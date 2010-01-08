@@ -1,0 +1,124 @@
+Fri Jan  8, 2010  3:51 PM 
+
+Matthias a présenté son système à base de deux jugements : Δ | t, qui
+signifie "je peux construire une dérivation t à partir de mes faits Δ"
+et Δ | t → u, "je peux construire une dérivation pour u à partir de
+la dérivation de t et de la base de faits Δ". 
+
+Le système est joli mais on a remarqué une certaine redondance : il y
+a par exemple une règle d'introduction de la partie gauche d'une
+application pour le jugement qui a une flèche et une règle de typage
+pour l'application pour le jugement "Δ | t". 
+
+En fait, se focaliser sur une dérivation particulière introduit
+une certaine asymétrie : on travaille sur une dérivation particulière
+qui n'a rien de plus qu'une autre dérivation de la base Δ. Pourquoi
+ne pas travailler directement sur plusieurs dérivations à la fois 
+et se permettre d'en déduire plusieurs dérivations? On a donc
+adapté le système avec cette idée en introduisant un unique 
+jugement : Δ ⊧ Δ' où Δ représente les dérivations qu'on a déjà 
+sous la main et Δ' les dérivations que l'on déduit. 
+
+Les règles de typage sont des axiomes de ce système, ainsi que les
+métathéorèmes (en particulier, les très utiles "lemmes d'inversion").
+La théorie des patchs (paramétrée par le langage) a donc une mission
+d'administration des dérivations de typage. Le langage des patchs
+décrit des constructions de dérivations (à partir d'autres). A priori,
+l'expressivité des constantes est peu limitée, en termes opérationnels
+(on peut itérer sur une dérivation pour réécrire les environnements de
+jugement). Par contre, l'expressivité du langage de patchs est limitée
+puisque c'est un langage dont seule la sémantique statique nous
+intéresse vraiment (On pourrait imaginer associer une sémantique
+opérationnelle qui réaliserait réellement les constructions
+de dérivation de typage de bas-niveau mais si on travail dans Coq,
+on a la garantie qu'on ne fait rien de mal.)
+
+Il devrait exister un système de types/une analyse statique
+intéressant(e) pour le langage des patchs qui permettrait de donner un
+sens à des transformations mais non pas sur des dérivations de typage
+sur des patchs eux-mêmes. En effet, les transformations tels que
+l'évolution d'un répositoire (qui est un patch) en une nouvelle
+version de ce répositoire est un patch! On doit donc, d'une certaine
+façon, pouvoir bootstrapper le système. 
+
+Revenons à des choses plus concrètes. Matthias a remarqué que le
+jugement "Δ ⊧ Δ'" gagne, certes, en symétrie mais on voit moins bien
+ce sur quoi s'applique le patch. En particulier, lorsque les patchs
+avec une unique conclusion, on pouvait les décrire à l'aide d'un terme
+du langage objet (éventuellement étendu par plongement des
+métathéorèmes comme des opérateurs constants). Il semble plus
+difficile de jouer avec la syntaxe de cette façon dans le nouveau
+système.
+
+Quels sont les prochains objectifs? Je pense qu'il faut avoir ce que
+l'on a dit en tête mais se focaliser sur un langage particulier (STLC
+par exemple). Je ressens vraiment le besoin d'obtenir un prototype
+(soit écrit en Caml ou extrait de Coq) et de pouvoir réellement
+(méta-)programmer avec ce système. 
+
+Mon Jan  4, 2010  3:22 PM [semantic patch]
+
+Discussion avec Matthias à propos des patchs sémantiques. Il a
+formalisé plusieurs systèmes (en Coq et en Agda) qui énumèrent des
+transformations possibles sur des dérivations de typage (préservant la
+bonne formation de celles-ci).
+
+Le premier système contient des transformations sur la syntaxe basées
+sur les règles dirigées par la syntaxe ainsi que des règles de passage
+aux contextes.
+
+Le système final contient des transformations avec mémoire,
+c'est-à-dire permettant de nommer des dérivations (et les réutiliser
+plus tard). Ce système subsume le précédent.
+
+Ce système semble prometteur : en le codant en Coq et en définissant
+une base de hints, Matthias a été capable de vérifier des théorèmes
+admissibles automatiquement. Il a pensé rajouter des récurseurs (ou
+des opérateurs similaires à ceux des langages de stratégies, comme
+Stratego).
+
+Matthias a aussi pu constater une certaine méthodologie pour déduire
+automatiquement des règles de transformations à partir des règles
+dirigées par la syntaxe. La notion de "méta-théorème" constructif
+lui semble aussi de plus en plus naturelle.
+
+Les prochaines étapes :
+- vérifier que les bindeurs fonctionnent bien ;
+- prendre en compte le contexte et la spécification (i.e. le jugement
+ tout entier) ;
+- valider un système permettant d'écrire les règles d'affaiblissement
+ et de renforcement du contexte.
+
+
+
+Fri Dec 18, 2009  3:39 PM
+
+Matthias a posé la question de la vérification de l'application
+d'un métathéorème. 
+
+Par exemple, le renommage R[x -> y] s'applique bien sur le 
+terme [let x = e1 in e2] mais pas sur le theme [e1].
+
+Est-ce qu'on peut trouver un système de types intéressant pour
+vérifier la bonne application de R ?
+
+Yann répond : il suffit d'utiliser Coq mais, c'est un peu facile
+comme réponse :). 
+
+Mon Dec 14, 2009  6:29 PM
+
+Une transformation non triviale qui apparait souvent :
+
+let rec f x = 
+  ... g y ...
+and g y = 
+  ... f x ...
+
+devient :
+
+let rec f env x = 
+ ... g env y ...
+and g env y = 
+ ... f env x ...
+
+(ou bien interaction a l'aide d'un '?')
