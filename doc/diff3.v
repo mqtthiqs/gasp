@@ -28,6 +28,12 @@ Inductive term : env -> type -> Type :=
   E |- B
 where "E |- A" := (term E A).
 
+Inductive p : nat -> Prop :=
+| c1 : p O
+| c2 : forall n, p (S n).
+
+
+
 Notation "\ u" := (Lam u) (at level 61, left associativity).
 Notation "t @ u" := (App t u) (at level 62).
 
