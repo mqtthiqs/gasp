@@ -1,3 +1,83 @@
+Sat Jan 16, 2010  7:21 PM 
+
+Plus je réfléchis aux patchs sémantiques et plus je me dis que le bon
+cadre de développement est effectivement Coq. 
+
+Si on prend le point de vue très général qui consiste à voir
+les dérivations de typage comme n'importe quel inductif dans
+Type (de façon à en avoir une représentation enregistrable 
+sur un support physique) et qu'on voit les patchs atomiques
+comme des appels à des lemmes écrits en Coq (dont le
+type est un transformateur), alors la difficulté de la 
+conception d'un système de patchs consiste essentiellement
+à la définition dans langage de programmation capturant
+les transformations utiles au développement d'un programme
+(qui a un aspect un peu plus "méta" que la programmation). 
+
+Voici une proposition simple pour ce langage mais qui
+pose déjà des problèmes intéressants. On voit
+un programme dans ce langage comme un transformateur
+de répositoire/mémoire associant des dérivations à des
+emplacement. On a alors l'interprétation suivante 
+des trois opérations standards: 
+
+- ref e  : alloue un emplacement frais contenant
+  la dérivation de typage ∇.
+- ! e    : lit un emplacement.
+- x := e : écrit dans un emplacement.
+
+C'est la troisième opération qui est intéressante puisque, pour
+préserver le fait que la mémoire peut être interprétée comme une
+dérivation de typage correcte, il faut s'assurer que les utilisateurs
+de 'x' sont toujours satisfaits. Pour cela, on peut produire des
+sous-buts, à la manière des tactiques de Coq. On obtient une sorte de
+jeu.  Pour traiter ces sous-buts automatiquement, on peut imaginer
+comparer l'ancienne et la nouvelle version de "x" et déduire des
+transformations canoniques, lorsqu'elle existe.
+
+Par exemple, si on rajoute un nouveau constructeur dans un ADT, on
+peut vouloir rajouter une branche avec un lancement d'exception sur
+tous les patterns matchings de ce type. Si on rajoute un nouvel
+argument à une fonction, tous les utilisateurs de cette fonction
+peuvent être appliqué à une valeur par défaut. Il y a aussi cette
+transformation de passage de "map" à "foldmap" (qui doit avoir une
+définition catégorique):
+
+let map f = function
+| [] -> []
+| x :: xs -> (f x) :: map f xs
+
+en 
+
+let fold f accu = function
+| [] -> accu, []
+| x :: xs ->
+  let x', accu = f x accu in
+  let accu, xs' = fold f accu xs in
+  (accu, x' :: xs')
+
+C'est le passage du type "a -> b" au type "a * c -> b * c"
+dont parlait Paul-Andre l'autre fois. L'argument "c" 
+suit le flot d'exécution. Quelle est la transformation
+similaire qui préserve le tail-call?
+
+On doit pouvoir programmer un interprète pour ce langage en Coq.
+
+La mémoire Δ contiendrait des sommes dépendentes de la forme
+Σ T: S. φ (T) où φ est une fonction qui transforme S,
+la signature de l'algèbre des objets syntaxiques de 
+la théorie (ça peut être un jugement, un environnement,
+un terme, peu importe). Une procédure de décision sur
+ces objets est du type D ≡ list T -> bool. 
+
+Du coup, les transformateurs ont des types de la forme Θ ≡ list T *
+list D * list T, qu'on peut facilement interpréter dans Type. De cette
+façon, on élimine le problème d'extensibilité: il suffit de
+dynamiquement intégrer un nouveau méta-théorème dans l'environnement
+du langage de patchs pour que cela fonctionne. 
+
+Le système de type du langage de patchs obtenu est simple. 
+
 Fri Jan  8, 2010  3:51 PM 
 
 Matthias a présenté son système à base de deux jugements : Δ | t, qui
