@@ -1,3 +1,49 @@
+Sun Jan 17, 2010 12:19 AM
+
+Quelques réflexions supplémentaires. 
+
+Le type "dlist", qui sera renommé en "spec", correspond quasi
+exactement aux types de LF (i.e. λπ). Plus généralement, l'inductif
+"signature" semble correspondre à la définition de théorie LF. 
+
+Le langage de patchs est donc un langage qui correspond à
+un sous-ensemble de Delphin[1] (la version constructive et
+fonctionnelle de Twelf). Il faudra se comparer à ce langage
+et expliquer en quoi la restriction que nous considérons
+est digne d'intérêt. D'ailleurs, est-ce qu'on ne pourrait
+pas directement (meta)-programmer en Delphin?
+
+La sémantique que j'ai en tête pour le langage de patchs
+se décrit comme une transformation d'un "répositoire",
+qui est toujours bien formé. Cette transformation
+est décrite de façon impérative mais on pourrait très bien
+se placer dans une monade et rester fonctionnel. D'ailleurs,
+je me demande si une monade de transaction ne serait pas
+pertinente pour modéliser la modification concurrente
+de répositoire. 
+
+Ensuite, il serait vraiment amusant et intéressant de
+voir le langage de patchs et son système de type comme
+une entrée possible à lui-même. Je ne sais pas encore
+bien expliquer ce qu'on obtient mais à première vue,
+c'est un langage de patchs sur des patchs, donc un
+moyen de parler de l'historique d'un projet et de
+le modifier. 
+
+Enfin, il serait intéressant de voir en quoi le 
+langage de patchs se compare aux systèmes de module
+et aux systèmes de compilation incrémentale (compilation
+séparée). Une question à se poser pourrait être : 
+comment construire un ensemble de modules O'Caml
+à partir d'un répositoire? Si on se débrouille bien
+cette construction pourrait être incrémentale : on
+ne génèrerait les modules correspondant uniquement
+aux dérivations de typage mis-à-jour. 
+
+Voilà, c'est tout pour aujourd'hui.
+
+[1] http://www.cs.yale.edu/homes/delphin/delphin.htm
+
 Sat Jan 16, 2010  7:21 PM 
 
 Plus je réfléchis aux patchs sémantiques et plus je me dis que le bon
