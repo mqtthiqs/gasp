@@ -1,8 +1,54 @@
+Sun Jan 17, 2010  9:47 AM
+
+Au sujet de la visualisation d'une dérivation à offrir au programmeur,
+ce n'est pas évident. A première vue, je pensais qu'il suffisait de se
+donner une (ou plusieurs) syntaxe(s) pour visualiser les jugements
+mais en fait, ce n'est pas suffisant. En effet, éditer les jugements
+permettrait de faire de la programmation, mais pas de la
+méta-programmation.
+
+Il faut vraiment se donner une syntaxe pour le langage des expressions
+du langage de patchs, incluant une syntaxe pour les transformateurs
+ainsi que l'ensemble des objets syntaxiques considérés (jugement,
+atom, type, etc).
+
+Si on veut définir le "diff", il se passe quelque chose de bizarre
+puisque l'on calcule une différence syntaxique entre (deux visualisations
+de) deux expressions du langage de patchs qui doit être interprétée
+elle-même comme une expression du langage de patchs! Pour ce qui
+est de changement syntaxique sur le terme du programme, je suis 
+d'accord mais si on change une application de transformateur
+en l'application d'un autre transformateur, on n'a pas de langage 
+pour exprimer cette transformation! 
+
+Peut-être que je me pose la mauvaise question: lorsque l'on modifie
+un noeud correspondant à la modification d'un transformateur, on
+est dans le langage calculatoire des patchs (le petit langage
+impératif du début). Il se peut quand produisant non pas une 
+expression du langage de patchs mais un programme du langage de
+patchs, on puisse capturer correctement la différence entre 
+deux expressions du langage de patchs. 
+
+Sun Jan 17, 2010  9:38 AM
+
+A propos du related work, il faudra se comparer à Twelf, Delphin et 
+Cocinnelle. Pour ce dernier, c'est juste le nom de "semantic patch"
+qui est surchargé mais ça n'a pas grand chose à voir, il me semble.
+
+Sun Jan 17, 2010  9:37 AM
+
+Quelque chose d'amusant serait de traiter des commentaires
+structurés pouvant contenir du code, à mettre à jour aussi
+à travers les patchs. D'une façon générale, on peut même 
+interagir avec le programmeur pour que tout commentaire 
+qui a été impacté par un patchs puisse être mis-à-jour
+intéractivement.
+
 Sun Jan 17, 2010  9:30 AM
 
 En parlant des points de comparaison avec les systèmes de compilation
 séparée, il faut noter que notre approche fonctionne uniquement 
-dans un cadre open-source. Pour traiter l'opacité des dérivations,
+dans un cadre open source. Pour traiter l'opacité des dérivations,
 ça ne devrait pas être trop dur.
 
 Sun Jan 17, 2010  9:24 AM
