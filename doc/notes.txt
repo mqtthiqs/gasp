@@ -1,3 +1,48 @@
+Sun Jan 17, 2010  9:24 AM
+
+A propos des systèmes de modules, je pense qu'il suffirait de définir
+un jugement de la forme "env |- decls => env" pour les traiter. Une
+question intéressante serait de déterminer différents moyens de
+visualiser l'utilisation de modules importés au sein d'un autre
+module.
+
+En effet, on peut écrire :
+import M
+val f x = ...
+
+Pour représenter le méta-programme qui utilise la dérivation de module
+M pour construire une nouvelle dérivation de module. Mais on peut
+aussi vouloir visualiser dans le buffer, l'ensemble des déclarations
+de M (ça évite d'avoir à regarder dans la documentation.).
+
+Comment représenter un foncteur? Peut-être ainsi :
+
+uses Msig
+val f x = ...
+
+qui signifie qu'on définit une dérivation de module qui peut-être
+jointe à une autre qui remplit la signature Msig.
+
+Comment représenter des contraintes entre les modules? Peut-être ainsi:
+
+uses M1 : M1sig
+uses M2 : M2sig
+requires M1.t = M2.t
+
+Il faut noter que cette façon de coder les modules les cantonnent à
+être des objets de seconde classe. Une question ambitieuse serait de
+définir un langage de méta-programmation qui intégrerait dynamiquement
+ces constructions. On pourrait ainsi créer des dérivations
+dynamiquement et donc charger des modules dynamiquement. Ca reste une
+perspective sur du long terme. A mettre dans le Future work.
+
+A propos maintenant d'inférence de type, j'avais des doutes sur la
+possibilité de l'intégrer au système mais en fait, il n'y a pas de
+raison : on peut très bien définir un jugement de la forme "env |- t
+=> t' : tau où t est implicitement typé tandis que t' est
+explicitement typé.
+
+
 Sun Jan 17, 2010  1:15 AM
 
 Un des points de comparaison avec Twelf, c'est tout
