@@ -1,3 +1,15 @@
+Sun Jan 17, 2010  1:15 AM
+
+Un des points de comparaison avec Twelf, c'est tout
+simplement que nous n'utilisons la syntaxe d'ordre
+supérieure pour représenter les jugements mais
+pas pour représenter la syntaxe objet. 
+
+Je ne sais pas trop si c'est très profond comme
+comparaison puisqu'on pourrait très bien faire 
+de la syntaxe du premier ordre en Twelf ... qui
+peut le plus, peut le moins. 
+
 Sun Jan 17, 2010 12:19 AM
 
 Quelques réflexions supplémentaires. 
