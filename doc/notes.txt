@@ -1,3 +1,10 @@
+Sun Jan 17, 2010  9:30 AM
+
+En parlant des points de comparaison avec les systèmes de compilation
+séparée, il faut noter que notre approche fonctionne uniquement 
+dans un cadre open-source. Pour traiter l'opacité des dérivations,
+ça ne devrait pas être trop dur.
+
 Sun Jan 17, 2010  9:24 AM
 
 A propos des systèmes de modules, je pense qu'il suffirait de définir
