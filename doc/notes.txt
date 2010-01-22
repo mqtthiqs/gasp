@@ -1,3 +1,65 @@
+Fri Jan 22, 2010  6:45 PM 
+
+Aujourd'hui, la discussion a porté sur :
+1. une explication du système décrit moralement dans meta.v
+2. une réflexion sur la forme du langage de patch
+3. l'expressivité de l'algèbre de types
+4. des questionnements sur l'aspect logique/programmation.
+5. l'interface à fournir au programmeur.
+
+A propos de 1, pas grand chose à dire, si ce n'est que les
+noms des concepts ont été très mal choisis. 
+
+Au sujet de 2, Matthias a fait remarquer une distinction que je
+n'avais pas saisi: quand on développe, c'est vraiment monotone. En
+effet, on ne veut surtout pas perdre l'historique du développement. Le
+langage de patchs est donc pure : il nomme des expressions de patchs
+mais ne modifie pas les expressions existantes. L'interprétation d'une
+série d'expressions de patchs nommés est claire : il s'agit finalement
+juste de mémoiser les résultats de fonctions Coq.
+
+C'est le niveau du dessus qui décrit des transformations sur des
+répositoires (les expressions de patch nommées). C'est donc en
+auto-appliquant le système qu'on voit apparaître la notion de 
+développement (concurrent ou du moins, local vs global). Il faut
+alors définir des méta-théorèmes sur le langage de patchs qui 
+décrivent comment on peut ajuster, par exemple, les clients
+d'une dérivation pour ne pas perdre la propriété d'être
+bien formé pour un répositoire. Matthias a suggéré qu'on
+se focalise sur le niveau "langage de patchs" avant de
+s'intéresser au "langage de développement". Il a aussi
+remarqué une ressemblance très forte avec Git. 
+
+Au sujet de 3, Matthias a proposé qu'on autorise des 
+types d'ordre supérieur pour donner un type aux récurseurs. 
+C'est possible. On a ensuite essayé quelques exemples qui
+nous ont à peu près convaincu de l'expressivité de la chose. 
+Il faudra se comparer exactement aux types de LF. Cette
+précision nous a permis de spécifier le type de module
+permettant de décrire un langage objet et sa métathéorie. 
+Ca a l'air ok. 
+
+Au sujet de 4, Matthias était gêné par une redondance entre
+les termes du lambda-calcul simplement typé et des dérivations
+de preuve. Effectivement, quand on travaille dans un système
+logique qui satisfait curry-howard, il n'y a pas de raison
+de se donner une syntaxe pour les termes: ils sont extractibles. 
+Au contraire, en programmation, les programmes ont une vie en
+dehors des preuves de typage. Notre système est compatible
+avec les deux approches. 
+
+Au sujet de 5, il n'est pas évident de définir une 
+interface pour l'utilisateur lambda, subsumant les 
+pratiques habituelles d'édition textuelle. Un algorithme
+de diff, construisant un patch à partir de deux termes
+devra être fourni. Il sera aussi nécessaire de préciser
+les langages de description de chemin pour accéder à une
+dérivation précise, etc. A mon avis, cela s'éclairera plus tard. 
+Pour l'instant, nous allons méta-programmer.
+
+La prochaine étape est la réimportation de ces idées dans
+le code Coq. 
+
 Thu Jan 21, 2010  4:35 PM
 
 Matthias a découvert les travaux d'une étudiante de Frank Pfenning,
