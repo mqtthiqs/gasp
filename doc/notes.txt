@@ -1,4 +1,54 @@
-Fri Jan 22, 2010  6:45 PM 
+Fri Feb  5, 2010  7:06 PM 
+
+Aujourd'hui, nous avons discuté de :
+1. Explicitation de points obscurs sur la syntaxe du langage de patch.
+2. Amélioration de cette syntaxe de patch.
+3. Quelques réflexions sur le système auto-appliqué.
+
+Matthias a précisé quelques notions au sujet de la dénotation d'un
+patch comme une transformation de programme. En fait, la sémantique du
+langage de patch donne une place centrale au répositoire. La transformation
+d'un programme peut être extraite du répositoire (c'est une sous-séquence
+de définitions de dérivation menant du programme source au programme
+cible). 
+
+Matthias a proposé une amélioration de la syntaxe des patchs. Un
+patch est une séquence de définitions de la forme :
+
+  d11, ..., d1N = f d'11 ... d'1N'
+  d21, ..., d2M = g d'21 ... d'2M'
+  ...
+
+On "atomise" ainsi les spécifications. Yann avait une erreur de
+compréhension à ce sujet car il pensait qu'atomiser les spécifications
+impliquait une atomisation des dérivations. Ce n'est pas le cas: par
+exemple, si on appelle un méta-théorème [typecheck] alors on peut (on
+doit) très bien atomisé les différentes composantes objets nécessaires
+à la formulation du jugement tandis que la dérivation en elle-même
+peut rester internalisée en Coq. 
+
+Enfin, Yann a parlé un peu des idées de méta-théorème concernant le
+système appliqué une fois et qui apparaitrait comme des patchs de
+répositoire si on auto-applique. Parmi eux, on trouve la jointure, qui
+ne pose a priori pas de problème. Un méta-théorème plus intéressant
+consiste à exhiber les dépendances induites par les définitions du
+répositoire. Si on a un méta-théorème qui transforme le répositoire
+sans en modifier le sens (moralement, on ne change les connaissances
+de ce répositoire) alors on doit avoir une relation d'ordre entre les
+ensembles de dépendances. Typiquement, on peut devenir plus ou moins
+précis mais pas contradictoire. Or, avoir des dépendances fines permet
+de normaliser le répositoire et d'autoriser des transformations plus
+locales donc distribuer plus facilement le développement. 
+
+Pour finir, Matthias a vérifié qu'on s'intéressait plus volontier aux
+méta-théorèmes de :
+[forall X. Proprietes sur X => proprietes sur F(F(X)]
+Ils vont faire mal à la tête mais ils sont définitivement les points
+les plus intéressants de cette étude!
+
+Prochaine étape : mettre au clair [F(STLC)]. Baby steps!
+
+Fri Jan 22, 2010 6:45 PM
 
 Aujourd'hui, la discussion a porté sur :
 1. une explication du système décrit moralement dans meta.v
