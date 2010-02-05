@@ -1,4 +1,4 @@
-(** Some piece of Coq to illustrate notes of
+ (** Some piece of Coq to illustrate notes of
    Sat Jan 16, 2010  7:21 PM 
  *)
 
@@ -32,14 +32,14 @@ Inductive has_ty : env -> term -> type -> Type :=
   has_ty (bind x ty1 Γ) t ty2 ->
   has_ty Γ (Lam x ty1 t) (Arrow ty1 ty2).
 
-Inductive signature : Type :=
-| Atom : signature
-| Typ  : signature
-| Env  : signature
-| Term : signature 
-| HasTy : env -> term -> type -> signature.
+Inductive object_type : Type :=
+| Atom : object_type
+| Typ  : object_type
+| Env  : object_type
+| Term : object_type 
+| HasTy : env -> term -> type -> object_type.
 
-Fixpoint interpret_signature (s : signature) : Type :=
+Fixpoint interpret_object_type (s : object_type) : Type :=
   match s with
     | Atom => atom
     | Typ => type
@@ -48,32 +48,28 @@ Fixpoint interpret_signature (s : signature) : Type :=
     | HasTy e t ty => has_ty e t ty
   end.
 
-Require Import List.
-
-(* FIXME: The following two are fold_left...*)
-Definition object : Type := sigT interpret_signature.
-
-Hypothesis object_eqdec : forall o1 o2: object, { o1 = o2 } + {~ o1 = o2 }.
-
-Definition properties := object -> bool.
+Definition object : Type := sigT interpret_object_type.
 
 Require Import String.
 
-Inductive dlist : Type :=
-| dnil : forall a:signature, interpret_signature a -> dlist
-| dcons : forall (a : signature), (interpret_signature a -> dlist) -> dlist.
+Inductive spec :=
+| DUnit   : spec
+| DPi     : forall (o : object_type), 
+  (interpret_object_type o -> spec) -> spec
+| DSigma  : forall (o : object_type), 
+  (interpret_object_type o -> spec) -> spec.
 
-Fixpoint interpret_abs (s : dlist) : Type :=
+Fixpoint interpret_spec (s : spec) : Type :=
   match s with
-    | dnil ty _ => interpret_signature ty
-    | dcons ty f => forall x: interpret_signature ty, interpret_abs (f x) 
+    | DUnit => True
+    | DPi ty f => forall (x : interpret_object_type ty), interpret_spec (f x)
+    | DSigma ty f => sigT (fun (x : interpret_object_type ty) => interpret_spec (f x))
   end.
 
 Record transformer := mk_transformer {
-  name   : string;
-  spec  : dlist;
-(*  pre    : ?; : precondition ? *)
-  implementation : interpret_abs spec
+  tname          : string;
+  tspec          : spec;
+  timplementation : interpret_spec tspec
 }.
 
 Lemma bind2 : 
@@ -86,47 +82,6 @@ auto.
 Defined.
 
 Check bind2.
-
-Definition bind2_patch :=
-  mk_transformer "bind2"
-  (dcons Env 
-    (fun env => dcons Atom
-      (fun x => dcons Atom
-        (fun y => dcons Typ
-          (fun ty0 => dcons Typ
-            (fun ty1 => dcons Typ
-              (fun ty2 => dcons Term
-                (fun t => dcons (HasTy (bind y ty0 (bind x ty1 env)) t ty2)
-                  (fun H => dnil 
-                    (HasTy env (Lam x ty1 (Lam y ty0 t)) (Arrow ty1 (Arrow ty0 ty2)))
-                    (bind2 env x y ty0 ty1 ty2 t H))))))))))
-  bind2.
-
-Extraction bind2_patch.
-
-Require Import FMaps.
-Require Import FMapAVL.
-
-Module Make (Mem : WS).
-
-Definition derivation_name := Mem.E.t.
-
-Inductive expression : Type :=
-| DerivationName : signature -> derivation_name -> expression
-| Transformer : transformer -> list expression -> expression
-| Object : forall s:signature, interpret_signature s -> expression.
-
-Inductive patch : Type :=
-| New    : derivation_name -> expression -> patch
-| Update : derivation_name -> expression -> patch
-| Seq    : patch -> patch -> patch.
-
-Record repo := mk_repo {
-  derivations : Mem.t expression;
-  context     : Mem.t (list derivation_name)
-}.
-
-Hypothesis signature_eqdec : forall s1 s2: signature, { s1 = s2 } + { ~ s1 = s2 }.
 
 Require Import Program.
 
@@ -155,68 +110,133 @@ Proof.
   destruct (coerce T T H x). simpl. apply JMeq_eq; auto.
 Qed. 
 
-Program Fixpoint check_dlist (spec : dlist) (tys : list (option object)) : option object :=
-  match spec, tys with
-    | dnil ty x, nil => Some (existT _ ty x)
-    | dcons ty f, (Some (existT xty x)) :: tys => 
-      if signature_eqdec ty xty then
-        check_dlist (f (▹ x)) tys
+(* I thought that Quote would have been nice to transform
+   automatically our Coq type into a spec. Yet, the quote tactic does
+   not seem to deal with "forall x. ...". We shall use LTac instead.*)
+Require Import Quote.
+
+Program Definition bind2_patch :=
+  mk_transformer "bind2"
+  (DPi Env 
+    (fun env => DPi Atom
+      (fun x => DPi Atom
+        (fun y => DPi Typ
+          (fun ty0 => DPi Typ
+            (fun ty1 => DPi Typ
+              (fun ty2 => DPi Term
+                (fun t => DPi (HasTy (bind y ty0 (bind x ty1 env)) t ty2)
+                  (fun H => DSigma 
+                    (HasTy env (Lam x ty1 (Lam y ty0 t)) (Arrow ty1 (Arrow ty0 ty2)))
+                    (fun _ => DUnit))))))))))
+  _.
+Next Obligation. eexists; [apply bind2|]; auto.
+Defined.
+
+Require Import FMaps.
+Require Import FMapAVL.
+
+Module Make (Mem : WS).
+
+Definition derivation_name := Mem.E.t.
+
+Inductive expression : Type :=
+| DerivationName : object_type -> derivation_name -> expression
+| Join : list expression -> expression
+| Transformer : transformer -> expression -> expression.
+
+Record repo := mk_repo {
+  derivations : Mem.t expression
+}.
+
+Hypothesis object_type_eqdec : forall s1 s2: object_type, { s1 = s2 } + { ~ s1 = s2 }.
+
+Program Fixpoint apply_transformer 
+  (spec : spec) (t : interpret_spec spec) (args : list object)
+: option (list object) :=
+  match spec, args with
+    | DUnit, nil => Some nil
+    | DPi ty f, (existT xty x) :: os => 
+      let t' := ((▹ t) : forall (o: interpret_object_type ty), interpret_spec (f o)) in
+      if object_type_eqdec ty xty then
+        let x' := ((▹ x) : interpret_object_type ty) in
+        apply_transformer (f x') (t' x') os
       else 
         None
+    | DSigma ty f, nil => 
+      let t' := ((▹ t) : sigT (fun (x : interpret_object_type ty) => interpret_spec (f x))) in
+      let o  := projT1 t' in
+        match apply_transformer (f o) (projT2 t') nil with
+          | None => None
+          | Some os => Some (existT _ ty o :: os)
+        end
     | _, _ => None
   end.
-Next Obligation.
-Proof. intuition.  inversion H1. inversion H0. Defined.
-Next Obligation.
-Proof. intuition. inversion H1. inversion H0. Defined.
-Next Obligation.
-Proof. intuition. inversion H0. inversion H1. Defined.
+Solve Obligations using (program_simpl; intuition; congruence; auto).
 
 (** To remove the artificial nat, define an inductive expressing
-   that [derivations r] is a dag. *)
+   that [derivations r] is a dag: 
+   
+   Proposal (maybe too naive but very simple):
+
+   1. Attach a function "depth_var : var -> nat" to every repository.
+   2. Define "depth : repo -> exp -> nat" by induction:
+      x               => depth_var repo x
+    | tuple ts        => 1 + sum depth ts
+    | transformer f e => 1 + depth e
+    3. Define "wf_repo : repo -> Prop := forall (x |-> e) in repo, depth_var x > depth e
+
+*)
+
+(** FIXME: We could use the Error monad here. *)
+(** Use depth as a measure. *)
 Program Fixpoint 
-interpret_expression (n : nat) (r : repo) (e : expression) 
-: option (sigT interpret_signature) :=
+interpret_expression (n : nat) (r : repo) (e : expression) : option (list object) :=
 match n with
 | O => None
 | S n =>
   match e with
-    | Object s x => Some (existT _ s x)
-    | Transformer t es =>
-      let etys := List.map (interpret_expression n r) es in
-        check_dlist (spec t) etys 
+    | Transformer t e =>
+      match interpret_expression n r e with
+        | None => None
+        | Some args => apply_transformer (tspec t) (timplementation t) args
+      end
+    | Join es =>
+      List.fold_right (fun accu x =>
+         match accu with None => None
+           | Some l => match x with Some [x] => Some (x :: l)
+                         | _ => None 
+                       end
+         end) (Some []) (List.map (interpret_expression n r) es)
     | DerivationName s x => 
       match Mem.find x (derivations r) with
         | None => None
         | Some e =>
           match interpret_expression n r e with
-            | None => None
-            | Some (existT s' y) =>
-              if signature_eqdec s s' then
-                Some (existT _ s' y)
+            | Some [existT s' y] =>
+              if object_type_eqdec s s' then
+                  Some [existT _ s' y]
                 else 
                   None
+            | _ => None
           end
       end
   end
 end.
 
-(** Fin du Coq bien type. *)
+(** Claim: Si le programme est bien typé et que le repo est WF alors on obtient une 
+   valeur du type attendu par cette fonction interprétation. *)
 
-(** Les invariants de fonctionnement de l'interprete: 
-   - toute expression du repo à une interprétation;
-   - le repo forme un DAG ; 
-   - à chaque (grand) pas d'exécution, on passe d'un repo bien formé à un autre. *)
+(** Ensuite: écrire les fonctions de rajout d'une expression dans le repo, en 
+   maintenant la bonne formation. Ca devrait aller. *)
 
-Fixpoint play (r : repo) (p : patch) : 
-  (** Retourne une liste de sous-problemes dont les solutions sont
-     des patchs qui assurent la reconstruction d'un repositoire 
-     bien forme. *)
-  (** FIXME: Quel type pour ces objets-la? *)
+(** Puis: considérer des opérations plus méta comme par exemple la jointure de 
+   deux repos. A quelles conditions peut-on maintenir la bonne formation? 
+   Quels méta-théorèmes sur le langage de patchs peut-on en déduire? *)
 
-| New    : derivation_name -> expression -> patch
-| Update : derivation_name -> expression -> patch
-| Seq    : patch -> patch -> patch.
+(** Enfin: essayer d'enrichir ces fonctions avec l'information supplémentaire: qui utilise
+   quelle dérivation (le champ [context] dans la version précédente de ce fichier).
 
-(** A suivre ... *)
+   On doit alors pouvoir exhiber des propriétés intéressantes sur les jointures.
+*)
 
+(** En conclusion: auto-appliquer! *)
