@@ -1,3 +1,86 @@
+Thu Feb 11, 2010 14:00 PM
+
+Discussion éclair, partant d'un exemple simple (λx.x → λf.λx. fx), sur les thèmes:
+- maximisation du partage dans les patches et hash-consing
+- adaptation des signatures de métathéorêmes
+
+Le problème de départ est le suivant: Pour transformer D : (x:A ⊢ x:A)
+en (x:A, f:AA ⊢ f x : A), on doit appliquer weak sur D d'un côté (on
+obtient D₁ : (x:A, f:AA ⊢ x:A)), et créer de l'autre la dérivation D₂
+: (x:A, f:AA ⊢ f:AA), pour finalement créer l'application, qui exige
+deux environnements identiques. Question: les deux environnements
+sont-ils: 
+- structurellement identiques, ce qui oblige effectuer une
+  vérification d'égalité structurelle au typage du patch?  
+- ou identique au niveau de leur localité (représentés par la même
+  variable dans le patch)? C'est plus contraignant pour les patches,
+  puisque deux objets "structurellement égaux" ne pourront pas être
+  utilisés indifféremment; par contre le typage est beaucoup moins
+  coûteux, et on a une garantie du partage maximal.
+
+La deuxième solution a été retenue parce qu'elle est plus élégante.
+On en a tiré une leçon/question plus générale à propos du partage dans
+le langage: Est-il possible de créer deux objets (types, dérivations,
+termes), structurellement égaux? Oui, sans aucun doutes. Mais pour
+chacune de ces situations, y a-t-il un moyen d'exprimer le patch
+différemment pour que ces objets partagent la même variable? Sans
+doutes (mais pas sûr). Si c'est le cas, alors pas besoin d'embarquer
+une procédure d'unification (ou égalité syntaxique) dans le
+typeur. Sinon, on peut imaginer permettre la comparaison, mais fournir
+une procédure de hash-consing sur les patches qui maximise le partage.
+Sous réserve que ça soit le cas, alors on adapte la théorie:
+
+Le constructeur d'atome [deriv] n'est plus paramétré par un triplet
+(env, terme, type) mais par trois variables (X,Y,Z). De cette façon on
+garantit que les env, terme et type sont bien déclarés plus
+haut. Maintenant, si un transformer a une [deriv] dans sa conclusion,
+il faut pouvoir donner une valeur a (X,Y,Z) ses arguments. On change
+donc le type des métathéorêmes, de ΠΣ en ΠΔΣ. Δ c'est une série de
+let-in's qui bindent (du verber binder) les noms nécessaire à leur
+définitions en terme de transformer. Par exemple:
+
+weak :: Π (E:env) (t:term) (A:type) (D:deriv(E,t,A)) (x:var) (B:type). 
+        Δ (E'=cons(E,x,B)). Σ (D':deriv(E',t,A))
+
+Attention, les variables de Δ font moralement partie de la conclusion
+d'un transformer, et on mémorise leur valeur implicitement.
+
+(E',D') = weak(E,t,A,D,x,B)
+
+doit être compris comme (expansé en):
+
+E' = cons(E,x,B)
+D' = weak(E,t,A,D,x,B,E')
+
+De cette façon, on a récupéré E' dont on peut parler. On a proposé un
+exemple pour lequel il est assez naturel de permettre des définitions
+embarquant des transformers plus complexes que [cons]: la
+transformation CPS. On a trois transformers:
+
+cps_terms :: term -> term
+a_a_trans :: type -> type
+typed_cps :: Π (D : deriv(Γ,t,A)).
+             Δ (t' = cps_term t) (A' = a_a_trans t).
+             Σ (D' : deriv(Γ,t',A'))
+
+Problème: Cette approche semble permettre un typage des patches en ne
+connaissant que la signature de chaque transformer. Est-ce vraiment le
+cas? En vérité je ne crois pas. Imaginons un transformer qui prend en
+argument une dérivation d'une certaine forme (deriv(Γ;x:A, t, A→A) par
+exemple). 
+
+1/ ça ne rentre plus dans notre syntaxe! Faut-il des let-in entrelacés
+dans les arguments aussi?
+
+2/ si on lui passe le E' plus haut, pour vérifier le bon typage du
+transformer, on va être obligé de calculer cons(E,x,B). On perd donc
+notre propriété de non-execution des transformers. Doit-on autoriser
+une forme lazy de calcul sur les transformers (dans l'exemple
+ci-dessus, calculer juste assez pour pouvoir garantir que E' n'est pas
+vide?)
+
+A suivre…
+
 Fri Feb  5, 2010  7:06 PM 
 
 Aujourd'hui, nous avons discuté de :
