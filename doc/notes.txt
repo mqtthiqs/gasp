@@ -1,8 +1,401 @@
+Content-Type: text/enriched
+Text-Width: 70
+
+Tue Feb 16, 2010 12:18 PM
+
+
+Quelques notes sur l'algèbre de type. 
+
+
+Nous avons convergé vers la syntaxe suivante pour les types de métathéorème 
+(le suffixe "s" signifie que l'on a un vecteur en ASCII) :
+
+
+  parameter θ :: le type des objets syntaxiques
+
+
+  ζ ::= Π Σ
+  Π ::= ∀ (Xs : θs := e). Π
+     |  ∀ (X : θ). Π
+     |  •
+  Σ ::= ∃ (Xs : θs := e). Σ
+     |  ∃ (X : θ). Σ
+     |  •
+
+
+  e ::= X
+     |  F (Xs)
+
+
+Cette syntaxe est dépendante de deux façons. Par la faute des lieurs ∀
+et ∃, on introduit des objets auxquels on peut faire référence dans la
+suite du type dans deux contextes :
+
+
+  1. Dans les types θ, comme dans le type 
+     "Γ ⊢ t : τ" 
+  2. Dans les bornes e, comme dans la borne 
+     "∀ (Γ' : env := cons (x, τ, Γ)). …" 
+
+
+Ca complique quelque peu l'interprétation des types ζ en termes de
+types Coq (mais pas trop). On se donne une syntaxe des environnements
+de typage des objets syntaxiques et des métathéorèmes Δ :
+
+
+  Δ ::= • | Δ (X : θ) | Δ (F : ζ := F̃) 
+
+
+et on définit, de façon mutuellement récursive, <italic>l'interprétation d'un
+type ζ sous un environnement Δ </italic>et <italic>l'interprétation statique d'une
+expression e</italic> <italic>sous un environnement Δ</italic> de la façon suivante :
+
+
+<underline>I</underline>nterprétation statique d'une expression e<underline> </underline>sous un environnement Δ
+
+
+Signature :
+
+  〚 • 〛_Δ : (e : expr) → (〚 Δ 〛 → 〚 type_of e 〛_Δ)
+
+
+— Cas "variable"
+
+  〚 X 〛_Δ = fun (σ : 〚 Δ 〛) ⇒ σ (X)
+
+
+— Cas "application de transformer"
+
+  〚 F (Ys) 〛_Δ = fun (σ : 〚 Δ 〛) ⇒ F̃ (〚 Ys 〛_Δ σ)
+
+
+<underline>I</underline>nterprétation d'un type ζ sous un environnement Δ
+
+
+Signature :
+
+  〚 • 〛_Δ : (ζ : spec) → (〚 Δ 〛 → Type)
+
+
+— Cas "quantification universelle bornée" 
+
+  〚 ∀ (Xs : θs := e). Π 〛_Δ =
+
+  fun (σ : 〚 Δ 〛) ⇒ ∀ (Xs : 〚 θ 〛_Δ). Xs = 〚 e 〛_Δ → 〚 Π 〛_{Δ (Xs : θ)} Xs
+
+
+– Cas "quantification universelle non bornée" 
+
+  〚 ∀ (Xs : θs). Π 〛_Δ =
+
+  fun (σ : 〚 Δ 〛) ⇒ ∀ (Xs : 〚 θ 〛_Δ). 〚 Π 〛_{Δ (Xs : θ)} Xs
+
+
+(règles similaires pour les quantifications existentielles)
+
+
+L'interprétation statique des expressions n'a de sens que pour les
+expressions bien typées (celles pour lesquelles la fonction typeof
+
+est définie). Du point de vue de l'implémentation en Coq, on
+
+voudra sûrement indicer le type des expressions par leur type). 
+
+
+Maintenant, l'interprétation dynamique des expressions de patch
+
+s'opère dans un répositoire de type Δ qui se définit ainsi :
+
+
+  ρ ::= • | ρ (X = X) | ρ (Xs ↦ e)
+
+
+avec les invariants de bon typage suivants:
+
+- Si X₁ = X₂ dans ρ, alors Δ (X₁) = Δ (X₂)
+
+- Si Xs ↦ e dans ρ, alors Δ (Xs) = typeof e
+
+
+L'interprétation dynamique d'un répositoire sous un environnement Δ
+
+est une fonction qui calcule une paire formée d'une structure de
+donnée associative entre des variables et des objets (internalisés en
+Coq) et d'une preuve d'(une conjonction de) égalité(s) entre des
+objets (internalisés en Coq).
+
+
+  《•》_Δ :
+
+  (ρ : repositoire de type Δ) →
+
+  { X ↦ 〚 Δ (X) 〛_Δ } × (⋀_{X₁ = X₂} (〚 Δ (X₁) 〛_Δ = 〚 Δ (X₂) 〛_Δ))
+
+
+Voilà pour un gros tas de symboles qui n'ont sûrement pas encore beaucoup
+
+de sens. En tout cas, ça donne une base pour reprendre le développement Coq
+
+avec nos dernières idées. 
+
+
+Tue Feb 16, 2010 12:19 PM
+
+Forwarded conversation
+Subject: Petite question.
+------------------------
+
+From: Yann Régis-Gianas <<yann.regis-gianas@pps.jussieu.fr>
+Date: 2010/2/13
+To: matthias <<puech@cs.unibo.it>
+
+
+Salut Matthias,
+
+j'espère que ton déménagement se passe bien. Juste une toute petite
+question : je ne me souviens plus de ta dernière remarque au sujet des
+types d'entrée des méta-théorèmes.
+
+Pour donner le type de l'inversion du lambda, par exemple, dans la
+nouvelle syntaxe des types de méta-théorème, il faut écrire quelque
+chose comme :
+
+forall env x t tau1 tau2.
+delta tau3 := tau1 -> tau2 in
+forall d1 : env |- lambda (x : tau1). t : tau3
+delta env' := env; x : tau1 in
+sigma d2 : env' |- t : tau2
+
+Je ne sais plus ce que l'on avait dit : est-ce le typechecking de
+l'application de ce méta-théorème nécessite de l'unification? J'ai un
+doute car j'avais l'impression que nous avions répondu "non" à cette
+question mais je ne vois plus du tout pourquoi.
+
+A plus,
+--
+Yann
+
+----------
+From: Matthias Puech <<puech@cs.unibo.it>
+Date: 2010/2/15
+To: Yann Régis-Gianas <<yann.regis-gianas@pps.jussieu.fr>
+
+
+Salut Yann,
+Ça y est, installé!
+
+Alors... de ce que j'ai retenu, on s'était dit que le type [deriv]
+prenant plus des vrais termes,types,envs mais plutôt des variables (de
+patch). Pour moi l'inversion ressemble plus à ça du coup: delta tau3
+:= arrow(tau1,tau2) in // construction du nouveau type delta t2 :=
+lambda(x,tau1,t) in // du nouveau terme forall d1 : deriv(env,t2,tau3)
+// on a une deriv des deux dans env delta env' := cons(env,x,tau1) in
+// alors on a une deriv dans env sigma d2 : deriv(env',t,tau2) // des
+objets initiaux
+
+Tu es d'accord? Laisse-moi penser à haute voix: ce transformer sera
+appliqué à 8 arguments (c'est beaucoup). Les deux avant-derniers, tau3
+et t2 devront être *strictement* construits par application du
+transformer arrow (resp. lambda) aux arguments 4 et 5 (resp. 1, 3 et
+2). Et on ira pas voir ce que c'est que arrow ou lambda.  Comme tu as
+dit, on compare les noms des transformers seulement.  Donc pour moi,
+non, pas besoin d'unification, mais par contre on a des contraintes
+d'égalité entre arguments (c'est des types dépendants quoi...). A un
+état du repository donné, on a donc un lot de "contraintes" comme tu
+le suggérais, qu'on a accumulé à chaque delta dans un sigma (des
+définitions dans la conclusion) et qui pourront nous servir dans la
+suite à appliquer des transformers qui nécessitent une forme
+particulière.
+
+Est-ce que cette approche est complète? Selon moi non, parce que ces
+arguments correspondant à des deltas peuvent avoir été crées par
+d'autres transformers plus... haut niveau (transformation CPS par
+exemple). Ces derniers doivent donc refléter dans leur signature qu'il
+créent bien des objets de type e.g. arrow(A,B) pour la CPS (par un
+delta à la fin).
+
+En fait, je commence a me poser la question du bien-fondé de nos deltas.
+En toute généralité, n'importe quel transformer a besoin de
+potentiellement n'importe quelle forme d'hypothèses (aussi profonde
+soit-elle). Donc chaque transformer doit préciser exactement la forme de
+ses hypothèses, et pas moins. Ça exclue donc les transformers comme la
+CPS sur les types par exemple (A-A-traduction): sa signature devrait
+donner la forme exacte de tous les types de sortie en fonction du type
+d'entrée, donc contenir l'algo tout entier! (c'est assez clair ce que je
+viens de dire?).
+
+Bref, on a un problème, qui est en lien à celui-ci: on veut pouvoir
+typer un patch sans rien savoir du contenu calculatoire des
+métathéorêmes qu'on utilise (juste leur signatures). Mais certains
+patches ne s'appliquent que sur des programmes d'une certaine forme,
+même s'ils sont en soi corrects (transforment un programme bien typé
+en un programme bien typé). La question est: comment faire respecter
+ces contraintes sans exécuter les transformers?
+
+Je vois deux alternatives:
+
+- Ou bien on se dit que de toutes façon on n'a besoin que des règles
+de typage et de leur inversion. On exclue donc les transformers qui
+font des choses variée en fonction de leur entrée, on ne garde que
+constructeurs et destructeurs (ils ont tous un seul niveau de
+profondeur dans leurs deltas). Dans ce cas je peux imaginer que c'est
+complet, et en plus, c'est peut-être juste ça qu'on veut: un algo de
+transformation, ad-hoc dans le sens qu'il doit être réécrit pour
+chaque programme d'entrée. Pas de CPS, pas de patchs génériques
+d'alpha-conversion ("transforme tous les f en g dans n'importe quel
+programme d'entrée"), pas de récurseurs, uniquement des chaînes de
+transformations locales. Peut-être que l'on veut juste ça.
+
+- Ou bien on peut executer les transformers et se rammener à des
+  objets plus "primitifs" (les constructeurs du langage), mais de
+  façon lazy. Dans l'exemple précédent, la A-A-traduction prendrait un
+  type, en renverrait un, opaque, mais si l'on doit vérifier que le
+  type résultant est une flèche, on déroule juste un coup sa
+  définition (on ne calcule pas au typage toute la traduction du type
+  argument, juste ce qui nous faut pour typer la suite). C'est un gros
+  changement par rapport à ce qu'on s'est dit avant, peut-être qu'il
+  faudrait bien investiguer le premier point avant de s'y résoudre.
+
+Voilà mes quelques remarques!
+
+Au fait, j'ai parlé à Andrea des patches aujourd'hui, et aussi de
+l'autre versant de mon projet de recherche (recherche de preuve par
+focusing dans CC). Il a été très critique sur les deux, et me propose
+de bosser sur un theorem-prover premier-ordre d'égalité à interfacer
+avec Matita. Dur dur la thèse... Mais je vais quand même lui présenter
+plus en détail notre boulot vendredi, ainsi qu'à Claudio sans
+doutes. Je te tiens au courant!
+
+A bientôt,
+       -m
+
+----------
+From: Matthias Puech <<puech@cs.unibo.it>
+Date: 2010/2/15
+To: Yann Régis-Gianas <<yann.regis-gianas@pps.jussieu.fr>
+
+
+PS: J'ai parlé de notre projet à un copain, un vrai codeur lui, qui
+travaille dans une boîte de supply-chain, parle de web-services et de
+facturation. Il m'a fait cette remarque: "super, alors plus de
+conflits quand un mec committe un patch de refactoring trivial et un
+autre une feature dans le même fichier". J'ai pas vraiment su quoi lui
+répondre mais je garde cet exemple dans un coin de la tête pour le
+moment ou on parlera de concurrence :) a+
+
+----------
+From: Yann Régis-Gianas <<yann.regis-gianas@pps.jussieu.fr>
+Date: 2010/2/16
+To: Matthias Puech <<puech@cs.unibo.it>
+
+
+Salut Matthias,
+
+merci pour tes remarques. Je te réponds au fil du texte...
+
+2010/2/15 Matthias Puech <<puech@cs.unibo.it>:
+> Ça y est, installé!
+
+Quelle rapidité! Passe un bon séjour.
+> [...]
+
+On a la même chose en tête. Je vais essayer d'écrire des notes un petit peu
+formelle pour fixer ça.
+> [...]
+
+Je ne sais pas trop ce que tu entends par "complète". Est-ce que c'est
+lié aux problèmes que tu avais illustrés avec la mise en forme CPS?
+
+La forme d'incomplétude que nous avons, il me semble que c'est notre
+capacité à déduire à l'intérieur du langage de patchs des implications
+de la forme : "Si tel type a été produit par la transformation CPS,
+alors c'est une flèche." Du coup, il n'est pas possible d'appliquer
+directement un transformer qui attend une flèche sans préalablement
+repasser au niveau du dessous en appliquant un lemme qui paraphrase
+exactement l'implication dont nous avons besoin.
+
+C'est une excellente remarque.
+
+En fait, j'étais en train de me poser une même question similaire en
+réfléchissant au type-checking : on peut très bien définir un
+algorithme de type-checking pas trop compliqué en récoltant des
+contraintes d'égalité entre variables (une sorte d'unification en
+fait, je le maintiens :-)).
+
+Le langage typé obtenu décrit des patchs de bas-niveau, que
+j'appellerai P_low, dans le sens où on explique vraiment toutes les
+étapes d'application des transformers. Ces explications nécessitent un
+grand nombre de transformer (toutes les implications permettant
+moralement de déduire d'une égalité X := F(Ys) une autre égalité de la
+forme X := G(Ws).)  Note en passant que je généralise encore la notion
+de répositoire, qui est maintenant formé d'un ensemble de
+multi-équations mettant en relation des termes du premier ordre qui ne
+sont pas nécessairement des variables. Tant que ces termes ont des
+types similaires, ça semble avoir encore du sens.
+
+Le langage P_low est un langage cible idéal pour notre diff mais il
+est peu pratique pour le programmeur! Il y a deux raisons à cela.
+D'abord, le programmeur doit constamment prouver de nouveaux
+métathéorèmes pour pouvoir composer les métathéorèmes qu'il a sous la
+main (l'effet "vilaine incomplétude). En effet, comme tu le dis, si on
+veut se passer de ce travail, il faut que les spécifications de
+métathéorèmes ne s'expriment qu'à l'aide d'un ensemble fini de
+constructeurs/destructeurs, naturellement la syntaxe des objets
+sous-jacents, mais dans certains cas, il y a de grandes chances pour
+que cela nécessite d'écrire la spécification du métathéorème sous une
+forme très (trop) précise (en gros, son code exprimé sous une forme
+équationnelle). La deuxième raison, c'est que c'est un langage de trop
+bas niveau de toute façon : on veut donner les grandes lignes des
+transformations et pouvoir compléter les parties "stupides"
+automatiquement.
+
+Ca nous amène à un langage de plus haut niveau, que j'appelerai
+P_high, qui inclut un algorithme de sous-typage qui produit des
+obligations de preuve. L'algorithme de sous-typage réussit si les
+préconditions qui ne sont pas résolues trivialement (par unification)
+sont démontrées comme vraies par une procédure de décision donné par
+le module de description du langage de programmation. Dans un premier
+temps, une simple preuve par réflexivité en Coq doit être une bonne
+procédure de décision. :-)
+
+Est-ce que je suis assez clair?
+> [...]
+
+Hum, la deuxième solution semble être proche de l'idée décrite plus haut. Non?
+
+On peut commencer par développer P_low, l'algorithme de diff et
+s'attaquer à P_high un peu plus tard.
+Oui, tiens moi au courant ... Ta situation n'est pas très confortable.
+J'espère que tu pourras trouver un terrain d'entente avec Andrea et
+Claudio ...
+
+Je continue sur mes notes ...
+
+A plus,
+--
+Yann
+
+----------
+From: Yann Régis-Gianas <<yann.regis-gianas@pps.jussieu.fr>
+Date: 2010/2/16
+To: Matthias Puech <<puech@cs.unibo.it>
+
+
+Oui, c'était un exemple que j'avais en tête :-).
+
+L'alpha-conversion commute bien avec beaucoup de patchs par exemple.
+
+--
+Yann Régis-Gianas
+
+
 Thu Feb 11, 2010 14:00 PM
+
 
 Discussion éclair, partant d'un exemple simple (λx.x → λf.λx. fx), sur les thèmes:
 - maximisation du partage dans les patches et hash-consing
 - adaptation des signatures de métathéorêmes
+
 
 Le problème de départ est le suivant: Pour transformer D : (x:A ⊢ x:A)
 en (x:A, f:AA ⊢ f x : A), on doit appliquer weak sur D d'un côté (on
@@ -18,6 +411,7 @@ sont-ils:
   utilisés indifféremment; par contre le typage est beaucoup moins
   coûteux, et on a une garantie du partage maximal.
 
+
 La deuxième solution a été retenue parce qu'elle est plus élégante.
 On en a tiré une leçon/question plus générale à propos du partage dans
 le langage: Est-il possible de créer deux objets (types, dérivations,
@@ -30,6 +424,7 @@ typeur. Sinon, on peut imaginer permettre la comparaison, mais fournir
 une procédure de hash-consing sur les patches qui maximise le partage.
 Sous réserve que ça soit le cas, alors on adapte la théorie:
 
+
 Le constructeur d'atome [deriv] n'est plus paramétré par un triplet
 (env, terme, type) mais par trois variables (X,Y,Z). De cette façon on
 garantit que les env, terme et type sont bien déclarés plus
@@ -39,23 +434,30 @@ donc le type des métathéorêmes, de ΠΣ en ΠΔΣ. Δ c'est une série de
 let-in's qui bindent (du verber binder) les noms nécessaire à leur
 définitions en terme de transformer. Par exemple:
 
+
 weak :: Π (E:env) (t:term) (A:type) (D:deriv(E,t,A)) (x:var) (B:type). 
         Δ (E'=cons(E,x,B)). Σ (D':deriv(E',t,A))
+
 
 Attention, les variables de Δ font moralement partie de la conclusion
 d'un transformer, et on mémorise leur valeur implicitement.
 
+
 (E',D') = weak(E,t,A,D,x,B)
+
 
 doit être compris comme (expansé en):
 
+
 E' = cons(E,x,B)
 D' = weak(E,t,A,D,x,B,E')
+
 
 De cette façon, on a récupéré E' dont on peut parler. On a proposé un
 exemple pour lequel il est assez naturel de permettre des définitions
 embarquant des transformers plus complexes que [cons]: la
 transformation CPS. On a trois transformers:
+
 
 cps_terms :: term -> term
 a_a_trans :: type -> type
@@ -63,14 +465,17 @@ typed_cps :: Π (D : deriv(Γ,t,A)).
              Δ (t' = cps_term t) (A' = a_a_trans t).
              Σ (D' : deriv(Γ,t',A'))
 
+
 Problème: Cette approche semble permettre un typage des patches en ne
 connaissant que la signature de chaque transformer. Est-ce vraiment le
 cas? En vérité je ne crois pas. Imaginons un transformer qui prend en
 argument une dérivation d'une certaine forme (deriv(Γ;x:A, t, A→A) par
 exemple). 
 
+
 1/ ça ne rentre plus dans notre syntaxe! Faut-il des let-in entrelacés
 dans les arguments aussi?
+
 
 2/ si on lui passe le E' plus haut, pour vérifier le bon typage du
 transformer, on va être obligé de calculer cons(E,x,B). On perd donc
@@ -79,14 +484,18 @@ une forme lazy de calcul sur les transformers (dans l'exemple
 ci-dessus, calculer juste assez pour pouvoir garantir que E' n'est pas
 vide?)
 
+
 A suivre…
 
+
 Fri Feb  5, 2010  7:06 PM 
+
 
 Aujourd'hui, nous avons discuté de :
 1. Explicitation de points obscurs sur la syntaxe du langage de patch.
 2. Amélioration de cette syntaxe de patch.
 3. Quelques réflexions sur le système auto-appliqué.
+
 
 Matthias a précisé quelques notions au sujet de la dénotation d'un
 patch comme une transformation de programme. En fait, la sémantique du
@@ -95,12 +504,15 @@ d'un programme peut être extraite du répositoire (c'est une sous-séquence
 de définitions de dérivation menant du programme source au programme
 cible). 
 
+
 Matthias a proposé une amélioration de la syntaxe des patchs. Un
 patch est une séquence de définitions de la forme :
+
 
   d11, ..., d1N = f d'11 ... d'1N'
   d21, ..., d2M = g d'21 ... d'2M'
   ...
+
 
 On "atomise" ainsi les spécifications. Yann avait une erreur de
 compréhension à ce sujet car il pensait qu'atomiser les spécifications
@@ -109,6 +521,7 @@ exemple, si on appelle un méta-théorème [typecheck] alors on peut (on
 doit) très bien atomisé les différentes composantes objets nécessaires
 à la formulation du jugement tandis que la dérivation en elle-même
 peut rester internalisée en Coq. 
+
 
 Enfin, Yann a parlé un peu des idées de méta-théorème concernant le
 système appliqué une fois et qui apparaitrait comme des patchs de
@@ -123,15 +536,19 @@ précis mais pas contradictoire. Or, avoir des dépendances fines permet
 de normaliser le répositoire et d'autoriser des transformations plus
 locales donc distribuer plus facilement le développement. 
 
+
 Pour finir, Matthias a vérifié qu'on s'intéressait plus volontier aux
 méta-théorèmes de :
 [forall X. Proprietes sur X => proprietes sur F(F(X)]
 Ils vont faire mal à la tête mais ils sont définitivement les points
 les plus intéressants de cette étude!
 
+
 Prochaine étape : mettre au clair [F(STLC)]. Baby steps!
 
+
 Fri Jan 22, 2010 6:45 PM
+
 
 Aujourd'hui, la discussion a porté sur :
 1. une explication du système décrit moralement dans meta.v
@@ -140,8 +557,10 @@ Aujourd'hui, la discussion a porté sur :
 4. des questionnements sur l'aspect logique/programmation.
 5. l'interface à fournir au programmeur.
 
+
 A propos de 1, pas grand chose à dire, si ce n'est que les
 noms des concepts ont été très mal choisis. 
+
 
 Au sujet de 2, Matthias a fait remarquer une distinction que je
 n'avais pas saisi: quand on développe, c'est vraiment monotone. En
@@ -150,6 +569,7 @@ langage de patchs est donc pure : il nomme des expressions de patchs
 mais ne modifie pas les expressions existantes. L'interprétation d'une
 série d'expressions de patchs nommés est claire : il s'agit finalement
 juste de mémoiser les résultats de fonctions Coq.
+
 
 C'est le niveau du dessus qui décrit des transformations sur des
 répositoires (les expressions de patch nommées). C'est donc en
@@ -163,6 +583,7 @@ se focalise sur le niveau "langage de patchs" avant de
 s'intéresser au "langage de développement". Il a aussi
 remarqué une ressemblance très forte avec Git. 
 
+
 Au sujet de 3, Matthias a proposé qu'on autorise des 
 types d'ordre supérieur pour donner un type aux récurseurs. 
 C'est possible. On a ensuite essayé quelques exemples qui
@@ -171,6 +592,7 @@ Il faudra se comparer exactement aux types de LF. Cette
 précision nous a permis de spécifier le type de module
 permettant de décrire un langage objet et sa métathéorie. 
 Ca a l'air ok. 
+
 
 Au sujet de 4, Matthias était gêné par une redondance entre
 les termes du lambda-calcul simplement typé et des dérivations
@@ -181,6 +603,7 @@ Au contraire, en programmation, les programmes ont une vie en
 dehors des preuves de typage. Notre système est compatible
 avec les deux approches. 
 
+
 Au sujet de 5, il n'est pas évident de définir une 
 interface pour l'utilisateur lambda, subsumant les 
 pratiques habituelles d'édition textuelle. Un algorithme
@@ -190,17 +613,23 @@ les langages de description de chemin pour accéder à une
 dérivation précise, etc. A mon avis, cela s'éclairera plus tard. 
 Pour l'instant, nous allons méta-programmer.
 
+
 La prochaine étape est la réimportation de ces idées dans
 le code Coq. 
 
+
 Thu Jan 21, 2010  4:35 PM
+
 
 Matthias a découvert les travaux d'une étudiante de Frank Pfenning,
 très proche de ce que nous faisons. Son nom est Penny Anderson.
 
+
 A lire.
 
+
 Sun Jan 17, 2010  9:47 AM
+
 
 Au sujet de la visualisation d'une dérivation à offrir au programmeur,
 ce n'est pas évident. A première vue, je pensais qu'il suffisait de se
@@ -209,10 +638,12 @@ mais en fait, ce n'est pas suffisant. En effet, éditer les jugements
 permettrait de faire de la programmation, mais pas de la
 méta-programmation.
 
+
 Il faut vraiment se donner une syntaxe pour le langage des expressions
 du langage de patchs, incluant une syntaxe pour les transformateurs
 ainsi que l'ensemble des objets syntaxiques considérés (jugement,
 atom, type, etc).
+
 
 Si on veut définir le "diff", il se passe quelque chose de bizarre
 puisque l'on calcule une différence syntaxique entre (deux visualisations
@@ -223,6 +654,7 @@ d'accord mais si on change une application de transformateur
 en l'application d'un autre transformateur, on n'a pas de langage 
 pour exprimer cette transformation! 
 
+
 Peut-être que je me pose la mauvaise question: lorsque l'on modifie
 un noeud correspondant à la modification d'un transformateur, on
 est dans le langage calculatoire des patchs (le petit langage
@@ -231,13 +663,17 @@ expression du langage de patchs mais un programme du langage de
 patchs, on puisse capturer correctement la différence entre 
 deux expressions du langage de patchs. 
 
+
 Sun Jan 17, 2010  9:38 AM
+
 
 A propos du related work, il faudra se comparer à Twelf, Delphin et 
 Cocinnelle. Pour ce dernier, c'est juste le nom de "semantic patch"
 qui est surchargé mais ça n'a pas grand chose à voir, il me semble.
 
+
 Sun Jan 17, 2010  9:37 AM
+
 
 Quelque chose d'amusant serait de traiter des commentaires
 structurés pouvant contenir du code, à mettre à jour aussi
@@ -246,14 +682,18 @@ interagir avec le programmeur pour que tout commentaire
 qui a été impacté par un patchs puisse être mis-à-jour
 intéractivement.
 
+
 Sun Jan 17, 2010  9:30 AM
+
 
 En parlant des points de comparaison avec les systèmes de compilation
 séparée, il faut noter que notre approche fonctionne uniquement 
 dans un cadre open source. Pour traiter l'opacité des dérivations,
 ça ne devrait pas être trop dur.
 
+
 Sun Jan 17, 2010  9:24 AM
+
 
 A propos des systèmes de modules, je pense qu'il suffirait de définir
 un jugement de la forme "env |- decls => env" pour les traiter. Une
@@ -261,28 +701,36 @@ question intéressante serait de déterminer différents moyens de
 visualiser l'utilisation de modules importés au sein d'un autre
 module.
 
+
 En effet, on peut écrire :
 import M
 val f x = ...
+
 
 Pour représenter le méta-programme qui utilise la dérivation de module
 M pour construire une nouvelle dérivation de module. Mais on peut
 aussi vouloir visualiser dans le buffer, l'ensemble des déclarations
 de M (ça évite d'avoir à regarder dans la documentation.).
 
+
 Comment représenter un foncteur? Peut-être ainsi :
+
 
 uses Msig
 val f x = ...
 
+
 qui signifie qu'on définit une dérivation de module qui peut-être
 jointe à une autre qui remplit la signature Msig.
 
+
 Comment représenter des contraintes entre les modules? Peut-être ainsi:
+
 
 uses M1 : M1sig
 uses M2 : M2sig
 requires M1.t = M2.t
+
 
 Il faut noter que cette façon de coder les modules les cantonnent à
 être des objets de seconde classe. Une question ambitieuse serait de
@@ -291,6 +739,7 @@ ces constructions. On pourrait ainsi créer des dérivations
 dynamiquement et donc charger des modules dynamiquement. Ca reste une
 perspective sur du long terme. A mettre dans le Future work.
 
+
 A propos maintenant d'inférence de type, j'avais des doutes sur la
 possibilité de l'intégrer au système mais en fait, il n'y a pas de
 raison : on peut très bien définir un jugement de la forme "env |- t
@@ -298,25 +747,32 @@ raison : on peut très bien définir un jugement de la forme "env |- t
 explicitement typé.
 
 
+
 Sun Jan 17, 2010  1:15 AM
+
 
 Un des points de comparaison avec Twelf, c'est tout
 simplement que nous n'utilisons la syntaxe d'ordre
 supérieure pour représenter les jugements mais
 pas pour représenter la syntaxe objet. 
 
+
 Je ne sais pas trop si c'est très profond comme
 comparaison puisqu'on pourrait très bien faire 
 de la syntaxe du premier ordre en Twelf ... qui
 peut le plus, peut le moins. 
 
+
 Sun Jan 17, 2010 12:19 AM
 
+
 Quelques réflexions supplémentaires. 
+
 
 Le type "dlist", qui sera renommé en "spec", correspond quasi
 exactement aux types de LF (i.e. λπ). Plus généralement, l'inductif
 "signature" semble correspondre à la définition de théorie LF. 
+
 
 Le langage de patchs est donc un langage qui correspond à
 un sous-ensemble de Delphin[1] (la version constructive et
@@ -324,6 +780,7 @@ fonctionnelle de Twelf). Il faudra se comparer à ce langage
 et expliquer en quoi la restriction que nous considérons
 est digne d'intérêt. D'ailleurs, est-ce qu'on ne pourrait
 pas directement (meta)-programmer en Delphin?
+
 
 La sémantique que j'ai en tête pour le langage de patchs
 se décrit comme une transformation d'un "répositoire",
@@ -334,6 +791,7 @@ je me demande si une monade de transaction ne serait pas
 pertinente pour modéliser la modification concurrente
 de répositoire. 
 
+
 Ensuite, il serait vraiment amusant et intéressant de
 voir le langage de patchs et son système de type comme
 une entrée possible à lui-même. Je ne sais pas encore
@@ -341,6 +799,7 @@ bien expliquer ce qu'on obtient mais à première vue,
 c'est un langage de patchs sur des patchs, donc un
 moyen de parler de l'historique d'un projet et de
 le modifier. 
+
 
 Enfin, il serait intéressant de voir en quoi le 
 langage de patchs se compare aux systèmes de module
@@ -352,14 +811,19 @@ cette construction pourrait être incrémentale : on
 ne génèrerait les modules correspondant uniquement
 aux dérivations de typage mis-à-jour. 
 
+
 Voilà, c'est tout pour aujourd'hui.
+
 
 [1] http://www.cs.yale.edu/homes/delphin/delphin.htm
 
+
 Sat Jan 16, 2010  7:21 PM 
+
 
 Plus je réfléchis aux patchs sémantiques et plus je me dis que le bon
 cadre de développement est effectivement Coq. 
+
 
 Si on prend le point de vue très général qui consiste à voir
 les dérivations de typage comme n'importe quel inductif dans
@@ -372,6 +836,7 @@ conception d'un système de patchs consiste essentiellement
 les transformations utiles au développement d'un programme
 (qui a un aspect un peu plus "méta" que la programmation). 
 
+
 Voici une proposition simple pour ce langage mais qui
 pose déjà des problèmes intéressants. On voit
 un programme dans ce langage comme un transformateur
@@ -379,10 +844,12 @@ de répositoire/mémoire associant des dérivations à des
 emplacement. On a alors l'interprétation suivante 
 des trois opérations standards: 
 
+
 - ref e  : alloue un emplacement frais contenant
   la dérivation de typage ∇.
 - ! e    : lit un emplacement.
 - x := e : écrit dans un emplacement.
+
 
 C'est la troisième opération qui est intéressante puisque, pour
 préserver le fait que la mémoire peut être interprétée comme une
@@ -393,6 +860,7 @@ jeu.  Pour traiter ces sous-buts automatiquement, on peut imaginer
 comparer l'ancienne et la nouvelle version de "x" et déduire des
 transformations canoniques, lorsqu'elle existe.
 
+
 Par exemple, si on rajoute un nouveau constructeur dans un ADT, on
 peut vouloir rajouter une branche avec un lancement d'exception sur
 tous les patterns matchings de ce type. Si on rajoute un nouvel
@@ -401,11 +869,14 @@ peuvent être appliqué à une valeur par défaut. Il y a aussi cette
 transformation de passage de "map" à "foldmap" (qui doit avoir une
 définition catégorique):
 
+
 let map f = function
 | [] -> []
 | x :: xs -> (f x) :: map f xs
 
+
 en 
+
 
 let fold f accu = function
 | [] -> accu, []
@@ -414,12 +885,15 @@ let fold f accu = function
   let accu, xs' = fold f accu xs in
   (accu, x' :: xs')
 
+
 C'est le passage du type "a -> b" au type "a * c -> b * c"
 dont parlait Paul-Andre l'autre fois. L'argument "c" 
 suit le flot d'exécution. Quelle est la transformation
 similaire qui préserve le tail-call?
 
+
 On doit pouvoir programmer un interprète pour ce langage en Coq.
+
 
 La mémoire Δ contiendrait des sommes dépendentes de la forme
 Σ T: S. φ (T) où φ est une fonction qui transforme S,
@@ -428,25 +902,31 @@ la théorie (ça peut être un jugement, un environnement,
 un terme, peu importe). Une procédure de décision sur
 ces objets est du type D ≡ list T -> bool. 
 
+
 Du coup, les transformateurs ont des types de la forme Θ ≡ list T *
 list D * list T, qu'on peut facilement interpréter dans Type. De cette
 façon, on élimine le problème d'extensibilité: il suffit de
 dynamiquement intégrer un nouveau méta-théorème dans l'environnement
 du langage de patchs pour que cela fonctionne. 
 
+
 Le système de type du langage de patchs obtenu est simple. 
 
+
 Fri Jan  8, 2010  3:51 PM 
+
 
 Matthias a présenté son système à base de deux jugements : Δ | t, qui
 signifie "je peux construire une dérivation t à partir de mes faits Δ"
 et Δ | t → u, "je peux construire une dérivation pour u à partir de
 la dérivation de t et de la base de faits Δ". 
 
+
 Le système est joli mais on a remarqué une certaine redondance : il y
 a par exemple une règle d'introduction de la partie gauche d'une
 application pour le jugement qui a une flèche et une règle de typage
 pour l'application pour le jugement "Δ | t". 
+
 
 En fait, se focaliser sur une dérivation particulière introduit
 une certaine asymétrie : on travaille sur une dérivation particulière
@@ -456,6 +936,7 @@ et se permettre d'en déduire plusieurs dérivations? On a donc
 adapté le système avec cette idée en introduisant un unique 
 jugement : Δ ⊧ Δ' où Δ représente les dérivations qu'on a déjà 
 sous la main et Δ' les dérivations que l'on déduit. 
+
 
 Les règles de typage sont des axiomes de ce système, ainsi que les
 métathéorèmes (en particulier, les très utiles "lemmes d'inversion").
@@ -471,6 +952,7 @@ opérationnelle qui réaliserait réellement les constructions
 de dérivation de typage de bas-niveau mais si on travail dans Coq,
 on a la garantie qu'on ne fait rien de mal.)
 
+
 Il devrait exister un système de types/une analyse statique
 intéressant(e) pour le langage des patchs qui permettrait de donner un
 sens à des transformations mais non pas sur des dérivations de typage
@@ -478,6 +960,7 @@ sur des patchs eux-mêmes. En effet, les transformations tels que
 l'évolution d'un répositoire (qui est un patch) en une nouvelle
 version de ce répositoire est un patch! On doit donc, d'une certaine
 façon, pouvoir bootstrapper le système. 
+
 
 Revenons à des choses plus concrètes. Matthias a remarqué que le
 jugement "Δ ⊧ Δ'" gagne, certes, en symétrie mais on voit moins bien
@@ -488,26 +971,32 @@ métathéorèmes comme des opérateurs constants). Il semble plus
 difficile de jouer avec la syntaxe de cette façon dans le nouveau
 système.
 
+
 Quels sont les prochains objectifs? Je pense qu'il faut avoir ce que
 l'on a dit en tête mais se focaliser sur un langage particulier (STLC
 par exemple). Je ressens vraiment le besoin d'obtenir un prototype
 (soit écrit en Caml ou extrait de Coq) et de pouvoir réellement
 (méta-)programmer avec ce système. 
 
+
 Mon Jan  4, 2010  3:22 PM [semantic patch]
+
 
 Discussion avec Matthias à propos des patchs sémantiques. Il a
 formalisé plusieurs systèmes (en Coq et en Agda) qui énumèrent des
 transformations possibles sur des dérivations de typage (préservant la
 bonne formation de celles-ci).
 
+
 Le premier système contient des transformations sur la syntaxe basées
 sur les règles dirigées par la syntaxe ainsi que des règles de passage
 aux contextes.
 
+
 Le système final contient des transformations avec mémoire,
 c'est-à-dire permettant de nommer des dérivations (et les réutiliser
 plus tard). Ce système subsume le précédent.
+
 
 Ce système semble prometteur : en le codant en Coq et en définissant
 une base de hints, Matthias a été capable de vérifier des théorèmes
@@ -515,10 +1004,12 @@ admissibles automatiquement. Il a pensé rajouter des récurseurs (ou
 des opérateurs similaires à ceux des langages de stratégies, comme
 Stratego).
 
+
 Matthias a aussi pu constater une certaine méthodologie pour déduire
 automatiquement des règles de transformations à partir des règles
 dirigées par la syntaxe. La notion de "méta-théorème" constructif
 lui semble aussi de plus en plus naturelle.
+
 
 Les prochaines étapes :
 - vérifier que les bindeurs fonctionnent bien ;
@@ -529,34 +1020,46 @@ Les prochaines étapes :
 
 
 
+
 Fri Dec 18, 2009  3:39 PM
+
 
 Matthias a posé la question de la vérification de l'application
 d'un métathéorème. 
 
+
 Par exemple, le renommage R[x -> y] s'applique bien sur le 
 terme [let x = e1 in e2] mais pas sur le theme [e1].
+
 
 Est-ce qu'on peut trouver un système de types intéressant pour
 vérifier la bonne application de R ?
 
+
 Yann répond : il suffit d'utiliser Coq mais, c'est un peu facile
 comme réponse :). 
 
+
 Mon Dec 14, 2009  6:29 PM
 
+
 Une transformation non triviale qui apparait souvent :
+
 
 let rec f x = 
   ... g y ...
 and g y = 
   ... f x ...
 
+
 devient :
+
 
 let rec f env x = 
  ... g env y ...
 and g env y = 
  ... f env x ...
 
+
 (ou bien interaction a l'aide d'un '?')
+
