@@ -1,6 +1,21 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Tue Feb 16, 2010  9:09 PM
+
+
+Après avoir commencé à spécifier ce qui précède en Coq, j'ai remarqué
+
+qu'il n'y a pas d'interprétation statique des expressions mais seulement
+
+une interprétation dynamique. Les interprétations des expressions et des types
+
+sont définies de façon mutuellement récursives.
+
+
+La suite demain ...
+
+
 Tue Feb 16, 2010 12:18 PM
 
 
