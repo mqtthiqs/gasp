@@ -1,6 +1,38 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Sat Feb 20 16:18:54 CET 2010
+
+
+Une idée à propos de l'α-conversion: Jusque la on a pensé la
+formalisation du langage objet comme toujours _nommée_. Et aussi, on a
+laissé implicite le fait que pour l'utilisateur final qui veut écrire
+du code, il faut toujours _parser_ avant de laisser la main à
+p.ex. l'algo de diff.
+
+
+Quitte à faire ce prétraitement, on peut aussi passer en DeBruijn de
+façon interne, mais en gardant l'info de nom, à la façon Coq. exemple:
+
+
+type term =
+
+| Var of int
+
+| Lam of string * term
+
+| App of term * term
+
+
+De cette façon, on a tous les avantages des DeBruijn, en gardant les
+noms, et l'α-conversion se réduit à changer le nom seulement au niveau du
+binder. En plus on peut comme ça réutiliser toutes les formalisation
+off-the-shelf (peut-être).
+
+
+    -m
+
+
 Tue Feb 16, 2010  9:09 PM
 
 
