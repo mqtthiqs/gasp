@@ -1,6 +1,42 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Mon Feb 22, 2010  6:40 PM
+
+
+Je viens de passer une heure et demie à essayer de dérouler les
+dépendances du système actuel. Je vais certainement trop vite
+
+mais pour le moment, je ne vois pas comment écrire la fonction
+
+d'interprétation d'un type de transformer en un Type Coq.
+
+
+Le problème vient de la dépendance "expression -> type" que
+
+nous avons introduit. L'interprétation des expressions et
+
+des types sont maintenant mutuellement récursives. Or, pour
+
+ces interprétations doivent maintenant attendre un environnement
+
+fournissant la spécification des transformers mais le type de
+
+ces spécifications fait appel à l'interprétation des types!
+
+
+Je n'arrive vraiment pas à briser ce cycle ... et pourtant,
+
+je sens bien qu'il n'y a pas de problèmes très profonds car
+
+on n'applique que des transformers localement clos.
+
+
+Bref, ce n'est pas clair aujourd'hui. Cela le sera peut-être
+
+plus demain.
+
+
 Sat Feb 20 16:18:54 CET 2010
 
 

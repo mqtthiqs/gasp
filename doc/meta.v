@@ -48,16 +48,130 @@ Fixpoint interpret_object_type (s : object_type) : Type :=
     | HasTy e t ty => has_ty e t ty
   end.
 
+
+Require Import Program.
+
+(** [coerce T U Hid x] is an explicit coercion from [x] of type [T] to
+   a value [y] of type [U], which is justified by a type equality
+   [Hid]. [x] and [y] are related by a John Major equality. *)
+Lemma coerce : forall (T U : Type), T = U -> forall (x : T),
+  { y : U | JMeq x y }.
+Proof.
+  intros. subst. exists x. constructor.
+Defined.
+
+(** Most of the time, the type inference engine of Coq can help us to
+   determine [T] and [U]. *)
+Notation "▹ t" := (coerce _ _ _ t) (at level 10).
+
+(** When [T = U], this tactic turns a dependent equality 
+   into a Leibniz' and substitute it right away. *)
+Ltac substT H :=
+  generalize (inj_pair2 _ _ _ _ _ H); intro; subst; clear H.
+
+(** When [T = U], a coercion is the identity. *)
+Lemma coerce_id : forall T (x : T) H, proj1_sig (coerce T T H x) = x.
+Proof.
+  intros.
+  destruct (coerce T T H x). simpl. apply JMeq_eq; auto.
+Qed. 
+
+Require Import FMaps.
+Require Import FMapAVL.
+
+Module Make (Mem : WS).
+
+Definition derivation_name := Mem.E.t.
+Definition transformer_name := Mem.E.t.
+
+Inductive output_type := 
+| DSigma  : forall (o : object_type), 
+  derivation_name -> option expression ->
+  output_type -> output_type 
+| DUnit : output_type 
+
+with transformer_type := 
+| DPi  : forall (o : object_type), 
+  derivation_name -> option expression ->
+  transformer_type -> transformer_type 
+| DOutput : output_type -> transformer_type
+
+with expression : Type :=
+| DerivationName : 
+  derivation_name -> object_type -> expression
+| Transformer : 
+  transformer_name -> transformer_type
+  -> list (derivation_name * object_type)
+  -> expression. 
+
 Definition object : Type := sigT interpret_object_type.
 
-Require Import String.
+Definition object_type_env := Mem.t object.
 
-Inductive spec :=
-| DUnit   : spec
-| DPi     : forall (o : object_type), 
-  (interpret_object_type o -> spec) -> spec
-| DSigma  : forall (o : object_type), 
-  (interpret_object_type o -> spec) -> spec.
+Definition bind_object (oenv : object_type_env) x xty v :=
+  Mem.add x (existT _ xty v) oenv.
+
+Definition derivation_has_type x ty (env : object_type_env) :=
+  exists o, Mem.MapsTo x (existT _ ty o) env.
+
+Program Definition derivation_lookup x ty env (H : derivation_has_type x ty env) 
+  : interpret_object_type ty :=
+  match Mem.find x env with
+    | None => !
+    | Some (existT ty' o) => ▹ o
+  end.
+Next Obligation.
+  unfold derivation_has_type in H. destruct H.
+  generalize (Mem.find_1 (elt := object) H).
+  congruence.
+Qed.
+Next Obligation.
+  unfold derivation_has_type in H. 
+  destruct H.
+  generalize (Mem.find_1 (elt := object) H).
+  intro Hin. rewrite Hin in *.
+  inversion Heq_anonymous.
+  subst. 
+  simpl.
+  auto.
+Qed.
+
+Definition transformer_type_env := True.
+
+Program Fixpoint interpret_transformer_type 
+  (oenv : object_type_env) 
+  (tenv : transformer_type_env)
+  (t : transformer_type) 
+: Type := 
+  match t with
+    | DPi oty x None f => 
+      forall (xc : interpret_object_type oty),
+        let oenv := bind_object oenv x oty xc in
+        interpret_transformer_type oenv tenv f
+
+    | DPi oty x (Some e) f => 
+      forall (xc : interpret_object_type oty),
+        let oenv := bind_object oenv x oty xc in
+          xc = interpret_expression oenv tenv oty e ->
+          interpret_transformer_type oenv tenv f
+
+    | DOutput _ => True
+  end
+
+with interpret_expression oenv tenv oty e : 
+  interpret_object_type oty :=
+  match e with
+    | DerivationName d _ => 
+      derivation_lookup d oty oenv _
+    | Transformer f fty ys => 
+      let ftype := interpret_transformer_type oenv tenv fty in
+        
+      (*
+        let (d, oty) := p in
+          interpret_expression oenv tenv oty (DerivationName d oty)) ys in*)
+        _
+    end.
+
 
 Fixpoint interpret_spec (s : spec) : Type :=
   match s with
@@ -71,6 +185,11 @@ Record transformer := mk_transformer {
   tspec          : spec;
   timplementation : interpret_spec tspec
 }.
+
+
+
+Require Import String.
+
 
 Lemma bind2 : 
 forall env x y ty0 ty1 ty2 t,
@@ -141,8 +260,7 @@ Definition derivation_name := Mem.E.t.
 
 Inductive expression : Type :=
 | DerivationName : object_type -> derivation_name -> expression
-| Join : list expression -> expression
-| Transformer : transformer -> expression -> expression.
+| Transformer : transformer -> list derivation_name -> expression.
 
 Record repo := mk_repo {
   derivations : Mem.t expression
