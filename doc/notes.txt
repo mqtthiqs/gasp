@@ -1,6 +1,102 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Tue Feb 23, 2010 12:01 PM
+
+
+Aujourd'hui, je me suis souvenu de la remarque de Matthias qui
+
+suggérait qu'il serait plus simple de définir l'interprétation
+
+d'un type de transformer sous la forme d'une relation plutôt
+
+qu'une fonction. Effectivement, grâce à cette idée, je suis allé une
+étape plus loin dans la formalisation en Coq.
+
+
+Hier, j'étais gêné par le fait que la fonction d'interprétation
+
+des types de transformer devait être paramétrée par un environnement
+
+contenant les transformers. Or, cet environnement devait contenir
+
+l'interprétation des transformers dont le type était défini
+
+par la fonction que l'on était en train de définir.
+
+
+En fait, j'ai relâché cette dernière contrainte temporairement:
+
+l'environnement des transformers contient maintenant des valeurs
+
+Coq _closes_ de type "sigT (fun (T : Type) => T)".
+
+Dans un second temps, on a invariant de bonne formation qui nous assure
+
+que lorsque l'on extrait un transformer de cet environnement, le
+
+type de la valeur Coq obtenu est en fait une interprétation
+
+du type de transformer attendu.
+
+
+En résumé, cette coercion a posteriori, qui est autorisée par
+l'invariant de bon typage des expressions de patch, permet de casser
+la récursion mutuelle entre le type des environnements de transformer et
+
+l'interprétation des types de transformer.
+
+
+J'ai l'impression que ca va fonctionner.
+
+
+Un nouveau problème est apparu pour définir l'interprétation
+
+des applications de transformer "F (Y1, ..., YN)".
+
+
+On a un type Coq T ainsi qu'une valeur FC Coq de type T issue
+
+de l'extraction de F de l'environnement des transformers.
+
+
+On aimerait former l'application Coq :
+
+<center>
+
+FC YC1 ... HEQ1 ... HEQM ... YCN
+
+
+</center><flushboth>où les YC1s sont les interprétations des Yk et les HEQi sont
+
+les preuves des égalités attendues par F.
+
+
+Mon intuition, c'est que l'on doit pouvoir calculer à partir
+
+du type (de transformer) de F et des Yk, un terme Coq de type
+
+
+T -> YT_1 -> ... -> YTN -> HEQ1 -> ... -> HEQN -> type_de l_application
+
+
+En gros, cela nous dit que l'on peut différer la preuve de HEQi
+
+à plus tard. Or, ces HEQi peuvent être des arguments du constructeur
+
+de l'inductif d'interprétation (on doit certainement utiliser une
+
+liste de propriétés, de type Coq "list Type" pour rendre cela
+possible).
+
+</flushboth><nofill>		   
+
+C'est encore un peu flou. Je vais laisser décanter tout ça et retourner
+
+à la préparation de mes cours. </nofill><flushleft>
+
+</flushleft>
+
 Mon Feb 22, 2010  6:40 PM
 
 
