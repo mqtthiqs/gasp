@@ -1,6 +1,127 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Feb 25, 2010  6:10 PM
+
+
+Reprise du développement Coq: même après deux jours, je n'arrive pas
+
+à comprendre ce que j'ai fait :^). La bonne explication, c'est que
+
+c'est trop compliqué.
+
+
+Du coup, j'ai imaginé une autre façon d'attaquer le problème:
+
+
+1. On simplifie un peu l'algèbre de type des transformers.
+
+On sépare clairement dans la syntaxe des type les binders et
+
+les égalités/bornes. Ca donne quelque chose comme ça :
+
+
+    o     ::= Sigma { Eq* }
+
+    Sigma ::= sigma (x : theta). Sigma
+
+    i     ::= Pi { Eq* } . o
+
+    Pi    ::= pi (x : theta). Pi
+
+    Eq    ::= X1, ..., XN = E
+
+    E     ::= X
+
+           |  F (X1, ..., XN)
+
+
+Voici un type de transformer :
+
+Pi (X : theta) (Y : theta') { X = F(Y1, Y2), Y = G(Y1) }.
+
+Sigma (Z : theta'') { Z = H(Y3) }
+
+
+On peut voir les égalités comme des pré/post-conditions
+
+associés à la fonction de type
+
+
+Pi (X : theta) (Y : theta'). Sigma (Z : theta'')
+
+
+2. Pré-interprétation des types
+
+
+On se donne ensuite une pré-interprétation des types qui
+
+fonctionne un peu comme la première interprétation que nous avions
+
+définie sur les types sans égalités (moralement, Pi = forall,
+
+Sigma = exists).
+
+
+On se débrouille "juste" pour que cette interprétation
+
+soit paramétrée par une interprétation des égalités, abstraites
+
+pour le moment. 
+
+
+3. Pré-interprétation des expressions
+
+
+On définit une pré-interprétation des expressions qui est
+
+paramétrée par l'interprétation future des égalités IH, qui
+
+attend un environnement d'objets et un environnement de
+
+transformers contenant des pre-interprétations des transformers
+
+appliquées sur IH.
+
+
+La pré-interprétation d'une variable est un lookup dans
+
+l'environnement d'objets.
+
+
+La pré-interprétation d'une application de transformers
+
+"F(Y1, ..., YN)" va chercher la pré-interprétation de F
+
+dans l'environnement des transformers et l'applique
+
+aux pré-interprétation des Yi. Cela produit un
+
+terme Coq en attente des preuves d'égalités. 
+
+
+4. On ferme la boucle.
+
+
+C'est le point le plus délicat. Il faut maintenant instancier
+
+les pré-interprétations sur des familles d'égalités plus
+
+petites au sens où elles utilisent des pré-interprétations définies
+
+plus tôt (sur des environnements d'objets plus petits).
+
+
+On obtient alors des familles imbriquées d'interprétations mutuelles
+
+entre types et expressions. Ca doit avoir des liens avec
+
+"Coq en Coq" d'ailleurs ...
+
+
+J'ai l'intuition mais de là à le faire passer en Coq... Au secours :-)
+
+
 Tue Feb 23, 2010 12:01 PM
 
 
