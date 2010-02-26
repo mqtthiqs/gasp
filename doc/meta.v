@@ -104,95 +104,27 @@ with expression : Type :=
 | Transformer : 
   transformer_name -> transformer_type
   -> list (derivation_name * object_type)
-  -> expression. 
+  -> expression.
 
-Definition object : Type := sigT interpret_object_type.
-
-Definition object_env := Mem.t object.
-
-Definition bind_object (oenv : object_env) x xty v :=
-  Mem.add x (existT _ xty v) oenv.
-
-Definition derivation_has_type x ty (env : object_env) :=
-  exists o, Mem.MapsTo x (existT _ ty o) env.
-
-Program Definition derivation_lookup x ty env (H : derivation_has_type x ty env) 
-  : interpret_object_type ty :=
-  match Mem.find x env with
-    | None => !
-    | Some (existT ty' o) => ▹ o
+Fixpoint preinterp_sigma (t : output_type) (iexp : expression -> Type) : Type :=
+  match t with
+    | DSigma o None f => 
+      sigT (fun x => preinterp_sigma (f x) iexp)
+    | DSigma o (Some e) f => 
+      sigT (fun x => iexp (e x) -> preinterp_sigma (f x) iexp)
+    | DUnit =>
+      True
   end.
-Next Obligation.
-  unfold derivation_has_type in H. destruct H.
-  generalize (Mem.find_1 (elt := object) H).
-  congruence.
-Qed.
-Next Obligation.
-  unfold derivation_has_type in H. 
-  destruct H.
-  generalize (Mem.find_1 (elt := object) H).
-  intro Hin. rewrite Hin in *.
-  inversion Heq_anonymous.
-  subst. 
-  simpl.
-  auto.
-Qed.
 
-Definition transformer_object := sigT (fun (T : Type) => T).
-
-Definition transformer_env := Mem.t transformer_object.
-
-Inductive interpret_transformer_type : 
-  object_env ->
-  transformer_env ->
-  transformer_type ->
-  Type ->
-  Type
-:=
-| interpret_pi_type : 
-  forall oenv tenv oty f F,
-    interpret_transformer_type_functional oenv tenv oty f F ->
-    interpret_transformer_type oenv tenv 
-    (DPi oty None f)
-    (forall xc, F xc)
-
-| interpret_pidef_type : 
-  forall oenv tenv oty e E f F,
-    interpret_transformer_type_functional oenv tenv oty f F ->
-    interpret_expression oenv tenv oty e E ->
-    interpret_transformer_type oenv tenv 
-    (DPi oty None f)
-    (forall xc, xc = E -> F xc)
-
-with interpret_transformer_type_functional :
-  object_env ->
-  transformer_env ->
-  forall (o : object_type),
-    (interpret_object_type o -> transformer_type) ->
-    (interpret_object_type o -> Type) ->
-    Type :=
-| wf_interpret_transformer_type_functional:
-  forall oenv tenv oty (x : interpret_object_type oty) f F, 
-    interpret_transformer_type oenv tenv (f x) (F x) ->
-    interpret_transformer_type_functional oenv tenv oty f F
-
-with interpret_expression :
-  object_env ->
-  transformer_env ->
-  forall (o : object_type),
-    expression ->
-    interpret_object_type o ->
-    Type :=
-
-| interpret_derivation_name:
-  forall oenv tenv oty d,
-    forall (H : derivation_has_type d oty oenv), 
-    interpret_expression oenv tenv oty (DerivationName d oty) (derivation_lookup d oty oenv H).
-
-(** Difficulte: comment exprimer que l'application est bien typé. *)
-| interpret_transformer_app:
-  forall oenv tenv t tty ys, 
-    forall T fo,
-      MapsTo t (existT T fo) tenv ->
-      interpret_transformer_type oenv tenv tty fo ->
-    interpret_expression oenv tenv oty (Transformer t tty ys) ...
+Fixpoint preinterp_pi (t : transformer_type) (iexp : expression -> Type) : Type :=
+  match t with
+    | DPi o None f => 
+      forall (x : interpret_object_type o), preinterp_pi (f x) iexp
+    | DPi o (Some e) f => 
+      forall (x : interpret_object_type o), 
+        iexp (e x) ->
+        preinterp_pi (f x) iexp
+    | DOutput s =>
+      preinterp_sigma s iexp
+  end.
+ 
