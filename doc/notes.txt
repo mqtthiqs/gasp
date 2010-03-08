@@ -1,6 +1,168 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Mon Mar  8, 2010 11:35 AM
+
+
+Aujourd'hui, nous avons discuté de différentes formulations du langage
+de patchs, dont le niveau d'abstraction varie. 
+
+
+Matthias a mis le doigt sur une sorte d'incohérence entre deux
+
+propriétés du système actuel :
+
+
+1. On veut maximiser le partage et donc s'assurer que l'on a un
+
+nom unique pour chaque élément du domaine d'interprétation de
+
+la syntaxe. Ceci permet de vérifier les contraintes facilement
+
+par une simple unification à la Huet.
+
+
+2. Il y a plusieurs façons de construire un élément du domaine
+
+d'interprétation : par exemple, le type-checker ou le weakening
+
+sont deux façons d'obtenir la même dérivation de typage. Du coup,
+
+il semble difficile de vérifier une contrainte de la forme
+
+"X1, ..., XN = E" sans aller voir le code des transformers. Il
+
+faut sortir de son chapeau une preuve d'égalité qui peut être
+arbitrairement complexe pour quotienter les noms de façon à maintenir
+la propriété de partage optimal.
+
+
+Le type-checking du langage de patchs semble être compromis par
+
+cette tension. 
+
+
+Du coup, Matthias propose de se restreindre l'ensemble des transformers
+
+aux constructeurs de données. Ainsi, les objets qui apparaissent dans
+
+le langage de patchs sont exclusivement des données, c'est à dire
+
+des descriptions canoniques d'éléments du domaine d'interprétation
+
+et non des descriptions (non canoniques) caractérisées comme des
+
+résultats d'un calcul. Le système obtenu est très proche de git dans
+
+le sens où il est orienté-données. On ne parle plus de la façon dont
+
+les objets sont construits mais des objets eux-mêmes. C'est une sorte
+
+de "sémantique de trace" du développement. Les étapes du calcul sont
+
+caractérisées comme les transformations d'une donnée en une autre
+
+donnée. Il existe certainement un langage de bas-niveau permettant
+
+de décrire ces transformations de façon canonique : il se peut
+
+même que ce soit tout simplement un langage formé des listes
+
+d'égalités de la forme "X = F(X1, ..., XN)" assurant le partage
+
+maximal.
+
+
+Le type-checking dans ce langage orienté données peut s'exprimer
+
+de nouveau comme une unification à la Huet mêlé à un type-checking
+
+de types dépendants. L'interprétation des répositoires est définie
+
+par un point fixe mémoisant de fonctionnelles de production
+
+des constructeurs (des procédures de décision en somme), qui auraient
+
+le type :
+
+
+((forall x, F x) -> (forall x, F x)) -> (forall x, F x)
+
+
+Comme on se place à un niveau d'abstraction
+
+très bas, on ne peut pas internaliser grand chose dans ce
+
+langage de patchs. Matthias a fait remarqué que, dans ce cadre,
+
+le weakening nécessite une déconstruction/reconstruction
+
+explicitée dans le patch (on voit la trace de la déconstruction
+
+et la trace de la reconstruction apparaître sous la forme de
+
+résultats intermédiaires nommés).
+
+
+Yann, sans trop en avoir conscience :-), a proposé de travailler
+
+"modulo" des procédures de recherche de preuve. Par exemple,
+
+dans le cas du weaking, on peut supposer que l'on se donne,
+
+en plus des procédures de décision évoquées plus tôt, des
+
+"fonctionnelles d'incrémentalité" qui auraient le type :
+
+
+((forall x, F x -> G x) -> (forall x, F x -> G x)) ->
+
+(forall x, F x -> G x)
+
+
+Le weakening tombe dans ce cadre, puisqu'il s'agit de
+
+construire une dérivation qui parle d'un terme "t"
+
+à partir d'une autre qui parle du même terme "t". 
+
+
+On pourrait les utiliser lors des appels récursifs des procédures
+
+de décision : on se donne la possibilité d'utiliser
+
+un résultat intermédiaire issu de l'application d'une fonction
+
+pour déduire le résultat final et non uniquement l'appel
+
+récursif sur un sous-terme de x.
+
+
+Ainsi, du coup, quand on a un objet syntaxique dans le patch,
+
+son interprétation est multiple : elle représente tout ce
+
+que l'on peut déduire par application des fonctionnelles. On
+
+travaille "modulo" ces fonctionnelles, comme l'a suggéré Matthias.
+
+
+Vu à la lumière du memoizing, j'ai l'impression qu'on est
+
+en train de se donner la possibilité de piocher des résultats
+
+intermédiaires d'évaluation d'une fonction F soit en observant
+
+ce que l'on déjà calculé à l'aide de F, soit en utilisant
+
+une sorte de coercion des résultats d'une fonction G déjà
+
+calculés eux aussi.
+
+
+Tout ceci est très intéressant!
+
+
 Thu Feb 25, 2010  6:10 PM
 
 
