@@ -1,19 +1,16 @@
 Require Import List.
-Require Import Bool.
-
-Open Scope type_scope.
 
 (* Parameters: patch variables, atoms with arity, transformer names *)
+
 Parameter var : Type.
 Parameter var_dec : forall x y : var, {x=y}+{x<>y}.
 
-Parameter atom : Type.
-Parameter atom_arity : atom -> nat.
-Parameter transformer : Type.
+Module Type LANG.
+  Parameter atom : Type.
+  Parameter transformer : Type.
+End LANG.
 
-(* An atom always comes with its variables (maybe this should be
-dependent, we'll see) *)
-(* Definition atom := atom_name * list var. *)
+Module Patch (Import L : LANG).
 
 (* A declaration is a judgement of type (a : A xs) *)
 Record decl := {
@@ -147,7 +144,7 @@ Fixpoint in_assign_dec (E : environment) (a : assign) : bool :=
     | Enil => false
   end.
 
-Require Setoid.
+Require Import Setoid Bool.
 
 Lemma in_assign_dec_adeq E a : Is_true (in_assign_dec E a) <-> in_assign E a.
 split.
@@ -156,7 +153,7 @@ induction E; simpl; intro.
 destruct H.
 apply In_assign_decl_S. auto.
 case_eq (assign_eq_dec a a0); intro.
-info rewrite assign_eq_dec_adeq1 in H0. subst. apply In_assign_O.
+rewrite assign_eq_dec_adeq1 in H0. subst. apply In_assign_O.
 apply In_assign_assign_S. rewrite H0 in H. auto. 
 rewrite assign_eq_dec_adeq2 in H0. trivial.
 (* <- *)
@@ -234,3 +231,5 @@ Inductive wt_patch (S:signature) E : patch -> Prop :=
   wt_patch S E' p ->
   wt_patch S E (a :: p)
 .
+
+End Patch.
