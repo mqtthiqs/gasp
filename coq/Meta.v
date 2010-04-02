@@ -7,6 +7,18 @@ Definition decidable P := {P}+{~P}.
 Definition eq_dec A := forall x y : A, decidable (x=y).
 Hint Unfold decidable eq_dec.
 
+(** A meta-theory is composed of:
+
+   - atoms: 
+   The syntactic object constructors of the theory (terms, types,
+   environments, judgments, ...)
+
+   - transformers: 
+   The constructive metatheorems.
+
+   The types of these objects are declared in the module Sort (of
+   module type [S]) of the meta-theory. *)
+
 Module Type S.
   Parameter atom_name : Type.
   (* Parameter atom_name_eq_dec : eq_dec atom_name. *)
@@ -14,8 +26,41 @@ Module Type S.
   (* Parameter transformer_eq_dec : eq_dec transformer. *)
 End S.
 
+(** From the sorts of the meta-theory, we can deduce the type of 
+   syntactic object at the meta-level, that is:
+
+   - variables: 
+   These are names for object-level syntactic objects.
+
+   - atoms: 
+   Flat syntactic objects built from the meta-theory constructors
+   applied to variables. We use the meta-variable "a" for these 
+   atoms. 
+
+   - judgments: 
+   A judgment represents either the existence of a particular syntactic 
+   object, or an equation between a list of atoms and the result of a
+   transformer application to a list of variables. 
+
+   | NDY: Pour ce point, je ne suis pas certain de bien comprendre le 
+   | sens de la déclaration Coq ... ou plutot du nom "judgment". 
+
+   - arity:
+   An arity denotes the type of a transformer. It is based on judgments
+   which refer to other transformers. 
+
+   These types have the following shape:
+
+   Π b₁ … b_n . Σ b₁' … b_n'
+   
+   where b ::= (X : a) | (X : a = F (X1, …, XN))
+
+   As we use a DeBruijn representation, the type is represented as pair
+   of judgment lists. *)
+
 Module Type F1 (Import X : S).
-(* deBuijn representation *)
+
+  (* deBruijn representation *)
   Definition var := nat.
   Definition var_eq_dec : eq_dec var := eq_nat_dec.
   
@@ -33,7 +78,13 @@ Module Type F1 (Import X : S).
     ar_concls : list judgement
   }.
 End F1.
+(* | NDY: En ce point ne comprends pas forcément pourquoi F1 est un "module type" 
+   | et non un simple foncteur. Il me semble que la seule implémentation possible
+   | pour F1, c'est exactement F1. Hum, j'imagine que l'on est dans le cas typique
+   | où le système de modules a besoin qu'on lui déclare des types pour s'en sortir... *)
 
+(** From the previous declarations we can also deduce the type of the functions 
+   that assign a type to atoms and to transformers. *)
 Module Type F2 (Import X : S) (Import Y : F1 X).
   Parameter arity_of_atom : atom_name -> list atom.  
   Parameter arity_of_transformer : transformer -> arity.
@@ -41,8 +92,13 @@ End F2.
 
 Module Type F12 (X : S) := F1 X <+ F2 X.
 
+(** We can now implement a type system to check the valid application of 
+   transformers. *)
 Module F3 (Import X : S) (Import Y : F12 X).
   
+  (** A typing environment is a list of binding between variables and atoms
+     they are bound to. As we use in DeBruijn indices, the variable name is
+     encoded as its position in the list. *)
   Definition env := list atom.
   
   Inductive list_nth {A} : nat -> list A -> A -> Prop :=
@@ -52,6 +108,8 @@ Module F3 (Import X : S) (Import Y : F12 X).
     list_nth (S m) (b :: tl) a
     .
 
+  (** To check that syntactic object are well-formed, we check that object-level
+     constructors are correctly applied given their declared arity. *)
   Inductive wt_atom (Γ : env) : atom -> Prop :=
   | Wt_atom A xs :
     wt_atoms Γ xs (arity_of_atom A) ->
@@ -75,9 +133,13 @@ Module F3 (Import X : S) (Import Y : F12 X).
     wt_atom_list (a :: Γ) As ->
     wt_atom_list Γ (a :: As)
     .
-  
+
+  (** A renaming is a function from indices to indices implemented as list. 
+     | NDY: On ne suppose rien de plus? Bijectivité, etc? *)
   Definition renaming := list var.
   
+  (** A list of variables [X1 ... XN] is a renaming R of a list 
+     of variables [Y1 ... YN] iff R[Xi] = Yi. *)
   Inductive rename_vars : list var -> renaming -> list var -> Prop :=
   | Rename_nil σ :
     rename_vars [] σ []
@@ -89,9 +151,16 @@ Module F3 (Import X : S) (Import Y : F12 X).
 
   (* TODO lifting *)
   
-  Inductive wt_assign (Γ : env) : renaming -> 
-    list var -> transformer -> list atom -> 
-    renaming -> env -> Prop :=
+  (** To check if an assignment X1, ..., XN <- F(a1, ..., aM) is
+     correct w.r.t to some assignment of the free variables Γ modulo
+     some renaming R, we incrementally check the arguments building
+     a substitution along the way. This substitution is used to 
+     check the sequel. 
+     NDY: J'en suis ici dans ma lecture. Je regarde ca demain apres-midi. *) 
+
+  Inductive wt_assign (Γ : env) : renaming ->
+     list var -> transformer -> list atom -> renaming -> env -> Prop
+     :=
 
   | Wt_assign σ args concls T Γ' Γ'' σ' σ'':
     wt_args Γ σ args (ar_args (arity_of_transformer T)) σ' Γ' ->

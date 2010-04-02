@@ -73,7 +73,7 @@ Module PL := Patch L V.
 Import PL.
 
 (* Some example transformer arities. Their creation should be
-automatizable in Ltac. *)
+   automatizable in Ltac. *)
 
 Definition Sbase := pair Tbase 
   {| ar_args := List.nil; 
@@ -89,3 +89,4 @@ Definition Svar := pair Tvar
   {| ar_args := Jdecl {| d_var := 1; d_params := nil; d_atom := Atype |} :: nil;
      ar_concls := Jdecl {| d_var := 2; d_params := nil; d_atom := Atype |} :: nil
   |}.
+
