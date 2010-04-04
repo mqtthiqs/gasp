@@ -38,9 +38,10 @@ End S.
    atoms. 
 
    - judgments: 
-   A judgment represents either the existence of a particular syntactic 
-   object, or an equation between a list of atoms and the result of a
-   transformer application to a list of variables. 
+   A judgment represents either the existence of a
+   particular syntactic object, or an equation between a list of
+   variables representing some atoms and the result of a transformer
+   application to a list of variables.
 
    | NDY: Pour ce point, je ne suis pas certain de bien comprendre le 
    | sens de la déclaration Coq ... ou plutot du nom "judgment". 
@@ -56,7 +57,13 @@ End S.
    where b ::= (X : a) | (X : a = F (X1, …, XN))
 
    As we use a DeBruijn representation, the type is represented as pair
-   of judgment lists. *)
+   of judgment lists. 
+
+   | NDY: Visiblement, ici, les variables appliquées au transformer sont 
+   | arbitrairement choisies. Cependant, j'ai l'impression que les jugements
+   | des bonnes formations qui viennent ensuite imposent que les types des
+   | transformer soient clos. Est-ce correct?
+*)
 
 Module Type F1 (Import X : S).
 
@@ -151,12 +158,15 @@ Module F3 (Import X : S) (Import Y : F12 X).
 
   (* TODO lifting *)
   
-  (** To check if an assignment X1, ..., XN <- F(a1, ..., aM) is
+  (** To check that an assignment X1:a1, ..., XN:aN <- F(Y1, ..., YM) is
      correct w.r.t to some assignment of the free variables Γ modulo
      some renaming R, we incrementally check the arguments building
-     a substitution along the way. This substitution is used to 
-     check the sequel. 
-     NDY: J'en suis ici dans ma lecture. Je regarde ca demain apres-midi. *) 
+     a substitution along the way. This substitution is threaded 
+     to check the conclusion's types. 
+
+     | NDY: Quelle est la relation entre le domaine de σ et le domaine
+     | de l'environnement?
+  *)
 
   Inductive wt_assign (Γ : env) : renaming ->
      list var -> transformer -> list atom -> renaming -> env -> Prop
@@ -167,18 +177,32 @@ Module F3 (Import X : S) (Import Y : F12 X).
     wt_concls Γ' σ' concls (ar_concls (arity_of_transformer T)) σ'' Γ'' ->
     wt_assign Γ σ args T concls σ'' Γ''
 
+  (** To check that an effective argument Yi is a well-assigned formal
+     i-th argument of a transformer T, we have to check that it has been
+     assigned to the right atom in Γ modulo the current (local?)
+     renaming of variables. *)
+
   with wt_args (Γ : env) : renaming -> 
     list var -> list judgement -> 
     renaming -> env -> Prop :=
 
-  | Wt_args_nil σ :
-    wt_args Γ σ [] [] σ Γ
+  (** The number of formals arguments must be equal to the number of
+      effective ones. *) 
+  | Wt_args_nil σ : wt_args Γ σ [] [] σ Γ
 
+  (** If the expected assignment has the form "X = a", 
+     then we check that Y is assigned to a in Γ. *)
   | Wt_args_decl σ x xs ys A zs js σ' Γ':
     rename_vars zs σ ys ->
     list_nth x Γ (A ys) -> 
     wt_args (A ys :: Γ) (x::σ) xs js σ' Γ' ->
     wt_args Γ σ (x::xs) (Jdecl (A zs) :: js) σ' Γ'
+
+  (** If the expected assignment has the form "Y1':a1', ..., YN':aN' =
+      T (X1', ..., XM')", we ignore the initial [xs] and the next [js]
+      and we simply check this assignment.  *)
+
+  (** | NDY: Je ne comprends pas du tout cette règle... *)
 
   | Wt_args_assign σ xs concls T args js σ' Γ' :
     wt_assign Γ σ args T concls σ' Γ' ->
