@@ -43,8 +43,17 @@ End S.
    variables representing some atoms and the result of a transformer
    application to a list of variables.
 
+   | NDM: Je dirais plutôt qu'un jugement affirme:
+   | - soit l'existence d'un objet d'un certain type 
+   |   (comme dans e.g. "(X : a(y,z))")
+   | - soit l'existence simultanée de plusieurs objets formés d'une
+   |   façon particulière (comme dans "(X:a, Y:b) = T(Z,W)")
+   | C'est OK?
+
    | NDY: Pour ce point, je ne suis pas certain de bien comprendre le 
    | sens de la déclaration Coq ... ou plutot du nom "judgment". 
+
+   | NDM: Les noms sont sûrement encore mal choisis…
 
    - arity:
    An arity denotes the type of a transformer. It is based on judgments
@@ -54,16 +63,21 @@ End S.
 
    Π b₁ … b_n . Σ b₁' … b_n'
    
-   where b ::= (X : a) | (X : a = F (X1, …, XN))
+   where b ::= (x : a) | ((x₁:a₁) … (x_n:a_n) = F (X1, …, XN))
 
-   As we use a DeBruijn representation, the type is represented as pair
-   of judgment lists. 
+   As we use a DeBruijn representation, the arity is represented as a pair
+   of judgment lists, and the judgements as bare atoms or list of
+   atoms with the application of variables to a transformer.
 
    | NDY: Visiblement, ici, les variables appliquées au transformer sont 
    | arbitrairement choisies. Cependant, j'ai l'impression que les jugements
    | des bonnes formations qui viennent ensuite imposent que les types des
    | transformer soient clos. Est-ce correct?
-*)
+
+   | NDM: Oui, ici c'est juste de la syntaxe pour l'instant, les
+   | règles de bon _typage_ viennent après.
+
+ *)
 
 Module Type F1 (Import X : S).
 
@@ -88,10 +102,27 @@ End F1.
 (* | NDY: En ce point ne comprends pas forcément pourquoi F1 est un "module type" 
    | et non un simple foncteur. Il me semble que la seule implémentation possible
    | pour F1, c'est exactement F1. Hum, j'imagine que l'on est dans le cas typique
-   | où le système de modules a besoin qu'on lui déclare des types pour s'en sortir... *)
+   | où le système de modules a besoin qu'on lui déclare des types pour s'en sortir... 
+
+   | NDM: En effet. L'idée est que si on séparait pas F1 et F2, on
+   | serait obligé dans chaque implem du gros Module Type résultant de
+   | répéter les définitions qui constituent F1. Avec ce système, un
+   | simple Include fait l'affaire (voir plus bas l'exemple). Merci Elie :)
+ *)
 
 (** From the previous declarations we can also deduce the type of the functions 
-   that assign a type to atoms and to transformers. *)
+   that assign a type to atoms and to transformers. 
+
+   | NDM: Viendront sans doutes s'ajouter à ces hypothèses d'autres
+   | contraintes plus tard. Notamment, pour que la réification du
+   | langage objet fasse sens, il faut que l'arité des atomes soit
+   | bien fondée (ex. on pourrait pas avoir un atome A d'arité A). De
+   | même pour les transformers: on veut pas que la signature de deux
+   | transformers soit mutuellement dépendante, ex.:
+   | T :: (X:a) (Y:b = U(x)) ———-> (Z:c)
+   | U :: (X:a) (Y:b = T(x)) ———-> (Z:c)
+   
+*)
 Module Type F2 (Import X : S) (Import Y : F1 X).
   Parameter arity_of_atom : atom_name -> list atom.  
   Parameter arity_of_transformer : transformer -> arity.
@@ -133,7 +164,12 @@ Module F3 (Import X : S) (Import Y : F12 X).
     .
 
   (** A renaming is a function from indices to indices implemented as list. 
-     | NDY: On ne suppose rien de plus? Bijectivité, etc? *)
+     | NDY: On ne suppose rien de plus? Bijectivité, etc?
+     | NDM: Le renommage prend le rôle de la substitution, puisqu'on a
+     | aucun sous-termes dans les applications de transformers (juste
+     | des variables). Pour la bijectivité, je pense pas que ça soit
+     | nécessaire...
+ *)
   Definition renaming := list var.
 
   Definition rename_var y x k := 
@@ -214,6 +250,9 @@ Module F3 (Import X : S) (Import Y : F12 X).
 
      | NDY: Quelle est la relation entre le domaine de σ et le domaine
      | de l'environnement?
+     | NDM: Aucune je crois... σ contient les variables qui sont
+     | appliquées à un transformer quand on type l'application. C'est
+     | tout.
   *)
 
   (* TODO lifting *)
