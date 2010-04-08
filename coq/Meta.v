@@ -95,6 +95,7 @@ End F1.
 Module Type F2 (Import X : S) (Import Y : F1 X).
   Parameter arity_of_atom : atom_name -> list atom.  
   Parameter arity_of_transformer : transformer -> arity.
+  Coercion arity_of_transformer : transformer >-> arity.
 End F2.
 
 Module Type F12 (X : S) := F1 X <+ F2 X.
@@ -115,36 +116,83 @@ Module F3 (Import X : S) (Import Y : F12 X).
     list_nth (S m) (b :: tl) a
     .
 
-  (** To check that syntactic object are well-formed, we check that object-level
-     constructors are correctly applied given their declared arity. *)
-  Inductive wt_atom (Γ : env) : atom -> Prop :=
-  | Wt_atom A xs :
-    wt_atoms Γ xs (arity_of_atom A) ->
-    wt_atom Γ (A xs)
-
-  with wt_atoms (Γ : env) : list var -> list atom -> Prop :=
-  | Wt_atoms_nil :
-    wt_atoms Γ [] []
-  | Wt_atoms_cons x xs a As :
-    list_nth x Γ a ->
-    wt_atom Γ a ->
-    wt_atoms Γ xs As ->
-    wt_atoms Γ (x :: xs) (a :: As)
+  Inductive list_chop {A} : list A -> nat -> list A -> Prop :=
+  | Chop_o Γ :
+    list_chop Γ 0 Γ
+  | Chop_s n a Γ Γ' :
+    list_chop Γ n Γ' ->
+    list_chop (a :: Γ) (S n) Γ'
     .
 
-  Inductive wt_atom_list (Γ : env) : list atom -> Prop :=
-  | Wt_atom_list_nil :
-    wt_atom_list Γ []
-  | Wt_atom_list_cons a As :
-    wt_atom Γ a ->
-    wt_atom_list (a :: Γ) As ->
-    wt_atom_list Γ (a :: As)
+  Inductive list_first {A} : list A -> nat -> list A -> Prop :=
+  | First_o l :
+    list_first l 0 []
+  | First_s xs n x l:
+    list_first xs n (x::l)-> 
+    list_first (x::xs) (S n) l
     .
 
   (** A renaming is a function from indices to indices implemented as list. 
      | NDY: On ne suppose rien de plus? Bijectivité, etc? *)
   Definition renaming := list var.
+
+  Definition rename_var y x k := 
+    match y with
+      | 0 => x+k
+      | S n => n
+    end.
+
+  Fixpoint rename_vars_dec xs x k : list var :=
+    match xs with
+      | [] => []
+      | y::xs => rename_var y x k :: rename_vars_dec xs x k
+    end.
+
+  Fixpoint rename_env As x k : env :=
+    match As with
+      | [] => []
+      | Atom a xs :: As => 
+        Atom a (rename_vars_dec xs x k) :: rename_env As x (S k)
+    end.
   
+  Fixpoint rename_judgements js n k :=
+    match js with
+      | [] => []
+      | Jdecl (Atom A xs) :: js => 
+        Jdecl (A (rename_vars_dec xs n k)) :: rename_judgements js n (S k)
+      | Jassign atoms T args :: js =>
+        Jassign (rename_env atoms n k) T (rename_vars_dec args n k)
+        :: rename_judgements js n (k + length args)
+    end.
+
+  Fixpoint rename_env_list js ns :=
+    match ns with
+      | [] => js
+      | n :: ns => rename_env_list (rename_env js n 0) ns
+    end.
+
+  (** To check that syntactic object are well-formed, we check that object-level
+     constructors are correctly applied given their declared arity. *)
+
+  Inductive wt_atoms (Γ : env) : list var -> list atom -> Prop :=
+  | Wt_atoms_nil :
+    wt_atoms Γ [] []
+  | Wt_atoms_cons Γ' x xs As (A:atom_name) ys :
+    list_nth x Γ (A ys) ->
+    list_chop Γ (S x) Γ' ->
+    wt_atoms Γ' ys (arity_of_atom A) ->
+    wt_atoms Γ xs (rename_env As x 0) ->
+    wt_atoms Γ (x :: xs) (A ys :: As)
+
+  with wt_atom_list (Γ : env) : list atom -> Prop :=
+  | Wt_atom_list_nil :
+    wt_atom_list Γ []
+  | Wt_atom_list_cons A xs As :
+    wt_atoms Γ xs (arity_of_atom A) ->
+    wt_atom_list (A xs :: Γ) (rename_env As (length Γ) 0) ->
+    wt_atom_list Γ (A xs :: As)
+    .
+
   (** A list of variables [X1 ... XN] is a renaming R of a list 
      of variables [Y1 ... YN] iff R[Xi] = Yi. *)
   Inductive rename_vars : list var -> renaming -> list var -> Prop :=
@@ -168,9 +216,45 @@ Module F3 (Import X : S) (Import Y : F12 X).
      | de l'environnement?
   *)
 
-  Inductive wt_assign (Γ : env) : renaming ->
-     list var -> transformer -> list atom -> renaming -> env -> Prop
-     :=
+  (* TODO lifting *)
+
+  Inductive wt_judgements (Γ : env) : list judgement -> Prop :=
+  | Wt_judgements_nil :
+    wt_judgements Γ []
+
+  | Wt_judgements_decl (A : atom_name) xs js :
+    wt_atoms Γ xs (arity_of_atom A) ->
+    wt_judgements ((A xs) :: Γ) (rename_judgements js (length Γ) 0) ->
+    wt_judgements Γ (Jdecl (A xs) :: js)
+
+  | Wt_judgements_assign args atoms (T : transformer) js:
+    wt_judgement_list Γ args (ar_args T) ->
+    wt_judgements ((rename_env_list atoms args) ++ Γ) js ->
+  (* TODO verif que atoms est bien la conclusion jc *)
+    wt_judgements Γ (Jassign atoms T args :: js)
+    
+    with wt_judgement_list (Γ : env) : list var -> list judgement -> Prop :=
+  | Wt_judgement_list_nil :
+    wt_judgement_list Γ [] []
+
+  | Wt_judgement_list_decl Γ' x xs (A : atom_name) ys zs js :
+    list_nth x Γ (A zs) ->
+    list_chop Γ (S x) Γ' ->
+    wt_atoms Γ' ys (arity_of_atom A) ->
+    wt_judgement_list Γ xs (rename_judgements js x 0) ->
+    wt_judgement_list Γ (x :: xs) (Jdecl (A ys) :: js)
+
+  | Wt_judgement_list_assign xs xs' (T : transformer) atoms args js :
+    wt_judgement_list Γ args (ar_args T) ->
+  (* TODO verif atoms <-> jc *)
+    list_first xs (length atoms) xs' ->
+    wt_judgement_list (atoms ++ Γ) xs' js ->
+    wt_judgement_list Γ xs (Jassign atoms T args :: js)
+    .
+
+  Inductive wt_assign (Γ : env) : renaming -> 
+    list var -> transformer -> list atom -> 
+    renaming -> env -> Prop :=
 
   | Wt_assign σ args concls T Γ' Γ'' σ' σ'':
     wt_args Γ σ args (ar_args (arity_of_transformer T)) σ' Γ' ->
@@ -223,23 +307,8 @@ Module F3 (Import X : S) (Import Y : F12 X).
   (* TODO assign *)
     .
 
-  Inductive wt_judgements (Γ : env) : list judgement -> Prop :=
-  | Wt_judgements_nil :
-    wt_judgements Γ []
-
-  | Wt_judgements_cons A js :
-    wt_judgements (A :: Γ) js ->
-    wt_atom Γ A ->              (* besoin? *)
-    wt_judgements Γ (Jdecl A :: js)
-
-  | Wt_judgements_assign concls args js T Γ' σ' :
-    wt_assign Γ [] args T concls σ' Γ' ->
-    wt_judgements Γ' js ->
-    wt_judgements Γ (Jassign concls T args :: js)
-    .
-
-  Hint Constructors atom judgement arity list_nth wt_atom wt_atoms
-    wt_atom_list rename_vars wt_judgements wt_assign wt_args wt_concls : patch.
+  Hint Constructors atom judgement arity list_nth list_chop list_first wt_atoms
+    wt_atom_list wt_judgements wt_judgement_list : patch.
 
 End F3.
 
@@ -259,7 +328,7 @@ Module Import Example.
     match a with
       | A => []   | B => []
       | C => [ A []]  | D => [A []; B []]
-      | E => [A []; C [1]]
+      | E => [A []; C [0]]
     end.
 
   Definition arity_of_transformer (t : transformer) := 
@@ -273,11 +342,17 @@ Module Import Example.
 
   Include F3.
 
-  Ltac p := eauto with patch.
 
-  Lemma ex_atom : wt_atom [B []; A []] (D [1;0]).
-        apply Wt_atom; eapply Wt_atoms_cons; p.
-    (* impossible ac juste eauto?? pourquoi? *)
+  Ltac p := simpl;
+    try apply Wt_atom_list_cons;
+      try eapply Wt_atoms_cons; progress eauto with patch || p.
+  
+  Lemma ex_wt_atom_list : wt_atom_list [] [A[]; C[0]; E[1;0]].
+    p. (* impossible ac juste eauto?? pourquoi? *)
+  Qed.
+  
+  Lemma ex_wt_atom_list2 : wt_atom_list [B []; A []] [D [1;0]].
+    p.                          (* même chose *)
   Qed.
   
   (* ce lemme *mériterait* une preuve plus compacte :) *)
@@ -293,21 +368,25 @@ Module Import Example.
       Jdecl (D [1;0]);
       Jdecl (C [2])
     ].  (* Meme raison, on doit faire a la main *)
-    apply Wt_judgements_cons; p. 
-    apply Wt_judgements_cons; p.
-    apply Wt_judgements_cons; p.
-    apply Wt_judgements_cons; p.
-    apply Wt_atom; eapply Wt_atoms_cons; p.
-    apply Wt_atom; eapply Wt_atoms_cons; p.
+    apply Wt_judgements_decl. p.
+    simpl; apply Wt_judgements_decl. p. (* ici le apply foire si on met pas simpl devant. ??? *)
+    simpl; apply Wt_judgements_decl. p.
+    simpl; apply Wt_judgements_decl. p.
+    apply Wt_judgements_nil.
   Qed.
 
   Lemma ex_wt_jdugement_decls2 : wt_judgements []
     [ Jdecl (A []);
       Jdecl (C [0]);
-      Jdecl (D [1;0]);
+      Jdecl (E [1;0]);
       Jdecl (C [2])
-    ].  (* Meme raison, on doit faire a la main *)
-    apply Wt_judgements_cons; p.
+    ].  p. (* Meme raison, on doit faire a la main *)
+    apply Wt_judgements_decl. p.
+    simpl; apply Wt_judgements_decl. p.
+    simpl; apply Wt_judgements_decl. simpl.
+    eapply Wt_atoms_cons. p. p. p. simpl. 
+    simpl; apply Wt_judgements_decl. p.
+    simpl; apply Wt_judgements_decl. p.
     apply Wt_judgements_cons; p.
     apply Wt_judgements_cons; p.
     apply Wt_judgements_cons; p.
