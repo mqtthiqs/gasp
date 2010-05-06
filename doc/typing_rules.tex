@@ -1,0 +1,171 @@
+\documentclass[12pt]{article}
+\usepackage{mathpartir}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{mathpartir}
+\usepackage{color}
+%\usepackage[pdftex,backref=page,colorlinks=true]{hyperref}
+\usepackage{amsmath, amstext, amsthm, amsfonts}
+\usepackage{stmaryrd}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+
+\title{Typing rules for the data-oriented patch system}
+
+\newcommand{\sort}{\textsf{s}}
+\newcommand{\gor}{\ |\ }
+\newcommand{\gdecl}[2]{{#1}\ &::=\ {#2}}
+\newcommand{\subst}[2]{\{#1/#2\}}
+\begin{document}
+
+\maketitle
+
+\paragraph{Introduction}
+
+Representing syntax and logics is nicely done in a \emph{logical
+  framework} like LF: both the syntactic elements and the typing
+derivations sit in the same tree structure, and both can be rechecked
+at the same time. The PTSes are a concise presentation of a family of
+logical frameworks.
+
+For the purpose of incremental type checking though, our needs are a
+little bit different: first, we need to record, that is to name all
+intermediate values of our developments, so as to be able to address
+and reuse them multiple times. Secondly, we need to make sure that
+intermediate values are not recorded twice, which would imply that we
+will verify the same subterm twice (precisely what we are trying to
+avoid). These two conditions together entail that we are looking to
+represent syntactic and typing objects as a \emph{DAG} rather than a
+tree, and moreover a DAG with \emph{maximal sharing} among its
+sub-DAGs.
+
+Let's take the PTS approach, and tailor it to our needs. We make
+several changes to the usual presentation:
+\begin{itemize}
+\item In a first iteration of our project, we do not need computations
+  to take place within our DAGs. No $\lambda$'s, no conversion
+  rule. We stratify the syntax of the system into terms and types.
+\item Compound terms are what we want to avoid. Every term should be a
+  flat application of variables. 
+\item Finally we need a way to record these intermediate definitions:
+  we introduce a new kind of product, singleton products, which
+  contain the definition of the new object along with its name and
+  type. Environments are extended for these definitions.
+\end{itemize}
+
+\paragraph{Parameters}
+
+As for a regular PTS, our system depends on three variables:
+
+\begin{itemize}
+  \item$\mathcal S$ a set of sorts \sort,
+  \item$\mathcal A \in \mathcal S^2$ the axioms of the system,
+  \item$\mathcal R \in \mathcal S^3$ the allowed products.
+\end{itemize}
+
+\paragraph{Syntax} There are three syntactic categories: applicative
+terms $a$, types $t$ and environments $\Gamma$. Environments look like
+list, but in fact they aren't (see below).
+
+\begin{align*}
+ \gdecl{a}{x \gor a\ x } \\
+ \gdecl{t}{a \gor \sort \gor (x:t)\to t \gor (x=a:t)\to t} \\
+ \gdecl{\Gamma}{\cdot \gor \Gamma[x:t] \gor \Gamma[x=a:t]}
+\end{align*}
+
+Following Agda's syntax, we denote by $(x:t)\to u$ the dependent
+product (elsewhere written with a $\Pi$). The new construct
+$(x=a:t)\to u$ is a singleton type in argument position, whose value
+is $a$. Such a singleton product should be read as ``the function
+taking as argument any values syntactically equal to $a$ of type $t$
+(\emph{i.e.} a pedantic way to say $a$). We write as usual
+$(x_1:t_1)(x_2:t_2)\ldots(x_n:t_n)\to t$ for
+$(x_1:t_1)\to(x_2:t_2)\to\ldots\to(x_n:t_n)\to t$. The lookup in the
+environment is written either $\Gamma(x):t$, denoting ``$\Gamma$
+contains a declaration $[x:t]$ \emph{or} a definition $[x=a:t]$'', or
+$\Gamma(x)=a:t$ denoting ``$\Gamma$ contains a definition
+$[x=a:t]$''. Capture-avoiding renaming of variables in a term $t$ is
+written $t\subst{x}{y}$ for ``replace all occurences of $x$ by $y$''
+and is defined the usual way.
+
+We maintain the strong invariant that the environment does not contain
+two variables of the same name, nor two syntactically equal
+declarations (the $a$ part is unique). More on that in the
+implementation part.
+
+\paragraph{Typing} The typing of our system is a restriction of the
+PTS's typing rules with the additional two rules for typing a singleton
+product and the application of a singleton argument (featuring the
+syntactic verification in the environment). It relies on two distincts
+jugements:
+\begin{itemize}
+\item $\Gamma\vdash a : t$ ($a$ has type $t$ in $\Gamma$),
+\item $\Gamma\vdash t : \sort$ ($t$ has sort $s$ in $\Gamma$).
+\end{itemize}
+The rules are:
+\begin{mathpar}
+  \infer[Axiom]{
+  }{\Gamma\vdash\sort_1:\sort_2}
+  \quad(\sort_1,\sort_2)\in\mathcal A
+  \and
+  \infer[Init]{
+    \Gamma(x):t
+  }{\Gamma\vdash x:t}
+  \and
+  \infer[Prod]{\Gamma\vdash t:\sort_1 \and 
+    \Gamma[x:t]\vdash u:\sort_2
+  }{\Gamma\vdash(x:t)\to u : \sort_3}
+  \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
+  \and
+  \infer[Sing]{\Gamma\vdash a:t \and
+    \Gamma\vdash t:\sort_1 \and
+    \Gamma[x=a:t]\vdash u:\sort_2
+  }{\Gamma\vdash(x=a:t)\to u : \sort_3} 
+  \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
+  \and
+  \infer[AppP]{
+    \Gamma\vdash a:(y:t)\to u \and \Gamma(x):t
+    }{\Gamma\vdash a\ x : u\subst{x}{y}}
+  \and
+  \infer[AppS]{
+    \Gamma\vdash a:(y=b:t)\to u \and \Gamma(x)=b:t
+    }{\Gamma\vdash a\ x : u\subst{x}{y}}
+\end{mathpar}
+
+A term $t$ represents a state of the repository at a given moment. It
+contains the declaration of the object language's syntax, its typing
+rules, the syntactic objects and derivations recorded in it along with
+the patches that let the repository evolve. If $\cdot\vdash t:\sort$,
+then the repository is well-typed.
+
+\paragraph{An example}
+
+\paragraph{Implementation}
+
+The main problem when it comes with implementation is to guarantee the
+unicity of declarations and definitions in the environment. One
+approach would be to use the locally-nameless method, along with a
+special type of free names: A term is stored in deBruijn syntax, but
+as soon as a variable is introduced, it takes a real name. 
+
+How to choose the names in order for each of them to be uniquely bound
+to their content (for definitions)? Let's follow \textsf{git} on this:
+each definition is given for name the hash of its content
+(definiens). In turn, the content of a definition is itself an
+application of variables, which have been given unique names earlier,
+so taking the hash of the content guarantees that the whole sub-DAG is
+contained in the name.
+
+The receipt to choose a name at introduction-time (\textsc{Sing} or
+\textsc{Prod}) is:
+\begin{itemize}
+\item If we introduce a \emph{declaration}, it has no content. Let's
+  assign it a big random hash for a name: it will ensure its
+  uniqueness.
+\item If we introduce a \emph{definition}, then we compute the hash of
+  its content. If this hash is already present in the environment, we
+  don't introduce anything and take this hash as a name. Otherwise we
+  introduce the definition and assign it the hash as a name.
+\end{itemize}
+
+\end{document}
