@@ -8,9 +8,9 @@
 \usepackage{amsmath, amstext, amsthm, amsfonts}
 \usepackage{stmaryrd}
 \usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{fullpage}
 
-
-\title{Typing rules for the data-oriented patch system}
+\title{A kernel for incremental type-checking}
 
 \newcommand{\sort}{\textsf{s}}
 \newcommand{\gor}{\ |\ }
@@ -69,20 +69,23 @@ list, but in fact they aren't (see below).
 
 \begin{align*}
  \gdecl{a}{x \gor a\ x } \\
- \gdecl{t}{a \gor \sort \gor (x:t)\to t \gor (x=a:t)\to t} \\
+ \gdecl{t}{a \gor \sort \gor (x:t)\cdot t \gor (x=a:t)\cdot t} \\
  \gdecl{\Gamma}{\cdot \gor \Gamma[x:t] \gor \Gamma[x=a:t]}
 \end{align*}
 
-Following Agda's syntax, we denote by $(x:t)\to u$ the dependent
-product (elsewhere written with a $\Pi$). The new construct
-$(x=a:t)\to u$ is a singleton type in argument position, whose value
-is $a$. Such a singleton product should be read as ``the function
-taking as argument any values syntactically equal to $a$ of type $t$
-(\emph{i.e.} a pedantic way to say $a$). We write as usual
-$(x_1:t_1)(x_2:t_2)\ldots(x_n:t_n)\to t$ for
-$(x_1:t_1)\to(x_2:t_2)\to\ldots\to(x_n:t_n)\to t$. The lookup in the
-environment is written either $\Gamma(x):t$, denoting ``$\Gamma$
-contains a declaration $[x:t]$ \emph{or} a definition $[x=a:t]$'', or
+Following the standard syntax, we denote by $(x:t)\cdot u$ the
+dependent product (elsewhere written with a $\Pi$). The new construct
+$(x=a:t)\cdot u$ is a kind of singleton type, whose value is $a$. Such
+a singleton product should be read as ``the (implicit) function taking
+as argument any values syntactically equal to $a$ of type $t$
+(\emph{i.e.} a pedantic way to say $a$). 
+
+We write as usual $(x_1:t_1)(x_2:t_2)\ldots(x_n:t_n)\cdot t$ for
+$(x_1:t_1)\cdot(x_2:t_2)\cdot\ldots\cdot(x_n:t_n)\cdot t$, $t \to
+u$ for $(x:t)\cdot u$ where $x\notin u$, and $(x\ y : t)\cdot u$ for
+$(x:t)(y:t)\cdot u$. The lookup in the environment
+is written either $\Gamma(x):t$, denoting ``$\Gamma$ contains a
+declaration $[x:t]$ \emph{or} a definition $[x=a:t]$'', or
 $\Gamma(x)=a:t$ denoting ``$\Gamma$ contains a definition
 $[x=a:t]$''. Capture-avoiding renaming of variables in a term $t$ is
 written $t\subst{x}{y}$ for ``replace all occurences of $x$ by $y$''
@@ -90,7 +93,7 @@ and is defined the usual way.
 
 We maintain the strong invariant that the environment does not contain
 two variables of the same name, nor two syntactically equal
-declarations (the $a$ part is unique). More on that in the
+definitions (the $a$ part is unique). More on that in the
 implementation part.
 
 \paragraph{Typing} The typing of our system is a restriction of the
@@ -114,22 +117,22 @@ The rules are:
   \and
   \infer[Prod]{\Gamma\vdash t:\sort_1 \and 
     \Gamma[x:t]\vdash u:\sort_2
-  }{\Gamma\vdash(x:t)\to u : \sort_3}
+  }{\Gamma\vdash(x:t)\cdot u : \sort_3}
   \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
   \and
   \infer[Sing]{\Gamma\vdash a:t \and
     \Gamma\vdash t:\sort_1 \and
     \Gamma[x=a:t]\vdash u:\sort_2
-  }{\Gamma\vdash(x=a:t)\to u : \sort_3} 
+  }{\Gamma\vdash(x=a:t)\cdot u : \sort_3} 
   \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
   \and
-  \infer[AppP]{
-    \Gamma\vdash a:(y:t)\to u \and \Gamma(x):t
+  \infer[App]{
+    \Gamma\vdash a:(y:t)\cdot u \and \Gamma(x):t
     }{\Gamma\vdash a\ x : u\subst{x}{y}}
   \and
-  \infer[AppS]{
-    \Gamma\vdash a:(y=b:t)\to u \and \Gamma(x)=b:t
-    }{\Gamma\vdash a\ x : u\subst{x}{y}}
+  \infer[Skip]{
+    \Gamma\vdash a:(y=b:t)\cdot u \and \Gamma(x)=b:t
+    }{\Gamma\vdash a : u\subst{x}{y}}
 \end{mathpar}
 
 A term $t$ represents a state of the repository at a given moment. It
@@ -138,15 +141,18 @@ rules, the syntactic objects and derivations recorded in it along with
 the patches that let the repository evolve. If $\cdot\vdash t:\sort$,
 then the repository is well-typed.
 
-\paragraph{An example}
-
 \paragraph{Implementation}
 
 The main problem when it comes with implementation is to guarantee the
 unicity of declarations and definitions in the environment. One
 approach would be to use the locally-nameless method, along with a
 special type of free names: A term is stored in deBruijn syntax, but
-as soon as a variable is introduced, it takes a real name. 
+as soon as a variable is introduced, it takes a real name. So in fact,
+environments are not syntactic list objects, instead the operations
+$\Gamma[x:t]$ and $\Gamma[x=a:t]$ are the partial meta-operations of
+adding new entries into the environment, which returns a new, unique
+name for them. The last meta step is to substitute $x$ for this new
+name.
 
 How to choose the names in order for each of them to be uniquely bound
 to their content (for definitions)? Let's follow \textsf{git} on this:
@@ -167,5 +173,67 @@ The receipt to choose a name at introduction-time (\textsc{Sing} or
   don't introduce anything and take this hash as a name. Otherwise we
   introduce the definition and assign it the hash as a name.
 \end{itemize}
+
+\paragraph{An example}
+
+Let's put aside the problem of configuring the PTS for the moment,
+since it's not clear yet: we work in system U \emph{i.e.}
+$\langle\{*\},\{*:*\},\{(*,*,*)\}\rangle$.
+
+We are going to construct a repository gradually as a big term, but
+stopping at some steps to explain the construct. The beginning of the
+term will consist in the declaration of the language (a small
+arithmetic language). Keep in mind that this simply typed language is
+just an example: more evolved languages can and will be declared, even
+on-the-fly as part of a commit!
+\newcommand\nat{\mathbb N}
+\newcommand\prop{prop}
+\begin{align}&
+  (\prop : *)(\nat : *)(0:\nat)(S:\nat) \\&
+  (\land\ \lor\Rightarrow\ : \prop \to \prop \to \prop) \\&
+  (+\ -\ : \nat\to\nat\to\nat)
+  (=\ \neq\ \leq:\nat\to\nat\to \prop )
+  \intertext{Now let's begin the definition of the expression
+    $2+2=4$. The syntax restricts us to define it step-by-step:} &
+  (1 = S\ 0 : \nat)(2 = S\ 1 : \nat)(3 = S\ 2 :
+  \nat)(4=S\ 3 : \nat) \\&
+  (t = (+)\ 2\ 2 : \nat) (p : (=)\ t\ 4) \\&
+  \intertext{Forever, the name $p$ will be associated to that
+    expression. Let's mark it with a name. First we introduce -- on
+    the fly -- the marking feature to our repository (how cool is that?):} &
+  (commit : *)
+  (mark : \prop\to string\to commit)
+  \intertext{The type $string$ is predefined in some way, and the
+    choice of $prop$ as the argument to $mark$ fixes that we want to
+    record propositions as commits, not naturals: it is in some sense
+    the ``tip'' of our syntax. Now we can mark, or commit that $p$: } &
+  (x = mark\ p\ \mathtt{``Cool\ equation}" : commit)
+  \intertext{Now let's make it evolve to $2+2=1+3$, and commit the result} &
+  (u = (+)\ 1\ 3 : \nat)(q = (=)\ t\ u : \prop) \\&
+  (y = mark\ q\ \mathtt{``Also\ true}")
+  \intertext{We could stop here: we have a nice object for commits,
+    and a way to verify by typing that our repository is valid. Let's
+    try to exploit the type system a little bit more: We  now
+    introduce a higher-order object -- a
+    patch maybe? -- taking a piece of syntax matching a certain form
+    and constructing another object. In that case, it takes an
+    equation and transforms it into an inequation:} &
+  (P : (t\ u:\nat)(p=(=)\ t\ u:\prop)(q=(\leq)\ t\ u)\cdot mark\ q\
+  \mathtt{``A\ fortiori}")
+  \intertext{Now we can show that this patch applies to our
+    repository by filling in the missing items:} &
+  (z = P\ t\ u : (p=(=)\ t\ u:\prop)(q=(\leq)\ t\ u)\cdot mark\ q\
+  \mathtt{``A\ fortiori}")
+\end{align}
+When the type of $P\ t\ u$ will be typed, the variable $p$ will be
+given the same name as the previously-introduced $q$, because their
+content match; whereas the new $q$ will be introduced into the
+environment, and given a new unique name.
+\\
+
+The status of commits, patches etc. is still not very clear and the
+previous example should be taken with a grain of salt, but this
+hopefully gives a hint of what is possible with a dependently-typed,
+memoizing language.
 
 \end{document}
