@@ -1,0 +1,16 @@
+(prop         : Type)
+(nat          : Type)
+(0            : nat)
+(S            : nat -> nat)
+(and or imply : prop -> prop -> prop)
+(add sub      : nat -> nat -> nat)
+(eq neq le    : nat -> nat -> prop)
+
+(1 = S 0     : nat)
+(2 = S 1     : nat)
+(3 = S 2     : nat)
+(4 = S 3     : nat)
+(t = add 2 2 : nat)
+(p = eq t 4  : prop)
+
+Type

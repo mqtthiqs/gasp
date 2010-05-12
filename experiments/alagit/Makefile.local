@@ -1,0 +1,8 @@
+###########################
+## Package configuration ##
+###########################
+VERSION   = 0.1
+TARGET    = gasp
+TARGETEXT = gasp
+PACKAGE   = gasp-$(VERSION)
+
