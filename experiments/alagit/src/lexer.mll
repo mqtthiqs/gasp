@@ -69,6 +69,7 @@ rule main = parse
 | eof                                   { EOF }
 
 (** Punctuation. *)
+| "."                                   { DOT }
 | ":"                                   { COLON }
 | '('                                   { LPAREN }
 | ')'                                   { RPAREN }

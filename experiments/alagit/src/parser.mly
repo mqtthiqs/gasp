@@ -8,11 +8,11 @@
 %}
 
 %token EOF
-%token LPAREN RPAREN COLON EQUAL TYPE ARROW
+%token LPAREN RPAREN COLON EQUAL TYPE ARROW DOT
 %token<string> ID
 
 %right ARROW
-%nonassoc RPAREN
+%right DOT
 %start<AST.patch> patch
 
 %%
@@ -30,7 +30,7 @@ ptype: a=loc(term)
 {
   Sort s
 }
-| LPAREN xs=ID+ COLON t=loc(ptype) RPAREN s=loc(ptype)
+| LPAREN xs=ID+ COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
 {
   Position.value 
     (List.fold_left 
@@ -38,7 +38,7 @@ ptype: a=loc(term)
 	  Position.with_pos (Position.position accu) (Prod (x, t, accu))) 
        s xs)
 }
-| LPAREN x=ID EQUAL a=loc(term) COLON t=loc(ptype) RPAREN s=loc(ptype)
+| LPAREN x=ID EQUAL a=loc(term) COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
 {
   SProd (x, t, a, s)
 }
