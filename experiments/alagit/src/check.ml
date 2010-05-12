@@ -2,8 +2,15 @@ open AST
 
 let ( ! ) = Position.value
 
-let type_error pos = 
-  Error.error "during type checking" pos "Error."
+let as_string f = 
+  let b = Buffer.create 13 in 
+  let fmt = Format.formatter_of_buffer b in
+  f fmt;
+  Format.pp_print_flush fmt ();
+  Buffer.contents b
+
+let type_error pos ?(msg="Error.") () = 
+  Error.error "during type checking" pos msg
 
 let rec term_subst x y = function
   | Var z      when z = x -> Var y
@@ -67,6 +74,8 @@ module Env : sig
   val empty : t
   val bind_def : Position.t -> t -> id -> ptype -> term -> t
   val bind_dec : Position.t -> t -> id -> ptype -> t
+  val find_def : t -> term -> id
+  val choose_fresh : t -> id -> id
 end = struct
   (* FIXME: use a functional hashtbl instead. *)
   type t = (id * entry) list
@@ -74,19 +83,32 @@ end = struct
   let empty = 
     []
 
+  let find_def env t = 
+    fst 
+      (List.find (fun (_, entry) -> 
+		    match entry with
+		      | Def (_, u) -> term_equal t u
+		      | _ -> false) env)
+		   
+				      
+
+  let check_not_bound pos env x = 
+    if (List.mem_assoc x env) then 
+      type_error pos ~msg:(Printf.sprintf "`%s' is already bound." x) ()
+
   let bind_def pos env x ty d = 
-    if (List.mem_assoc x env) then type_error pos;
+    check_not_bound pos env x;
     (x, Def (ty, d)) :: env
 
   let bind_dec pos env x ty = 
-    if (List.mem_assoc x env) then type_error pos;
+    check_not_bound pos env x;
     (x, Dec ty) :: env
 
   let lookup pos env x = 
     try 
       List.assoc x env
     with Not_found -> 
-      type_error pos
+      type_error pos ~msg:(Printf.sprintf "`%s' is unbound." x) ()
 
   let type_lookup pos env x = 
     match lookup pos env x with
@@ -95,8 +117,14 @@ end = struct
 
   let def_lookup pos env x =
     match lookup pos env x with
-      | Def (s, d) -> (s, d)
-      | _ -> type_error pos
+      | Def (s, d) -> 
+	  (s, d)
+      | _ -> 
+	  type_error pos ~msg:(Printf.sprintf "`%s' is not bound to a definition." x) ()
+
+  let rec choose_fresh env x = 
+    if List.mem_assoc x env then choose_fresh env (x ^ "_") else x
+
 end
 
 let rec check_term pos env ptype = function
@@ -112,28 +140,43 @@ and check_term' env ptype a = check_term (Position.position a) env ptype !a
 
 and infer_term pos env = function
   | Var x -> 
-      Env.type_lookup pos env x 
+      Env.type_lookup pos env x
   | App (a, x) ->
       let a_ptype   = infer_term' env a in
       infer_application_ptype pos env a_ptype x
 
 and infer_term' env term' = infer_term (Position.position term') env !term'
-	
+
+(* Because of non unicity of types, we decide to normalize type on demand. *)	
+and normalize_ptype pos env = function
+  | SProd (y, t, a, s) as pt -> 
+      (try 
+	 let x = Env.find_def env !a in 
+	 assert (ptype_equal (Env.type_lookup pos env x) !t); 
+	 normalize_ptype pos env (ptype_subst y x !s)
+       with Not_found -> 
+       type_error pos ~msg:
+	 (as_string 
+	    (fun fmt -> 
+	       Format.fprintf fmt "@[Impossible to normalize %a.@]@." 
+		 Print.ptype pt)) 
+	 ())
+  | x -> 
+      x
+
 and infer_application_ptype pos env a_ptype x = 
-  let (y, s, t, x_ptype) =
-    match a_ptype with
+  match normalize_ptype pos env a_ptype with
     | Prod (y, t, s) ->
-	(* FIXME: Choose [y] fresh for env? *)
-	(y, s, t, Env.type_lookup pos env x)
-    | SProd (y, t, a, s) ->
-	let (x_ptype, x_def) = Env.def_lookup pos env x in
-	check_term_equal pos x_def (! a);
-	(y, s, t, x_ptype)
+	let x_ptype = Env.type_lookup pos env x in
+	(* Choose [y] fresh for env? *)
+	check_ptype_equal pos (! t) x_ptype;
+	! (ptype_subst' y x s)
+    | SProd _ ->
+	(* By normalization of types. *)
+	assert false 
     | _ -> 
-	type_error pos
-  in
-  check_ptype_equal pos (! t) x_ptype;
-  ! (ptype_subst' y x s)
+	type_error pos 
+	  ~msg:"The left-hand-side of this application is not a product." ()
 	    
 and check_ptype pos env ptype = function
   | Term t -> 
@@ -141,12 +184,16 @@ and check_ptype pos env ptype = function
   | Sort s -> 
       ()
   | Prod (y, t, s) -> 
+      let z = Env.choose_fresh env y in
+      let s = ptype_subst' y z s in
       check_ptype' env (Sort KType) t;
-      check_ptype' (Env.bind_dec pos env y !t) (Sort KType) s
+      check_ptype' (Env.bind_dec pos env z !t) (Sort KType) s
   | SProd (y, t, a, s) -> 
+      let z = Env.choose_fresh env y in
+      let s = ptype_subst' y z s in
       check_ptype' env (Sort KType) t;
       check_term' env !t a;
-      check_ptype' (Env.bind_def pos env y !t !a) (Sort KType) s
+      check_ptype' (Env.bind_def pos env z !t !a) (Sort KType) s
 
 and check_ptype' env ptype ptype' = 
   check_ptype (Position.position ptype') env ptype (Position.value ptype')
@@ -154,10 +201,18 @@ and check_ptype' env ptype ptype' =
 and check_ptype_equal pos t1 t2 = 
   if not (ptype_equal t1 t2) then 
     type_error pos 
+      ~msg:(as_string 
+	      (fun fmt -> Format.fprintf fmt "@[%a <> %a@]@." 
+		 Print.ptype t1 Print.ptype t2)) 
+      ()
 
 and check_term_equal pos t1 t2 = 
   if not (term_equal t1 t2) then 
-    type_error pos 
+    type_error pos ~msg:
+      (as_string 
+	 (fun fmt -> Format.fprintf fmt "@[%a <> %a@]@." 
+	    Print.term t1 Print.term t2)) 
+      ()
   
 let patch (Patch s) = 
   check_ptype' Env.empty (Sort KType) s

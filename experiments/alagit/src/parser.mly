@@ -36,7 +36,7 @@ ptype: a=loc(term)
     (List.fold_left 
        (fun accu x -> 
 	  Position.with_pos (Position.position accu) (Prod (x, t, accu))) 
-       s xs)
+       s (List.rev xs))
 }
 | LPAREN x=ID EQUAL a=loc(term) COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
 {
