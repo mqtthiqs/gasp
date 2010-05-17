@@ -1,0 +1,5 @@
+(b : Type).
+(a : Type).
+(a : (a:Type).Type).
+(c = a b : Type).
+c

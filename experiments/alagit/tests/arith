@@ -13,8 +13,7 @@
 (t = add 2 2 : nat).
 (p = eq t 4  : prop).
 
-(commit : Type).
-(mark : nat -> commit).
+(mark : nat -> Type).
 
 (P : (t u : nat) . (p = eq t u : prop) . (q = le t u : prop) . mark 0).
 

@@ -17,12 +17,14 @@ else
   MENHIROPT=-yaccflag --explain 
 endif
 
+OCAMLBUILD_DEF = ocamlbuild -cflag "-dtypes" -tag debug -no-hygiene $(MENHIROPT)
+
 # In Emacs, use classic display to enable error jumping.
 TERM = $(shell echo $$TERM)
 ifeq ($(TERM), dumb)
- OCAMLBUILD = ocamlbuild -cflag "-dtypes" -tag debug -classic-display -no-hygiene $(MENHIROPT)
+ OCAMLBUILD = $(OCAMLBUILD_DEF) -classic-display
 else
- OCAMLBUILD = ocamlbuild -no-hygiene $(MENHIROPT)
+ OCAMLBUILD = $(OCAMLBUILD_DEF)
 endif
 
 OCAMLDOC = ocamldoc

@@ -1,0 +1,10 @@
+_build
+gasp
+gasp.native
+*.vo
+*.glob
+*.aux
+*.log
+*.pdf
+userInput.ml
+myocamlbuild_config.ml

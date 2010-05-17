@@ -1,0 +1,31 @@
+(* 
+ * Simply typed lambda-calculus, dependent version 
+ *)
+
+(* Language definition *)
+
+(type : Type).
+(nat : type).
+(arr : type -> type -> type).
+
+(env : Type).
+(nil : env).
+(cons : type -> env -> env).
+
+(var : env -> type -> Type).
+(o : (e:env).(a:type).(f=cons a e : env). var f a).
+(s : (a b : type).(e : env).(f=cons a e : env). var e b -> var f b).
+
+(term : env -> type -> Type).
+(V : (e:env).(a:type). var e a -> term e a).
+(L : (e:env).(a b:type).(c=arr a b : type).(f=cons a e:env). 
+   term f b -> term e c).
+(A : (e:env).(a b:type).(c=arr a b : type).
+   term e c -> term e a -> term e b).
+
+(* Definition of some terms *)
+
+(e1 = cons nat nil : env).
+(v1 = o nil nat : var e1 nat).		(* FIXME: type error here (shouldn't) *)
+
+Type

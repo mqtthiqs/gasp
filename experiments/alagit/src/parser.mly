@@ -11,8 +11,8 @@
 %token LPAREN RPAREN COLON EQUAL TYPE ARROW DOT
 %token<string> ID
 
-%right ARROW
 %right DOT
+%right ARROW
 %start<AST.patch> patch
 
 %%
