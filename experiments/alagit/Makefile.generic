@@ -34,8 +34,10 @@ HEADACHE = headache
 # Rules #
 #########
 
-.PHONY: configure all-generic byte opt doc clean dist install uninstall headers clear
+.PHONY: configure all-generic byte opt doc clean dist \
+	install uninstall headers clear all
 
+all : all-generic
 all-generic: configure clear $(STARGET) $(TARGET)
 
 $(TARGET):
