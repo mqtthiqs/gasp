@@ -29,8 +29,10 @@ let parse_file filename =
     ~input: filename
 
 let process filename = 
-  let ast = parse_file filename in
-  Check.patch ast
+  let (AST.Patch t) = parse_file filename in
+  let s = Check.infer_type Env.empty Subst.empty t in
+  Print.ptype Format.std_formatter (AST.Sort s);
+  Format.pp_print_newline Format.std_formatter()
 
 let _ =
   List.map process filenames

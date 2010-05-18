@@ -26,6 +26,26 @@
 (* Definition of some terms *)
 
 (e1 = cons nat nil : env).
-(v1 = o nil nat : var e1 nat).		(* FIXME: type error here (shouldn't) *)
+(v1 = o nil nat : var e1 nat).	        (* nat ⊢ nat *)
+(t1 = V e1 nat v1 : term e1 nat).	(* nat ⊢ nat *)
+(nn = arr nat nat : type).
+(t2 = L nil nat nat t1 : term nil nn).	(* ⊢ nat → nat *)
+
+(* The same parameterized by a base type *)
+
+(P : (a : type).
+     (e1 = cons a nil : env).
+     (v1 = o nil a : var e1 a).	        (* a ⊢ a *)
+     (t1 = V e1 a v1 : term e1 a).	(* a ⊢ a *)
+     (nn = arr a a : type).
+     (t2 = L nil a a t1 : term nil nn).	(* ⊢ a → a *)
+     Type).
+
+(* We can apply this "patch" to nn as well  *)
+
+(p = P nn : Type).			(* at this point inside the typing of 
+					   P nn, the environment contains a 
+					   derivation of 
+					   ⊢ (nat → nat) → (nat → nat) *)
 
 Type

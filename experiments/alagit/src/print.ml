@@ -24,3 +24,6 @@ and ptype' fmt t = ptype fmt !t
 let term fmt t = fprintf fmt "@[%a@]" term t
 
 let ptype fmt t = fprintf fmt "@[%a@]" ptype t
+
+let subst fmt s =
+  Subst.fold (fun n k () -> fprintf fmt "@[(%s -> %d)@]" n k) s ();

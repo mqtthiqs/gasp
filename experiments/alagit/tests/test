@@ -1,5 +1,5 @@
 (b : Type).
-(a : Type).
+(u : Type).
 (a : (a:Type).Type).
 (c = a b : Type).
 c

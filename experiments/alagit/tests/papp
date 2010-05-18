@@ -1,0 +1,8 @@
+(* Partial application test *)
+
+(A : Type).
+(b : A -> A -> Type).
+(a : A).
+(c = b a : A -> Type).
+
+b a a
