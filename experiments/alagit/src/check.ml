@@ -66,15 +66,38 @@ let rec equal_type env sigma t u =
 let check_equal pos sigma t u =
   (* no need to pass the whole env here as keys for open variables
      will be equal *)
+  (* Y: What are "open variables"? *)
+  (* Y: For the moment, I am not totally convinced that syntactic
+   * equality is enough for our purpose. In the interpretation of our
+   * types, I think that the symbol '=' should mean "provably equal"
+   * (with respect to the Coq underlying implementation of the
+   * metatheory). So, maybe we should add the possibility to decide if
+   * (F (X1, ..., XN) = G (Y1, ..., YM)) (efficiently using
+   * hash-consing for instance).  In practical terms, this means that
+   * each type that represents object-level term should be equipped
+   * with a decidable equality. 
+   * I don't know if this makes any sense but this idea is haunting my 
+   * mind for several days now. 
+   *)
   if equal_type Env.empty sigma t u then () else error_not_equal pos t u
 
 (* 
  * Type-checking
  *)
 
+(* Are [x1, ..., xn] correct formal arguments for a function of
+   type [P1. ... PM. T] where P is a product binder [(y : t).] or a
+   bounded product binder [(y : t = a).] under a given substition
+   sigma? *)
 let rec check_term pos env sigma al t = 
   match al,t with
     | _, SProd (y,t,a,u) ->
+	(* If there is an object "a" in the store, we can use its
+	   internal name as a concrete name for [y] without consuming
+	   a formal argument. 
+	   First, this is enforcing the invariant of (syntactic, not
+	   semantic) maximal sharing. Second, this is avoiding an
+	   explicit substitution of [a] for [y] in [u]. *)
 	let (k,env) = Env.bind_def env !t (Subst.keys_of sigma a) in
 	check_term (pos_of u) env (Subst.bind sigma y k) al !u
     | x::al, Prod (y,t,u) ->
@@ -84,9 +107,14 @@ let rec check_term pos env sigma al t =
 	let tx = Env.lookup env kx in
 	check_equal pos sigma tx !t;
 	check_term pos env (Subst.bind sigma y kx) al !u
-    | [], _ -> t, sigma
-    | x::_,_ -> error_not_a_product pos t x
+    | [], _ -> 
+	(* Partial application is allowed. *)
+	t, sigma
+    | x::_,_ -> 
+	(* Too many formal arguments for this function type. *)
+	error_not_a_product pos t x
 
+(* Is a sequence of application [F x1 ... xn] well-formed?  *)
 let infer_term pos env sigma a =
   let rec aux pos al = function
     | Var x -> 
@@ -94,9 +122,12 @@ let infer_term pos env sigma a =
 	  try Subst.lookup sigma x 
 	  with Not_found -> error_not_bound pos x in
 	check_term pos env sigma al (Env.lookup env kx)
-    | App (a,x) -> aux (pos_of a) (x::al) !a in
+    | App (a,x) -> 
+	aux (pos_of a) (x::al) !a in
   aux pos [] a
 
+(* Check that [t] is well-formed under the substitution [sigma] and 
+   the repos*)
 let rec infer_type env sigma t =
   match !t with
     | Sort KType -> KType
