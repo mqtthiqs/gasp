@@ -29,6 +29,10 @@ let error_not_a_sort pos t =
   type_error pos
     (fun fmt -> Format.fprintf fmt "@[The type of %a is not a sort.@]@." Print.ptype t)
 
+let error_not_bound pos x =
+  type_error pos
+    (fun fmt -> Format.fprintf fmt "@[Variable %s is not bound.@]@." x)
+
 (* 
  * Structural equality modulo α
  * Y: more generally, with respect to a substitution? 
@@ -74,17 +78,22 @@ let rec check_term pos env sigma al t =
 	let (k,env) = Env.bind_def env !t (Subst.keys_of sigma a) in
 	check_term (pos_of u) env (Subst.bind sigma y k) al !u
     | x::al, Prod (y,t,u) ->
-	let kx = Subst.lookup sigma x in
+	let kx = 
+	  try Subst.lookup sigma x 
+	  with Not_found -> error_not_bound pos x in
 	let tx = Env.lookup env kx in
-	check_equal (pos_of t) sigma tx !t;
-	check_term (pos_of u) env (Subst.bind sigma y kx) al !u
+	check_equal pos sigma tx !t;
+	check_term pos env (Subst.bind sigma y kx) al !u
     | [], _ -> t, sigma
     | x::_,_ -> error_not_a_product pos t x
 
 let infer_term pos env sigma a =
   let rec aux pos al = function
-    | Var x -> check_term pos env sigma al
-	(Env.lookup env (Subst.lookup sigma x))
+    | Var x -> 
+	let kx = 
+	  try Subst.lookup sigma x 
+	  with Not_found -> error_not_bound pos x in
+	check_term pos env sigma al (Env.lookup env kx)
     | App (a,x) -> aux (pos_of a) (x::al) !a in
   aux pos [] a
 

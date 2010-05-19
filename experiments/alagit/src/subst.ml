@@ -12,7 +12,7 @@ let bind sigma n k =
   (* Printf.printf "subst: binding %s to %d\n" n k; *)
   Idmap.add n k sigma
 
-let lookup sigma n = try Idmap.find n sigma with Not_found -> failwith ("not found "^n) (* DEBUG *)
+let lookup sigma n = Idmap.find n sigma
 
 let fold = Idmap.fold
 
