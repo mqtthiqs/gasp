@@ -31,6 +31,7 @@ let error_not_a_sort pos t =
 
 (* 
  * Structural equality modulo α
+ * Y: more generally, with respect to a substitution? 
  *)
 
 let rec equal_term sigma a b = 
@@ -41,19 +42,22 @@ let rec equal_term sigma a b =
     | _ -> false
 
 let rec equal_type env sigma t u = 
+  let equal_prod x t1 t2 y u1 u2 = 
+    equal_type env sigma !t1 !u1 &&
+      let (kx,env) = Env.bind_decl env x !t1 in
+      equal_type env (Subst.bind sigma y kx) !t2 !u2
+  in
   match t,u with
-    | Term a,Term b -> equal_term sigma !a !b
-    | Sort KType, Sort KType -> true
+    | Term a,Term b -> 
+	equal_term sigma !a !b
+    | Sort KType, Sort KType -> 
+	true
     | Prod (x,t1,t2), Prod (y,u1,u2) -> 
-	equal_type env sigma !t1 !u1 &&
-	  let (kx,env) = Env.bind_decl env x !t1 in
-	  equal_type env (Subst.bind sigma y kx) !t2 !u2
+	equal_prod x t1 t2 y u1 u2 
     | SProd (x,t1,a,t2), SProd (y,u1,b,u2) ->
-	equal_type env sigma !t1 !u1 &&
-	  equal_term sigma !a !b &&
-	  let (kx,env) = Env.bind_decl env x !t1 in
-	  equal_type env (Subst.bind sigma y kx) !t2 !u2
-    | _ -> false
+	equal_prod x t1 t2 y u1 u2 && equal_term sigma !a !b
+    | _ -> 
+	false
 
 let check_equal pos sigma t u =
   (* no need to pass the whole env here as keys for open variables
