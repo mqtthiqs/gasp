@@ -1,0 +1,10 @@
+
+(nat : Type).
+(o : nat).
+(s : nat -> nat).
+
+(P : nat -> Type).
+
+(B : (n : nat).(sn = s n : nat). P sn).
+
+Type

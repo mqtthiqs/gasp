@@ -23,11 +23,20 @@
 (A : (e:env).(a b:type).(c=arr a b : type).
    term e c -> term e a -> term e b).
 
+(* Weakening here is just another rule, no way to prove it is admissible *)
+(W : (e:env).(a b:type).(f=cons b e : env).
+     term e a -> term f a).
+
 (* Definition of some terms *)
 
 (e1 = cons nat nil : env).
 (v1 = o nil nat : var e1 nat).	        (* nat ⊢ nat *)
 (t1 = V e1 nat v1 : term e1 nat).	(* nat ⊢ nat *)
+
+(e2 = cons nat e1 : env).
+(t1w = W e1 nat nat t1 : term e2 nat). (* nat,nat ⊢ nat *)
+(* But t1w is not decomposable into a V rule, since W doesn't compute *)
+
 (nn = arr nat nat : type).
 (t2 = L nil nat nat t1 : term nil nn).	(* ⊢ nat → nat *)
 

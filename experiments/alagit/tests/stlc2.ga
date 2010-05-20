@@ -1,0 +1,68 @@
+(* 
+ * Simply typed lambda-calculus, non-dependent version 
+ *)
+
+(* Language definition *)
+
+(nat : Type).
+(o : nat).
+(s : nat -> nat).
+
+(type : Type).
+(base : type).
+(arr : type -> type -> type).
+
+(env : Type).
+(nil : env).
+(cons : type -> env -> env).
+
+(term : Type).
+(var : nat -> term).
+(lam : term -> term).
+(app : term -> term -> term).
+
+(* Typing rules *)
+
+(lookup : env -> nat -> type -> Type).
+(lookup_o : (e : env).(a : type).(f = cons a e : env). lookup e o a).
+
+(lookup_s : (e : env).(a b : type).(n : nat).(sn = s n : nat).(f = cons a e : env).
+            lookup e n b -> lookup f sn b).
+
+(of : env -> term -> type -> Type).
+(of_var : (e : env).(a : type).(n : nat).(v = var n : term).
+          lookup e n a -> of e v a).
+(of_lam : (e : env).(t : term).(a b: type).(c = arr a b : type).
+          (u = lam t : term).(f = cons a e : env).
+          of f t b -> of e u c).
+(of_app : (e : env).(t u: term).(a b: type).
+          (c = arr a b : type).(v = app t u : term).
+          of e t c -> of e u a -> of e v b).
+
+(* Construction of some terms *)
+
+(1 = s o : nat).(v0 = var o : term).(v1 = var 1 : term).
+(t3 = lam v0 : term).(ch0 = lam t3 : term).    (* this is church's 0 *)
+(t1 = app v0 v1 : term).(t2 = lam t1 : term).
+(t4 = lam t2 : term).                          (* this is church's 1 *)
+
+(bb = arr base base : type).
+(e0 = cons bb nil : env).
+(e1 = cons base e0 : env).
+(d0 = lookup_o e1 base : lookup e1 o base).        (* a→a, a ⊢ 0 : a *)
+(d1 = of_var e1 base o d0 : of e1 v0 base).	   (* a→a, a ⊢ 0 : a *)
+(d2 = of_lam e0 v0 base base d1 : of e0 t3 bb).    (* a→a ⊢ λ0 : a → a *)
+(bbb = arr bb bb : type).
+(d3 = of_lam nil t3 bb bb d2 : of nil ch0 bbb).    (* ⊢ λλ0 : (a→a)→(a→a) *)
+
+(g1 = lookup_o e0 bb : lookup e0 o bb).
+(g2 = lookup_s e0 base bb o g1 : lookup e1 1 bb).
+(g3 = of_var e1 bb 1 g2 : of e1 v1 bb).	           (* a→a, a ⊢ 1 : a→a *)
+(t5 = app v1 v0 : term).
+(g4 = of_app e1 v1 v0 base base g3 d1 : of e1 t5 base). (* ... ⊢ 1 0 : a *)
+(t6 = lam t5 : term).
+(g5 = of_lam e0 t5 base base g4 : of e0 t6 bb).    (* a→a ⊢ λ(1 0) : a→a *)
+(t7 = lam t6 : term).
+(g6 = of_lam nil t6 bb bb g5 : of nil t7 bbb).	   (* ⊢ λλ(1 0) : (a→a)→a→a  *)
+
+Type
