@@ -48,7 +48,7 @@ let rec equal_term sigma a b =
 let rec equal_type env sigma t u = 
   let equal_prod x t1 t2 y u1 u2 = 
     equal_type env sigma !t1 !u1 &&
-      let (kx,env) = Env.bind_decl env x !t1 in
+      let (kx,env) = Env.bind_decl env !t1 in
       equal_type env (Subst.bind sigma y kx) !t2 !u2
   in
   match t,u with
@@ -137,7 +137,7 @@ let rec infer_type env sigma t =
 	   | _ -> error_not_a_sort (pos_of a) (Term a))
     | Prod (x,t,u) -> 
 	ignore (infer_type env sigma t); (* only one sort *)
-	let (k,env) = Env.bind_decl env x !t in
+	let (k,env) = Env.bind_decl env !t in
 	infer_type env (Subst.bind sigma x k) u
     | SProd (x,t,a,u) ->
 	ignore (infer_type env sigma t); (* only one sort *)
@@ -145,4 +145,3 @@ let rec infer_type env sigma t =
 	check_equal (pos_of t) sigma ta !t;
 	let (k,env) = Env.bind_def env !t (Subst.keys_of sigma a) in
 	infer_type env (Subst.bind sigma x k) u
-
