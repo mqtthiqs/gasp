@@ -1,9 +1,12 @@
+GASP=../gasp
 
-check:
-	@for i in *.ga; do            \
-	  echo -n " * Test" $$i... ""; \
-	  ../gasp $$i;                  \
-	  if [ $$? != 0 ]; then          \
-	    exit 1;                       \
-	  fi;                              \
-	done
+.PHONY: check
+
+check: $(addsuffix .out,$(wildcard *.ga))
+clean:
+	rm *.out
+
+%.ga.out: %.ga
+	@echo -n " * Test" $<... ""; \
+	LOG=`$(GASP) $<` && \
+	echo $$LOG > $<.out && echo OK
