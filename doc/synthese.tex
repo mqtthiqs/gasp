@@ -1,0 +1,47 @@
+\documentclass{article}
+\usepackage[francais]{babel}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+
+\title{Synthèse des idées sur \textsc{Gasp}}
+
+Ce document synthétise les idées sur le développement du
+\textit{framework} de patchs sémantiques \textsc{Gasp}, dans le but de
+décider efficacement des directions de recherche à explorer.
+
+\section{Le noyau}
+
+\section{Les outils}
+
+\subsection{Édition avec historique}
+
+\subsubsection{Édition \textit{via} des vues}
+
+La syntaxe concrète au choix. Un choix intéressant~: les constructeurs des termes du langage,
+des noms pour des transformations locales (de refactoring), des annotations d'aide à la 
+reconstruction de l'objet interne (généralisation des annotations de type dans le cas
+de l'inférence de type). 
+
+\subsubsection{Algorithme de \textit{diff}}
+
+Un outil pour l'incrémentalité. Une application du cadre de la programmation bidirectionnelle (?). 
+
+\subsection{Développement collaboratif}
+
+Qu'est-ce qu'une branche? Qu'un merge? Toutes les opérations de \textsc{Git}, de \textsc{Darcs}? 
+Une hypothèse~: la métathéorie du langage de patchs
+fournit des outils méta semblant capturer ces notions. Une auto-application du système
+fait apparaître un langage de description de l'évolution d'un ensemble d'historique. 
+
+\subsection{Unification du système de modules (de seconde classe) et du système de construction}
+
+\section{Certification en \textsc{Coq}}
+
+Coq pour donner une interprétation au langage et pour construire un noyau de primitives
+certifiées sur lesquelles on peut s'appuyer pour construire des transformations plus 
+complexes. 
+
+\section{Plan d'attaque}
+
+\end{document}
