@@ -33,6 +33,14 @@ let error_not_bound pos x =
   type_error pos
     (fun fmt -> Format.fprintf fmt "@[Variable %s is not bound.@]@." x)
 
+let error_prod_rule pos s1 s2 =
+  type_error pos
+    (fun fmt -> Format.fprintf fmt "@[Product (%a,%a,_) is not available.@]@." Print.sort s1 Print.sort s2)
+
+let error_type_kind pos s =
+  type_error pos
+    (fun fmt -> Format.fprintf fmt "@[%a has no type.@]@." Print.sort s)
+
 (* 
  * Structural equality modulo α
  * Y: more generally, with respect to a substitution? 
@@ -54,8 +62,7 @@ let rec equal_type env sigma t u =
   match t,u with
     | Term a,Term b -> 
 	equal_term sigma !a !b
-    | Sort KType, Sort KType -> 
-	true
+    | Sort s1, Sort s2 -> s1 = s2
     | Prod (x,t1,t2), Prod (y,u1,u2) -> 
 	equal_prod x t1 t2 y u1 u2 
     | SProd (x,t1,a,t2), SProd (y,u1,b,u2) ->
@@ -126,22 +133,35 @@ let infer_term pos env sigma a =
 	aux (pos_of a) (x::al) !a in
   aux pos [] a
 
+let prod_rule = function
+  | _,s -> s				(* PTS total *)
+
+let axiom_rule = function
+  | KType -> KKind
+  | _ -> raise Not_found
+
 (* Check that [t] is well-formed under the substitution [sigma] and 
    the repos*)
-let rec infer_type env sigma t =
-  match !t with
-    | Sort KType -> KType
-    | Term a -> 
+let rec infer_type env sigma ty =
+  match !ty with
+    | Sort s ->
+	(try axiom_rule s
+	with Not_found -> error_type_kind (pos_of ty) s)
+    | Term a ->
 	(match fst (infer_term (pos_of a) env sigma !a) with
 	   | Sort s -> s
 	   | _ -> error_not_a_sort (pos_of a) (Term a))
     | Prod (x,t,u) -> 
-	ignore (infer_type env sigma t); (* only one sort *)
+	let s1 = infer_type env sigma t in
 	let (k,env) = Env.bind_decl env !t in
-	infer_type env (Subst.bind sigma x k) u
+	let s2 = infer_type env (Subst.bind sigma x k) u in
+	(try prod_rule (s1,s2)
+	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)
     | SProd (x,t,a,u) ->
-	ignore (infer_type env sigma t); (* only one sort *)
+	let s1 = infer_type env sigma t in
 	let (ta,sigma) = infer_term (pos_of a) env sigma !a in
 	check_equal (pos_of t) sigma ta !t;
 	let (k,env) = Env.bind_def env !t (Subst.keys_of sigma a) in
-	infer_type env (Subst.bind sigma x k) u
+	let s2 = infer_type env (Subst.bind sigma x k) u in
+	(try prod_rule (s1,s2) 
+	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)

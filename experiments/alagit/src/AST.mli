@@ -8,6 +8,7 @@ and term' = term Position.located
 
 type sort = 
   | KType
+  | KKind
 
 type ptype = 
   | Term  of term'

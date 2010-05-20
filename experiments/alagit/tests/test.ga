@@ -2,4 +2,4 @@
 (u : Type).
 (a : (a:Type).Type).
 (c = a b : Type).
-c
+Type

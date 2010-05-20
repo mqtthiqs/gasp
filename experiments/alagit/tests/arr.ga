@@ -1,3 +1,4 @@
 (a:(t:Type). Type -> (u:Type). Type -> Type).
 (b:Type).
-a b b b b
+(x : a b b b b).
+Type

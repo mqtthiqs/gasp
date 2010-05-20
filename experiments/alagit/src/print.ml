@@ -9,11 +9,15 @@ let rec term fmt = function
 
 and term' fmt t = term fmt !t
 
+let rec sort fmt = function
+  | KType -> fprintf fmt "Type"
+  | KKind -> fprintf fmt "Kind"
+
 let rec ptype fmt = function
   | Term t -> 
       fprintf fmt "@[%a@]" term' t
-  | Sort KType -> 
-      fprintf fmt "Type"
+  | Sort s ->
+      fprintf fmt "@[%a@]" sort s
   | Prod (x, t, s) -> 
       fprintf fmt "@[@[(%s : %a).@]@,@[%a@]@]" x ptype' t ptype' s
   | SProd (x, t, a, s) -> 
