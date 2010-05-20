@@ -99,7 +99,7 @@ let rec check_term pos env sigma al t =
 	   semantic) maximal sharing. Second, this is avoiding an
 	   explicit substitution of [a] for [y] in [u]. *)
 	let (k,env) = Env.bind_def env !t (Subst.keys_of sigma a) in
-	check_term (pos_of u) env (Subst.bind sigma y k) al !u
+	check_term pos env (Subst.bind sigma y k) al !u
     | x::al, Prod (y,t,u) ->
 	let kx = 
 	  try Subst.lookup sigma x 

@@ -5,7 +5,7 @@ module Intmap = Map.Make(struct type t = key let compare = Pervasives.compare en
 type t = ptype Intmap.t
 let empty = Intmap.empty
 
-let lookup env k = try Intmap.find k env with Not_found -> failwith ("not found "^string_of_int k) (* DEBUG *)
+let lookup env k = Intmap.find k env
   
 (* TODO Comparer les types *)
 let bind_decl env n t = 
