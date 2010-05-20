@@ -17,7 +17,7 @@ else
   MENHIROPT=-yaccflag --explain 
 endif
 
-OCAMLBUILD_DEF = ocamlbuild -cflag "-dtypes" -tag debug -no-hygiene $(MENHIROPT)
+OCAMLBUILD_DEF = ocamlbuild -cflags "-dtypes","-warn-error","A" -tag debug -no-hygiene $(MENHIROPT)
 
 # In Emacs, use classic display to enable error jumping.
 TERM = $(shell echo $$TERM)
@@ -35,9 +35,9 @@ HEADACHE = headache
 #########
 
 .PHONY: configure all-generic byte opt doc clean dist \
-	install uninstall headers clear all
+	install uninstall headers clear all check
 
-all : all-generic
+all : all-generic check
 all-generic: configure clear $(STARGET) $(TARGET)
 
 $(TARGET):
@@ -79,7 +79,8 @@ headers:
 clean:
 	@ $(OCAMLBUILD) -clean
 	find -name '*~' -exec rm '{}' \;
-	rm -fr *~ $(TARGET) $(PACKAGE) $(PACKAGE).tar.gz
+	rm -fr *~ $(TARGET) $(PACKAGE) $(PACKAGE).tar.gz; \
+	rm -f tests/*.out
 
 doc: byte
 	$(OCAMLBUILD) $(TARGET).docdir/index.html
@@ -99,5 +100,4 @@ dist:
         done
 	tar cvfz $(PACKAGE).tar.gz $(PACKAGE)
 
-check: all
-	$(MAKE) -C tests check
+check: $(TARGET) $(addsuffix .out,$(wildcard tests/*.ga))

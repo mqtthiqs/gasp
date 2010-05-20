@@ -6,3 +6,7 @@ TARGET    = gasp
 TARGETEXT = gasp
 PACKAGE   = gasp-$(VERSION)
 
+%.ga.out: %.ga
+	@echo " * Test" $<.; \
+	LOG=`./$(TARGET) $<` && \
+	echo $$LOG > $<.out
