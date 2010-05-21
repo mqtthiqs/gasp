@@ -17,4 +17,4 @@
 
 (P : (t u : nat) . (p = eq t u : prop) . (q = le t u : prop) . mark 0).
 
-Type
+mark 4
