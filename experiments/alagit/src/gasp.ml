@@ -46,12 +46,14 @@ let parse_arith filename =
 
 let process_arith filename =
   let e = parse_arith filename in
-  print_string"done\n";flush_all();
-  Print.arith Format.std_formatter e
+  let t = Arith.reify e in
+  let (_,s) = Check.infer_type Env.empty t in
+  Print.ptype Format.std_formatter (AST.Sort s);
+  Format.pp_print_newline Format.std_formatter()
 
 let process filename = 
   let (AST.Patch t) = parse_file filename in
-  let s = Check.infer_type Env.empty t in
+  let (_,s) = Check.infer_type Env.empty t in
   Print.ptype Format.std_formatter (AST.Sort s);
   Format.pp_print_newline Format.std_formatter()
 

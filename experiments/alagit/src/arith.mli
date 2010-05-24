@@ -10,3 +10,5 @@ type expr =
   | Eq of expr * expr
   | Neq of expr * expr
   | Le of expr * expr
+
+val reify : expr -> AST.ptype'
