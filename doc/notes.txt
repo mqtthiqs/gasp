@@ -1,6 +1,151 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Fri May 21 17:44:10 CEST 2010
+
+
+Cher journal,
+
+Discussion téléphonique aujourd'hui sur plusieurs aspects tournant
+autour du noyau actuel (alagit), et directions pour la suite:
+
+- explications de Yann sur l'embryon de système de "mémoisation de
+calculs",
+
+- mise en évidence des différences conceptuelles de ce système avec
+  celui du noyau programmé,
+
+- clarification sur la différence entre un système qui calcule et un
+  système purement syntaxique,
+
+- décisions sur la direction des travaux.
+
+
+1/ Le système de Yann (mail du 12/5/2010):
+
+
+Il s'agit d'une variante du système précédent, où le typage est vu
+comme la vérification d'une solution vis-à-vis d'un problème. Les deux
+différences fondamentales sont:
+
+- qu'il prend en compte le fait que la réduction d'un problème à un
+autre se réduit potentiellement vers une solution "canonique".
+
+- et qu'un problème n'est pas une seule entité syntaxique, mais une
+classe d'équivalence, au moyen une égalité ad-hoc donnée.
+
+Il est paramétré par:
+
+- un ensemble P de problèmes (les atomes dans le système
+d'avant). Appliqués à d'autres problèmes ils forment des instances τ.
+
+- un ensemble F de réduction de problèmes (procédures de décision ou
+règles de typage du langage objet)
+
+- Pour chaque problème, deux fonctions Ψ et φ, de décision d'égalité
+entre deux instances et de destruction d'une solution en ses
+sous-problèmes.
+
+- Un prédicat singleton τ → bool, décidant si une instance a une
+unique solution (autrement dit si toutes les solutions sont
+équivalentes, sorte de proof-irrelevance).
+
+Le typage consiste à vérifier si un ensemble de déclarations et
+définitions de solutions à des instances de problème est valide, et en
+même temps si ces instances ont déjà des solutions définies plus tôt,
+de façon à les réutiliser. Si ce n'est pas le cas, on cherche une
+solution équivalente (pour φ), ou sinon on évalue un pas la solution
+proposée et en recommence récursivement le processus. Si et seulement
+si la solution est totalement inconnue, on l'ajoute à l'environnement
+courant.
+
+
+2/ Système syntaxique / système avec calcul.
+
+
+Le système actuellement implémenté a deux caractéristique disjointe et
+indépendantes:
+
+- il est purement syntaxique, parce que les objets déclarés sont de
+purs noms. Un exemple: définissant le λ-calcul simplement typé dans
+notre système (fichier stlc.v), rajouter une déclaration Weak de type
+(Γ⊢t:A → Γ,B⊢t:A), c'est rajouter une règle supplémentaire, on ne peut
+pas montrer qu'elle est admissible. On ne pourra pas détruire Weak(Γ,A
+⊢ t u : B) en App(Γ⊢t:CB, Γ⊢u:C).
+
+- il implémente le partage maximal. Ceci est fait en "découpant" les
+termes profonds en leur noeuds applicatifs, et donnant des noms (et
+des types) à chacuns de ces résultats intermédiaires.
+
+Découper c'est n'autoriser que des termes applicatifs plats, nommer
+les résultats intermédiaires c'est introduire un produit spécial
+contenant ces termes plats.
+
+
+Il a été dit qu'il existe plusieurs façons d'introduire du calcul dans
+le système:
+
+- mode externaliste: En dehors du système, une déclaration (un nom)
+est associé à un programme récursif – un client, en caml par exemple –
+qui construit un terme du système automatiquement. Ce programme est
+paramétré par son appel récursif, de façon à ce qu'à chaque appel
+récursif, le système puisse vérifier s'il n'a pas déjà une solution
+calculée pour le problème en cours. Dans ce sens, c'est la solution
+qui se rapproche le plus du système de Yann.
+
+- mode internaliste: On étend le système avec du vrai calcul, à la
+façon des PTS. Par exemple, on prend un PTS qu'on restreint avec une
+application seulement à des variables, et qu'on étend avec le produit
+singleton (règles de typage habituelles, y compris conversion):
+
+t ::= x | (x:t).t | (x=t:t).t | λx:t.t | t x | s
+
+On pourrait y définir un terme dont le type est celui du weakening,
+dont l'application à une dérivation se réduirait vraiment vers une
+autre dérivation.
+
+
+Remarque: Dans ce cadre intéressant, il me semble que hash-consing et
+mémoïsation se confondent élégemment: traditionellement, le
+hash-consing est le partage de sous-termes égaux, et la mémoïsation
+est le partage de résultats de calculs. Dans un PTS comme décrit plus
+haut, un sous-terme devra être indexé (hash-consé) modulo son calcul,
+c'est-à-dire que s'il réapparaît plus tard, on aura sa valeur
+normale. Ce point est à développer quand on y arrivera.
+
+
+3/ Directions des travaux
+
+
+Il a été conclu de s'intéresser d'abord au système sans calcul, qui
+présente déjà des difficultés:
+
+- Que doit-on représenter comme un terme dans notre système:
+uniquement de la syntaxe? des "patches"? des commits? des branches?
+Quel choix d'univers adopter (conséquence des choix précédents)?
+
+- Que nous apportera le bootstrapping? A-t-on besoin de constructions
+spéciales (p.ex. de hashing) pour le définir à l'intérieur de
+lui-même?
+
+- Comment définir l'inférence de type d'un langage "à la Curry"? Si
+toutes les informations de typages ne sont pas dans la syntaxe, un
+algorithme doit être en charge de les inférer.
+
+- Quelle interface utilisateur pour le système?
+
+
+Deux directions parallèles donc:
+
+- Reflexion sur l'interface utilisateur du système, pour avoir une
+spécification claire. Dans synthèse.tex (?)
+
+- Implémentation d'un langage objet "à la Church", le lambda-calcul
+simplement typé p.ex. Cela comprend: parseur/pretty-printer,
+conversion des termes dans l'AST du système, et après voir...
+
+
+
 Mon Mar  8, 2010 11:35 AM
 
 
