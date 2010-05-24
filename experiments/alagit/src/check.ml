@@ -142,25 +142,25 @@ let axiom_rule = function
 let rec infer_type env ty =
   match !ty with
     | Sort s ->
-	(try axiom_rule s
-	 with Not_found -> error_type_kind (pos_of ty) s)
+	env, (try axiom_rule s
+	      with Not_found -> error_type_kind (pos_of ty) s)
     | Term a ->
-	(match fst (infer_term (pos_of a) env !a) with
+	env, (match fst (infer_term (pos_of a) env !a) with
 	   | Sort s -> s
 	   | _ -> error_not_a_sort (pos_of a) (Term a))
     | Prod (x,t,u) -> 
-	let s1 = infer_type env t in
+	let (_,s1) = infer_type env t in
 	let env = Env.bind_decl env x !t in
-	let s2 = infer_type env u in
-	(try prod_rule (s1,s2)
-	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+	let (env,s2) = infer_type env u in
+	env, (try prod_rule (s1,s2)
+	     with Not_found -> error_prod_rule (pos_of ty) s1 s2)
     | SProd (x,t,a,u) ->
-	let s1 = infer_type env t in
+	let (_,s1) = infer_type env t in
 	(let (ta,env) = infer_term (pos_of a) env !a in
 	 check_equal (pos_of t) env ta !t); (* parenthesis are important: 
 						 env is only used to check 
 						 equality, not for the rest *)
 	let env = Env.bind_def env x !a !t in
-	let s2 = infer_type env u in
-	(try prod_rule (s1,s2) 
-	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+	let (env,s2) = infer_type env u in
+	env, (try prod_rule (s1,s2) 
+	      with Not_found -> error_prod_rule (pos_of ty) s1 s2)
