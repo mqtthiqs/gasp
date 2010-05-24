@@ -10,3 +10,8 @@ PACKAGE   = gasp-$(VERSION)
 	@echo " * Test" $<.; \
 	LOG=`./$(TARGET) $<` && \
 	echo $$LOG > $<.out
+
+%.ar.out: %.ar
+	@echo " * Test" $<.; \
+	LOG=`./$(TARGET) $<` && \
+	echo $$LOG > $<.out

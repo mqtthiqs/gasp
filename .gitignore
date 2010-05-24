@@ -8,4 +8,4 @@ gasp.native
 *.pdf
 userInput.ml
 myocamlbuild_config.ml
-experiments/alagit/tests/*.ga.out
+experiments/alagit/tests/*.out

@@ -31,3 +31,17 @@ let ptype fmt t = fprintf fmt "@[%a@]" ptype t
 
 (* let subst fmt s = *)
 (*   Subst.fold (fun n k () -> fprintf fmt "@[(%s -> %d)@]" n (Obj.magic k)) s (); *)
+
+open Arith
+
+let rec arith fmt = function
+  | O -> fprintf fmt "O"
+  | S a -> fprintf fmt "@[(S %a)@]" arith a
+  | And (a,b) -> fprintf fmt "@[(%a and %a)@]" arith a arith b
+  | Or (a,b) -> fprintf fmt "@[(%a or %a)@]" arith a arith b
+  | Impl (a,b) -> fprintf fmt "@[(%a -> %a)@]" arith a arith b
+  | Plus (a,b) -> fprintf fmt "@[(%a + %a)@]" arith a arith b
+  | Minus (a,b) -> fprintf fmt "@[(%a - %a)@]" arith a arith b
+  | Eq (a,b) -> fprintf fmt "@[(%a = %a)@]" arith a arith b
+  | Neq (a,b) -> fprintf fmt "@[(%a /= %a)@]" arith a arith b
+  | Le (a,b) -> fprintf fmt "@[(%a <= %a)@]" arith a arith b
