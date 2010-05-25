@@ -5,23 +5,25 @@ let ( ! ) = Position.value
 
 let rec term fmt = function
   | Var x -> fprintf fmt "@[%s@]" x
-  | App (t, x) -> fprintf fmt "@[%a @,@[%s@]@]" term' t x
-
-and term' fmt t = term fmt !t
+  | App (t, x) -> fprintf fmt "@[%a @,@[%s@]@]" term t x
 
 let rec sort fmt = function
   | KType -> fprintf fmt "Type"
   | KKind -> fprintf fmt "Kind"
 
-let rec ptype fmt = function
+let rec head fmt = function
   | Term t -> 
-      fprintf fmt "@[%a@]" term' t
+      fprintf fmt "@[%a@]" term t
   | Sort s ->
       fprintf fmt "@[%a@]" sort s
+
+let rec ptype fmt = function
+  | Head h -> 
+      fprintf fmt "@[%a@]" head h
   | Prod (x, t, s) -> 
       fprintf fmt "@[@[(%s : %a).@]@,@[%a@]@]" x ptype' t ptype' s
-  | SProd (x, t, a, s) -> 
-      fprintf fmt "@[@[(%s = %a : %a).@]@,%a@]" x term' a ptype' t ptype' s
+  | SProd (x, a, s) -> 
+      fprintf fmt "@[@[(%s = %a).@]@,%a@]" x term !a ptype' s
 
 and ptype' fmt t = ptype fmt !t
 

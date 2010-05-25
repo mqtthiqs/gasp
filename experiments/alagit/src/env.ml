@@ -2,59 +2,49 @@ open AST
 
 type key = int
 
-module Env = struct
-  module Intmap = Map.Make(struct type t = key let compare = Pervasives.compare end)
-  type t = ptype Intmap.t
-  let empty = Intmap.empty
-  let lookup env k = Intmap.find k env
-    
-  let bind env k t =
-    try ignore (Intmap.find k env); k,env
-    with Not_found -> k, Intmap.add k t env
-      
-  (* TODO être sûr qu'on utilise tous les bits *)
-  let bind_decl env t = bind env (Random.bits()) t
-    
-  (* Warning: to be correct, the hash function should respect [forall a
-     tl, hash(a::tl) = hash(hash a, hash tl)] to ensure that partial
-     application is treated correctly (see papp.ga) *)
-  let bind_def env t a = bind env (Hashtbl.hash a) t
-end
+module Intmap = Map.Make(struct type t = key let compare = Pervasives.compare end)
+module Idmap = Map.Make(struct type t = id let compare = Pervasives.compare end)
 
-module Subst = struct
-  module Idmap = Map.Make(struct type t = id let compare = Pervasives.compare end)
-  type t = key Idmap.t
-  let empty = Idmap.empty
-  let bind sigma n k = 
-    Idmap.add n k sigma
-  let lookup sigma n = Idmap.find n sigma
+type t = {
+  env : j Intmap.t;
+  sigma : key Idmap.t;
+  free : j list
+}
+and j = t * head
 
+let empty = {
+  env = Intmap.empty; 
+  sigma = Idmap.empty;
+  free = [];
+}
+
+let keys_of sigma a = 
   let rec fold_app f acc = function
     | Var x -> f x acc
-    | App (a,x) -> f x (fold_app f acc (Position.value a))
-  let keys_of sigma a = 
-    fold_app (fun x acc -> lookup sigma x::acc) [] a
-end
+    | App (a,x) -> f x (fold_app f acc a) in
+  fold_app (fun x acc -> Idmap.find x sigma::acc) [] a
 
-type t = (Env.t * Subst.t)
-let empty = (Env.empty, Subst.empty)
+let bind_def env x a t =
+  let k = Hashtbl.hash (keys_of env.sigma a) in
+  { env with 
+      env = Intmap.add k t env.env; 
+      sigma = Idmap.add x k env.sigma }
 
-let bind_def (env,sigma) x a t =
-  let (k,env) = Env.bind_def env t (Subst.keys_of sigma a) in
-  (env, Subst.bind sigma x k)
+let bind_decl env x t =
+  let k = Random.bits() in
+  { env = Intmap.add k t env.env;
+    sigma = Idmap.add x k env.sigma;
+    free = t :: env.free }
 
-let bind_decl (env,sigma) x t =
-  let (k,env) = Env.bind_decl env t in
-  (env, Subst.bind sigma x k)
+let lookup env x =
+  Intmap.find (Idmap.find x env.sigma) env.env
 
-let lookup (env,sigma) x =
-  Env.lookup env (Subst.lookup sigma x)
+let equal env x y =
+  Idmap.find x env.sigma = Idmap.find y env.sigma
 
-let equal (env,sigma) x y =
-  Subst.lookup sigma x = Subst.lookup sigma y
+let lookup_and_link env x y =
+  let k = Idmap.find x env.sigma in
+  let t = Intmap.find k env.env in
+  { env with sigma = Idmap.add y k env.sigma }, t
 
-let lookup_and_bind (env,sigma) x y =
-  let k = Subst.lookup sigma x in
-  let t = Env.lookup env k in
-  let sigma = Subst.bind sigma y k in
-  (env,sigma), t
+let free env = env.free

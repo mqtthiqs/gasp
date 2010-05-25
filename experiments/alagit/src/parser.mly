@@ -22,13 +22,13 @@ patch: t=loc(ptype) EOF
   Patch t
 }
 
-ptype: a=loc(term)
+ptype: a=term
 {
-  Term a
+  Head(Term a)
 }
 | s=sort
 {
-  Sort s
+  Head(Sort s)
 }
 | LPAREN xs=ID+ COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
 {
@@ -38,9 +38,9 @@ ptype: a=loc(term)
 	  Position.with_pos (Position.position accu) (Prod (x, t, accu))) 
        s (List.rev xs))
 }
-| LPAREN x=ID EQUAL a=loc(term) COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
+| LPAREN x=ID EQUAL a=loc(term) RPAREN DOT s=loc(ptype)
 {
-  SProd (x, t, a, s)
+  SProd (x, a, s)
 }
 | t1=loc(ptype) ARROW t2=loc(ptype)
 {
@@ -51,7 +51,7 @@ term: x=ID
 {
   Var x
 }
-| t=loc(term) x=ID
+| t=term x=ID
 {
   App (t, x)
 }

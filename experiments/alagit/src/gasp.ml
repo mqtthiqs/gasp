@@ -31,7 +31,7 @@ let parse_file filename =
 let process filename = 
   let (AST.Patch t) = parse_file filename in
   let (_,s) = Check.infer_type Env.empty t in
-  Print.ptype Format.std_formatter (AST.Sort s);
+  Print.sort Format.std_formatter s;
   Format.pp_print_newline Format.std_formatter()
 
 let _ =
