@@ -1,0 +1,5 @@
+(A B C : Type).
+(a : A). (b : B). (c : C).
+(P : A -> B -> C -> Type).
+(x : P a b c).
+Type

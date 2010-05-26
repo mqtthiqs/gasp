@@ -1,5 +1,13 @@
+(P : Type -> Type -> Type -> Type).
+(A : Type).
+(a = P A).
+(b = a A).
+Type
+
+(*
 (b : Type).
 (u : Type).
 (a : (a:Type).Type).
-(c = a b : Type).
+(c = a b).
 Type
+*)

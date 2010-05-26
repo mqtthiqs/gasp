@@ -5,6 +5,6 @@
 
 (P : nat -> Type).
 
-(B : (n : nat).(sn = s n : nat). P sn).
+(B : (n : nat).(sn = s n). P sn).
 
 Type

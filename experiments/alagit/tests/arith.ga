@@ -15,6 +15,6 @@
 
 (mark : nat -> Type).
 
-(P : (t u : nat) . (p = eq t u) . (q = le t u) . mark 0).
+(P : (t u : nat) . (p = eq t u) . (q = le t u) . mark 1).
 
-mark 4
+mark 2

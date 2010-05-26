@@ -31,5 +31,10 @@ let term fmt t = fprintf fmt "@[%a@]" term t
 
 let ptype fmt t = fprintf fmt "@[%a@]" ptype t
 
-(* let subst fmt s = *)
-(*   Subst.fold (fun n k () -> fprintf fmt "@[(%s -> %d)@]" n (Obj.magic k)) s (); *)
+let rec env fmt e =
+  try
+    let (e,k) = Env.pop_decl e in
+    judg fmt (Env.lookup_key e k); fprintf fmt ","; env fmt e
+  with Env.Empty -> ()
+and judg fmt (e,h:Env.j) : unit = 
+    fprintf fmt "@[(%a ⊢ %a)@]" env e head h

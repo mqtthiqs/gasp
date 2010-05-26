@@ -13,46 +13,46 @@
 (cons : type -> env -> env).
 
 (var : env -> type -> Type).
-(o : (e:env).(a:type).(f=cons a e : env). var f a).
-(s : (a b : type).(e : env).(f=cons a e : env). var e b -> var f b).
+(o : (e:env).(a:type).(f=cons a e). var f a).
+(s : (a b : type).(e : env).(f=cons a e). var e b -> var f b).
 
 (term : env -> type -> Type).
 (V : (e:env).(a:type). var e a -> term e a).
-(L : (e:env).(a b:type).(c=arr a b : type).(f=cons a e:env). 
+(L : (e:env).(a b:type).(c=arr a b).(f=cons a e). 
    term f b -> term e c).
-(A : (e:env).(a b:type).(c=arr a b : type).
+(A : (e:env).(a b:type).(c=arr a b).
    term e c -> term e a -> term e b).
 
 (* Weakening here is just another rule, no way to prove it is admissible *)
-(W : (e:env).(a b:type).(f=cons b e : env).
+(W : (e:env).(a b:type).(f=cons b e).
      term e a -> term f a).
 
 (* Definition of some terms *)
 
-(e1 = cons nat nil : env).
-(v1 = o nil nat : var e1 nat).	        (* nat ⊢ nat *)
-(t1 = V e1 nat v1 : term e1 nat).	(* nat ⊢ nat *)
+(e1 = cons nat nil).
+(v1 = o nil nat).	        (* nat ⊢ nat *)
+(t1 = V e1 nat v1).	(* nat ⊢ nat *)
 
-(e2 = cons nat e1 : env).
-(t1w = W e1 nat nat t1 : term e2 nat). (* nat,nat ⊢ nat *)
+(e2 = cons nat e1).
+(t1w = W e1 nat nat t1). (* nat,nat ⊢ nat *)
 (* But t1w is not decomposable into a V rule, since W doesn't compute *)
 
-(nn = arr nat nat : type).
-(t2 = L nil nat nat t1 : term nil nn).	(* ⊢ nat → nat *)
+(nn = arr nat nat).
+(t2 = L nil nat nat t1).	(* ⊢ nat → nat *)
 
 (* The same parameterized by a base type *)
 
 (P : (a : type).
-     (e1 = cons a nil : env).
-     (v1 = o nil a : var e1 a).	        (* a ⊢ a *)
-     (t1 = V e1 a v1 : term e1 a).	(* a ⊢ a *)
-     (nn = arr a a : type).
-     (t2 = L nil a a t1 : term nil nn).	(* ⊢ a → a *)
+     (e1 = cons a nil).
+     (v1 = o nil a).	        (* a ⊢ a *)
+     (t1 = V e1 a v1).	(* a ⊢ a *)
+     (nn = arr a a).
+     (t2 = L nil a a t1).	(* ⊢ a → a *)
      Type).
 
 (* We can apply this "patch" to nn as well  *)
 
-(p = P nn : Type).			(* at this point inside the typing of 
+(p = P nn).			(* at this point inside the typing of 
 					   P nn, the environment contains a 
 					   derivation of 
 					   ⊢ (nat → nat) → (nat → nat) *)

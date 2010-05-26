@@ -4,11 +4,11 @@
 (R : Type -> Type -> Type).
 
 (* A is the construction of R X X in two steps *)
-(P = R X : Type -> Type).
-(A = P X : Type).
+(P = R X).
+(A = P X).
 
 (* B is the same object but constructed at once *)
-(B = R X X : Type).
+(B = R X X).
 
 (* Do they have the same place in the context?
  * The astonishing answer is: Yes they do!
@@ -23,7 +23,7 @@
 (* Let f be a function on B. It accepts also type C as argument *)
 (f : A -> Type).
 
-(x = f a : Type).
-(y = f b : Type).
+(x = f a).
+(y = f b).
 
 Type
