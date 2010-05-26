@@ -44,8 +44,8 @@ let lookup env x =
 let link env x k =
   { env with sigma = Idmap.add x k env.sigma}
 
-let equal env x y =
-  Idmap.find x env.sigma = Idmap.find y env.sigma
+let equal e1 e2 x y =
+  Idmap.find x e1.sigma = Idmap.find y e2.sigma
 
 let lookup_and_link env x y =
   let k = Idmap.find x env.sigma in

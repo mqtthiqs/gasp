@@ -56,25 +56,25 @@ let has_args e =
   try ignore (Env.pop_decl e); true
   with Env.Empty -> false
 
-let rec equals_term env t1 t2 =
+let rec equals_term e1 e2 t1 t2 =
   match t1,t2 with
-    | Var x, Var y -> Env.equal env x y 
-    | App (a,x), App (b,y) -> Env.equal env x y && equals_term env a b
+    | Var x, Var y -> Env.equal e1 e2 x y
+    | App (a,x), App (b,y) -> Env.equal e1 e2 x y && equals_term e1 e2 a b
     | _ -> false
 
-let rec equals_env env e1 e2 =
+let rec equals_env e1 e2 =
   try
     let (e1,k1) = Env.pop_decl e1 in
     let (e2,k2) = Env.pop_decl e2 in
-    equals_env env e1 e2 &&
-      equals_judg env (Env.lookup_key env k1) (Env.lookup_key env k2)
+    equals_env e1 e2 &&
+      equals_judg (Env.lookup_key e1 k1) (Env.lookup_key e2 k2)
   with Env.Empty -> 
-    if has_args e1 || has_args e2 then false else true
+    if has_args e1 || has_args e2 then false else true (* TODO ya mieux *)
 
-and equals_judg env (e1,h1) (e2,h2) =
-  equals_env env e1 e2 &&
+and equals_judg (e1,h1) (e2,h2) =
+  equals_env e1 e2 &&
     match h1,h2 with
-      | Term a, Term b -> equals_term env a b
+      | Term a, Term b -> equals_term e1 e2 a b
       | Sort s, Sort t -> s=t
       | _ -> false
 
@@ -92,7 +92,7 @@ let rec infer_term pos env : term -> Env.j = function
 	try Env.lookup env x 
 	with Not_found -> error_not_bound pos x in
       let jy = Env.lookup_key ea k in
-      if equals_judg env jx jy then
+      if equals_judg jx jy then
         Env.link ea x k, ha
       else error_not_equal pos jx jy
 

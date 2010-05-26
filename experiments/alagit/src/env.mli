@@ -23,7 +23,7 @@ val link : t -> id -> key -> t
 val lookup_and_link : t -> id -> id -> t * j
 
 (* [equal env x y] finds out if x and y points to the same type *)
-val equal : t -> id -> id -> bool
+val equal : t -> t -> id -> id -> bool
 
 exception Empty
 val pop_decl : t -> t * key
