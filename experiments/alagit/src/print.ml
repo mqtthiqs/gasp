@@ -34,7 +34,13 @@ let ptype fmt t = fprintf fmt "@[%a@]" ptype t
 let rec env fmt e =
   try
     let (e,k) = Env.pop_decl e in
-    judg fmt (Env.lookup_key e k); fprintf fmt ","; env fmt e
+    judg fmt (Env.lookup_key e k); 
+    ignore (Env.pop_decl e);
+    fprintf fmt ", "; env fmt e
   with Env.Empty -> ()
+
 and judg fmt (e,h:Env.j) : unit = 
+  try ignore (Env.pop_decl e);
     fprintf fmt "@[(%a ⊢ %a)@]" env e head h
+  with Env.Empty -> 
+    fprintf fmt "@[%a@]" head h

@@ -51,6 +51,7 @@ let error_type_kind pos s =
 (* 
  * Type-checking
  *)
+
 let has_args e =
   try ignore (Env.pop_decl e); true
   with Env.Empty -> false
@@ -78,17 +79,21 @@ and equals_judg env (e1,h1) (e2,h2) =
       | _ -> false
 
 let rec infer_term pos env : term -> Env.j = function
-  | Var x -> Env.lookup env x
+  | Var x -> 
+      ( try Env.lookup env x
+	with Not_found -> error_not_bound pos x )
   | App (a,x) ->
       let (ea,ha) = infer_term pos env a in
       Format.printf "app (%a : %a) %s@\n" Print.term a Print.judg (ea,ha) x;
-      let (ea',k) = try Env.pop_decl ea
+      let (ea,k) = 
+	try Env.pop_decl ea
 	with Env.Empty -> error_not_a_product pos a x in
-      let jx = try Env.lookup env x 
+      let jx = 
+	try Env.lookup env x 
 	with Not_found -> error_not_bound pos x in
-      let jy = Env.lookup_key ea' k in
+      let jy = Env.lookup_key ea k in
       if equals_judg env jx jy then
-        Env.link ea' x k, ha
+        Env.link ea x k, ha
       else error_not_equal pos jx jy
 
 let rec infer_head pos env = function
@@ -112,8 +117,7 @@ let rec infer_type env ty = match !ty with
   | Prod (x,t,u) -> 
       let (jt,s1) = infer_type (Env.clear_decl env) t in
       Format.printf "intro dec %s : %a@\n" x Print.judg jt;
-      let env = Env.bind_decl env x jt in
-      let (ju,s2) = infer_type env u in
+      let (ju,s2) = infer_type (Env.bind_decl env x jt) u in
       ju, (try prod_rule (s1,s2)
 	   with Not_found -> error_prod_rule (pos_of ty) s1 s2)
   | SProd (x,a,u) ->

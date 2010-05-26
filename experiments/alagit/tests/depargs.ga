@@ -1,0 +1,4 @@
+(P : (T:Type). T -> Type).
+(A : Type).
+(a : A).
+P A a
