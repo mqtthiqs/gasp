@@ -33,8 +33,8 @@ let ptype fmt t = fprintf fmt "@[%a@]" ptype t
 
 let rec env fmt e =
   try
-    let (e,k) = Env.pop_decl e in
-    judg fmt (Env.lookup_key e k); 
+    let (e,x) = Env.pop_decl e in
+    judg fmt (Env.lookup e x); 
     ignore (Env.pop_decl e);
     fprintf fmt ", "; env fmt e
   with Env.Empty -> ()

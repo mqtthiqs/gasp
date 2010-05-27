@@ -8,7 +8,7 @@ module Idmap = Map.Make(struct type t = id let compare = Pervasives.compare end)
 type t = {
   env : j Intmap.t;
   sigma : key Idmap.t;
-  free : key list
+  free : id list
 }
 and j = t * head
 
@@ -34,15 +34,15 @@ let bind_decl env x t =
   let k = Random.bits() in
   { env = Intmap.add k t env.env;
     sigma = Idmap.add x k env.sigma;
-    free = k :: env.free }
+    free = x :: env.free }
 
 let lookup_key env k = Intmap.find k env.env
 
 let lookup env x =
   lookup_key env (Idmap.find x env.sigma) 
 
-let link env x k =
-  { env with sigma = Idmap.add x k env.sigma}
+let link env x y =
+  { env with sigma = Idmap.add x (Idmap.find y env.sigma) env.sigma}
 
 let equal e1 e2 x y =
   Idmap.find x e1.sigma = Idmap.find y e2.sigma
@@ -63,7 +63,7 @@ let list_last =
   aux []
 
 let pop_decl env = 
-  let (k,f) = list_last env.free in
-  {env with free = f}, k
+  let (x,f) = list_last env.free in
+  {env with free = f}, x
 
 let clear_decl env = { env with free=[] }

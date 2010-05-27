@@ -1,7 +1,6 @@
 open AST
 
 type t
-type key
 type j = t * head
 
 val empty : t
@@ -14,9 +13,8 @@ val bind_decl : t -> id -> j -> t
 
 (* [lookup env x] returns the type of x in env *)
 val lookup : t -> id -> j
-val lookup_key : t -> key -> j
 
-val link : t -> id -> key -> t
+val link : t -> id -> id -> t
 
 (* [lookup_and_bind env x y] returns the type of x in env, and binds y
    to the same type *)
@@ -26,6 +24,6 @@ val lookup_and_link : t -> id -> id -> t * j
 val equal : t -> t -> id -> id -> bool
 
 exception Empty
-val pop_decl : t -> t * key
+val pop_decl : t -> t * id
 
 val clear_decl : t -> t

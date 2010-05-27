@@ -64,10 +64,10 @@ let rec equals_term e1 e2 t1 t2 =
 
 let rec equals_env e1 e2 =
   try
-    let (e1,k1) = Env.pop_decl e1 in
-    let (e2,k2) = Env.pop_decl e2 in
+    let (e1,x1) = Env.pop_decl e1 in
+    let (e2,x2) = Env.pop_decl e2 in
     equals_env e1 e2 &&
-      equals_judg (Env.lookup_key e1 k1) (Env.lookup_key e2 k2)
+      equals_judg (Env.lookup e1 x1) (Env.lookup e2 x2)
   with Env.Empty -> 
     if has_args e1 || has_args e2 then false else true (* TODO ya mieux *)
 
@@ -85,15 +85,15 @@ let rec infer_term pos env : term -> Env.j = function
   | App (a,x) ->
       let (ea,ha) = infer_term pos env a in
       Format.printf "app (%a : %a) %s@\n" Print.term a Print.judg (ea,ha) x;
-      let (ea,k) = 
+      let (ea,y) = 
 	try Env.pop_decl ea
 	with Env.Empty -> error_not_a_product pos a x in
       let jx = 
 	try Env.lookup env x 
 	with Not_found -> error_not_bound pos x in
-      let jy = Env.lookup_key ea k in
+      let jy = Env.lookup ea y in
       if equals_judg jx jy then
-        Env.link ea x k, ha
+        Env.link ea x y, ha
       else error_not_equal pos jx jy
 
 let rec infer_head pos env = function
