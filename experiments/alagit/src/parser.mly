@@ -35,7 +35,7 @@ ptype: a=term
   Position.value 
     (List.fold_left 
        (fun accu x -> 
-	  Position.with_pos (Position.position accu) (Prod (x, t, accu))) 
+	  Position.with_pos (Position.position accu) (Prod (Name x, t, accu))) 
        s (List.rev xs))
 }
 | LPAREN x=ID EQUAL a=loc(term) RPAREN DOT s=loc(ptype)
@@ -44,7 +44,7 @@ ptype: a=term
 }
 | t1=loc(ptype) ARROW t2=loc(ptype)
 {
-  Prod (noname (), t1, t2)
+  Prod (Anonymous, t1, t2)
 }
 
 term: x=ID

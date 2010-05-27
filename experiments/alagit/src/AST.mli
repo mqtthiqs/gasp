@@ -12,9 +12,13 @@ type head =
   | Sort of sort
   | Term of term
 
+type binder =
+  | Name of id
+  | Anonymous
+
 type ptype = 
   | Head  of head
-  | Prod  of id * ptype' * ptype'
+  | Prod  of binder * ptype' * ptype'
   | SProd of id * term Position.located * ptype'
 
 and ptype' = ptype Position.located

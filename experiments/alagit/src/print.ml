@@ -17,11 +17,17 @@ let rec head fmt = function
   | Sort s ->
       fprintf fmt "@[%a@]" sort s
 
+let binder fmt = function
+  | Name x -> fprintf fmt "%s" x
+  | Anonymous -> fprintf fmt "_"
+
 let rec ptype fmt = function
   | Head h -> 
       fprintf fmt "@[%a@]" head h
-  | Prod (x, t, s) -> 
+  | Prod (Name x, t, s) -> 
       fprintf fmt "@[@[(%s : %a).@]@,@[%a@]@]" x ptype' t ptype' s
+  | Prod (Anonymous, t, s) -> 
+      fprintf fmt "@[@[%a@]@ -> @[%a@]@]" ptype' t ptype' s
   | SProd (x, a, s) -> 
       fprintf fmt "@[@[(%s = %a).@]@,%a@]" x term !a ptype' s
 

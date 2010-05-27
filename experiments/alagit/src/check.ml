@@ -116,7 +116,7 @@ let rec infer_type env ty = match !ty with
       infer_head (pos_of ty) env h
   | Prod (x,t,u) -> 
       let (jt,s1) = infer_type (Env.clear_decl env) t in
-      Format.printf "intro dec %s : %a@\n" x Print.judg jt;
+      Format.printf "intro dec %a : %a@\n" Print.binder x Print.judg jt;
       let (ju,s2) = infer_type (Env.bind_decl env x jt) u in
       ju, (try prod_rule (s1,s2)
 	   with Not_found -> error_prod_rule (pos_of ty) s1 s2)

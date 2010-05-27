@@ -33,7 +33,9 @@ let bind_def env x a t =
 let bind_decl env x t =
   let k = Random.bits() in
   { env = Intmap.add k t env.env;
-    sigma = Idmap.add x k env.sigma;
+    sigma = (match x with
+	       | Name x -> Idmap.add x k env.sigma
+	       | Anonymous -> env.sigma);
     free = x :: env.free }
 
 let lookup_key env k = Intmap.find k env.env
