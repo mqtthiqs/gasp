@@ -100,6 +100,6 @@ dist:
         done
 	tar cvfz $(PACKAGE).tar.gz $(PACKAGE)
 
-$(addsuffix .out,$(wildcard tests/*.ga)): $(TARGET)
+$(addsuffix .out,$(wildcard tests/gasp-internals/*.ga)): $(TARGET)
 
-check: $(addsuffix .out,$(wildcard tests/*.ga))
+check: $(addsuffix .out,$(wildcard tests/gasp-internals/*.ga))
