@@ -12,24 +12,17 @@ let filenames =
     Arg.parse options (fun f -> filenames := f :: !filenames) usage_msg;
     !filenames
 
-let parse_file filename =
-  let parser lexer lexbuf = try
-    Parser.patch lexer lexbuf
+let parse_file input parser_fun lexer_fun =
+  let parser_fun lexer lexbuf = try
+    parser_fun lexer lexbuf
   with
   | Parser.Error -> Error.error "Parsing" (Position.cpos lexbuf) "Unknown error.\n"
   in
-  SyntacticAnalysis.process
-    ~lexer_init: (fun filename -> 
-		    let lexbuf = Lexing.from_channel (open_in filename) in 
-		    lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = filename };
-		    lexbuf
-		    )
-    ~lexer_fun: Lexer.main
-    ~parser_fun: parser
-    ~input: filename
+  SyntacticAnalysis.process 
+    ~lexer_init:ExtLexing.lexer_init ~lexer_fun ~parser_fun ~input
 
 let process filename = 
-  let (AST.Patch t) = parse_file filename in
+  let (AST.Patch t) = parse_file filename Parser.patch Lexer.main in
   let s = Check.infer_type Env.empty t in
   Print.ptype Format.std_formatter (AST.Sort s);
   Format.pp_print_newline Format.std_formatter()
