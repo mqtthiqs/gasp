@@ -27,6 +27,12 @@ let process filename =
   Print.ptype Format.std_formatter (AST.Sort s);
   Format.pp_print_newline Format.std_formatter()
 
+let process_stlcdec filename = 
+  let _fragment_ast = 
+    parse_file filename StlcdecParser.fragment StlcdecLexer.main
+  in
+  ()
+
 let _ =
   List.map process filenames
 
