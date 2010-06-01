@@ -47,11 +47,6 @@ let link env x y =
 let equal e1 e2 x y =
   Idmap.find x e1.sigma = Idmap.find y e2.sigma
 
-let lookup_and_link env x y =
-  let k = Idmap.find x env.sigma in
-  let t = Intmap.find k env.env in
-  { env with sigma = Idmap.add y k env.sigma }, t
-
 exception Empty
 
 let list_last = 
