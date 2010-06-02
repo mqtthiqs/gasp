@@ -13,6 +13,14 @@ val fresh : string -> t
     is exactly [s(0)]. No freshness guarantee provided. *)
 val from_string : string -> t
 
+(** [unique_from_string s] works as [from_string s] except that an
+    extra check is performed to ensure that [s] is not the concrete
+    representation of a previously generated name. *)
+val unique_from_string : string -> t
+
+(** [InternalNameAlreadyInUse] is raised when [unique_from_string] fails. *)
+exception InternalNameAlreadyInUse
+
 (** [compare n1 n2] is a standard library compliant comparison
     function. *)
 val compare : t -> t -> int

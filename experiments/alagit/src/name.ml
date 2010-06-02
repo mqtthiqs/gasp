@@ -16,10 +16,20 @@ let fresh s = incr internal_counter; {
   salt   = !internal_counter
 }
 
-let from_string s = {
-  prefix = s;
-  salt   = 0;
-}
+let cache = Hashtbl.create 13
+
+let from_string s = try 
+  Hashtbl.find cache s
+with Not_found -> 
+  let n = { prefix = s; salt = 0 } in
+  Hashtbl.add cache s n;
+  n
+  
+
+exception InternalNameAlreadyInUse
+let unique_from_string s = 
+  if Hashtbl.mem cache s then raise InternalNameAlreadyInUse;
+  from_string s
 
 let compare n1 n2 = 
   match compare n1.salt n2.salt with
