@@ -1,4 +1,4 @@
-type id = string
+type id = Name.t
 
 type term = 
   | Var of id

@@ -2,9 +2,7 @@
   open AST
 
   let parse_error = Error.error "during parsing"
-  let noname = 
-    let c = ref 0 in
-    fun () -> incr c; "*" ^ string_of_int !c
+  let noname () = Name.fresh "*"
 %}
 
 %token EOF
@@ -30,7 +28,7 @@ ptype: a=loc(term)
 {
   Sort s
 }
-| LPAREN xs=ID+ COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
+| LPAREN xs=id+ COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
 {
   Position.value 
     (List.fold_left 
@@ -38,7 +36,7 @@ ptype: a=loc(term)
 	  Position.with_pos (Position.position accu) (Prod (x, t, accu))) 
        s (List.rev xs))
 }
-| LPAREN x=ID EQUAL a=loc(term) COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
+| LPAREN x=id EQUAL a=loc(term) COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
 {
   SProd (x, t, a, s)
 }
@@ -47,11 +45,16 @@ ptype: a=loc(term)
   Prod (noname (), t1, t2)
 }
 
-term: x=ID
+id: x=ID
+{
+  Name.from_string x
+}
+
+term: x=id
 {
   Var x
 }
-| t=loc(term) x=ID
+| t=loc(term) x=id
 {
   App (t, x)
 }

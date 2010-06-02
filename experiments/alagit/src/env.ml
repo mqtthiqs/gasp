@@ -3,7 +3,7 @@ open AST
 type key = int
 
 module Env = struct
-  module Intmap = Map.Make(struct type t = key let compare = Pervasives.compare end)
+  module Intmap = Map.Make (struct type t = key let compare = Pervasives.compare end)
   type t = ptype Intmap.t
   let empty = Intmap.empty
   let lookup env k = Intmap.find k env
@@ -22,7 +22,7 @@ module Env = struct
 end
 
 module Subst = struct
-  module Idmap = Map.Make(struct type t = id let compare = Pervasives.compare end)
+  module Idmap = Map.Make (Name)
   type t = key Idmap.t
   let empty = Idmap.empty
   let bind sigma n k = 

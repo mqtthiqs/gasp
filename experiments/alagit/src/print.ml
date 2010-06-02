@@ -3,9 +3,12 @@ open Format
 
 let ( ! ) = Position.value
 
+let id fmt x = 
+  fprintf fmt "%s" (Name.to_string x)
+
 let rec term fmt = function
-  | Var x -> fprintf fmt "@[%s@]" x
-  | App (t, x) -> fprintf fmt "@[%a @,@[%s@]@]" term' t x
+  | Var x -> fprintf fmt "@[%a@]" id x
+  | App (t, x) -> fprintf fmt "@[%a @,@[%a@]@]" term' t id x
 
 and term' fmt t = term fmt !t
 
@@ -19,9 +22,9 @@ let rec ptype fmt = function
   | Sort s ->
       fprintf fmt "@[%a@]" sort s
   | Prod (x, t, s) -> 
-      fprintf fmt "@[@[(%s : %a).@]@,@[%a@]@]" x ptype' t ptype' s
+      fprintf fmt "@[@[(%a : %a).@]@,@[%a@]@]" id x ptype' t ptype' s
   | SProd (x, t, a, s) -> 
-      fprintf fmt "@[@[(%s = %a : %a).@]@,%a@]" x term' a ptype' t ptype' s
+      fprintf fmt "@[@[(%a = %a : %a).@]@,%a@]" id x term' a ptype' t ptype' s
 
 and ptype' fmt t = ptype fmt !t
 

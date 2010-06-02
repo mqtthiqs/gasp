@@ -23,7 +23,7 @@ let error_not_equal pos t u =
 let error_not_a_product pos t x =
   type_error pos
     (fun fmt -> Format.fprintf fmt 
-       "@[%s cannot be applied to a function of type %a.@]@." x Print.ptype t)
+       "@[%a cannot be applied to a function of type %a.@]@." Print.id x Print.ptype t)
 
 let error_not_a_sort pos t =
   type_error pos
@@ -31,7 +31,7 @@ let error_not_a_sort pos t =
 
 let error_not_bound pos x =
   type_error pos
-    (fun fmt -> Format.fprintf fmt "@[Variable %s is not bound.@]@." x)
+    (fun fmt -> Format.fprintf fmt "@[Variable %a is not bound.@]@." Print.id x)
 
 let error_prod_rule pos s1 s2 =
   type_error pos
