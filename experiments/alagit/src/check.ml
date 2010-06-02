@@ -139,20 +139,27 @@ let axiom_rule = function
 
 (* Check that [t] is well-formed under the substitution [sigma] and 
    the repos*)
-let rec infer_type env ty =
+type inference_result =
+    RSort of sort   (* For a closed type. *)
+  | REnv  of Env.t  (* For a context.     *)
+
+exception IsNotClosed
+exception IsClosed
+
+let rec infer env ty : inference_result =
   match !ty with
     | Sort s ->
-	(try axiom_rule s
+	(try RSort (axiom_rule s)
 	 with Not_found -> error_type_kind (pos_of ty) s)
     | Term a ->
 	(match fst (infer_term (pos_of a) env !a) with
-	   | Sort s -> s
+	   | Sort s -> RSort s
 	   | _ -> error_not_a_sort (pos_of a) (Term a))
     | Prod (x,t,u) -> 
 	let s1 = infer_type env t in
 	let env = Env.bind_decl env x !t in
 	let s2 = infer_type env u in
-	(try prod_rule (s1,s2)
+	(try RSort (prod_rule (s1, s2))
 	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)
     | SProd (x,t,a,u) ->
 	let s1 = infer_type env t in
@@ -162,5 +169,17 @@ let rec infer_type env ty =
 						 equality, not for the rest *)
 	let env = Env.bind_def env x !a !t in
 	let s2 = infer_type env u in
-	(try prod_rule (s1,s2) 
+	(try RSort (prod_rule (s1,s2))
 	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+    | Cont ->
+	REnv env
+
+and infer_type env t = 
+  match infer env t with
+    | REnv _  -> raise IsNotClosed
+    | RSort s -> s
+
+and infer_env env t = 
+  match infer env t with
+    | RSort _  -> raise IsClosed
+    | REnv e -> e

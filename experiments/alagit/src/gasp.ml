@@ -33,6 +33,10 @@ let process_stlcdec filename =
   in
   ()
 
+let init_stcldec_repository () = 
+  let _repository = StlcdecInternalize.initial_repository in 
+  ()
+
 let _ =
   List.map process filenames
 

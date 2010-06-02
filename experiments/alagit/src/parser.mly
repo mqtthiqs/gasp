@@ -6,7 +6,7 @@
 %}
 
 %token EOF
-%token LPAREN RPAREN COLON EQUAL TYPE ARROW DOT
+%token LPAREN RPAREN COLON EQUAL TYPE ARROW DOT CONT
 %token<string> ID
 
 %right DOT
@@ -43,6 +43,10 @@ ptype: a=loc(term)
 | t1=loc(ptype) ARROW t2=loc(ptype)
 {
   Prod (noname (), t1, t2)
+}
+| CONT
+{
+  Cont
 }
 
 id: x=ID

@@ -25,6 +25,8 @@ let rec ptype fmt = function
       fprintf fmt "@[@[(%a : %a).@]@,@[%a@]@]" id x ptype' t ptype' s
   | SProd (x, t, a, s) -> 
       fprintf fmt "@[@[(%a = %a : %a).@]@,%a@]" id x term' a ptype' t ptype' s
+  | Cont ->
+      fprintf fmt "@[...@]" 
 
 and ptype' fmt t = ptype fmt !t
 

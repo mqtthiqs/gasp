@@ -8,7 +8,7 @@ and expression =
   | Var of identifier
   | Lam of identifier * ty * expression
   | App of expression * expression
-  
+
 and ty = 
   | TyVar   of type_identifier
   | TyArrow of ty * ty

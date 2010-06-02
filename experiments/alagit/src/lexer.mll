@@ -77,6 +77,7 @@ rule main = parse
 (** Symbols. *)
 | '='                                   { EQUAL }
 | "->"                                  { ARROW  }
+| "..."					{ CONT   }
 | identifier                            { let id = lexeme lexbuf in
                                             try is_keyword id 
 					    with Not_found -> ID (id)

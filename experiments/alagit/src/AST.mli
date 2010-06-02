@@ -15,6 +15,7 @@ type ptype =
   | Sort  of sort
   | Prod  of id * ptype' * ptype'
   | SProd of id * ptype' * term' * ptype'
+  | Cont
 
 and ptype' = ptype Position.located
 
