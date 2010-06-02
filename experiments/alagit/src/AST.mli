@@ -20,7 +20,3 @@ and ptype' = ptype Position.located
 
 type patch = Patch of ptype'
 
-type entry = 
-    | Dec of ptype
-    | Def of ptype * term
-	
