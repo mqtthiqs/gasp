@@ -1,25 +1,25 @@
 open AST
 
+type key
+
+type head = 
+  | Hsort of sort
+  | Happ of head * key
+
 type t
-type j = t * head
+
+and j = t * head
 
 val empty : t
 
-(* [bind_def env x a t] introduces the definition (x=a:t) in env. *)
-val bind_def : t -> id -> term -> j -> t
+val lookup : t -> key -> j
 
-(* [bind_decl env x t] introduces the declaration (x:t) in env *)
-val bind_decl : t -> id -> j -> t
+val bind_def : t -> key list -> j -> t * key
 
-(* [lookup env x] returns the type of x in env *)
-val lookup : t -> id -> j
-
-val link : t -> id -> id -> t
-
-(* [equal env x y] finds out if x and y points to the same type *)
-val equal : t -> t -> id -> id -> bool
+val bind_decl : t -> j -> t * key
 
 exception Empty
-val pop_decl : t -> t * id
+
+val pop_decl : t -> t * key
 
 val clear_decl : t -> t

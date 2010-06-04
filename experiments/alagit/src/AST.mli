@@ -1,22 +1,16 @@
 type id = string
 
-type term = 
-  | Var of id
-  | App of term * id
-
 type sort = 
   | KType
   | KKind
 
-type head =
+type term = 
+  | Var of id
+  | App of term' * id
   | Sort of sort
-  | Term of term
+  | Prod  of id * term' * term'
+  | SProd of id * term' * term'
 
-type ptype = 
-  | Head  of head
-  | Prod  of id * ptype' * ptype'
-  | SProd of id * term Position.located * ptype'
+and term' = term Position.located
 
-and ptype' = ptype Position.located
-
-type patch = Patch of ptype'
+type patch = Patch of term'

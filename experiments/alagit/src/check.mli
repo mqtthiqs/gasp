@@ -1,3 +1,3 @@
 open AST
 
-val infer_type : Env.t -> ptype' -> Env.j * sort
+val infer_type : Env.t -> term' -> Env.j * sort

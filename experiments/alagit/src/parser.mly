@@ -22,13 +22,9 @@ patch: t=loc(ptype) EOF
   Patch t
 }
 
-ptype: a=term
+ptype: s=sort
 {
-  Head(Term a)
-}
-| s=sort
-{
-  Head(Sort s)
+  Sort s
 }
 | LPAREN xs=ID+ COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
 {
@@ -51,7 +47,7 @@ term: x=ID
 {
   Var x
 }
-| t=term x=ID
+| t=loc(term) x=ID
 {
   App (t, x)
 }
