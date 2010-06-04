@@ -52,33 +52,33 @@ let error_type_kind pos s =
  * Type-checking
  *)
 
-let has_args e =
-  try ignore (Env.pop_decl e); true
-  with Env.Empty -> false
+(* let has_args e = *)
+(*   try ignore (Env.pop_decl e); true *)
+(*   with Env.Empty -> false *)
 
-let rec equals_term e1 e2 t1 t2 =
-  match t1,t2 with
-    | Var x, Var y -> Env.equal e1 e2 x y
-    | App (a,x), App (b,y) -> Env.equal e1 e2 x y && equals_term e1 e2 a b
-    | _ -> false
+(* let rec equals_term e1 e2 t1 t2 = *)
+(*   match t1,t2 with *)
+(*     | Var x, Var y -> Env.equal e1 e2 x y *)
+(*     | App (a,x), App (b,y) -> Env.equal e1 e2 x y && equals_term e1 e2 a b *)
+(*     | _ -> false *)
 
-let rec equals_env e1 e2 =
-  try
-    let (e1,x1) = Env.pop_decl e1 in
-    let (e2,x2) = Env.pop_decl e2 in
-    equals_env e1 e2 &&
-      equals_judg (Env.lookup e1 x1) (Env.lookup e2 x2)
-  with Env.Empty -> 
-    if has_args e1 || has_args e2 then false else true (* TODO ya mieux *)
+(* let rec equals_env e1 e2 = *)
+(*   try *)
+(*     let (e1,x1) = Env.pop_decl e1 in *)
+(*     let (e2,x2) = Env.pop_decl e2 in *)
+(*     equals_env e1 e2 && *)
+(*       equals_judg (Env.lookup e1 x1) (Env.lookup e2 x2) *)
+(*   with Env.Empty ->  *)
+(*     if has_args e1 || has_args e2 then false else true (\* TODO ya mieux *\) *)
 
-and equals_judg (e1,h1) (e2,h2) =
-  equals_env e1 e2 &&
-    match h1,h2 with
-      | Term a, Term b -> equals_term e1 e2 a b
-      | Sort s, Sort t -> s=t
-      | _ -> false
+(* and equals_judg (e1,h1) (e2,h2) = *)
+(*   equals_env e1 e2 && *)
+(*     match h1,h2 with *)
+(*       | Term a, Term b -> equals_term e1 e2 a b *)
+(*       | Sort s, Sort t -> s=t *)
+(*       | _ -> false *)
 
-let rec infer_term pos env : term -> Env.j = function
+let rec infer_term env : term -> Env.j = function
   | Var x -> 
       ( try Env.lookup env x
 	with Not_found -> error_not_bound pos x )
@@ -95,25 +95,19 @@ let rec infer_term pos env : term -> Env.j = function
       if equals_judg jx jy then
         Env.link ea x y, ha
       else error_not_equal pos jx jy
-
-let rec infer_head pos env = function
   | Sort s ->
       let k = 
 	try axiom_rule s
 	with Not_found -> error_type_kind pos s in
       (env, Sort s), k
-  | Term a ->
-      let ja = infer_term pos env a in
-      (* Format.printf "app @[%a : %a@]@\n" Print.term a Print.judg ja; *)
-      let k = match snd ja, has_args (fst ja) with
-	| Sort s, false -> s
-	| _ -> 
-	    error_not_a_sort pos a in
-      (env, Term a), k
-
-let rec infer_type env ty = match !ty with
-  | Head h -> 
-      infer_head (pos_of ty) env h
+  (* | Term a -> *)
+  (*     let ja = infer_term pos env a in *)
+  (*     (\* Format.printf "app @[%a : %a@]@\n" Print.term a Print.judg ja; *\) *)
+  (*     let k = match snd ja, has_args (fst ja) with *)
+  (* 	| Sort s, false -> s *)
+  (* 	| _ ->  *)
+  (* 	    error_not_a_sort pos a in *)
+  (*     (env, Term a), k *)
   | Prod (x,t,u) -> 
       let (jt,s1) = infer_type (Env.clear_decl env) t in
       Format.printf "intro dec %s : %a@\n" x Print.judg jt;
