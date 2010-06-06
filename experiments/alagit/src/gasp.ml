@@ -30,8 +30,8 @@ let parse_file filename =
 
 let process filename = 
   let (AST.Patch t) = parse_file filename in
-  let (_,s) = Check.infer_type Env.empty t in
-  Print.sort Format.std_formatter s;
+  let (_,h) = Check.infer_term Env.empty t in
+  Print.head Format.std_formatter h;
   Format.pp_print_newline Format.std_formatter()
 
 let _ =

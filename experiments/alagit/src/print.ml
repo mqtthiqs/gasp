@@ -9,10 +9,10 @@ let rec sort fmt = function
   | KKind -> fprintf fmt "Kind"
 
 let rec term fmt : term -> unit = function
-  | Var x -> fprintf fmt "@[%s@]" x
-  | App (t, x) -> fprintf fmt "@[%a @,@[%s@]@]" term' t x
+  | Var x -> fprintf fmt "@[%s@]" !x
+  | App (t, x) -> fprintf fmt "@[%a @,@[%s@]@]" term' t !x
   | Sort s ->
-      fprintf fmt "@[%a@]" sort s
+      fprintf fmt "@[%a@]" sort !s
   | Prod (x, t, s) -> 
       fprintf fmt "@[@[(%s : %a).@]@,@[%a@]@]" x term' t term' s
   | SProd (x, a, s) -> 

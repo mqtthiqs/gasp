@@ -4,10 +4,10 @@ let ( ! ) = Position.value
 let pos_of = Position.position
 
 let prod_rule = function
-  | _,s -> s				(* PTS total *)
+  | _,s -> Env.Hsort s				(* PTS total *)
 
 let axiom_rule = function
-  | KType -> KKind
+  | KType -> Env.Hsort KKind
   | _ -> raise Not_found
 
 (* 
@@ -78,47 +78,64 @@ let error_type_kind pos s =
 (*       | Sort s, Sort t -> s=t *)
 (*       | _ -> false *)
 
-let rec infer_term env : term -> Env.j = function
+(* key -> key substitutions *)
+module Subst = struct
+  open Env
+  type t = key Keymap.t
+  let empty = Keymap.empty
+  let bind sigma k l = Keymap.add k l sigma
+  let lookup sigma k = Keymap.find k sigma
+end
+
+(* id -> key substitutions *)
+module Topsubst = struct
+  open Env
+  type t = key Idmap.t
+  let empty = Idmap.empty
+  let bind sigma k l = Idmap.add k l sigma
+  let lookup sigma k = Idmap.find k sigma
+end
+
+let sort_of j t = 
+  match snd j with 
+    | Env.Hsort s -> s 
+    | _ -> error_not_a_sort (pos_of t) !t
+
+let rec infer_term top sigma env = function
   | Var x -> 
-      ( try Env.lookup env x
-	with Not_found -> error_not_bound pos x )
-  | App (a,x) ->
-      let (ea,ha) = infer_term pos env a in
-      Format.printf "app (%a : %a) %s@\n" Print.term a Print.judg (ea,ha) x;
-      let (ea,y) = 
+      begin try Env.lookup env (Topsubst.lookup top !x) 
+      with Not_found -> error_not_bound (pos_of x) !x end
+  | App (a,x) -> 
+      let jx = Env.lookup env (Topsubst.lookup top !x) in
+      let (ea,ha) = infer_term top sigma env !a in
+      let ea,ky = 
 	try Env.pop_decl ea
-	with Env.Empty -> error_not_a_product pos a x in
-      let jx = 
-	try Env.lookup env x 
-	with Not_found -> error_not_bound pos x in
-      let jy = Env.lookup ea y in
-      if equals_judg jx jy then
-        Env.link ea x y, ha
-      else error_not_equal pos jx jy
+	with Env.Empty -> error_not_a_product (pos_of a) !a !x in
+      let jy = Env.lookup env ky in
+      if jx != jy then error_not_equal (pos_of x) jx jy; (* TODO *)
+      ea, (snd jy)
   | Sort s ->
-      let k = 
-	try axiom_rule s
-	with Not_found -> error_type_kind pos s in
-      (env, Sort s), k
-  (* | Term a -> *)
-  (*     let ja = infer_term pos env a in *)
-  (*     (\* Format.printf "app @[%a : %a@]@\n" Print.term a Print.judg ja; *\) *)
-  (*     let k = match snd ja, has_args (fst ja) with *)
-  (* 	| Sort s, false -> s *)
-  (* 	| _ ->  *)
-  (* 	    error_not_a_sort pos a in *)
-  (*     (env, Term a), k *)
+      begin try (env, axiom_rule !s)
+      with Not_found -> error_type_kind (pos_of s) !s end
   | Prod (x,t,u) -> 
-      let (jt,s1) = infer_type (Env.clear_decl env) t in
+      let jt = infer_term top sigma (Env.clear_decl env) !t in
+      let s1 = sort_of jt t in
       Format.printf "intro dec %s : %a@\n" x Print.judg jt;
-      let (ju,s2) = infer_type (Env.bind_decl env x jt) u in
-      ju, (try prod_rule (s1,s2)
-	   with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+      let (env,kx) = Env.bind_decl env jt in
+      let top = Topsubst.bind top x kx in
+      let ju = infer_term top sigma env !u in
+      let s2 = sort_of ju u in
+      begin try fst ju, prod_rule (s1,s2)
+      with Not_found -> error_prod_rule (pos_of t) s1 s2 end
   | SProd (x,a,u) ->
       Format.printf "typage de (%s = %a)@\n" x Print.term !a;
-      let (ea,ha as ja) = infer_term (pos_of a) (Env.clear_decl env) !a in
+      let ja = infer_term top sigma (Env.clear_decl env) !a in
+      let s1 = sort_of ja a in
       Format.printf "intro def %s : %a@\n" x Print.judg ja;
-      let (_,s1) = infer_type ea (Position.with_pos (pos_of a) (Head ha)) in
-      let (ju,s2) = infer_type (Env.bind_def env x !a ja) u in
-      ju, (try prod_rule (s1,s2) 
-	    with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+      let env,kx = Env.bind_def env (Env.keys_of top !a) ja in
+      let ju = infer_term (Topsubst.bind top x kx) sigma env !u in
+      let s2 = sort_of ju u in
+      begin try fst ju,  prod_rule (s1,s2)
+      with Not_found -> error_prod_rule (pos_of a) s1 s2 end
+
+let infer_term env t = infer_term Topsubst.empty Subst.empty env !t

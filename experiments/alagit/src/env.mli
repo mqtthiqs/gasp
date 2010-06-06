@@ -2,6 +2,9 @@ open AST
 
 type key
 
+module Keymap : Map.S with type key = key
+module Idmap : Map.S with type key = id
+
 type head = 
   | Hsort of sort
   | Happ of head * key
@@ -23,3 +26,5 @@ exception Empty
 val pop_decl : t -> t * key
 
 val clear_decl : t -> t
+
+val keys_of : key Idmap.t -> term -> key list

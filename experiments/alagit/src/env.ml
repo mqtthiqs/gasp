@@ -24,12 +24,12 @@ let lookup env k =
 
 let bind_def env l j = 
   let k = Hashtbl.hash l in
-  { env = Keymap.add k j env.env;
-    free = k :: env.free }, k
+  { env with env = Keymap.add k j env.env }, k
 
 let bind_decl env j =
   let k = Random.bits() in
-  { env with env = Keymap.add k j env.env }, k
+  { env = Keymap.add k j env.env;
+    free = k :: env.free }, k
 
 exception Empty
 
@@ -48,13 +48,16 @@ let pop_decl env =
 let clear_decl env = { env with free=[] }
 
 
-(* module Idmap = Map.Make(struct type t = id let compare = Pervasives.compare end) *)
+module Idmap = Map.Make(struct type t = id let compare = Pervasives.compare end)
 
-(* let keys_of sigma a =  *)
-(*   let rec fold_app f acc = function *)
-(*     | Var x -> f x acc *)
-(*     | App (a,x) -> f x (fold_app f acc a) in *)
-(*   fold_app (fun x acc -> Idmap.find x sigma::acc) [] a *)
+let ( ! ) = Position.value
+
+let keys_of sigma a =
+  let rec fold_app f acc = function
+    | Var x -> f x acc
+    | App (a,x) -> f x (fold_app f acc !a) 
+    | _ -> assert false in
+  fold_app (fun x acc -> Idmap.find !x sigma::acc) [] a
 
 (* let bind_def env x a t = *)
 (*   let k = Hashtbl.hash (keys_of env.sigma a) in *)

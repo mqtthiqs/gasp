@@ -17,16 +17,16 @@
 
 %%
 
-patch: t=loc(ptype) EOF
+patch: t=loc(term) EOF
 {
   Patch t
 }
 
-ptype: s=sort
+term: s=loc(sort)
 {
   Sort s
 }
-| LPAREN xs=ID+ COLON t=loc(ptype) RPAREN DOT s=loc(ptype)
+| LPAREN xs=ID+ COLON t=loc(term) RPAREN DOT s=loc(term)
 {
   Position.value 
     (List.fold_left 
@@ -34,20 +34,19 @@ ptype: s=sort
 	  Position.with_pos (Position.position accu) (Prod (x, t, accu))) 
        s (List.rev xs))
 }
-| LPAREN x=ID EQUAL a=loc(term) RPAREN DOT s=loc(ptype)
+| LPAREN x=ID EQUAL a=loc(term) RPAREN DOT s=loc(term)
 {
   SProd (x, a, s)
 }
-| t1=loc(ptype) ARROW t2=loc(ptype)
+| t1=loc(term) ARROW t2=loc(term)
 {
   Prod (noname (), t1, t2)
 }
-
-term: x=ID
+| x=loc(ID)
 {
   Var x
 }
-| t=loc(term) x=ID
+| t=loc(term) x=loc(ID)
 {
   App (t, x)
 }
