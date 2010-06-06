@@ -120,20 +120,23 @@ let rec infer_term top sigma env = function
   | Prod (x,t,u) -> 
       let jt = infer_term top sigma (Env.clear_decl env) !t in
       let s1 = sort_of jt t in
-      Format.printf "intro dec %s : %a@\n" x Print.judg jt;
+      Format.printf "intro dec %a : %a@\n" Print.name x Print.judg jt;
       let (env,kx) = Env.bind_decl env jt in
-      let top = Topsubst.bind top x kx in
+      let top = match x with Id x -> Topsubst.bind top x kx | Anonymous -> top in
       let ju = infer_term top sigma env !u in
       let s2 = sort_of ju u in
       begin try fst ju, prod_rule (s1,s2)
       with Not_found -> error_prod_rule (pos_of t) s1 s2 end
   | SProd (x,a,u) ->
       Format.printf "typage de (%s = %a)@\n" x Print.term !a;
-      let ja = infer_term top sigma (Env.clear_decl env) !a in
+      let ja = 
+	try Env.lookup env (Topsubst.lookup top x)
+	with Not_found -> infer_term top sigma (Env.clear_decl env) !a in
       let s1 = sort_of ja a in
       Format.printf "intro def %s : %a@\n" x Print.judg ja;
       let env,kx = Env.bind_def env (Env.keys_of top !a) ja in
-      let ju = infer_term (Topsubst.bind top x kx) sigma env !u in
+      let top = Topsubst.bind top x kx in
+      let ju = infer_term top sigma env !u in
       let s2 = sort_of ju u in
       begin try fst ju,  prod_rule (s1,s2)
       with Not_found -> error_prod_rule (pos_of a) s1 s2 end

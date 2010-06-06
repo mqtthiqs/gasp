@@ -8,13 +8,19 @@ let rec sort fmt = function
   | KType -> fprintf fmt "Type"
   | KKind -> fprintf fmt "Kind"
 
+let name fmt = function
+  | Id x -> fprintf fmt "%s" x
+  | Anonymous -> fprintf fmt "_"
+
 let rec term fmt : term -> unit = function
   | Var x -> fprintf fmt "@[%s@]" !x
   | App (t, x) -> fprintf fmt "@[%a @,@[%s@]@]" term' t !x
   | Sort s ->
       fprintf fmt "@[%a@]" sort !s
-  | Prod (x, t, s) -> 
+  | Prod (Id x, t, s) -> 
       fprintf fmt "@[@[(%s : %a).@]@,@[%a@]@]" x term' t term' s
+  | Prod (Anonymous, t, s) -> 
+      fprintf fmt "@[(@[%a@] -> @[%a@])@]" term' t term' s
   | SProd (x, a, s) -> 
       fprintf fmt "@[@[(%s = %a).@]@,%a@]" x term' a term' s
 

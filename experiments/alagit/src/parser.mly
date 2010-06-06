@@ -30,8 +30,8 @@ term: s=loc(sort)
 {
   Position.value 
     (List.fold_left 
-       (fun accu x -> 
-	  Position.with_pos (Position.position accu) (Prod (x, t, accu))) 
+       (fun accu (x:string) -> 
+	  Position.with_pos (Position.position accu) (Prod (Id x, t, accu))) 
        s (List.rev xs))
 }
 | LPAREN x=ID EQUAL a=loc(term) RPAREN DOT s=loc(term)
@@ -40,7 +40,7 @@ term: s=loc(sort)
 }
 | t1=loc(term) ARROW t2=loc(term)
 {
-  Prod (noname (), t1, t2)
+  Prod (Anonymous, t1, t2)
 }
 | x=loc(ID)
 {
