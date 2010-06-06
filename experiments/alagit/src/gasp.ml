@@ -30,9 +30,10 @@ let parse_file filename =
 
 let process filename = 
   let (AST.Patch t) = parse_file filename in
-  let (_,h) = Check.infer_term Env.empty t in
-  Print.head Format.std_formatter h;
-  Format.pp_print_newline Format.std_formatter()
+  let _ = Check.infer_term Env.empty t in
+  (* Print.head Format.std_formatter h; *)
+  (* Format.pp_print_newline Format.std_formatter(); *)
+  ()
 
 let _ =
   List.map process filenames

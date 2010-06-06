@@ -11,7 +11,11 @@ type head =
 
 type t
 
-and j = t * head
+and j = { 
+  env : t ;
+  head : head;
+  sort : sort
+}
 
 val empty : t
 

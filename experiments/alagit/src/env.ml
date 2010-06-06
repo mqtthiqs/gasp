@@ -12,7 +12,11 @@ type t = {
   env : j Keymap.t;
   free : key list
 }
-and j = t * head
+and j = { 
+  env : t ;
+  head : head;
+  sort : sort
+}
     
 let empty = {
     env = Keymap.empty; 

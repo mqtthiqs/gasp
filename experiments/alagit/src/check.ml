@@ -1,13 +1,14 @@
 open AST
+open Env
 
 let ( ! ) = Position.value
 let pos_of = Position.position
 
 let prod_rule = function
-  | _,s -> Env.Hsort s				(* PTS total *)
+  | _,s -> s				(* PTS total *)
 
 let axiom_rule = function
-  | KType -> Env.Hsort KKind
+  | KType -> KKind
   | _ -> raise Not_found
 
 (* 
@@ -97,8 +98,8 @@ module Topsubst = struct
 end
 
 let sort_of j t = 
-  match snd j with 
-    | Env.Hsort s -> s 
+  match j.head with 
+    | Hsort s -> s 
     | _ -> error_not_a_sort (pos_of t) !t
 
 let rec infer_term top sigma env = function
@@ -107,15 +108,17 @@ let rec infer_term top sigma env = function
       with Not_found -> error_not_bound (pos_of x) !x end
   | App (a,x) -> 
       let jx = Env.lookup env (Topsubst.lookup top !x) in
-      let (ea,ha) = infer_term top sigma env !a in
+      let ja = infer_term top sigma env !a in
       let ea,ky = 
-	try Env.pop_decl ea
+	try Env.pop_decl ja.env
 	with Env.Empty -> error_not_a_product (pos_of a) !a !x in
       let jy = Env.lookup env ky in
       if jx != jy then error_not_equal (pos_of x) jx jy; (* TODO *)
-      ea, (snd jy)
+      { env = ea; 
+	head = ja.head;
+	sort = ja.sort }		(* TODO subst *)
   | Sort s ->
-      begin try (env, axiom_rule !s)
+      begin try { env = env; head = Hsort !s; sort = axiom_rule !s }
       with Not_found -> error_type_kind (pos_of s) !s end
   | Prod (x,t,u) -> 
       let jt = infer_term top sigma (Env.clear_decl env) !t in
@@ -125,7 +128,7 @@ let rec infer_term top sigma env = function
       let top = match x with Id x -> Topsubst.bind top x kx | Anonymous -> top in
       let ju = infer_term top sigma env !u in
       let s2 = sort_of ju u in
-      begin try fst ju, prod_rule (s1,s2)
+      begin try { ju with sort = prod_rule (s1,s2) }
       with Not_found -> error_prod_rule (pos_of t) s1 s2 end
   | SProd (x,a,u) ->
       Format.printf "typage de (%s = %a)@\n" x Print.term !a;
@@ -138,7 +141,7 @@ let rec infer_term top sigma env = function
       let top = Topsubst.bind top x kx in
       let ju = infer_term top sigma env !u in
       let s2 = sort_of ju u in
-      begin try fst ju,  prod_rule (s1,s2)
+      begin try { ju with sort =  prod_rule (s1,s2) }
       with Not_found -> error_prod_rule (pos_of a) s1 s2 end
 
 let infer_term env t = infer_term Topsubst.empty Subst.empty env !t

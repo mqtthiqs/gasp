@@ -40,8 +40,8 @@ let rec env fmt e =
     fprintf fmt ", "; env fmt e
   with Env.Empty -> ()
 
-and judg fmt (e,h:Env.j) : unit =
-  try ignore (Env.pop_decl e);
-    fprintf fmt "@[(%a ⊢ %a)@]" env e head h
+and judg fmt (j:Env.j) : unit =
+  try ignore (Env.pop_decl j.env);
+    fprintf fmt "@[(%a ⊢ %a : %a)@]" env j.env head j.head sort j.sort
   with Env.Empty ->
-    fprintf fmt "@[%a@]" head h
+    fprintf fmt "@[%a : %a@]" head j.head sort j.sort
