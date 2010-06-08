@@ -94,7 +94,8 @@ let prelude = "
 let AST.Patch internalized_prelude =
   let parser_fun lexer lexbuf = try
     Parser.patch lexer lexbuf
-  with Parser.Error -> assert false in
+  with Parser.Error -> assert false 
+  in
   SyntacticAnalysis.process 
     ~lexer_init:Lexing.from_string 
     ~parser_fun 
@@ -103,3 +104,6 @@ let AST.Patch internalized_prelude =
 
 let initial_repository = 
   Check.infer_env Env.empty internalized_prelude
+
+let fragment f = 
+  assert false

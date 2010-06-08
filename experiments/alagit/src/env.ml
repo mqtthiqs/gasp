@@ -4,8 +4,11 @@ type key = int
 
 module Env = struct
   module Intmap = Map.Make (struct type t = key let compare = Pervasives.compare end)
+
   type t = ptype Intmap.t
+
   let empty = Intmap.empty
+
   let lookup env k = Intmap.find k env
     
   let bind env k t =
@@ -23,20 +26,25 @@ end
 
 module Subst = struct
   module Idmap = Map.Make (Name)
+
   type t = key Idmap.t
+
   let empty = Idmap.empty
-  let bind sigma n k = 
-    Idmap.add n k sigma
+
+  let bind sigma n k = Idmap.add n k sigma
+
   let lookup sigma n = Idmap.find n sigma
 
   let rec fold_app f acc = function
     | Var x -> f x acc
     | App (a,x) -> f x (fold_app f acc (Position.value a))
+
   let keys_of sigma a = 
     fold_app (fun x acc -> lookup sigma x::acc) [] a
 end
 
 type t = (Env.t * Subst.t)
+
 let empty = (Env.empty, Subst.empty)
 
 let bind_def (env,sigma) x a t =
