@@ -57,16 +57,17 @@ let module_typingj_iname     = !+ module_typingj_cname
 
 (** The internalized meta-theory of STLCDEC. *)
 
-(* Unfinished. *)
 let prelude = "
-(type_identifier : Type).
-(identifier      : Type).
-(declaration     : Type).
-(expression      : Type).
-(declarations    : Type).
-(ty              : Type).
-(environment	 : Type).
-(binding	 : Type).
+(type_identifier            : Type).
+(identifier		    : Type).
+(declaration		    : Type).
+(expression		    : Type).
+(declarations		    : Type).
+(ty		            : Type).
+(environment		    : Type).
+(binding	            : Type).
+(expression_typing_judgment : Type).
+(module_typing_judgment     : Type).
 
 (DValue          : identifier -> ty -> expression -> declaration).
 (DType	         : type_identifier -> declaration).
@@ -84,6 +85,9 @@ let prelude = "
 (BindVar	 : identifier -> ty -> binding).
 (BindTyVar	 : identifier -> binding).
 
+(HasType	 : environment -> expression -> ty -> expression_typing_judgment).
+
+(Module	         : environment -> declarations -> environment).
 ...
 "
 
