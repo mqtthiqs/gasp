@@ -77,4 +77,4 @@ let AST.Patch internalized_prelude =
     ~input:prelude
 
 let initial_repository = 
-  () (* Check.infer_env Env.empty internalized_prelude *)
+  Check.infer_env Env.empty internalized_prelude

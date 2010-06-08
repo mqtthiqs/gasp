@@ -158,9 +158,12 @@ let rec infer env ty : inference_result =
     | Prod (x,t,u) -> 
 	let s1 = infer_type env t in
 	let env = Env.bind_decl env x !t in
-	let s2 = infer_type env u in
-	(try RSort (prod_rule (s1, s2))
-	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+	let s2 = infer env u in
+	(match s2 with
+	   | REnv _ -> s2 
+	   | RSort s2 -> 
+	       (try RSort (prod_rule (s1, s2))
+		with Not_found -> error_prod_rule (pos_of ty) s1 s2))
     | SProd (x,t,a,u) ->
 	let s1 = infer_type env t in
 	(let (ta,env) = infer_term (pos_of a) env !a in
