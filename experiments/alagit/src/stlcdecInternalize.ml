@@ -23,11 +23,20 @@ let var_exp_cname	     = "Var"
 let var_exp_iname            = !+ var_exp_cname
 let lam_exp_cname	     = "Lam"
 let lam_exp_iname	     = !+ lam_exp_cname
+let app_exp_cname	     = "App"
+let app_exp_iname	     = !+ app_exp_cname
+
+let ty_cname	             = "ty"
+let ty_iname		     = !+ ty_cname
 let var_ty_cname	     = "TyVar"
 let var_ty_iname	     = !+ var_ty_cname
+let arrow_ty_cname	     = "TyArrow"
+let arrow_ty_iname	     = !+ arrow_ty_cname
 
 let environment_cname        = "environment"
 let environment_iname        = !+ environment_cname
+let nil_environment_cname    = "NoBinding"
+let nil_environment_iname    = !+ nil_environment_cname
 let cons_environment_cname   = "ConsBinding"
 let cons_environment_iname   = !+ cons_environment_cname
 
@@ -56,6 +65,8 @@ let prelude = "
 (expression      : Type).
 (declarations    : Type).
 (ty              : Type).
+(environment	 : Type).
+(binding	 : Type).
 
 (DValue          : identifier -> ty -> expression -> declaration).
 (DType	         : type_identifier -> declaration).
@@ -63,6 +74,16 @@ let prelude = "
 (Var             : identifier -> expression).
 (Lam             : identifier -> ty -> expression -> expression).
 (App             : expression -> expression -> expression).
+
+(TyVar		 : identifier -> ty).
+(TyArrow	 : ty -> ty -> ty).
+
+(ConsBinding	 : binding -> environment -> environment).
+(NoBinding	 : environment).
+
+(BindVar	 : identifier -> ty -> binding).
+(BindTyVar	 : identifier -> binding).
+
 ...
 "
 
