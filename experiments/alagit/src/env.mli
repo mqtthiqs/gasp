@@ -19,3 +19,6 @@ val lookup_and_bind : t -> id -> id -> t * ptype
 
 (* [equal env x y] finds out if x and y points to the same type *)
 val equal : t -> id -> id -> bool
+
+(* [to_ptype env] converts (back) an environment as a type. *)
+val to_ptype : t -> ptype'

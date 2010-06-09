@@ -2,6 +2,8 @@ open SyntacticAnalysis
 
 let command = ref `None
 
+let repository_filename = ref "repository"
+
 let define_command = function
   | "init"   -> command := `Init
   | "commit" -> command := `Commit
@@ -13,7 +15,10 @@ let options = Arg.align
     " Set debug mode.";
 
     "--do", Arg.Symbol ([ "init"; "commit" ], define_command),
-    " Apply an operation on the current repository."
+    " Apply an operation on the current repository.";
+
+    "--repository", Arg.Set_string repository_filename,
+    " Set the file where the repository is stored. [default=repository]"
   ]
 
 let usage_msg =
@@ -31,34 +36,15 @@ let typecheck filename =
   Print.ptype Format.std_formatter (AST.Sort s);
   Format.pp_print_newline Format.std_formatter ()
 
-(** For the moment, we focus on the STLCdec programming language. *)
-
-(** [internalize_stlcdec n f] internalizes a view on [name] stored in
-    [filename]. *)
-let internalize_stlcdec_fragment_view name filename = 
-  let _fragment_ast : StlcdecAST.fragment = 
-    parse_file filename StlcdecParser.fragment StlcdecLexer.main
-  in
-  let _fragment_patch = 
-    StlcdecInternalize.fragment _fragment_ast
-  in
-  assert false
-
-let initialize_stlcdec_repository () = 
-  let _repository = StlcdecInternalize.initial_repository in 
-  assert false
-
-let load_stlcdec_repository () = 
-  assert false
 
 let commit_specification = "commit [rootname] [filename] [kind]"
 
 let _ =
   match !command with
     | `None   -> List.iter typecheck arguments
-    | `Init   -> initialize_stlcdec_repository ()
+    | `Init   -> StlcdecRepository.initialize !repository_filename
     | `Commit -> 
-	let _repository = load_stlcdec_repository () in
+	let _repository = StlcdecRepository.load !repository_filename in
 	let name, filename, kind = 
 	  Misc.ListExt.get3 commit_specification arguments 
 	in
@@ -77,7 +63,7 @@ let _ =
 	   and a set of declarations). *)
 	let _internal_name, _repository = 
 	  match extension with
-	    | "module" -> internalize_stlcdec_fragment_view name filename
+	    | "module" -> StlcdecRepository.internalize_fragment_view name filename
 	    | _ -> Error.global_error "during commit" "Invalid view extension."
 	in
 	

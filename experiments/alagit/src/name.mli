@@ -9,6 +9,10 @@ val to_string : t -> string
     starts with prefix. *)
 val fresh : string -> t
 
+(** [has_prefix s n] returns true if [n] has been built initially using
+    [s] as prefix. *)
+val has_prefix : string -> t -> bool
+
 (** [from_string s] generates a name whose concrete representation
     is exactly [s(0)]. No freshness guarantee provided. *)
 val from_string : string -> t

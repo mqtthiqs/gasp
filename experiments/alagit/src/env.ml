@@ -40,7 +40,10 @@ module Subst = struct
     | App (a,x) -> f x (fold_app f acc (Position.value a))
 
   let keys_of sigma a = 
-    fold_app (fun x acc -> lookup sigma x::acc) [] a
+    fold_app (fun x acc -> lookup sigma x :: acc) [] a
+
+  let as_list sigma = 
+    List.rev (Idmap.fold (fun k v ks -> (k, v) :: ks) sigma [])
 end
 
 type t = (Env.t * Subst.t)
@@ -66,3 +69,12 @@ let lookup_and_bind (env,sigma) x y =
   let t = Env.lookup env k in
   let sigma = Subst.bind sigma y k in
   (env,sigma), t
+
+let to_ptype (env, sigma) = 
+  let wrap = Position.unknown_pos in
+  List.fold_left 
+    (fun c (k, v) -> 
+       let t = wrap (Env.lookup env v) in
+       wrap (Prod (k, t, c)))
+    (wrap Cont)
+    (Subst.as_list sigma)

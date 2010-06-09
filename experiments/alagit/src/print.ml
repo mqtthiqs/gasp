@@ -21,6 +21,8 @@ let rec ptype fmt = function
       fprintf fmt "@[%a@]" term' t
   | Sort s ->
       fprintf fmt "@[%a@]" sort s
+  | (Prod (_, t1, t2)) as t when ASText.is_arrow t ->
+      fprintf fmt "@[@[%a@]@ -> @[%a@]@]" ptype' t1 ptype' t2
   | Prod (x, t, s) -> 
       fprintf fmt "@[@[(%a : %a).@]@,@[%a@]@]" id x ptype' t ptype' s
   | SProd (x, t, a, s) -> 

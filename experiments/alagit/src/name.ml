@@ -16,6 +16,8 @@ let fresh s = incr internal_counter; {
   salt   = !internal_counter
 }
 
+let has_prefix s n = n.prefix = s
+
 let cache = Hashtbl.create 13
 
 let from_string s = try 

@@ -2,7 +2,6 @@
   open AST
 
   let parse_error = Error.error "during parsing"
-  let noname () = Name.fresh "*"
 %}
 
 %token EOF
@@ -42,7 +41,7 @@ ptype: a=loc(term)
 }
 | t1=loc(ptype) ARROW t2=loc(ptype)
 {
-  Prod (noname (), t1, t2)
+  ASText.mk_arrow t1 t2
 }
 | CONT
 {

@@ -11,3 +11,9 @@ val parse_file :
   (Lexing.lexbuf -> 'token) -> 
   'ast
   
+val parse_string :
+  string ->
+  ((Lexing.lexbuf -> 'token) -> Lexing.lexbuf -> 'ast) ->
+  (Lexing.lexbuf -> 'token) -> 
+  'ast
+  
