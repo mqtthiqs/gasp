@@ -36,8 +36,10 @@ let typecheck filename =
   Print.ptype Format.std_formatter (AST.Sort s);
   Format.pp_print_newline Format.std_formatter ()
 
-
 let commit_specification = "commit [rootname] [filename] [kind]"
+
+(* Note: We only focus on the STLCdec programming language for the
+   moment. *)
 
 let _ =
   match !command with
@@ -57,14 +59,15 @@ let _ =
 	    view must be syntactically correct). *)
 
 	(** The view category is deduced from the filename extension. *)
-	let extension = Filename.chop_extension filename in 
+	let extension = Misc.FilenameExt.get_extension filename in 
 	(* For the moment, we only handle one kind of view: views on
 	   module fragment (which is composed of a set of parameters 
 	   and a set of declarations). *)
 	let _internal_name, _repository = 
 	  match extension with
 	    | "module" -> StlcdecRepository.internalize_fragment_view name filename
-	    | _ -> Error.global_error "during commit" "Invalid view extension."
+	    | _ -> Error.global_error "during commit" 
+		(Printf.sprintf "Invalid view extension `%s'." extension)
 	in
 	
         (** At this point, a fresh internal name is associated to the

@@ -18,6 +18,11 @@ patch: t=loc(ptype) EOF
 {
   Patch t
 }
+| error
+{
+  parse_error (Position.lex_join $startpos $endpos) "Syntax error."
+}
+
 
 ptype: a=loc(term)
 {

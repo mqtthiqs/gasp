@@ -9,6 +9,7 @@
    "let",	LET;
    "in",	IN;
    "fun",	FUN;
+   "val",	VAL
  ]
 
  let is_keyword =

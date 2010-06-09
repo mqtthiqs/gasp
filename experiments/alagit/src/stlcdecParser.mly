@@ -18,9 +18,13 @@
 
 %%
 
-fragment: g=binding+ d=declaration+  EOF
+fragment: g=binding* d=declaration*  EOF
 {
   Fragment (Env g, d)
+}
+| error
+{
+  parse_error (Position.lex_join $startpos $endpos) "Syntax error."
 }
 
 binding: VAL x=ID COLON ty=ty

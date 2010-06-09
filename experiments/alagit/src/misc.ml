@@ -11,3 +11,13 @@ module ListExt = struct
       | _ -> Error.global_error "internal" msg
 	  
 end
+
+module FilenameExt = struct
+
+  let get_extension s = 
+    try 
+      let idx = String.rindex s '.' in
+      String.sub s (idx + 1) (String.length s - idx - 1)
+    with Not_found -> "" 
+
+end

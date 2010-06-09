@@ -88,7 +88,7 @@ let prelude = "
 (HasType	 : environment -> expression -> ty -> expression_typing_judgment).
 
 (Module	         : environment -> declarations -> environment).
-...
+(...)
 "
 
 let AST.Patch internalized_prelude =
