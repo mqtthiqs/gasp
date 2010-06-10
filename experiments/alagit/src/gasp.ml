@@ -46,7 +46,7 @@ let _ =
     | `None   -> List.iter typecheck arguments
     | `Init   -> StlcdecRepository.initialize !repository_filename
     | `Commit -> 
-	let _repository = StlcdecRepository.load !repository_filename in
+	let repository = StlcdecRepository.load !repository_filename in
 	let name, filename, kind = 
 	  Misc.ListExt.get3 commit_specification arguments 
 	in
@@ -55,21 +55,28 @@ let _ =
 
 	(** The provided filename is assumed to be a (modified) view
 	    on something that is named [N] by the user. We internalize
-	    this view "as is", with minimal syntactic requirement (the
-	    view must be syntactically correct). *)
+	    this view "as is", with minimal requirement (the view must
+	    only be syntactically correct). *)
 
 	(** The view category is deduced from the filename extension. *)
 	let extension = Misc.FilenameExt.get_extension filename in 
 	(* For the moment, we only handle one kind of view: views on
 	   module fragment (which is composed of a set of parameters 
-	   and a set of declarations). *)
-	let _internal_name, _repository = 
+	   and a set of declarations). In the future, we will have 
+	   others views like type derivations views (i.e. signatures) 
+	   for instance. *)
+	let _internal_name, AST.Patch p = 
 	  match extension with
-	    | "module" -> StlcdecRepository.internalize_fragment_view name filename
+	    | "module" -> StlcdecInternalize.named_fragment_view_from_file name filename
 	    | _ -> Error.global_error "during commit" 
 		(Printf.sprintf "Invalid view extension `%s'." extension)
 	in
+	Print.ptype' Format.std_formatter p;
+	Format.pp_print_newline Format.std_formatter ();
 	
+
+	let repository = Check.infer_env repository p in
+
         (** At this point, a fresh internal name is associated to the
 	    internalized version of the user module fragments. This 
 	    internal representation may share some subterms with 
@@ -80,7 +87,8 @@ let _ =
 	match kind with
 	  | "save" -> 
 	      (** The user only wants to produce a snapshot of its work. *)
-	      ()
+	      StlcdecRepository.save repository !repository_filename 
+
 	  | _ ->
 	      (** The user wants a higher level of integration by updating 
 		  the older version of the subtree called [name] in an

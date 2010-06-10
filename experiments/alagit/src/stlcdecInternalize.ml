@@ -1,3 +1,8 @@
+open StlcdecAST
+
+(* In the future, this module will be automatically generated from the
+   programming language meta-theory definition. *)
+
 let ( !+ ) = Name.unique_from_string
 
 (** The following declarations provide constants for concrete
@@ -40,6 +45,11 @@ let nil_environment_iname    = !+ nil_environment_cname
 let cons_environment_cname   = "ConsBinding"
 let cons_environment_iname   = !+ cons_environment_cname
 
+let fragment_cname	     = "fragment"
+let fragment_iname	     = !+ fragment_cname
+let fragment_ctor_cname      = "Fragment"
+let fragment_ctor_iname      = !+ fragment_ctor_cname
+
 let binding_cname	     = "binding"
 let binding_iname	     = !+ binding_cname
 let bind_var_cname	     = "BindVar"
@@ -55,6 +65,12 @@ let modulej_cname	     = "module_typing_judgment"
 let module_typingj_cname     = "Module"
 let module_typingj_iname     = !+ module_typingj_cname
 
+let identifier_cname	     = "identifier"
+let identifier_iname	     = !+ identifier_cname
+
+let type_identifier_cname    = "type_identifier"
+let type_identifier_iname    = !+ type_identifier_cname
+
 (** The internalized meta-theory of STLCDEC. *)
 
 let prelude = "
@@ -68,6 +84,7 @@ let prelude = "
 (binding	            : Type).
 (expression_typing_judgment : Type).
 (module_typing_judgment     : Type).
+(fragment		    : Type).
 
 (DValue          : identifier -> ty -> expression -> declaration).
 (DType	         : type_identifier -> declaration).
@@ -76,11 +93,16 @@ let prelude = "
 (Lam             : identifier -> ty -> expression -> expression).
 (App             : expression -> expression -> expression).
 
-(TyVar		 : identifier -> ty).
+(TyVar		 : type_identifier -> ty).
 (TyArrow	 : ty -> ty -> ty).
+
+(ConsDeclaration   : declaration -> declarations -> declarations).
+(EmptyDeclarations : declarations).
 
 (ConsBinding	 : binding -> environment -> environment).
 (NoBinding	 : environment).
+
+(Fragment	 : environment -> declarations -> fragment).
 
 (BindVar	 : identifier -> ty -> binding).
 (BindTyVar	 : identifier -> binding).
@@ -88,14 +110,167 @@ let prelude = "
 (HasType	 : environment -> expression -> ty -> expression_typing_judgment).
 
 (Module	         : environment -> declarations -> environment).
+
 (...)
 "
 
 let AST.Patch internalized_prelude =
   ASTparser.patch_from_string prelude
 
-let initial_repository = 
-  Check.infer_env Env.empty internalized_prelude
 
-let fragment f = 
-  assert false
+let on_names f l g = 
+  let defs = List.flatten (List.map f l) in
+  let names = 
+    List.rev (Misc.ListExt.cut (List.length l) 
+		(List.rev (fst (List.split defs)))) 
+  in 
+  defs @ g names
+
+let on_name f x g = 
+  on_names f [x] (function [y] -> g y | _ -> assert false)
+
+let on_2_names f x1 x2 g = 
+  on_names f [x1; x2] (function [y1; y2] -> g y1 y2 | _ -> assert false)
+
+let wr = Position.unknown_pos
+
+let var x = wr (AST.Var x)
+
+let ty_var x = AST.Term (var x)
+
+let app f xs = 
+  wr (List.fold_left (fun accu x -> (AST.App (wr accu, x))) (AST.Var f) xs)
+
+let name (ty, t) = (Name.fresh "X", (ty, Some t))
+
+(* FIXME: escape [ and ]. *)
+let name_literal lit = Name.from_string (Printf.sprintf "data[%s]" lit)
+
+let rec declaration = function
+  | DValue (x, t, e) -> 
+      on_name expression e 
+	(fun e_name -> 
+	   on_name ty t 
+	     (fun t_name -> 
+		on_name type_identifier x 
+		  (fun x_name -> 
+		     [name (ty_var declaration_iname, 
+			    app dvalue_declaration_iname 
+			      [ x_name; t_name; e_name; ])])))
+		       
+  | DType x -> 
+      on_name type_identifier x 
+	(fun x_name ->
+	   [name (ty_var declaration_iname, 
+		  app dtype_declaration_iname [ x_name ])])
+		    
+
+and declarations = function 
+  | [] -> 
+      [name (ty_var declarations_iname, var empty_declarations_iname)]
+  | x :: xs -> 
+      on_name declaration x 
+	(fun x_name -> 
+	   on_name declarations xs 
+	     (fun xs_name -> 
+		[name (ty_var declarations_iname, 
+		       app cons_environment_iname [ x_name; xs_name ])]))
+
+and expression = function
+  | Var x -> 
+      on_name identifier x 
+	(fun x_name ->
+	   [name (ty_var expression_iname,
+		  app var_exp_iname [ x_name ])])
+  | Lam (x, t, e) -> 
+      on_name identifier x 
+	(fun x_name ->
+	   on_name ty t
+	     (fun t_name ->
+		on_name expression e 
+		  (fun e_name -> 
+		     [name (ty_var expression_iname,
+			    app lam_exp_iname [ x_name; t_name; e_name ])])))
+  | App (e1, e2) -> 
+      on_2_names expression e1 e2
+	(fun e1_name e2_name ->
+	   [name (ty_var expression_iname,
+		  app app_exp_iname [ e1_name; e2_name ])])
+
+and ty = function
+  | TyVar x ->  
+      on_name type_identifier x 
+	(fun x_name ->
+	   [name (ty_var ty_iname,
+		  app var_ty_iname [ x_name ])])
+
+  | TyArrow (ty1, ty2) -> 
+      on_2_names ty ty1 ty2 
+	(fun ty1_name ty2_name ->
+	   [name (ty_var ty_iname,
+		  app arrow_ty_iname [ ty1_name; ty2_name ])])
+
+and identifier x = 
+    [ name_literal x, (ty_var identifier_iname, None) ]
+
+and type_identifier x = 
+    [ name_literal x, (ty_var type_identifier_iname, None) ]
+
+and typing_environment (Env bs) = 
+  bindings bs
+
+and bindings = function
+  | [] -> 
+      [name (ty_var environment_iname, var nil_environment_iname)]
+  | x :: xs -> 
+      on_name binding x 
+	(fun x_name -> 
+	   on_name bindings xs 
+	     (fun xs_name -> 
+		[name (ty_var environment_iname,
+		       app cons_environment_iname [ x_name; xs_name ])]))
+	
+and binding = function
+  | BindVar (x, t) -> 
+      on_name identifier x 
+	(fun x_name -> 
+	   on_name ty t 
+	     (fun t_name ->
+		[name (ty_var binding_iname, 
+		       app bind_var_iname [ x_name; t_name ])]))
+  | BindTyVar x -> 
+      on_name type_identifier x
+	(fun x_name ->
+	   [name (ty_var binding_iname,
+		  app bind_tyvar_iname [ x_name ])])
+
+let fragment_view (Fragment (env, decs)) = 
+  on_name typing_environment env 
+    (fun env_name ->
+       on_name declarations decs
+	 (fun decs_name ->
+	    [name (ty_var fragment_iname,
+		   app fragment_ctor_iname [ env_name; decs_name ])]))
+  
+(* precondition: binders > []. *)
+let as_ptype iname binders = 
+  let binder x b = 
+    match snd b with
+      | None -> (fun e -> wr (AST.Prod (x, wr (fst b), e)))
+      | Some t -> (fun e -> wr (AST.SProd (x, wr (fst b), t, e)))
+  in
+  let rec aux = function
+    | []           -> assert false
+    | [(x, b)]     -> binder x b ((binder iname (fst b, Some (var x))) (wr AST.Cont))
+    | (x, b) :: bs -> binder x b (aux bs)
+  in
+  aux binders
+
+let named_fragment_view_from_file name filename = 
+  let _fragment_ast : StlcdecAST.fragment = 
+    SyntacticAnalysis.parse_file filename StlcdecParser.fragment StlcdecLexer.main
+  in
+  let fragment_binders = fragment_view _fragment_ast in
+  let iname = Name.fresh name in 
+  (iname, AST.Patch (as_ptype iname fragment_binders))
+  

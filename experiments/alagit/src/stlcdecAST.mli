@@ -20,6 +20,8 @@ and type_identifier = string
 type typing_environment = 
     Env of bindings
 
+and fragment = Fragment of typing_environment * declarations
+
 and binding = 
   | BindVar   of identifier * ty
   | BindTyVar of type_identifier
@@ -35,6 +37,5 @@ type module_typing_judgment = {
   out_env : typing_environment
 }
 
-type fragment = Fragment of typing_environment * declarations
 
 

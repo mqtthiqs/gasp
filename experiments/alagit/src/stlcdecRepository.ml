@@ -1,13 +1,5 @@
-(** [internalize_stlcdec n f] internalizes a view on [name] stored in
-    [filename]. *)
-let internalize_fragment_view name filename = 
-  let _fragment_ast : StlcdecAST.fragment = 
-    SyntacticAnalysis.parse_file filename StlcdecParser.fragment StlcdecLexer.main
-  in
-  let _fragment_patch = 
-    StlcdecInternalize.fragment _fragment_ast
-  in
-  assert false
+let initial = 
+  Check.infer_env Env.empty StlcdecInternalize.internalized_prelude
 
 let save env repository_filename = 
   let ptype = Env.to_ptype env in
@@ -21,5 +13,5 @@ let load repository_filename =
   Check.infer_env Env.empty repository
 
 let initialize repository_filename = 
-  let repository = StlcdecInternalize.initial_repository in 
+  let repository = initial in 
   save repository repository_filename
