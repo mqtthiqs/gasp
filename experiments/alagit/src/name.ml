@@ -6,11 +6,6 @@ type t = {
 (** Not thread-safe. *)
 let internal_counter = ref 0 
 
-let to_string s = 
-  match s.salt with
-    | 0 -> s.prefix
-    | _ -> s.prefix ^ "(" ^ string_of_int s.salt ^ ")"
-
 let fresh s = incr internal_counter; {
   prefix = s; 
   salt   = !internal_counter
@@ -20,14 +15,24 @@ let has_prefix s n = n.prefix = s
 
 let cache = Hashtbl.create 13
 
+let global_limit () = min_int + Hashtbl.length cache
+
 let from_string s = try 
   Hashtbl.find cache s
 with Not_found -> 
-  let n = { prefix = s; salt = 0 } in
+  let n = { prefix = s; salt = global_limit () } in
   Hashtbl.add cache s n;
   n
-  
 
+let to_string s = 
+  if s.salt <= 0 then
+    s.prefix
+  else 
+    s.prefix ^ "(" ^ string_of_int s.salt ^ ")"
+
+let to_string_debug s = 
+  s.prefix ^ "(" ^ string_of_int s.salt ^ ")"
+  
 exception InternalNameAlreadyInUse
 let unique_from_string s = 
   if Hashtbl.mem cache s then raise InternalNameAlreadyInUse;

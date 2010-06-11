@@ -147,6 +147,7 @@ exception IsNotClosed
 exception IsClosed
 
 let rec infer env ty : inference_result =
+(*Format.eprintf "========= CHECK ==========\n @[%a@]\n%!" Print.ptype' ty; *)
   match !ty with
     | Sort s ->
 	(try RSort (axiom_rule s)
@@ -171,9 +172,12 @@ let rec infer env ty : inference_result =
 						 env is only used to check 
 						 equality, not for the rest *)
 	let env = Env.bind_def env x !a !t in
-	let s2 = infer_type env u in
-	(try RSort (prod_rule (s1,s2))
-	 with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+	(match infer env u with
+	   | RSort s2 -> 
+	       (try 	
+		  RSort (prod_rule (s1,s2))
+		with Not_found -> error_prod_rule (pos_of ty) s1 s2)
+	   | r -> r)
     | Cont ->
 	REnv env
 

@@ -22,3 +22,7 @@ val equal : t -> id -> id -> bool
 
 (* [to_ptype env] converts (back) an environment as a type. *)
 val to_ptype : t -> ptype'
+
+(* [expand env on_var on_app x] exports an internalized term using the
+   two constructors [on_var] and [on_app]. *)
+val expand : t -> (id -> 'a) -> ('a -> id -> 'a) -> id -> 'a

@@ -26,8 +26,8 @@ let usage_msg =
 
 let arguments =
   let arguments = ref [] in
-    Arg.parse options (fun f -> arguments := f :: !arguments) usage_msg;
-    !arguments
+  Arg.parse options (fun f -> arguments := f :: !arguments) usage_msg;
+  List.rev !arguments
 
 (** [typecheck r] checks a repository stored in file [r]. *)
 let typecheck filename = 
@@ -89,7 +89,7 @@ let _ =
 	      (** The user only wants to produce a snapshot of its work. *)
 	      StlcdecRepository.save repository !repository_filename 
 
-	  | _ ->
+	  | "update" ->
 	      (** The user wants a higher level of integration by updating 
 		  the older version of the subtree called [name] in an
 		  existing subtree A. 
@@ -99,5 +99,9 @@ let _ =
 		  produce a new version of A.  *)
 	      assert false (* FIXME: soon. *)
 	
+	  | cmd -> 
+	      Error.global_error "During integration" 
+		(Printf.sprintf "Unknown integration kind `%s'." cmd)
+
 	  
 

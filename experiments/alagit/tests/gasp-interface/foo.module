@@ -1,1 +1,4 @@
+type int
+val f : int -> int
 val x : int
+let g : int -> int = fun (x : int) -> f x

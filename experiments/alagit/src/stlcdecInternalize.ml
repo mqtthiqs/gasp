@@ -8,22 +8,50 @@ let ( !+ ) = Name.unique_from_string
 (** The following declarations provide constants for concrete
     and internal identifiers. This part should be automatically
     generated in the future. *)
+
+let type_identifier_cname    = "type_identifier"
+let type_identifier_iname    = !+ type_identifier_cname
+
+let identifier_cname	     = "identifier"
+let identifier_iname	     = !+ identifier_cname
+
 let declaration_cname	     = "declaration"
 let declaration_iname	     = !+ declaration_cname
+
+let expression_cname	     = "expression"
+let expression_iname	     = !+ expression_cname
+
+let declarations_cname       = "declarations"
+let declarations_iname       = !+ declarations_cname
+
+let ty_cname	             = "ty"
+let ty_iname		     = !+ ty_cname
+
+let environment_cname        = "environment"
+let environment_iname        = !+ environment_cname
+
+let binding_cname	     = "binding"
+let binding_iname	     = !+ binding_cname
+
+let fragment_cname	     = "fragment"
+let fragment_iname	     = !+ fragment_cname
+
+let typingj_cname	     = "expression_typing_judgment"
+let typingj_iname	     = !+ typingj_cname
+
+let modulej_cname	     = "module_typing_judgment"
+let modulej_iname	     = !+ modulej_cname
+
 let dvalue_declaration_cname = "DValue"
 let dvalue_declaration_iname = !+ dvalue_declaration_cname
 let dtype_declaration_cname  = "DType"
 let dtype_declaration_iname  = !+ dtype_declaration_cname
 
-let declarations_cname       = "declarations"
-let declarations_iname       = !+ declarations_cname
 let cons_declarations_cname  = "ConsDeclaration"
 let cons_declarations_iname  = !+ cons_declarations_cname
 let empty_declarations_cname = "EmptyDeclarations"
 let empty_declarations_iname = !+ empty_declarations_cname
 
-let expression_cname	     = "expression"
-let expression_iname	     = !+ expression_cname
 let var_exp_cname	     = "Var"
 let var_exp_iname            = !+ var_exp_cname
 let lam_exp_cname	     = "Lam"
@@ -31,45 +59,31 @@ let lam_exp_iname	     = !+ lam_exp_cname
 let app_exp_cname	     = "App"
 let app_exp_iname	     = !+ app_exp_cname
 
-let ty_cname	             = "ty"
-let ty_iname		     = !+ ty_cname
 let var_ty_cname	     = "TyVar"
 let var_ty_iname	     = !+ var_ty_cname
 let arrow_ty_cname	     = "TyArrow"
 let arrow_ty_iname	     = !+ arrow_ty_cname
 
-let environment_cname        = "environment"
-let environment_iname        = !+ environment_cname
 let nil_environment_cname    = "NoBinding"
 let nil_environment_iname    = !+ nil_environment_cname
 let cons_environment_cname   = "ConsBinding"
 let cons_environment_iname   = !+ cons_environment_cname
 
-let fragment_cname	     = "fragment"
-let fragment_iname	     = !+ fragment_cname
 let fragment_ctor_cname      = "Fragment"
 let fragment_ctor_iname      = !+ fragment_ctor_cname
 
-let binding_cname	     = "binding"
-let binding_iname	     = !+ binding_cname
 let bind_var_cname	     = "BindVar"
 let bind_var_iname	     = !+ bind_var_cname
 let bind_tyvar_cname         = "BindTyVar"
 let bind_tyvar_iname	     = !+ bind_tyvar_cname
 
-let typingj_cname	     = "expression_typing_judgment"
 let exp_typingj_cname        = "HasType"
 let exp_typingj_iname        = !+ exp_typingj_cname
 
-let modulej_cname	     = "module_typing_judgment"
 let module_typingj_cname     = "Module"
 let module_typingj_iname     = !+ module_typingj_cname
 
-let identifier_cname	     = "identifier"
-let identifier_iname	     = !+ identifier_cname
 
-let type_identifier_cname    = "type_identifier"
-let type_identifier_iname    = !+ type_identifier_cname
 
 (** The internalized meta-theory of STLCDEC. *)
 
@@ -105,7 +119,7 @@ let prelude = "
 (Fragment	 : environment -> declarations -> fragment).
 
 (BindVar	 : identifier -> ty -> binding).
-(BindTyVar	 : identifier -> binding).
+(BindTyVar	 : type_identifier -> binding).
 
 (HasType	 : environment -> expression -> ty -> expression_typing_judgment).
 
@@ -117,14 +131,11 @@ let prelude = "
 let AST.Patch internalized_prelude =
   ASTparser.patch_from_string prelude
 
-
 let on_names f l g = 
-  let defs = List.flatten (List.map f l) in
-  let names = 
-    List.rev (Misc.ListExt.cut (List.length l) 
-		(List.rev (fst (List.split defs)))) 
-  in 
-  defs @ g names
+  let defs = List.map f l in
+  let idefs = List.map (fun l -> List.hd (List.rev l)) defs in
+  let names = fst (List.split idefs) in 
+  List.flatten defs @ g names
 
 let on_name f x g = 
   on_names f [x] (function [y] -> g y | _ -> assert false)
@@ -152,7 +163,7 @@ let rec declaration = function
 	(fun e_name -> 
 	   on_name ty t 
 	     (fun t_name -> 
-		on_name type_identifier x 
+		on_name identifier x 
 		  (fun x_name -> 
 		     [name (ty_var declaration_iname, 
 			    app dvalue_declaration_iname 
@@ -174,7 +185,7 @@ and declarations = function
 	   on_name declarations xs 
 	     (fun xs_name -> 
 		[name (ty_var declarations_iname, 
-		       app cons_environment_iname [ x_name; xs_name ])]))
+		       app cons_declarations_iname [ x_name; xs_name ])]))
 
 and expression = function
   | Var x -> 
@@ -254,10 +265,17 @@ let fragment_view (Fragment (env, decs)) =
   
 (* precondition: binders > []. *)
 let as_ptype iname binders = 
+  let cache = Hashtbl.create 13 in
   let binder x b = 
-    match snd b with
-      | None -> (fun e -> wr (AST.Prod (x, wr (fst b), e)))
-      | Some t -> (fun e -> wr (AST.SProd (x, wr (fst b), t, e)))
+    (* Literal may have been introduced several times. We enforce the invariant
+       that bound names are distinct. *)
+    if Hashtbl.mem cache x then fun x -> x
+    else begin 
+      Hashtbl.add cache x (); 
+      match snd b with
+	| None -> (fun e -> wr (AST.Prod (x, wr (fst b), e)))
+	| Some t -> (fun e -> wr (AST.SProd (x, wr (fst b), t, e)))
+    end
   in
   let rec aux = function
     | []           -> assert false
