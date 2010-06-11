@@ -147,7 +147,6 @@ exception IsNotClosed
 exception IsClosed
 
 let rec infer env ty : inference_result =
-(*Format.eprintf "========= CHECK ==========\n @[%a@]\n%!" Print.ptype' ty; *)
   match !ty with
     | Sort s ->
 	(try RSort (axiom_rule s)
