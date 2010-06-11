@@ -28,10 +28,10 @@ let to_string s =
   if s.salt <= 0 then
     s.prefix
   else 
-    s.prefix ^ "(" ^ string_of_int s.salt ^ ")"
+    s.prefix ^ "{" ^ string_of_int s.salt ^ "}"
 
 let to_string_debug s = 
-  s.prefix ^ "(" ^ string_of_int s.salt ^ ")"
+  s.prefix ^ "{" ^ string_of_int s.salt ^ "}"
   
 exception InternalNameAlreadyInUse
 let unique_from_string s = 

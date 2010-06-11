@@ -54,7 +54,7 @@ ty: x=ID
   TyArrow (lhs, rhs)
 }
 
-expression: FUN LPAREN x=ID COLON ty=ty RPAREN ARROW e=expression1
+expression: FUN LPAREN x=ID COLON ty=ty RPAREN ARROW e=expression
 {
   Lam (x, ty, e)
 }

@@ -115,14 +115,16 @@ let to_ptype ((env, sigma) : t) =
     try Hashtbl.find cache k
     with Not_found -> Hashtbl.add cache k (Var n); t
   in
-  List.fold_left 
-    (fun c (k, v) -> 
-       let t, subkeys = Env.lookup env v in
-       if subkeys = [] then 
-	 wrap (Prod (k, wrap t, c))
-       else 
-	 wrap (SProd (k, wrap t, 
-		      wrap (bound v (export (env, sigma) (snd v))), c))
-    )
-    (wrap Cont)
-    (List.rev (Subst.as_list sigma))
+  let rec aux = function
+    | [] -> wrap Cont
+    | (k, v) :: bs ->
+	let t, subkeys = Env.lookup env v in
+	if subkeys = [] then 
+	  wrap (Prod (k, wrap t, aux bs))
+	else 
+	  let term = bound v (export (env, sigma) (snd v)) in
+	  wrap (SProd (k, wrap t, wrap term, aux bs))
+  in
+  aux (Subst.as_list sigma)
+
+

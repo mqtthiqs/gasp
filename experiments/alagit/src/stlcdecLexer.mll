@@ -52,7 +52,7 @@ let lowercase = ['a'-'z']
 
 let uppercase = ['A'-'Z']
 
-let identchar = ['A'-'Z' 'a'-'z' '0'-'9' '_']
+let identchar = ['A'-'Z' 'a'-'z' '0'-'9' '_' ]
 
 let integer   = [ '0'-'9' ]
 
