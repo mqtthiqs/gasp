@@ -30,3 +30,24 @@ module FilenameExt = struct
     with Not_found -> "" 
 
 end
+
+module IOExt = struct
+
+  let open_out_with_backup fname = 
+    if Sys.file_exists fname then begin
+      (* FIXME: Too many syscalls. *)
+      let rec find_free_name prefix i = 
+	let fname = prefix ^ "~" ^ string_of_int i in
+	if not (Sys.file_exists fname) then 
+	  fname
+	else find_free_name prefix (i + 1)
+      in
+      let backup_fname = find_free_name ("." ^ fname) 1 in
+      if Sys.command (Printf.sprintf "cp %s %s" fname backup_fname) != 0 then begin
+	Error.global_error "during backup" 
+	  (Printf.sprintf "Problem when copying `%s'." fname)
+      end
+    end;
+    open_out fname
+
+end

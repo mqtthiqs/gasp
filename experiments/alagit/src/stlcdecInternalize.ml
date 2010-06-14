@@ -152,7 +152,7 @@ let ty_var x = AST.Term (var x)
 let app f xs = 
   wr (List.fold_left (fun accu x -> (AST.App (wr accu, x))) (AST.Var f) xs)
 
-let name (ty, t) = (Name.fresh "X", (ty, Some t))
+let name (ty, t) = (Name.fresh "_", (ty, Some t))
 
 (* FIXME: escape [ and ]. *)
 let name_literal lit = Name.from_string (Printf.sprintf "data[%s]" lit)
@@ -292,3 +292,5 @@ let named_fragment_view_from_file name filename =
   let iname = Name.fresh name in 
   (iname, AST.Patch (as_ptype iname fragment_binders))
   
+let export_fragment repository name = 
+  assert false

@@ -5,8 +5,9 @@ let command = ref `None
 let repository_filename = ref "repository"
 
 let define_command = function
-  | "init"   -> command := `Init
-  | "commit" -> command := `Commit
+  | "init"     -> command := `Init
+  | "commit"   -> command := `Commit
+  | "checkout" -> command := `Checkout
   | _ -> assert false
 
 let options = Arg.align 
@@ -14,7 +15,7 @@ let options = Arg.align
     "--debug", Arg.Set Settings.debug, 
     " Set debug mode.";
 
-    "--do", Arg.Symbol ([ "init"; "commit" ], define_command),
+    "--do", Arg.Symbol ([ "init"; "commit"; "checkout" ], define_command),
     " Apply an operation on the current repository.";
 
     "--repository", Arg.Set_string repository_filename,
@@ -36,7 +37,8 @@ let typecheck filename =
   Print.ptype Format.std_formatter (AST.Sort s);
   Format.pp_print_newline Format.std_formatter ()
 
-let commit_specification = "commit [rootname] [filename] [kind]"
+let commit_specification   = "commit [rootname] [filename] [kind]"
+let checkout_specification = "checkout [rootname] [filename] [kind]"
 
 (* Note: We only focus on the STLCdec programming language for the
    moment. *)
@@ -45,6 +47,38 @@ let _ =
   match !command with
     | `None   -> List.iter typecheck arguments
     | `Init   -> StlcdecRepository.initialize !repository_filename
+    | `Checkout -> 
+	let repository = StlcdecRepository.load !repository_filename in
+	let name, filename = 
+	  Misc.ListExt.get2 checkout_specification arguments 
+	in
+	let extension = Misc.FilenameExt.get_extension filename in
+	(** The user is asking for a concrete view of an existing 
+	    entry [name] of the repository. *)
+
+	(** First, extract the externalized version of the entry
+	    [name]. We cannot determine the exact type of this 
+	    object. However, we rely on the user to provide a 
+	    concrete view name [extension] which will give us enough 
+	    dynamic information to type-check our code. *)
+	let saver =
+	  match extension with
+	    | "raw-fragment" -> 
+		(* For the moment, we are working with raw syntax. *)
+		let ast = StlcdecInternalize.export_fragment repository name in
+		(fun cout -> StlcdecPrint.fragment cout ast)
+	    | _ -> 
+		Error.global_error "during checkout" 
+		  (Printf.sprintf "Invalid view extension `%s'." extension)
+		
+	in
+	(** The provided filename denotes the container of this view. 
+	    If a file already exists with this name, we first clone
+	    it in a hidden backup file. *)
+	let cout = Misc.IOExt.open_out_with_backup filename in
+	saver cout;
+	close_out cout
+
     | `Commit -> 
 	let repository = StlcdecRepository.load !repository_filename in
 	let name, filename, kind = 
@@ -95,7 +129,7 @@ let _ =
 		  existing subtree A. 
 
 		  For instance, if the fragment is used by another
-		  typing derivations, then the integration patch must
+		  typing derivation, then the integration patch must
 		  produce a new version of A.  *)
 	      assert false (* FIXME: soon. *)
 	
