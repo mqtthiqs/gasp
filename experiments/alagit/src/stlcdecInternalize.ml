@@ -292,5 +292,4 @@ let named_fragment_view_from_file name filename =
   let iname = Name.fresh name in 
   (iname, AST.Patch (as_ptype iname fragment_binders))
   
-let export_fragment repository name = 
-  assert false
+

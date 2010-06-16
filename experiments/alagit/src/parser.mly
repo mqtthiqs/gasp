@@ -2,7 +2,10 @@
   open AST
 
   let parse_error = Error.error "during parsing"
+
 %}
+
+%parameter< Settings : ParserSettings.Sig >
 
 %token EOF
 %token LPAREN RPAREN COLON EQUAL TYPE ARROW DOT CONT
@@ -55,7 +58,10 @@ ptype: a=loc(term)
 
 id: x=ID
 {
-  Name.from_string x
+  if Settings.internal then
+    Name.from_internal_string x
+  else 
+    Name.from_string x
 }
 
 term: x=id

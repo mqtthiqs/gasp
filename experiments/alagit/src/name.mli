@@ -27,6 +27,9 @@ val has_prefix : string -> t -> bool
     with extreme care. *)
 val from_string : string -> t
 
+(** [from_internal_string s] deserialize a string coming from [to_string]. *)
+val from_internal_string : string -> t
+
 (** [unique_from_string s] works as [from_string s] except that an
     extra check is performed to ensure that [s] is not the concrete
     representation of a previously generated name. *)
@@ -34,6 +37,10 @@ val unique_from_string : string -> t
 
 (** [InternalNameAlreadyInUse] is raised when [unique_from_string] fails. *)
 exception InternalNameAlreadyInUse
+
+(** [same_prefix n1 n2] returns true if [n1] and [n2] have been built 
+    initially using the same prefix. *)
+val same_prefix : t -> t -> bool
 
 (** [compare n1 n2] is a standard library compliant comparison
     function. *)

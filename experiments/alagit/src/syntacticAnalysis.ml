@@ -16,7 +16,7 @@ let parse lexer_init input parser_fun lexer_fun =
   let parser_fun lexer lexbuf = try
     parser_fun lexer lexbuf
   with
-  | Parser.Error -> 
+  | _ -> 
       Error.error "Parsing" (Position.cpos lexbuf) "Unknown error.\n"
   in
   process ~lexer_init ~lexer_fun ~parser_fun ~input

@@ -11,7 +11,11 @@ let fresh s = incr internal_counter; {
   salt   = !internal_counter
 }
 
-let has_prefix s n = n.prefix = s
+let has_prefix s n = 
+  Printf.eprintf "has prefix %s =?= %s\n" n.prefix s;
+  n.prefix = s
+
+let same_prefix n1 n2 = n1.prefix = n2.prefix
 
 let cache = Hashtbl.create 13
 
@@ -23,6 +27,13 @@ with Not_found ->
   let n = { prefix = s; salt = global_limit () } in
   Hashtbl.add cache s n;
   n
+
+let from_internal_string s = 
+  if Str.string_match (Str.regexp "\\([^{}]*\\){\\([0-9]+\\)}") s 0 then
+    { prefix = Str.matched_group 1 s;
+      salt   = int_of_string (Str.matched_group 2 s) }
+  else
+    from_string s
 
 let to_string s = 
   if s.salt <= 0 then

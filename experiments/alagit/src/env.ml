@@ -3,7 +3,11 @@ open AST
 (** A key for a variable [n] is the hash-code of the term [t] related
     to [n]. We provide a constant time mapping from hash-code to the
     first name used to denote [t] (simply by using a pair as a 
-    concrete representation.). *)
+    concrete representation.). Yet, we must keep in mind that this
+    type is morally dependent on the environment it comes from. 
+
+    NDY: avec ocaml 3.12, on va pouvoir utiliser les modules de premiere
+         classe pour typer fortement tout ca. Youpi :) *)
 type key = int * Name.t
 
 (** An environment is responsible for storing data associated to
@@ -109,6 +113,12 @@ let bind_decl (env,sigma) x t =
 let lookup (env,sigma) x =
   fst (Env.lookup env (Subst.lookup sigma x))
 
+let lookup_latest_with_prefix ((_, sigma) : t) x = 
+  fst (List.find (fun (k, _) -> 
+		    Printf.eprintf "=> %s\n%!" (Name.to_string_debug k);
+		    Name.has_prefix x k) 
+	 (List.rev (Subst.as_list sigma)))
+
 let expand ((env, sigma) : t) on_var on_app x =
   let rec aux x = 
     let _, termkeys = Env.lookup env (Subst.lookup sigma x) in 
@@ -118,6 +128,11 @@ let expand ((env, sigma) : t) on_var on_app x =
 	  List.fold_left (fun t n -> on_app t (snd n)) (on_var (snd x)) termkeys
   in
   aux x
+
+let subnames (env, sigma) x = 
+  List.map 
+    (fun (_, n) -> n) 
+    (snd (Env.lookup env (Subst.lookup sigma x)))
 
 let equal (env,sigma) x y =
   fst (Subst.lookup sigma x) = fst (Subst.lookup sigma y)
@@ -152,7 +167,7 @@ let to_ptype ((env, sigma) : t) =
     | (n, v) :: bs ->
 	let t, subkeys = Env.lookup env v in
 	if cached v || (subkeys = [] && not (is_canonical_name env v n)) then 
-	  aux bs
+	  wrap (SProd (n, wrap t, wrap (Var (Env.canonical_name env v)), aux bs))
 	else if subkeys = [] then
 	  wrap (Prod (n, wrap t, aux bs))
 	else 

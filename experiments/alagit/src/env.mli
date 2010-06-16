@@ -13,6 +13,10 @@ val bind_decl : t -> id -> ptype -> t
 (* [lookup env x] returns the type of x in env *)
 val lookup : t -> id -> ptype
 
+(* [lookup_latest_with_prefix env x] returns the id of the latest entry that 
+   has prefix [x]. *)
+val lookup_latest_with_prefix : t -> string -> id
+
 (* [lookup_and_bind env x y] returns the type of x in env, and binds y
    to the same type *)
 val lookup_and_bind : t -> id -> id -> t * ptype
@@ -26,3 +30,7 @@ val to_ptype : t -> ptype'
 (* [expand env on_var on_app x] exports an internalized term using the
    two constructors [on_var] and [on_app]. *)
 val expand : t -> (id -> 'a) -> ('a -> id -> 'a) -> id -> 'a
+
+(* [subnames env x] returns the list of names of subterms of the term
+   bound to [x]. *)
+val subnames : t -> id -> id list

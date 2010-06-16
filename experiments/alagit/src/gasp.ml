@@ -30,12 +30,6 @@ let arguments =
   Arg.parse options (fun f -> arguments := f :: !arguments) usage_msg;
   List.rev !arguments
 
-(** [typecheck r] checks a repository stored in file [r]. *)
-let typecheck filename = 
-  let (AST.Patch t) = parse_file filename Parser.patch Lexer.main in
-  let s = Check.infer_type Env.empty t in
-  Print.ptype Format.std_formatter (AST.Sort s);
-  Format.pp_print_newline Format.std_formatter ()
 
 let commit_specification   = "commit [rootname] [filename] [kind]"
 let checkout_specification = "checkout [rootname] [filename] [kind]"
@@ -45,7 +39,7 @@ let checkout_specification = "checkout [rootname] [filename] [kind]"
 
 let _ =
   match !command with
-    | `None   -> List.iter typecheck arguments
+    | `None   -> List.iter StlcdecRepository.typecheck arguments
     | `Init   -> StlcdecRepository.initialize !repository_filename
     | `Checkout -> 
 	let repository = StlcdecRepository.load !repository_filename in
@@ -65,7 +59,13 @@ let _ =
 	  match extension with
 	    | "raw-fragment" -> 
 		(* For the moment, we are working with raw syntax. *)
-		let ast = StlcdecInternalize.export_fragment repository name in
+		let entry = try 
+		  Env.lookup_latest_with_prefix repository name 
+		with Not_found -> 
+		  Error.global_error "during checkout" 
+		    (Printf.sprintf "There is no recent entry named `%s'." name)
+		in
+		let ast = StlcdecExternalize.fragment_view repository entry in
 		(Misc.FormatExt.save StlcdecPrint.fragment ast)
 	    | _ -> 
 		Error.global_error "during checkout" 
