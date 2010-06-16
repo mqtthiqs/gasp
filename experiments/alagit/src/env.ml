@@ -6,10 +6,24 @@ open AST
     concrete representation.). *)
 type key = int * Name.t
 
-(** An environment is responsible for storing the data associated to
-    hash-codes of terms. For each hash-code, this data is composed of 
-    a [ptype] and a flattened representation of the hashed term. *)
-module Env = struct
+(** An environment is responsible for storing data associated to
+    hash-codes of terms. For each hash-code, this piece of data is
+    composed of a canonical version of the key, a [ptype] and a
+    flattened representation of the hashed term. *)
+module Env : 
+sig
+
+  type t 
+  val empty : t
+  val lookup : t -> key -> ptype * key list
+  val bind_decl : t -> Name.t -> ptype -> (key * t)
+  val bind_def  : t -> Name.t -> ptype -> key list -> (key * t)
+
+  (** [canonical_name env k] returns the first name that has been
+      associated to data of key [k]. *)
+  val canonical_name : t -> key -> Name.t
+
+end = struct
   module Intmap = 
     Map.Make (struct 
 		type t = key 
@@ -17,22 +31,28 @@ module Env = struct
 	      end)
 
   (* ptype are assumed to be small, no hash-consing is done on them. *)
-  type t = (ptype * key list) Intmap.t
+  type t = (key * (ptype * key list)) Intmap.t
 
   let empty = Intmap.empty
 
-  let lookup env k = Intmap.find k env
+  let lookup env k = snd (Intmap.find k env)
+
+  let canonical_name env k = snd (fst (Intmap.find k env))
     
   let bind env k t =
-    try ignore (Intmap.find k env); k,env
-    with Not_found -> k, Intmap.add k t env
+    try let k' = fst (Intmap.find k env) in k', env
+    with Not_found -> k, Intmap.add k (k, t) env
       
   (* TODO être sûr qu'on utilise tous les bits *)
   let bind_decl env x t = bind env (Random.bits(), x) (t, [])
     
-  (* Warning: to be correct, the hash function should respect [forall a
-     tl, hash(a::tl) = hash(hash a, hash tl)] to ensure that partial
-     application is treated correctly (see papp.ga) *)
+  (* Warning: to be correct, the hash function should respect [forall
+     a tl, hash(a::tl) = hash(hash a, hash tl)] to ensure that partial
+     application is treated correctly (see papp.ga).  Besides, notice
+     that for definitions which are just renamings (also called stubs
+     in the sequel) like [X = Y], we should have to compute [hash Y]
+     and not [hash [hash Y]], but as these two values are equal, 
+     there is no issue. *)
   let bind_def env x t a = 
     let ks = fst (List.split a) in
     bind env (Hashtbl.hash ks, x) (t, a)
@@ -65,6 +85,13 @@ module Subst = struct
 
   let as_list sigma = 
     List.rev (Idmap.fold (fun k v ks -> (k, v) :: ks) sigma [])
+
+  let to_string sigma = 
+    String.concat "\n"
+      (List.map (fun (n, (k, _)) -> 
+	 "  " ^ Name.to_string_debug n ^ " -> " ^ string_of_int k)
+	 (as_list sigma))
+		       
 end
 
 type t = (Env.t * Subst.t)
@@ -111,19 +138,26 @@ let to_ptype ((env, sigma) : t) =
   (* To maintain the maximal sharing of the environment in the
      exported type, we just remember the already met keys and generate
      a stub to the related variables if we meet them again. *)
+  let cached (k, _) = Hashtbl.mem cache k in
   let bound (k, n) t = 
     try Hashtbl.find cache k
-    with Not_found -> Hashtbl.add cache k (Var n); t
+    with Not_found -> 
+      (Hashtbl.add cache k (Var n); t)
+  in
+  let is_canonical_name env k n = 
+    Env.canonical_name env k = n
   in
   let rec aux = function
     | [] -> wrap Cont
-    | (k, v) :: bs ->
+    | (n, v) :: bs ->
 	let t, subkeys = Env.lookup env v in
-	if subkeys = [] then 
-	  wrap (Prod (k, wrap t, aux bs))
+	if cached v || (subkeys = [] && not (is_canonical_name env v n)) then 
+	  aux bs
+	else if subkeys = [] then
+	  wrap (Prod (n, wrap t, aux bs))
 	else 
 	  let term = bound v (export (env, sigma) (snd v)) in
-	  wrap (SProd (k, wrap t, wrap term, aux bs))
+	  wrap (SProd (n, wrap t, wrap term, aux bs))
   in
   aux (Subst.as_list sigma)
 

@@ -108,7 +108,6 @@ let _ =
 	Print.ptype' Format.std_formatter p;
 	Format.pp_print_newline Format.std_formatter ();
 	
-
 	let repository = Check.infer_env repository p in
 
         (** At this point, a fresh internal name is associated to the
