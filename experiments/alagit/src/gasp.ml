@@ -66,7 +66,7 @@ let _ =
 	    | "raw-fragment" -> 
 		(* For the moment, we are working with raw syntax. *)
 		let ast = StlcdecInternalize.export_fragment repository name in
-		(fun cout -> StlcdecPrint.fragment cout ast)
+		(Misc.FormatExt.save StlcdecPrint.fragment ast)
 	    | _ -> 
 		Error.global_error "during checkout" 
 		  (Printf.sprintf "Invalid view extension `%s'." extension)

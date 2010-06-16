@@ -51,3 +51,11 @@ module IOExt = struct
     open_out fname
 
 end
+
+module FormatExt = struct
+
+  let save p x cout = 
+    let fmt = Format.formatter_of_out_channel cout in 
+    Format.fprintf fmt "@[%a@]" p x
+
+end
