@@ -12,7 +12,7 @@ STARGET  = $(OTARGET)
 # Menhir can be told to produce a parser that explains what
 # it is doing. 
 ifeq ($(DEBUGPARSING), yes)
-  MENHIROPT=-yaccflag --explain -yaccflag --trace
+  MENHIROPT=-yaccflag --explain -yaccflag --trace -yaccflag --dump
 else
   MENHIROPT=-yaccflag --explain 
 endif

@@ -9,7 +9,8 @@
    "let",	LET;
    "in",	IN;
    "fun",	FUN;
-   "val",	VAL
+   "val",	VAL;
+   "import",    IMPORT
  ]
 
  let is_keyword =
@@ -73,9 +74,12 @@ rule main = parse
 | eof                                   { EOF }
 
 (** Punctuation. *)
+| "."					{ DOT }
 | ":"                                   { COLON }
 | '('                                   { LPAREN }
 | ')'                                   { RPAREN }
+| '<'                                   { LABRACKET }
+| '>'                                   { RABRACKET }
 
 (** Symbols. *)
 | '='                                   { EQUAL }

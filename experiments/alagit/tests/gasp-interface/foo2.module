@@ -1,5 +1,8 @@
-type int
-val f : int -> int
-val x : int
-let g : int -> int = fun (x : int) -> f x
-let h : int -> int -> int = fun (x : int) -> fun (y : int) -> g y
+import 
+  type int.
+  val f : int -> int.
+  val x : int.
+  val g : int -> int.
+in
+  let h : int -> int -> int = 
+    fun (x : int) -> fun (y : int) -> g y.
