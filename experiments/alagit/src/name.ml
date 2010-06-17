@@ -28,10 +28,13 @@ with Not_found ->
   n
 
 let from_internal_string s = 
-  if Str.string_match (Str.regexp "\\([^{}]*\\){\\([0-9]+\\)}") s 0 then
+  let serialize_regexp = Str.regexp "\\([^{}]*\\){\\([0-9]+\\)}" in
+  if Str.string_match serialize_regexp s 0 then begin
+    let salt = int_of_string (Str.matched_group 2 s) in
+    internal_counter := max !internal_counter salt;
     { prefix = Str.matched_group 1 s;
-      salt   = int_of_string (Str.matched_group 2 s) }
-  else
+      salt   = salt }
+  end else
     from_string s
 
 let to_string s = 

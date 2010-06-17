@@ -11,8 +11,9 @@ let rec declaration fmt = function
       fprintf fmt "@[let type %a@]" 
 	type_identifier tvar
 
-and declarations fmt ds = 
-  List.iter (declaration fmt) ds
+and declarations fmt = function
+  | [] -> ()
+  | d :: ds -> fprintf fmt "@[%a@\n%a@]" declaration d declarations ds
 
 and expression fmt = function
   | Var x -> 
@@ -45,8 +46,9 @@ and typing_environment fmt (Env bs) =
   bindings fmt bs
 
 and fragment fmt (Fragment (tenv, decs)) = 
-  typing_environment fmt tenv;
-  declarations fmt decs
+  fprintf fmt "@[%a@\n@\n%a@]@."
+    typing_environment tenv
+    declarations decs
 
 and binding fmt = function
   | BindVar (x, t) -> 
@@ -58,8 +60,9 @@ and binding fmt = function
       fprintf fmt "@[type %a@]" 
 	type_identifier tvar
 
-and bindings fmt bs = 
-  List.iter (binding fmt) bs
+and bindings fmt = function
+  | [] -> ()
+  | b :: bs -> fprintf fmt "@[%a@\n%a@]" binding b bindings bs
 
 
 

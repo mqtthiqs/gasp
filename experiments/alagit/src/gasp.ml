@@ -37,12 +37,24 @@ let checkout_specification = "checkout [rootname] [filename] [kind]"
 (* Note: We only focus on the STLCdec programming language for the
    moment. *)
 
+let show_repository step repository = 
+  if !Settings.debug then begin
+    Format.printf "\
+    ========================\n 
+    %s\n\ 
+    ========================" step;
+    Print.ptype' Format.std_formatter (Env.to_ptype repository);
+    Format.pp_print_newline Format.std_formatter ()
+  end
+
 let _ =
   match !command with
     | `None   -> List.iter StlcdecRepository.typecheck arguments
     | `Init   -> StlcdecRepository.initialize !repository_filename
     | `Checkout -> 
 	let repository = StlcdecRepository.load !repository_filename in
+	show_repository "after loading" repository;
+
 	let name, filename = 
 	  Misc.ListExt.get2 checkout_specification arguments 
 	in
@@ -84,6 +96,7 @@ let _ =
 	let name, filename, kind = 
 	  Misc.ListExt.get3 commit_specification arguments 
 	in
+	show_repository "after loading" repository;
 
 	(** The user demands an integration of its work in the repository. *)
 
@@ -105,11 +118,9 @@ let _ =
 	    | _ -> Error.global_error "during commit" 
 		(Printf.sprintf "Invalid view extension `%s'." extension)
 	in
-	Print.ptype' Format.std_formatter p;
-	Format.pp_print_newline Format.std_formatter ();
 	
 	let repository = Check.infer_env repository p in
-
+	show_repository "after commit" repository;
         (** At this point, a fresh internal name is associated to the
 	    internalized version of the user module fragments. This 
 	    internal representation may share some subterms with 
