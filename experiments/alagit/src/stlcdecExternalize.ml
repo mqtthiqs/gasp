@@ -11,8 +11,7 @@ let export_from (env : Env.t) =
       Env.subnames env k 
     with Not_found -> 
       Error.global_error "during externalization"
-	(Printf.sprintf "External name `%s' is unbound." 
-	   (Name.to_string k))
+	(Printf.sprintf "External name `%s' is unbound." (Name.to_string k))
   in
   let on_name f k = 
     match subnames k with
@@ -23,7 +22,11 @@ let export_from (env : Env.t) =
     | [] -> raise NotEnoughKeys
     | k :: ks -> 
 	try 
-	  let y = f k (subnames k) in g y ks
+	  let y = match subnames k with
+	    | [] -> f k [] 
+	    | k :: ks -> f k ks
+	  in
+	  g y ks
 	with Not_found -> 
 	  Error.global_error "during externalization"
 	    (Printf.sprintf "External name `%s' is unbound." 
@@ -118,7 +121,7 @@ let export_from (env : Env.t) =
       [
 	nil_environment_iname, (! []);
 
-	cons_declarations_iname,
+	cons_environment_iname,
 	(from_names binding 
 	   (fun x -> from_names bindings (fun xs -> ! (x :: xs))))
       ]

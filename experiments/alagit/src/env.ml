@@ -114,9 +114,7 @@ let lookup (env,sigma) x =
   fst (Env.lookup env (Subst.lookup sigma x))
 
 let lookup_latest_with_prefix ((_, sigma) : t) x = 
-  fst (List.find (fun (k, _) -> 
-		    Printf.eprintf "=> %s\n%!" (Name.to_string_debug k);
-		    Name.has_prefix x k) 
+  fst (List.find (fun (k, _) -> Name.has_prefix x k) 
 	 (List.rev (Subst.as_list sigma)))
 
 let expand ((env, sigma) : t) on_var on_app x =
@@ -130,9 +128,9 @@ let expand ((env, sigma) : t) on_var on_app x =
   aux x
 
 let subnames (env, sigma) x = 
-  List.map 
-    (fun (_, n) -> n) 
-    (snd (Env.lookup env (Subst.lookup sigma x)))
+  List.rev (List.map 
+	      (fun (_, n) -> n) 
+	      (snd (Env.lookup env (Subst.lookup sigma x))))
 
 let equal (env,sigma) x y =
   fst (Subst.lookup sigma x) = fst (Subst.lookup sigma y)
