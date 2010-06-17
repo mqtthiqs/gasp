@@ -72,13 +72,22 @@ end
 module Subst = struct
   module Idmap = Map.Make (Name)
 
-  type t = key Idmap.t
+  type t = {
+    map   : key Idmap.t;
+    order : (Name.t * key) list
+  }
 
-  let empty = Idmap.empty
+  let empty = { 
+    map   = Idmap.empty;
+    order = []
+  }
 
-  let bind (sigma :t) n (k : key) = Idmap.add n k sigma
+  let bind (sigma :t) n (k : key) = {
+    map   = Idmap.add n k sigma.map;
+    order = (n, k) :: sigma.order
+  }
 
-  let lookup sigma n = Idmap.find n sigma
+  let lookup sigma n = Idmap.find n sigma.map
 
   let rec fold_app f acc = function
     | Var x -> f x acc
@@ -88,7 +97,7 @@ module Subst = struct
     fold_app (fun x acc -> lookup sigma x :: acc) [] a
 
   let as_list sigma = 
-    List.rev (Idmap.fold (fun k v ks -> (k, v) :: ks) sigma [])
+    List.rev sigma.order
 
   let to_string sigma = 
     String.concat "\n"

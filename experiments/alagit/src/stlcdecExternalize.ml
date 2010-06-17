@@ -6,9 +6,10 @@ exception NotEnoughKeys
 let ( ! ) x = fun ks -> assert (ks = []); x
 
 let export_from (env : Env.t) = 
-  let on_name    x = Externalize.on_name env x in
+  let on_name    x = 
+    Externalize.on_name env x in
   let from_names x = Externalize.from_names env x in
-  let match_key  = Externalize.match_key in
+  let match_key    = Externalize.match_key in
 
   let rec declaration k = 
     match_key k 

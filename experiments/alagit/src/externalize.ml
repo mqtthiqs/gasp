@@ -1,11 +1,23 @@
-let subnames env k = 
+let rec subnames env k = 
   try 
-    Env.subnames env k 
+    let ks = begin match Env.subnames env k with
+      | [] -> 
+	(* No subnames, this is an atom. *)
+	[] 
+      | [x] -> 
+      (* FIXME: Just a stub. We follow it. Is it correct? 
+	 Furthermore, if there is a cycle in the repository, 
+	 we are dead. *)
+	subnames env x 
+      | ks -> 
+	ks
+    end in 
+    ks
   with Not_found -> 
     Error.global_error "during externalization"
       (Printf.sprintf "External name `%s' is unbound." (Name.to_string k))
 
-let on_name env f k = 
+let rec on_name env f k = 
   match subnames env k with
     | [] -> f k [] 
     | g :: xs -> f g xs

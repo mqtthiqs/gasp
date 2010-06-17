@@ -32,7 +32,7 @@
 
 %inline meta(X): LABRACKET x=ID EQUAL o=X RABRACKET
 {
-  MetaAST.Define (Name.from_internal_string x, MetaAST.Object o)
+  MetaAST.Define (Name.fresh x, MetaAST.Object o)
 }
 | LABRACKET x=ID RABRACKET
 {

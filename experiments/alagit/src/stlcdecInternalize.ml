@@ -157,6 +157,15 @@ let name (ty, t) = (Name.fresh "_", (ty, Some t))
 (* FIXME: escape [ and ]. *)
 let name_literal lit = Name.from_string (Printf.sprintf "data[%s]" lit)
 
+let binding_ity = ty_var binding_iname
+let expression_ity = ty_var expression_iname
+let ty_ity = ty_var ty_iname
+let type_identifier_ity = ty_var type_identifier_iname
+let identifier_ity = ty_var identifier_iname
+let environment_ity = ty_var environment_iname
+let declarations_ity = ty_var declarations_iname
+let declaration_ity = ty_var declaration_iname
+
 let rec declaration = function
   | DValue (x, t, e) -> 
       on_name expression' e 
@@ -255,15 +264,15 @@ and binding = function
 	   [name (ty_var binding_iname,
 		  app bind_tyvar_iname [ x_name ])])
 
-and bindings'           x = MetaInternalize.on bindings x
-and binding'            x = MetaInternalize.on binding x
-and expression'         x = MetaInternalize.on expression x
-and ty'                 x = MetaInternalize.on ty x
-and type_identifier'    x = MetaInternalize.on type_identifier x
-and identifier'         x = MetaInternalize.on identifier x
-and typing_environment' x = MetaInternalize.on typing_environment x
-and declarations'       x = MetaInternalize.on declarations x
-and declaration'        x = MetaInternalize.on declaration x
+and bindings'           x = MetaInternalize.on bindings environment_ity x
+and binding'            x = MetaInternalize.on binding binding_ity x
+and expression'         x = MetaInternalize.on expression expression_ity x
+and ty'                 x = MetaInternalize.on ty ty_ity x
+and type_identifier'    x = MetaInternalize.on type_identifier type_identifier_ity x
+and identifier'         x = MetaInternalize.on identifier identifier_ity x
+and typing_environment' x = MetaInternalize.on typing_environment environment_ity x
+and declarations'       x = MetaInternalize.on declarations declarations_ity x
+and declaration'        x = MetaInternalize.on declaration declaration_ity x
 
 let fragment_view (Fragment (env, decs)) = 
   on_name typing_environment' env 

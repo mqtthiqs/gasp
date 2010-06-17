@@ -1,7 +1,8 @@
 import
+< interface_foo = 
   type int.
   val f : int -> int.
   val x : int.
+>
 in
   let g : int -> int = fun (x : int) -> f x.
-
