@@ -12,7 +12,6 @@ let fresh s = incr internal_counter; {
 }
 
 let has_prefix s n = 
-  Printf.eprintf "has prefix %s =?= %s\n" n.prefix s;
   n.prefix = s
 
 let same_prefix n1 n2 = n1.prefix = n2.prefix
