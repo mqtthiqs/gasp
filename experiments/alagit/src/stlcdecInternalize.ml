@@ -159,64 +159,64 @@ let name_literal lit = Name.from_string (Printf.sprintf "data[%s]" lit)
 
 let rec declaration = function
   | DValue (x, t, e) -> 
-      on_name expression e 
+      on_name expression' e 
 	(fun e_name -> 
-	   on_name ty t 
+	   on_name ty' t 
 	     (fun t_name -> 
-		on_name identifier x 
+		on_name identifier' x 
 		  (fun x_name -> 
 		     [name (ty_var declaration_iname, 
 			    app dvalue_declaration_iname 
 			      [ x_name; t_name; e_name; ])])))
 		       
   | DType x -> 
-      on_name type_identifier x 
+      on_name type_identifier' x 
 	(fun x_name ->
 	   [name (ty_var declaration_iname, 
 		  app dtype_declaration_iname [ x_name ])])
 		    
 
 and declarations = function 
-  | [] -> 
+  | EmptyDeclarations -> 
       [name (ty_var declarations_iname, var empty_declarations_iname)]
-  | x :: xs -> 
-      on_name declaration x 
+  | ConsDeclaration (x, xs) -> 
+      on_name declaration' x 
 	(fun x_name -> 
-	   on_name declarations xs 
+	   on_name declarations' xs 
 	     (fun xs_name -> 
 		[name (ty_var declarations_iname, 
 		       app cons_declarations_iname [ x_name; xs_name ])]))
 
 and expression = function
   | Var x -> 
-      on_name identifier x 
+      on_name identifier' x 
 	(fun x_name ->
 	   [name (ty_var expression_iname,
 		  app var_exp_iname [ x_name ])])
   | Lam (x, t, e) -> 
-      on_name identifier x 
+      on_name identifier' x 
 	(fun x_name ->
-	   on_name ty t
+	   on_name ty' t
 	     (fun t_name ->
-		on_name expression e 
+		on_name expression' e 
 		  (fun e_name -> 
 		     [name (ty_var expression_iname,
 			    app lam_exp_iname [ x_name; t_name; e_name ])])))
   | App (e1, e2) -> 
-      on_2_names expression e1 e2
+      on_2_names expression' e1 e2
 	(fun e1_name e2_name ->
 	   [name (ty_var expression_iname,
 		  app app_exp_iname [ e1_name; e2_name ])])
 
 and ty = function
   | TyVar x ->  
-      on_name type_identifier x 
+      on_name type_identifier' x 
 	(fun x_name ->
 	   [name (ty_var ty_iname,
 		  app var_ty_iname [ x_name ])])
 
   | TyArrow (ty1, ty2) -> 
-      on_2_names ty ty1 ty2 
+      on_2_names ty' ty1 ty2 
 	(fun ty1_name ty2_name ->
 	   [name (ty_var ty_iname,
 		  app arrow_ty_iname [ ty1_name; ty2_name ])])
@@ -228,37 +228,47 @@ and type_identifier x =
     [ name_literal x, (ty_var type_identifier_iname, None) ]
 
 and typing_environment (Env bs) = 
-  bindings bs
+  bindings' bs
 
 and bindings = function
-  | [] -> 
+  | NoBinding -> 
       [name (ty_var environment_iname, var nil_environment_iname)]
-  | x :: xs -> 
-      on_name binding x 
+  | ConsBinding (x, xs) -> 
+      on_name binding' x 
 	(fun x_name -> 
-	   on_name bindings xs 
+	   on_name bindings' xs 
 	     (fun xs_name -> 
 		[name (ty_var environment_iname,
 		       app cons_environment_iname [ x_name; xs_name ])]))
 	
 and binding = function
   | BindVar (x, t) -> 
-      on_name identifier x 
+      on_name identifier' x 
 	(fun x_name -> 
-	   on_name ty t 
+	   on_name ty' t 
 	     (fun t_name ->
 		[name (ty_var binding_iname, 
 		       app bind_var_iname [ x_name; t_name ])]))
   | BindTyVar x -> 
-      on_name type_identifier x
+      on_name type_identifier' x
 	(fun x_name ->
 	   [name (ty_var binding_iname,
 		  app bind_tyvar_iname [ x_name ])])
 
+and bindings'           x = MetaInternalize.on bindings x
+and binding'            x = MetaInternalize.on binding x
+and expression'         x = MetaInternalize.on expression x
+and ty'                 x = MetaInternalize.on ty x
+and type_identifier'    x = MetaInternalize.on type_identifier x
+and identifier'         x = MetaInternalize.on identifier x
+and typing_environment' x = MetaInternalize.on typing_environment x
+and declarations'       x = MetaInternalize.on declarations x
+and declaration'        x = MetaInternalize.on declaration x
+
 let fragment_view (Fragment (env, decs)) = 
-  on_name typing_environment env 
+  on_name typing_environment' env 
     (fun env_name ->
-       on_name declarations decs
+       on_name declarations' decs
 	 (fun decs_name ->
 	    [name (ty_var fragment_iname,
 		   app fragment_ctor_iname [ env_name; decs_name ])]))

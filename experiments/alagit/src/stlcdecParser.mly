@@ -18,56 +18,87 @@
 
 %%
 
-fragment: g=binding* d=declaration*  EOF
+meta(X): o=X 
 {
-  Fragment (Env g, d)
+  MetaAST.Object o
+}
+
+metalist(X): x=meta(X) xs=meta(metalist(X))
+{
+  MetaAST.Cons (x, xs)
+}
+| /* empty */
+{
+  MetaAST.Nil
+}
+
+fragment: g=meta(typing_environment) d=meta(declarations)  EOF
+{
+  Fragment (g, d)
 }
 | error
 {
   parse_error (Position.lex_join $startpos $endpos) "Syntax error."
 }
 
-binding: VAL x=ID COLON ty=ty
+typing_environment: bs=meta(bindings)
+{
+  Env bs
+}
+
+bindings: bs=metalist(binding)
+{
+  MetaInternalize.on_list NoBinding 
+  (fun x xs -> ConsBinding (x, xs)) bs
+}
+
+declarations: ds=metalist(declaration)
+{
+  MetaInternalize.on_list EmptyDeclarations 
+  (fun x xs -> ConsDeclaration (x, xs)) ds
+}
+
+binding: VAL x=meta(ID) COLON ty=meta(ty)
 {
   BindVar (x, ty)
 }
-| TYPE x=ID
+| TYPE x=meta(ID)
 {
   BindTyVar x
 }
 
-declaration: LET x=ID COLON ty=ty EQUAL e=expression
+declaration: LET x=meta(ID) COLON ty=meta(ty) EQUAL e=meta(expression)
 {
   DValue (x, ty, e)
 }
-| LET TYPE x=ID
+| LET TYPE x=meta(ID)
 {
   DType x
 }
 
-ty: x=ID
+ty: x=meta(ID)
 {
   TyVar x
 }
-| lhs=ty ARROW rhs=ty
+| lhs=meta(ty) ARROW rhs=meta(ty)
 {
   TyArrow (lhs, rhs)
 }
 
-expression: FUN LPAREN x=ID COLON ty=ty RPAREN ARROW e=expression
+expression: FUN LPAREN x=meta(ID) COLON ty=meta(ty) RPAREN ARROW e=meta(expression)
 {
   Lam (x, ty, e)
 }
-| LET x=ID COLON ty=ty EQUAL lhs=expression IN rhs=expression
+| LET x=meta(ID) COLON ty=meta(ty) EQUAL lhs=meta(expression) IN rhs=meta(expression)
 {
-  App (Lam (x, ty, rhs), lhs)
+  App (MetaAST.Object (Lam (x, ty, rhs)), lhs)
 }
 | e=expression1
 {
   e
 }
 
-expression1: lhs=expression1 rhs=expression2 
+expression1: lhs=meta(expression1) rhs=meta(expression2)
 {
   App (lhs, rhs)
 }
@@ -76,7 +107,7 @@ expression1: lhs=expression1 rhs=expression2
   e
 }
 
-expression2: x=ID
+expression2: x=meta(ID)
 {
   Var x
 }
