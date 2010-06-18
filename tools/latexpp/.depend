@@ -1,0 +1,18 @@
+main.cmo: pp.cmi options.cmi 
+main.cmx: pp.cmx options.cmx 
+metapost.cmo: pp.cmi 
+metapost.cmx: pp.cmx 
+misc.cmo: 
+misc.cmx: 
+mlpost_pp.cmo: pp.cmi options.cmi 
+mlpost_pp.cmx: pp.cmx options.cmx 
+ocaml.cmo: pp.cmi options.cmi 
+ocaml.cmx: pp.cmx options.cmx 
+options.cmo: version.cmo options.cmi 
+options.cmx: version.cmx options.cmi 
+pp.cmo: options.cmi misc.cmo pp.cmi 
+pp.cmx: options.cmx misc.cmx pp.cmi 
+version.cmo: 
+version.cmx: 
+options.cmi: 
+pp.cmi: 
