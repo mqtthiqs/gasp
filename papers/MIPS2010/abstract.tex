@@ -49,24 +49,19 @@
 
 \remplan{Motivations générales}
 
-It may be fruitful to investigate the possible relationship between the
-very \emph{methodologies} or even \emph{daily workflow} employed in
-both fields of mathematics and computer science: one trying to prove a
-theorem, the other constructing a program to fulfill a task. How does
-one or the other elaborates his object of study? What kind of \emph{a
+Practical efforts in the formalization of mathematical results have
+naturally led to the questions of how to manage large repositories of
+proofs, i.e. what is the \emph{daily workflow} of users of a proof
+assistant. How does one elaborate a formal proof? What kind of \emph{a
   posteriori} modification is he prone to doing? What do these
-modifications imply on the validity of the whole edifice or the other
+modifications imply on the validity of the whole edifice or, the other
 way around, how do one rely on existing work to build up new results?
-% Y: Je ne comprends pas tout à fait la dernière question: 
-Finally, how to relate how both scientists collaborate in a team?
-
-Recent efforts in the formalization of mathematical results have
-naturally led to these questions and many of them remain largely
-unanswered, but the tendency seems to be to adapt existing methods
-coming from software development, as illustrated for example by the
-recent introduction of modules, file-based scripts and separate
-compilation in proof assistants like \textsf{Coq}~{\cite{CoqDocWeb}}
-or \textsf{Matita}~{\cite{Asperti06userinteraction}}, the use of
+Many of these questions remain largely unanswered, but the tendency
+seems to be to adapt existing methods coming from software
+development, as illustrated for example by the introduction of
+modules, file-based scripts and separate compilation in proof
+assistants like \textsf{Coq}~{\cite{CoqDocWeb}} or
+\textsf{Matita}~{\cite{Asperti06userinteraction}}, the use of
 dependency management tools (\textsf{Make}) or version control system
 (\textsf{GIT}, \textsf{Subversion}) to build and manage versions of a
 project. Both for the development of proofs or programs, these tools
@@ -74,10 +69,9 @@ attempt to cope with the fact that most of a mathematician or
 programmer's time is actually spent \emph{editing}, not
 \emph{writing}.
 
-As intelligent and widely adopted as this tool chain has gotten, we
-believe that they are not adapted for the new, demanding requirements
-of proof developments. Indeed, whereas compilation of a program is
-usually fast enough for the programmer to rely on the usual
+We believe that these tools are not adapted for the new, demanding
+requirements of proof developments. Indeed, whereas compilation of a
+program is usually fast enough for the programmer to rely on the usual
 interaction loop ((edit; compile)*; commit)*, the operation of proof
 checking is usually too expensive computationally to mimic this
 workflow. But even besides the time factor, this ``traditional'' way
@@ -113,9 +107,10 @@ language-aware, both on a syntactic side (AST) and on a semantic side
 We propose to discuss a small part of these questions, namely the
 enhancement and adaptation of version control paradigms to the
 management of mathematical repositories, to witness with more
-precision the \emph{impact of changes}. In proof assistants based on the
-propositions-as-types paradigm, Type Theory offers a powerful tool to
-witness the effect of changes finely: types. 
+precision the \emph{impact of changes}. In proof assistants based on
+the propositions-as-types paradigm, Type Theory offers a powerful tool
+to witness the effect of changes finely: types, and we base our work
+on these.
 
 We will describe here some of the possible directions to develop a
 tool to analyze the impact of change through types. It involves at its
@@ -126,59 +121,29 @@ static, or data-driven model for repositories; in \S\ref{rw}, we
 quickly review related approaches, and hint a possible generalization
 in \S\ref{fw}.
 
-\section{A kernel language to describe semantic repositories}
+\section{A core language to describe typed repositories}
 \label{kernel}
 
+The kernel of our system is a type-checker algorithm for a typed
+meta-language. In this language, we will declare both the syntax of
+the object (proof-)language and its typing rules, and define pieces of
+syntax (our proofs) and their derivations. Describing transformations
+among syntax objects is done by sharing common subterms or
+subderivations.
+
 \subsection{How to describe a development?}
-
-\remplan{Fri Jun 18, 2010 10:09 AM. Pour commencer, on peut essayer 
-  de répondre à la question: ``À quoi sert ce langage?''. }
-
-\remtext{Fri Jun 18, 2010 10:10 AM. Il sert à décrire des objets d'une
-  théorie et, surtout, des transformations de ces objets (valides) en
-  de nouveaux objets (valides). Il sert donc à décrire des applications
-  de méta-théorèmes.}
-
-\remplan{Fri Jun 18, 2010 10:13 AM. Ensuite, est-ce qu'il n'existe pas déjà
-  des langages adaptés à ça? }
-
-\remtext{Fri Jun 18, 2010 10:15 AM. Pas tout à fait. Certes, LF
-  fournit un cadre qui autorise la représentation des metathéories et
-  des objets, construits par application de règles
-  admissibles/métathéorèmes. Cependant, la syntaxe de ces objets 
-  est statique/extensionnel~: on décrit l'objet comme le résultat
-  de sa construction en oubliant son histoire. Pour représenter 
-  l'historique d'un développement, notre langage
-  doit au contraire maintenir l'ordre dans lequel les objets ont
-  été construits ainsi que la façon dont ils l'ont été.}
-
-\remtext{Fri Jun 18, 2010 10:26 AM. Ce n'est pas peut être pas tout à fait vrai que personne n'a
-  fait de proposition de langages qui décrivent un développement ...
-  On peut peut-être citer Pfenning, Klint and co et faire une référence
-  en avant vers le related work.}
-
-\remtext{Fri Jun 18, 2010 10:20 AM. Remarque annexe: je pense qu'à ce
-  stade de l'explication, il n'est pas nécessaire de parler
-  d'incrémentalité et de partage maximal. Je crois que c'est une
-  conséquence pratique heureuse de notre formalisation mais qui ne
-  fait pas réellement partie des nécessités/besoins initiaux.
-  Ce que je veux dire, c'est que l'incrémentalité est une propriété
-  orthogonale à la capacité de dénoter une historique.}
 
 Representing syntax and logics is nicely done in a \emph{logical
   framework} like LF (\cite{harper1993framework}): both the syntactic
 elements and the typing derivations can sit in the same tree
 structure, and both can be rechecked at the same time, thanks to
-dependent types.
-
-For the purpose of incremental type checking though, our needs are a
-little bit different: first, we need to record, that is to name all
-intermediate values of our developments, so as to be able to address
-and reuse them multiple times. Secondly, we need to make sure that
-those intermediate values (sub-terms) are not recorded twice, so as to
-not type-check them twice. Thus we are looking to represent syntactic
-and typing objects as a \emph{DAG} rather than a tree, and ensure
-\emph{maximal sharing} among its sub-DAGs.
+dependent types. For the purpose of incremental type checking though,
+our needs are a little bit different: first, we need to record, that
+is to name all intermediate values of our developments, so as to be
+able to address and reuse them multiple times. Secondly, we need to
+make sure that those intermediate values (sub-terms) are not recorded
+twice, so as to not type-check them twice: we are looking to represent
+syntactic and typing objects as a DAG rather than a tree.
 
 Our system will have these properties \emph{wrt.} LF:
 \begin{itemize}
@@ -192,9 +157,6 @@ Our system will have these properties \emph{wrt.} LF:
   invariant that not two same definition can sit in the context while
   typing.
 \end{itemize}
-
-\remtext{Fri Jun 18, 2010 10:26 AM. 
-  Du coup, il faudrait reformuler un peu les paragraphes précédents.}
 
 \subsection{Formalization}
 
