@@ -132,9 +132,10 @@ repositories inspired by the repository model of \textsf{GIT}.
 The kernel of our system is a type-checker algorithm for a typed
 meta-language. In this language, we will declare both the syntax of
 the object (proof-)language and its typing rules, and define pieces of
-syntax (our proofs) and their derivations. Describing transformations
-among syntactic objects is done by sharing common subterms or
-subderivations.
+syntax (our proofs, potentially with omitted informations) and their
+derivations (fully explicit application of typing rules). Describing
+transformations among syntax objects is done by sharing common
+subterms or subderivations.
 
 Representing syntax and logics is nicely done in a \emph{logical
   framework} like LF: both the syntactic elements and the typing
@@ -146,21 +147,22 @@ values of our developments, so as to be able to address and reuse them
 multiple times. Secondly, we need to make sure that those intermediate
 values (sub-terms) are not recorded twice, so as to not type-check
 them twice: we are looking to represent syntactic and typing objects
-as a DAG rather than a tree. Moreover, we enforce by typing a property
-of \emph{maximal sharing}: every different subterm can be constructed
-exactly once. Our system will have these properties w.r.t. LF:
+as a directed acyclic graph (DAG) rather than a tree. Moreover, we
+enforce by typing a property of \emph{maximal sharing}: every
+different subterm can be constructed exactly once. Our system will
+have these properties w.r.t. LF:
 \begin{itemize}
 \item In this first iteration of the project, we do not need
   computations to take place within our DAGs. Our syntax will then be
-  restricted to product types and applications;
-\item Every term should be a flat application of variables, so that we
-  don't introduce compound terms without naming them and recording
-  their types;
+  restricted to product types $(x:t)\cdot t$ and applications;
+\item Every term should be a flat application of variables $a ::= \vec x$, so
+  that we don't introduce compound terms without naming them and
+  recording their types;
 \item Finally we need a way to record intermediate definitions: we
-  introduce a new kind of binder, the equality binder. We maintain the
-  invariant that not two same definition can sit in the context while
-  typing, thus guaranteeing \emph{maximal sharing} among terms and
-  derivations.
+  introduce a new kind of binder, the equality binder $(x=a)\cdot
+  t$. We maintain the invariant that no two syntactically equal
+  definition can sit in the context while typing, thus guaranteeing
+  \emph{maximal sharing} among terms and derivations.
 \end{itemize}
 
 We describe the state of a repository at a given moment by a type $t$
