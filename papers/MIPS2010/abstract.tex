@@ -61,7 +61,7 @@ seems to be to adapt existing methods coming from software
 development, as illustrated for example by the introduction of
 modules, file-based scripts and separate compilation in proof
 assistants like \textsf{Coq} ({\cite{CoqDocWeb}}) or
-\textsf{Matita}~{\cite{Asperti06userinteraction}}, the use of
+\textsf{Matita}~({\cite{AspertiCTZ07}}), the use of
 dependency management tools (\textsf{Make}) or version control system
 (\textsf{GIT}, \textsf{Subversion}) to build and manage versions of a
 project. Both for the development of proofs or programs, these tools
@@ -81,13 +81,13 @@ is considered frozen and any changes to it require the recompilation
 of the whole file; the linearity of the development also gives no room
 for alternate, inequivalent definitions. This fact has nonetheless
 been shown to be of crucial to the mathematical discovery
-process~\cite{lakatos1964proofs}, and we believe that they should be
+process~(\cite{lakatos1964proofs}), and we believe that they should be
 taken into account in the realization of mathematical assistants.
 
 In fact, although dedicated tools exist to formalize the description
 of languages and their metatheory (e.g. \textsf{Twelf},
 {\cite{pfenning1999system}}), and substantial formalizations have been
-undertaken~[]\cite{lee07}, we still use legacy tools
+undertaken~(\cite{lee07}), we still use legacy tools
 based on text representation to manage our developments. The general
 goal exposed here is to replace this tool chain and make it
 language-aware, both on a syntactic side (AST) and on a semantic side
@@ -357,11 +357,11 @@ programs.
 
 The problems of managing a formal mathematical library have been dealt
 with in various proof assistant and mathematical repositories. The
-HELM project (\cite{asperti2000content}, \cite{asperti2006content})
+HELM project (\cite{asperti2006content})
 was an attempt to create a large library of mathematics, importing
 \textsf{Coq}'s developments into a searchable and browsable database.
 Most ideas from this project were imported into the \textsf{Matita}
-proof assistants (\cite{asperti2007hop}), especially a mechanism of
+proof assistants (\cite{AspertiCTZ07}), especially a mechanism of
 \emph{invalidation and regeneration} to ensure the global consistency
 of its library w.r.t changes, with granularity the whole definitions
 or proofs and their dependencies. The MBase project
