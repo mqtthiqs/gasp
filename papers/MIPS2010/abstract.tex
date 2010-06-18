@@ -55,13 +55,13 @@ proofs, i.e. what is the \emph{daily workflow} of users of a proof
 assistant. How does one elaborate a formal proof? What kind of \emph{a
   posteriori} modification is he prone to doing? What do these
 modifications imply on the validity of the whole edifice or, the other
-way around, how do one rely on existing work to build up new results?
+way around, how does one rely on existing work to build up new results?
 Many of these questions remain largely unanswered, but the tendency
 seems to be to adapt existing methods coming from software
 development, as illustrated for example by the introduction of
 modules, file-based scripts and separate compilation in proof
-assistants like \textsf{Coq} ({\cite{CoqDocWeb}}) or
-\textsf{Matita}~({\cite{AspertiCTZ07}}), the use of
+assistants like \textsf{Coq}~\cite{CoqDocWeb} or
+\textsf{Matita}~\cite{AspertiCTZ07}, the use of
 dependency management tools (\textsf{Make}) or version control system
 (\textsf{GIT}, \textsf{Subversion}) to build and manage versions of a
 project. Both for the development of proofs or programs, these tools
@@ -87,22 +87,23 @@ taken into account in the realization of mathematical assistants.
 In fact, although dedicated tools exist to formalize the description
 of languages and their metatheory (e.g. \textsf{Twelf},
 {\cite{pfenning1999system}}), and substantial formalizations have been
-undertaken~(\cite{lee07}), we still use legacy tools
-based on text representation to manage our developments. The general
-goal exposed here is to replace this tool chain and make it
-language-aware, both on a syntactic side (AST) and on a semantic side
-(typing).
+undertaken\cite{lee07}, we still use legacy tools based on text
+representation to manage our developments. The general goal exposed
+here is to replace this tool chain and make it language-aware, both on
+a syntactic side through the use of abstract syntax trees instead of
+concrete syntax and on a semantic side by using typing to ensure 
+repository consistency.
 
-\remplan{Sujet du papier : on focalise sur un problème bien précis}
+% \remplan{Sujet du papier : on focalise sur un problème bien précis}
 
-\remtext{Fri Jun 18, 2010 10:00 AM.
-  Un peu de liant. Pour arriver à notre but, il y a une
-  question importante à résoudre: si on te donne une méta-théorie
-  formalisée, es-tu capable de décrire l'historique d'un développement
-  dans cette théorie? Cela induit deux questions : dans quel langage
-  et est-ce que ce langage est utilisable (parce qu'a priori, ce n'est
-  pas gagné car le développeur travaille en mode ``instantané'' et ne
-  veut pas se trimballer ses casseroles tout le temps\ldots).}
+%% \remtext{Fri Jun 18, 2010 10:00 AM.
+%%   Un peu de liant. Pour arriver à notre but, il y a une
+%%   question importante à résoudre: si on te donne une méta-théorie
+%%   formalisée, es-tu capable de décrire l'historique d'un développement
+%%   dans cette théorie? Cela induit deux questions : dans quel langage
+%%   et est-ce que ce langage est utilisable (parce qu'a priori, ce n'est
+%%   pas gagné car le développeur travaille en mode ``instantané'' et ne
+%%   veut pas se trimballer ses casseroles tout le temps\ldots).}
 
 We propose to discuss a small part of these questions, namely the
 enhancement and adaptation of version control paradigms to the
