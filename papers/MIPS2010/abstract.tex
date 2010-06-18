@@ -160,17 +160,13 @@ Our system will have these properties \emph{wrt.} LF:
 
 \subsection{Formalization}
 
-\remplan{On rentre dans les détails techniques. Je crois qu'il faut
-  prendre un peu de temps pour définir précisément les termes utilisés
-  (repository, patch, etc) et expliquer/paraphraser les règles.}
+We describe the state of a repository at a given moment by a type in
+the following syntax. Well-typed types in the repository meta-language
+guarantee that it contains only well-typed proofs in the object
+language.
 
 \paragraph{Syntax} There are three syntactic categories: applicative
 terms $a$, types $t$ and environments $\Gamma$.
-
-% Y: Remarque en passant: pour maintenir des notations cohérentes, il
-% vaut mieux se définir des macros pour absolument tout
-% (metavariables, jugements, ...). Ca passe mieux à l'échelle.  On
-% verra ca pour le prochain papier :-).
 
 \begin{align*}
  \gdecl{a}{x \gor a\ x } \\
@@ -180,8 +176,8 @@ terms $a$, types $t$ and environments $\Gamma$.
 
 Following the standard syntax, we denote by $(x:t)\cdot u$ the
 dependent product (elsewhere written with a $\Pi$). The new construct
-$(x=a:t)\cdot u$ is a definition, whose value is $a$. We write as
-usual $(x_1:t_1)(x_2:t_2)\ldots(x_n:t_n)\cdot t$ for
+$(x=a:t)\cdot u$ is a definition binder, whose value is $a$. We write
+as usual $(x_1:t_1)(x_2:t_2)\ldots(x_n:t_n)\cdot t$ for
 $(x_1:t_1)\cdot(x_2:t_2)\cdot\ldots\cdot(x_n:t_n)\cdot t$, $t \to u$
 for $(x:t)\cdot u$ where $x\notin u$, and $(x\ y : t)\cdot u$ for
 $(x:t)(y:t)\cdot u$. The lookup in the environment is written either
@@ -191,11 +187,7 @@ $\Gamma(x):t$, denoting ``$\Gamma$ contains a declaration $[x:t]$
 renaming of variables in a term $t$ is written $t\subst{x}{y}$ for
 ``replace all occurences of $x$ by $y$'' and is defined the usual way.
 
-\paragraph{Typing} The typing of our system is a restriction of the
-usual typing rules for dependently-typed systems with the additional
-two rules for typing a singleton product and the application of a
-singleton argument (featuring the syntactic verification in the
-environment). It depends on: 
+\paragraph{Typing} Typing is parameterized by:
 \begin{itemize}
   \item$\mathcal S$ a set of sorts \sort,
   \item$\mathcal A \in \mathcal S^2$ the axioms of the system,
@@ -204,7 +196,8 @@ environment). It depends on:
 It relies on two distinct judgments:
 \begin{itemize}
 \item $\Gamma\vdash a : t$ ($a$ has type $t$ in $\Gamma$),
-\item $\Gamma\vdash t : \sort$ ($t$ has sort $s$ in $\Gamma$).
+\item $\Gamma\vdash t : \sort$ (the repository $t$ is well-typed of
+  sort $s$ in $\Gamma$).
 \end{itemize}
 The rules are:
 \begin{mathpar}
@@ -221,26 +214,37 @@ The rules are:
   }{\Gamma\vdash(x:t)\cdot u : \sort_3}
   \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
   \and
-  \infer[Sing]{\Gamma\vdash a:t \and
+  \infer[Let1]{\Gamma\vdash a:t \and
     \Gamma\vdash t:\sort_1 \and
     \Gamma[x=a:t]\vdash u:\sort_2
   }{\Gamma\vdash(x=a:t)\cdot u : \sort_3} 
-  \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
+  \quad (x=a:t)\notin\Gamma
+  \and
+  \infer[Let2]{\Gamma\vdash t:\sort_1 \and
+    \Gamma\vdash u:\sort_2
+  }{\Gamma\vdash(x=a:t)\cdot u : \sort_3} 
+  \quad(x=a:t)\in\Gamma
   \and
   \infer[App]{
     \Gamma\vdash a:(y:t)\cdot u \and \Gamma(x):t
     }{\Gamma\vdash a\ x : u\subst{x}{y}}
   \and
-  \infer[Skip]{
+  \infer[Skip1]{
     \Gamma\vdash a:(y=b:t)\cdot u \and \Gamma(x)=b:t
+    }{\Gamma\vdash a : u\subst{x}{y}} \and
+  \infer[Skip2]{
+    \Gamma[x=b:t]\vdash a:(y=b:t)\cdot u
     }{\Gamma\vdash a : u\subst{x}{y}}
 \end{mathpar}
 
-A term $t$ represents a state of the repository at a given moment. It
-contains the declaration of the object language's syntax, its typing
-rules, the syntactic objects and derivations recorded in it along with
-the patches that let the repository evolve. If $\cdot\vdash t:\sort$,
-then the repository is well-typed.
+The first four rules are standard. As application is only performed on
+variables, the \textsc{App} rule looks up directly in the
+environment. Rules \textsc{Let1} and \textsc{Skip1} show the
+verification and the use of the equality binder in case the definition
+is not already known. Rule \textsc{Let2} and \textsc{Skip2} allow
+incremental typing in our system: if the definition was already known
+in the environment, we do not need to recheck it. If $\cdot\vdash
+t:\sort$, then the repository $t$ is well-typed.
 
 \section{Development through semantic patches}
 \label{devel}
