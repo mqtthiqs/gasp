@@ -85,13 +85,13 @@ requirements of proof developments. Indeed, whereas compilation of a
 program is usually fast enough for the programmer to rely on the usual
 interaction loop ((edit; compile)*; commit)*, the operation of proof
 checking is usually too expensive computationally to mimic this
-workflow. But even besides the time factor, this ``traditional'' way
+workflow. But even beyond the time factor, this ``traditional'' way
 of formalizing mathematics hinders the process of mathematical
 discovery process: once a concept contained in a file is compiled, it
 is considered frozen and any changes to it require the recompilation
 of the whole file; the linearity of the development also gives no room
 for alternate, inequivalent definitions. This fact has nonetheless
-been shown to be of crucial to the mathematical discovery
+been shown to be crucial to the mathematical discovery
 process~\citep{lakatos1964proofs}, and we believe that they should be
 taken into account in the realization of mathematical assistants.
 
@@ -102,7 +102,7 @@ undertaken~\citep{lee07}, we still use legacy tools based on text
 representation to manage our developments. The general goal exposed
 here is to replace this tool chain and make it language-aware, both on
 a syntactic side through the use of abstract syntax trees (AST) instead of
-concrete syntax and on a semantic side by using typing to ensure 
+concrete syntax, and on a semantic side by using typing to ensure 
 repository consistency.
 
 % \remplan{Sujet du papier : on focalise sur un problème bien précis}
