@@ -11,7 +11,7 @@
 \usepackage{natbib}
 \usepackage{fancyhdr}
 \usepackage[all,cmtip]{xy}
-%\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage[protrusion=true,expansion=true]{microtype}
 
 \definecolor{bwgreen}{rgb}{0.183,1,0.5}
 \definecolor{bwmagenta}{rgb}{1,0.169,0.909}
@@ -89,15 +89,15 @@ for alternate, inequivalent definitions. This fact has nonetheless
 been shown to be of crucial to the mathematical discovery
 process~\cite{lakatos1964proofs}, and we believe that they should be
 taken into account in the realization of mathematical assistants.
-% \textsf{Coq} or \textsf{Matita}.
 
-\remtext{Fri Jun 18, 2010 9:55. AM Ici, on pourrait rajouter un
-  paragraphe pour dire qu'il existe des travaux sur la formalisation
-  de metatheories dans les assistants de preuve, que ce soit en TWELF
-  ou Coq. Puis, on explicite notre but général qui est de construire
-  un système/framework qui remplace la chaîne d'outils traditionnelle
-  en important/adaptant la technologie issue de la formalisation de
-  metatheories.}
+In fact, although dedicated tools exist to formalize the description
+of languages and their metatheory (e.g. \textsf{Twelf},
+{\cite{pfenning1999system}}), and substantial formalizations have been
+undertaken \remtext{TODO citer, mais quoi?}, we still use legacy tools
+based on text representation to manage our developments. The general
+goal exposed here is to replace this tool chain and make it
+language-aware, both on a syntactic side (AST) and on a semantic side
+(typing).
 
 \remplan{Sujet du papier : on focalise sur un problème bien précis}
 
@@ -113,29 +113,21 @@ taken into account in the realization of mathematical assistants.
 We propose to discuss a small part of these questions, namely the
 enhancement and adaptation of version control paradigms to the
 management of mathematical repositories, to witness with more
-precision the \emph{impact of changes}. By studying the dependencies
-between objects in a proof, we can get a much finely grained vision of
-what a future evolution would impact. In proof assistants based on the
+precision the \emph{impact of changes}. In proof assistants based on the
 propositions-as-types paradigm, Type Theory offers a powerful tool to
-witness the effect of changes finely, \emph{i.e.} types. Eventually,
-we hope to be capable of expressing evolutions on formal proofs, check
-them efficiently and incrementally, and manage distributed
-repositories of mathematics with it, guaranteeing \emph{by typing} the
-stepwise global consistency of the repository.
+witness the effect of changes finely: types. 
 
-\remtext{Fri Jun 18, 2010 10:06 AM.  Le paragraphe précédent n'est pas
-  assez précis je pense et en même temps en dit trop. À la place, je
-  propose d'énoncer succintement les contributions de ce papier puis 
-  le plan. Ce serait quelque chose comme:
-  1. A description language for semantic repositories.
-  2. Theory development through semantic patches. 
-  3. Related work
-  4. Further work
-}
-
-\remplan{Fri Jun 18, 2010 10:08 AM. Du coup, je restructure un peu la suite.}
+We will describe here some of the possible directions to develop a
+tool to analyze the impact of change through types. It involves at its
+core a typed description language for repositories -- described in
+\S\ref{kernel} -- driven by a user interface that we sketch in
+\S\ref{devel}. In the first iteration of this project, we focus on a
+static, or data-driven model for repositories; in \S\ref{rw}, we
+quickly review related approaches, and hint a possible generalization
+in \S\ref{fw}.
 
 \section{A kernel language to describe semantic repositories}
+\label{kernel}
 
 \subsection{How to describe a development?}
 
@@ -289,6 +281,7 @@ the patches that let the repository evolve. If $\cdot\vdash t:\sort$,
 then the repository is well-typed.
 
 \section{Development through semantic patches}
+\label{devel}
 
 \remplan{Fri Jun 18, 2010 10:50 AM. L'objectif ici, c'est de décrire
   une (possible) architecture pour rendre utilisable le langage 
@@ -505,12 +498,55 @@ body has changed but not its type).
 \subsection{Application on simply typed $\lambda$-calculus}
 
 \section{Related work}
+\label{rw}
 
-\remtext{Dolphin, Twelf, etc}
+The \textsf{Twelf} project (\cite{pfenning1999system}) is an
+implementation of the Logical Framework (LF,
+\cite{harper1993framework}). It was used in \cite{anderson1993program}
+to devise transformations of proofs in order to extract efficient
+programs.
 
-\remtext{Semantic patches à la coccinnelle}
+The problems of managing a formal mathematical library have been dealt
+with in various proof assistant and mathematical repositories. The
+HELM project (\cite{asperti2000content}, \cite{asperti2006content})
+was an attempt to create a large library of mathematics, importing
+\textsf{Coq}'s developments into a searchable and browsable database.
+Most ideas from this project were imported into the \textsf{Matita}
+proof assistants (\cite{asperti2007hop}), especially a mechanism of
+\emph{invalidation and regeneration} to ensure the global consistency
+of its library w.r.t changes, with granularity the whole definitions
+or proofs and their dependencies. The MBase project
+(\cite{kohlhase2001mbase}) attempts at creating a web-based,
+distributed mathematical knowledge database putting forward the idea
+of \emph{development graph} (\cite{hutter2000management},
+\cite{autexier2000towards}) to manage changes in the database,
+allowing semantic-based retrieval and object-level dependency
+management.
+
+This idea, generalized over structured, semi-formal documents gave
+birth to \texttt{\it locutor} (\cite{muller2008fine}), a fine-grained
+extension of the \texttt{svn} version control system for XML
+documents, embedding ontology-driven, user-defined semantic knowledge
+which allows to go across the filesystem border. It embeds a
+\emph{diff} algorithm, operating on the source text modulo some
+equality theory to quotient the syntax. On the same line of work, we
+should mention the \emph{Coccinelle} tool
+(\cite{padioleau2008documenting}). It is an evolution over textual
+patches, specialized on the C language, allowing more flexibility in
+the matching process, and was developed to deal with the problem of
+\emph{collateral evolutions} in the Linux kernel. It embeds a
+declarative language for matching and transforming C source code,
+operating on text modulo defined isomorphisms.
+
+Our approach to the ``impact of changes'' problem seems novel on
+several aspects: first, it applies uniformly on proofs and programming
+languages by virtue of the Curry-Howard isomorphism, and because we
+operate at the AST level. Secondly, by taking \emph{types} as a
+witnesses for the evolution of a development, we refine the usual,
+dependency-based approach for a finer granularity.
 
 \section{Further work}
+\label{fw}
 
 \remtext{Extension vers une version constructiviste?}
 
