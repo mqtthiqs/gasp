@@ -293,11 +293,65 @@ then the repository is well-typed.
   opérations qui interviennent dans l'utilisation et on les décrit
   informellement à l'aide d'un exemple.}
 
+The kernel language described in the previous section is clearly not
+adapted to human interaction, for several reasons~: 
+\begin{itemize}
+
+\item Every single object is flattened, which makes unobvious the
+  structure of a program or a proof. 
+
+\item A term of this language denotes the entire history of a
+  development. Most of the time, the user is more interested in a
+  instantaneous snapshot of his object of study.
+
+\item Even though we were able to provide a snapshot of a particular
+  state of the development, the repository represents this state 
+  using proof terms, which contain too many syntactic details from the
+  user point of view and are not suitable for edition.  
+
+\end{itemize}
+
 \remtext{Fri Jun 18, 2010 10:52 AM. Par contre, je ne sais pas quel
   exemple utilisé. Le STLC? Est-ce que ça fait ``assez'' système
   logique pour ce workshop?}
 
 \subsection{A layered architecture}
+
+\remtext{Fri Jun 18, 2010  1:32 PM. Ici, on décrit la figure en suivant
+  le modèle de flot du système. On décrit le rôle des fonctions, 
+les problèmes posés.}
+
+With the previous remarks in mind, we designed a generic framework of semantic
+patches that can be described using three layers which are summarized in 
+Figure~\ref{fig:architecture}. 
+
+The most internal layer focused on the history of metatheory
+objects. It is composed of a type-checker for the kernel language. The
+purpose of this layer is to maintain a repository~$R$ and the
+invariant that it is well-typed. Through the layer interface, a client
+can ask for the \textit{integration} $\theta(R)$ of a patch $\Delta$
+to obtain an extended version $R'$ of the repository $R$.
+
+The middle layer is a mechanized formalization of a metatheory. This
+module provides a syntax for the objects of the metatheory (formulae,
+judgments, \ldots) as well as the admissible rules (that we also call
+metatheorems).  An \textit{internalization} function $\phi$ translates
+the constructors of these objects and the specification of the
+admissible rules as terms of the kernel language. As a consequence,
+every object~$t$ of the theory can be injected into the
+repository~$R$. An \textit{externalization} function $\psi$ is
+implementing the inverse operation. Given a modified version $t'$ of
+an object~$t$, we are able to compute the patch $\Delta$ using
+the \textit{differienciation} function $\nabla(t)$. 
+
+The external layer offers views on the objects of the theory. A
+view~$w$ is a human readable, and editable, partial representation of
+an object~$t$. A view is obtained from an object through a
+projection~$\pi$.  The user transforms the view $w$ into a view $w'$
+which must be $\textit{put back}$ into the metatheory as a modified
+object $t'$ using a $\textit{putback}$ function $\sigma(t, w)$. 
+
+
 
 % À mettre dans une figure. 
 \begin{figure}
@@ -319,10 +373,6 @@ then the repository is well-typed.
 \label{fig:architecture}
 \caption{A layered architecture for a semantic patch framework.}
 \end{figure}
-
-\remtext{Fri Jun 18, 2010  1:32 PM. Ici, on décrit la figure en suivant
-  le modèle de flot du système. On décrit le rôle des fonctions, 
-les problèmes posés.}
 
 \paragraph{From an abstract proof tree to a concrete view, and back}
 \-
