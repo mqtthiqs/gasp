@@ -247,7 +247,7 @@ environment). It depends on:
   \item$\mathcal A \in \mathcal S^2$ the axioms of the system,
   \item$\mathcal R \in \mathcal S^3$ the allowed products.
 \end{itemize}
-It relies on two distincts judgments:
+It relies on two distinct judgments:
 \begin{itemize}
 \item $\Gamma\vdash a : t$ ($a$ has type $t$ in $\Gamma$),
 \item $\Gamma\vdash t : \sort$ ($t$ has sort $s$ in $\Gamma$).
@@ -366,7 +366,7 @@ every object~$t$ of the theory can be injected into the
 repository~$R$. An \textit{externalization} function $\psi$ is
 implementing the inverse operation. Given a modified version $t'$ of
 an object~$t$, we are able to compute the patch $\Delta$ using
-the \textit{differienciation} function $\nabla(t)$. 
+the \textit{differentiation} function $\nabla(t)$. 
 
 The external layer offers views on the objects of the theory. A
 view~$w$ is a human readable, and editable, partial representation of
@@ -382,7 +382,7 @@ The implementation of this architecture raises some interesting
 technical difficulties that can be handled, but only partially, 
 by existing technology. Indeed, even if internalization and 
 externalization are easily implemented thanks to the expressivity
-of the kernel language, the projection, putback, differenciation
+of the kernel language, the projection, putback, differentiation
 and integration operations are more intricate to realize. 
 
 \paragraph{From an abstract proof tree to a concrete view, and back}
@@ -396,21 +396,21 @@ and integration operations are more intricate to realize.
 
 The problem of updating some data according to a modification that was
 done on a partial view of it is a well-known issue in database
-litterature called the \textit{view-update} problem. Pierce \textit{et
+literature called the \textit{view-update} problem. Pierce \textit{et
   al} have recently attacked it from a language design approach. Their
 idea is to develop projection and putback functions simultaneously by
 writing a so-called lens in a bidirectional programming
-language~\cite{pierce-bidirectional}. Roughly speaking, a lense is a
+language~\cite{pierce-bidirectional}. Roughly speaking, a lens is a
 software component that can be used to produce output from input but
-also input from output (hence the bidirectionality). A lense is able
+also input from output (hence the bidirectionality). A lens is able
 to keep track of the information that was erased by a projection to
 produce a projected output from the initial input. When we supply a
-modified output to the lense, it can elaborate, from the initial input
+modified output to the lens, it can elaborate, from the initial input
 and under certain conditions, the missing part of the modified input. 
 
 We plan to design a bidirectional language to define the
 projection~function~$\pi$ and the putback~function~$\sigma$ as a
-lense. Yet, we cannot just import existing lenses combinators from the
+lens. Yet, we cannot just import existing lenses combinators from the
 Harmony system that already works on trees. Indeed, most of the time,
 our trees have extra structural constraints induced by the presence of
 binders. 
@@ -427,14 +427,14 @@ binders.
 
 Computing the minimal edition script between two abstract syntax trees
 is a NP-hard problem that has been heavily studied, in particular in
-bioinformatics.  We guess that, in practice, we can restrict the
+bio-informatics.  We guess that, in practice, we can restrict the
 search to local transformations that preserve substructures (that
 roughly consist in inserting, removing or moving around entire
-subtrees). In that case, an existing polynomial algorithm might be
-used~\cite{REF!}. Besides, abstract trees are relativily small in
+sub-trees). In that case, an existing polynomial algorithm might be
+used~\cite{REF!}. Besides, abstract trees are relatively small in
 practice. 
 
-We are more concerned about our ability to elaborate high-level patchs
+We are more concerned about our ability to elaborate high-level patches
 from these low-level edition scripts. Actually, it is easy to deduce
 from a low-level edition script, a low-level patch, based on object
 syntax constructor elimination and introduction. However, such a
@@ -442,10 +442,10 @@ low-level patch may forbid a more efficient reuse of existing
 objects. For instance, let us assume a transformation of an
 object-level term~$x + x$ into~ he term~$2 + 2$. A low-level patch
 would represents the transformation as the replacement of the first
-subterm $x$ by the subterm~$2$ followed by the replacament of the
-second subterm $x$ by the subterm~$2$. If we had an object-level type
+sub-term $x$ by the sub-term~$2$ followed by the replacement of the
+second sub-term $x$ by the sub-term~$2$. If we had an object-level type
 derivation for $x + x$, the integration function would have to build
-two subderivations, one for each replaced subterms.  Instead, a
+two sub-derivations, one for each replaced sub-terms.  Instead, a
 high-level patch would represent that transformation as a substitution
 of the free occurrences of~$x$ by the term $2$ in the term~$x + x$. In
 that case, the integration function has the opportunity to apply a
@@ -467,6 +467,23 @@ interpretations of the low-level patch.
 \paragraph{Propagating changes through dependencies}
 \-
 
+There is several ways of integrating a patch $\Delta$ inside a
+repository~$R$.  The naive attempt would be a simple concatenation
+of~$\Delta$ at the end of~$R$.  This kind of integration, though
+possible and correct, is of little interest because it does not take
+into account the fact that $\Delta$ probably defines new versions of
+objects already present in~$R$.
+
+A more useful integration propagates changes to the context that uses
+the modified object in order to trigger the updating this context
+too. Again, in full generality, it is not possible to update the
+context automatically. Instead, we choose to generate
+\textit{challenges}, which are adaptation patches with holes. These
+challenges can be addressed by the author that wrote the patch to be
+integrated, by the author of the context or automatically when there
+is no ambiguity (think of a context that uses a function whose
+body has changed but not its type). 
+
 \remtext{Fri Jun 18, 2010 1:42 PM. Si on se contente de concaténer
   $\Delta$ à $R$, on n'a intégré qu'une nouvelle version de l'objet
   initial~$t$ dans $R$ mais on n'a pas propagé ces modifications
@@ -481,9 +498,9 @@ interpretations of the low-level patch.
   contexte nécessaire à la construction du patchs d'adaptation donc on
   peut imaginer un sorte de jeu où le système fait augmenter le
   contexte (en suivant les dépendances) si l'utilisateur ne sait pas
-  construire le patch d'adaptation. En passant, quand on parle d'utilisateur
-  ici, ce peut être aussi bien un programme, comme un type-checker
-  pour le langage objet, ou bien un programmeur.}
+  construire le patch d'adaptation. En passant, quand on parle
+  d'utilisateur ici, ce peut être aussi bien un programme, comme un
+  type-checker pour le langage objet, ou bien un programmeur.}
 
 \subsection{Application on simply typed $\lambda$-calculus}
 
@@ -496,8 +513,6 @@ interpretations of the low-level patch.
 \section{Further work}
 
 \remtext{Extension vers une version constructiviste?}
-
-\remtext{Algorithme d'élaboration de patchs?}
 
 \remtext{Parler du bootstraping?}
 
