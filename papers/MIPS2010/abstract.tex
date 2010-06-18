@@ -25,6 +25,7 @@
 \newcommand{\gor}{\ |\ }
 \newcommand{\gdecl}[2]{{#1}\ &::=\ {#2}}
 \newcommand{\subst}[2]{\{#1/#2\}}
+\newcommand{\nat}{\mathbb N}
 
 % Commandes à désactiver avant la soumission.
 % Remarques sur la structure.
@@ -32,8 +33,8 @@
 % Remarques sur le contenu.
 \newcommand{\remtext}[1]{\textcolor{bwgreen}{$\triangleright$ \textsl{#1}}}
 
-%\newcommand{\remplan}[1]{}
-%\newcommand{\remtext}[1]{}
+%\renewcommand{\remplan}[1]{}
+%\renewcommand{\remtext}[1]{}
 
 \title{Towards Semantic Patches}
   % pas sûr que le nom soit encore adapté
@@ -245,6 +246,63 @@ is not already known. Rule \textsc{Let2} and \textsc{Skip2} allow
 incremental typing in our system: if the definition was already known
 in the environment, we do not need to recheck it. If $\cdot\vdash
 t:\sort$, then the repository $t$ is well-typed.
+
+\paragraph{Example} 
+
+Here is a well-typed repository describing the simply-typed
+$\lambda$-calculus and constructing two $\lambda$-terms sharing some
+sub-derivations: 
+{\small
+\begin{align}&
+(\nat : *).
+(o : \nat).
+(s : \nat \to \nat).
+(type : *).
+(base : type).
+(arr : type \to type \to type). \\&
+(env : *).
+(nil : env).
+(cons : type \to env \to env). \\&
+(term : *).
+(var : \nat \to term).
+(lam : term \to term).
+(app : term \to term \to term). \\&
+(lookup : env \to \nat \to type \to *).
+(lookup_o : (e : env).(a : type).(f = cons\ a\ e : env). lookup\ e\ o\ a). \\&
+(lookup_s : (e : env).(a b : type).(n : \nat).(sn = s\ n : \nat).(f =
+cons\ a\ e : env). lookup\ e\ n\ b \to lookup\ f\ sn\ b). \\&
+(of : env \to term \to type \to *). \\&
+(of_v : (e : env).(a : type).(n : \nat).(v = var\ n : term).
+          lookup\ e\ n\ a \to of\ e\ v\ a). \\&
+(of_l : (e : env).(t : term).(a\ b: type).(c = arr\ a\ b : type).
+          (u = lam\ t : term).(f = cons\ a\ e : env).
+          of\ f\ t\ b \to of\ e\ u\ c). \\&
+(of_a : (e : env).(t\ u: term).(a\ b: type).
+          (c = arr\ a\ b : type).(v = app\ t\ u : term).
+          of\ e\ t\ c \to of\ e\ u\ a \to of\ e\ v\ b). \\&
+(1 = s\ o : \nat).(v_0 = var\ o : term).(v_1 = var\ 1 : term).
+(t_3 = lam\ v_0 : term).(ch_0 = lam\ t_3 : term).\\&
+(t_1 = app\ v_0\ v_1 : term).(t_2 = lam\ t_1 : term).
+(t_4 = lam\ t_2 : term).
+(bb = arr\ base\ base : type). \\&
+(e_0 = cons\ bb\ nil : env).
+(e_1 = cons\ base\ e0 : env).
+(d_0 = lookup_o\ e_1\ base : lookup\ e_1\ o\ base). \\& %        (* a→a, a ⊢ 0 : a *)
+(d_1 = of_v\ e_1\ base\ o\ d0 : of\ e_1\ v_0\ base). %	   (* a→a, a ⊢ 0 : a *)
+(d_2 = of_l\ e_0\ v_0\ base\ base d_1 : of\ e_0\ t_3\ bb). \\& %   (* a→a ⊢ λ0 : a → a *)
+(bbb = arr\ bb\ bb : type).
+(d_3 = of_l\ nil\ t_3\ bb\ bb\ d_2 : of\ nil\ ch_0\ bbb). \\& %  (* ⊢ λλ0 : (a→a)→(a→a) *)
+(g_1 = lookup_o\ e_0\ bb : lookup\ e_0\ o\ bb).
+(g_2 = lookup_s\ e_0\ base\ bb\ o\ g_1 : lookup\ e_1\ 1\ bb). \\&
+(g_3 = of_v\ e_1\ bb\ 1\ g_2 : of\ e_1\ v_1\ bb).	          % (* a→a, a ⊢ 1 : a→a *)
+(t_5 = app\ v_1\ v0 : term). \\&
+(g_4 = of_a\ e_1\ v_1\ v_0\ base\ base\ g_3\ d_1 : of\ e1\ t5\ base). % (* ... ⊢ 1 0 : a *)
+(t_6 = lam\ t_5 : term). \\&
+(g_5 = of_l\ e_0\ t_5\ base\ base\ g_4 : of\ e_0\ t_6\ bb).  %  (* a→a ⊢ λ(1 0) : a→a *)
+(t_7 = lam\ t_6 : term).
+(g_6 = of_l\ nil\ t_6\ bb\ bb\ g_5 : of\ nil\ t_7\ bbb). *	 %  (* ⊢ λλ(1 0) : (a→a)→a→a  *)
+\end{align}
+}
 
 \section{Development through semantic patches}
 \label{devel}
