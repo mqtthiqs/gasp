@@ -60,8 +60,8 @@ Many of these questions remain largely unanswered, but the tendency
 seems to be to adapt existing methods coming from software
 development, as illustrated for example by the introduction of
 modules, file-based scripts and separate compilation in proof
-assistants like \textsf{Coq}~\cite{CoqDocWeb} or
-\textsf{Matita}~\cite{AspertiCTZ07}, the use of
+assistants like \textsf{Coq}~\citep{CoqDocWeb} or
+\textsf{Matita}~\citep{AspertiCTZ07}, the use of
 dependency management tools (\textsf{Make}) or version control system
 (\textsf{GIT}, \textsf{Subversion}) to build and manage versions of a
 project. Both for the development of proofs or programs, these tools
@@ -81,13 +81,13 @@ is considered frozen and any changes to it require the recompilation
 of the whole file; the linearity of the development also gives no room
 for alternate, inequivalent definitions. This fact has nonetheless
 been shown to be of crucial to the mathematical discovery
-process~(\cite{lakatos1964proofs}), and we believe that they should be
+process~\citep{lakatos1964proofs}, and we believe that they should be
 taken into account in the realization of mathematical assistants.
 
 In fact, although dedicated tools exist to formalize the description
 of languages and their metatheory (e.g. \textsf{Twelf},
-{\cite{pfenning1999system}}), and substantial formalizations have been
-undertaken\cite{lee07}, we still use legacy tools based on text
+{\citep{pfenning1999system}}), and substantial formalizations have been
+undertaken~\citep{lee07}, we still use legacy tools based on text
 representation to manage our developments. The general goal exposed
 here is to replace this tool chain and make it language-aware, both on
 a syntactic side through the use of abstract syntax trees (AST) instead of
@@ -189,40 +189,40 @@ system towards LF (adding abstraction and reduction).
 \paragraph{Related works}
 \label{rw}
 
-The \textsf{Twelf} project~\cite{pfenning1999system} is an
-implementation of the Logical Framework (LF,
-\cite{harper1993framework}). It was used in \cite{anderson1993program}
-to devise transformations of proofs in order to extract efficient
-programs. Our kernel language reformulates LF by a syntactic
-explicitation of dependencies.
+The \textsf{Twelf} project~\citep{pfenning1999system} is an
+implementation of the Logical
+Framework~\citep{harper1993framework}. It was used in
+\citep{anderson1993program} to devise transformations of proofs in
+order to extract efficient programs. Our kernel language reformulates
+LF by a syntactic explicitation of dependencies.
 
 The problems of managing a formal mathematical library have been dealt
 with in various proof assistant and mathematical repositories. The
-HELM project~\cite{asperti2006content} was an attempt to create a
+HELM project~\citep{asperti2006content} was an attempt to create a
 large library of mathematics, importing \textsf{Coq}'s developments
 into a searchable and browsable database.  Most ideas from this
 project were imported into the \textsf{Matita} proof
-assistants~\cite{AspertiCTZ07}, especially a mechanism of
+assistants~\citep{AspertiCTZ07}, especially a mechanism of
 \emph{invalidation and regeneration} to ensure the global consistency
 of its library w.r.t changes, with granularity the whole definitions
 or proofs and their dependencies. The MBase
-project~\cite{kohlhase2001mbase} attempts at creating a web-based,
+project~\citep{kohlhase2001mbase} attempts at creating a web-based,
 distributed mathematical knowledge database putting forward the idea
 of \emph{development
-  graph}~\cite{hutter2000management,autexier2000towards} to manage
+  graph}~\citep{hutter2000management,autexier2000towards} to manage
 changes in the database, allowing semantic-based retrieval and
 object-level dependency management. 
 % Y: Un mot pour se comparer a ces travaux?
 
 This idea, generalized over structured, semi-formal documents gave
-birth to \texttt{\it locutor}~\cite{muller2008fine}, a fine-grained
+birth to \texttt{\it locutor}~\citep{muller2008fine}, a fine-grained
 extension of the \textsc{svn} version control system for XML
 documents, embedding ontology-driven, user-defined semantic knowledge
 which allows to go across the filesystem border. It embeds a
 \emph{diff} algorithm, operating on the source text modulo some
 equality theory to quotient the syntax. On the same line of work, we
-should mention the \emph{Coccinelle} tool
-(\cite{padioleau2008documenting}). It is an evolution over textual
+should mention the \emph{Coccinelle}
+tool~\citep{padioleau2008documenting}. It is an evolution over textual
 patches, specialized on the C language, allowing more flexibility in
 the matching process, and was developed to deal with the problem of
 \emph{collateral evolutions} in the Linux kernel. It embeds a
