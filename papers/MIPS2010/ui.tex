@@ -1,0 +1,224 @@
+\section{Development through semantic repositories}
+\label{devel}
+
+\remplan{Fri Jun 18, 2010 10:50 AM. L'objectif ici, c'est de décrire
+  une (possible) architecture pour rendre utilisable le langage 
+  décrit dans la section précédente. En gros, on énumère les 
+  opérations qui interviennent dans l'utilisation et on les décrit
+  informellement à l'aide d'un exemple.}
+
+The kernel language described in the previous section is clearly not
+adapted to human interaction, for several reasons~: 
+\begin{itemize}
+
+\item Every single object is flattened, which makes unobvious the
+  structure of a program or a proof. 
+
+\item A term of this language denotes the entire history of a
+  development. Most of the time, the user is more interested in a
+  instantaneous snapshot of his object of study.
+
+\item Even though we were able to provide a snapshot of a particular
+  state of the development, the repository represents this state 
+  using proof terms, which contain too many syntactic details from the
+  user point of view and are not suitable for edition.  
+
+\end{itemize}
+
+\remtext{Fri Jun 18, 2010 10:52 AM. Par contre, je ne sais pas quel
+  exemple utilisé. Le STLC? Est-ce que ça fait ``assez'' système
+  logique pour ce workshop?}
+
+\subsection{A layered architecture}
+
+\remtext{Fri Jun 18, 2010  1:32 PM. Ici, on décrit la figure en suivant
+  le modèle de flot du système. On décrit le rôle des fonctions, 
+les problèmes posés.}
+
+% À mettre dans une figure. 
+\begin{figure}
+\begin{center}
+% FIXME: il y a un problème avec la flèche double phi/psi.
+\xymatrix{
+\textrm{History of metatheory objects}
+&R 
+\ar@{->}[d]_{\phi}
+& \Delta \ar@{->}[r]^{\theta(R)} & R' \\
+\textrm{Metatheory objects} 
+&t \ar@{->}[d]^{\pi}
+\ar@{->}[u]_{\psi}
+& t' \ar@{->}[u]_{\nabla(t)}\\
+\textrm{Concrete views on metatheory objects} 
+&w \ar@{.>}[r] & w' \ar@{->}[u]_{\sigma(t, w)}
+}
+\end{center}
+\label{fig:architecture}
+\caption{A layered architecture for a semantic repository framework.}
+\end{figure}
+
+With the previous remarks in mind, we designed a generic framework of semantic
+repositories that can be described using three layers which are summarized in 
+Figure~\ref{fig:architecture}. We now describe the role of each layer.
+
+The most internal layer focused on the history of metatheory
+objects. It is composed of a type-checker for the kernel language. The
+purpose of this layer is to maintain a repository~$R$ and the
+invariant that it is well-typed. Through the layer interface, a client
+can ask for the \textit{integration} $\theta(R)$ of a patch $\Delta$
+to obtain an extended version $R'$ of the repository $R$.
+
+The middle layer is a mechanized formalization of a metatheory. This
+module provides a syntax for the objects of the metatheory (formulae,
+judgments, \ldots) as well as the admissible rules (that we also call
+metatheorems).  An \textit{internalization} function $\phi$ translates
+the constructors of these objects and the specification of the
+admissible rules as terms of the kernel language. As a consequence,
+every object~$t$ of the theory can be injected into the
+repository~$R$. An \textit{externalization} function $\psi$ is
+implementing the inverse operation. Given a modified version $t'$ of
+an object~$t$, we are able to compute the patch $\Delta$ using
+the \textit{differentiation} function $\nabla(t)$. 
+
+The external layer offers views on the objects of the theory. A
+view~$w$ is a human readable, and editable, partial representation of
+an object~$t$. A view is obtained from an object through a
+projection~$\pi$.  The user transforms the view $w$ into a view $w'$
+which must be $\textit{put back}$ into the metatheory as a modified
+object $t'$ using a $\textit{putback}$ function $\sigma(t, w)$.  In
+concrete syntax, an object~$t$ may be denoted simply using its
+syntactic definition but also, more interestingly, by a reference to this 
+object into the repository.
+
+The implementation of this architecture raises some interesting
+technical difficulties that can be handled, but only partially, 
+by existing technology. Indeed, even if internalization and 
+externalization are easily implemented thanks to the expressivity
+of the kernel language, the projection, putback, differentiation
+and integration operations are more intricate to realize. 
+
+\paragraph{From an abstract proof tree to a concrete view, and back}
+\-
+\remtext{Fri Jun 18, 2010  1:36 PM. Un arbre de preuves, ce n'est
+  pas très pratique. Pourtant, c'est moralement sur cet objet 
+  que s'opère le développement et non sur le code source, qui
+  n'en est qu'une représentation. On justifie la nécessité de
+  projection et on fait référence aux lentilles de Pierce pour
+  expliquer $\sigma$ et $\pi$.}
+
+The problem of updating some data according to a modification that was
+done on a partial view of it is a well-known issue in database
+literature called the \textit{view-update} problem. Pierce \textit{et
+  al} have recently attacked it from a language design approach. Their
+idea is to develop projection and putback functions simultaneously by
+writing a so-called lens in a bidirectional programming
+language~\cite{pierce-bidirectional}. Roughly speaking, a lens is a
+software component that can be used to produce output from input but
+also input from output (hence the bidirectionality). A lens is able
+to keep track of the information that was erased by a projection to
+produce a projected output from the initial input. When we supply a
+modified output to the lens, it can elaborate, from the initial input
+and under certain conditions, the missing part of the modified input. 
+
+We plan to design a bidirectional language to define the
+projection~function~$\pi$ and the putback~function~$\sigma$ as a
+lens. Yet, we cannot just import existing lenses combinators from the
+Harmony system that already works on trees. Indeed, most of the time,
+our trees have extra structural constraints induced by the presence of
+binders. 
+
+\remtext{Fri Jun 18, 2010 1:46 PM. Autre point important sur les vues
+  concrètes~: elles peuvent servir à parler de l'historique.  Voir le
+  module MetaAST de l'implémentation. Ces vues sont utiles par exemple
+  lorsque l'utilisateur doit construire un patch d'adaptation. Il a
+  alors toute la puissance des métathéorèmes ainsi que tous les objets
+  déjà construits pour décrire son patch.}
+
+\paragraph{Capturing the evolution of abstract proof trees}
+\-
+
+Computing the minimal edition script between two abstract syntax trees
+is a NP-hard problem that has been heavily studied, in particular in
+bio-informatics.  We guess that, in practice, we can restrict the
+search to local transformations that preserve substructures (that
+roughly consist in inserting, removing or moving around entire
+sub-trees). In that case, an existing polynomial algorithm may be
+used~\cite{Touzet05alinear}. Besides, abstract trees are relatively small in
+practice. 
+
+We are more concerned about the fact that existing algorithms are not
+aware of binders that occur in proof-terms. Indeed, some standard
+edition scripts must be forbidden because they could break
+well-scopedness. As a consequence, we will have to adapt standard
+algorithms to only look for scope-preserving edition scripts.
+
+%% We are more concerned about our ability to elaborate high-level patches
+%% from these low-level edition scripts. Actually, it is easy to deduce
+%% from a low-level edition script, a low-level patch, based on object
+%% syntax constructor elimination and introduction. However, such a
+%% low-level patch may forbid a more efficient reuse of existing
+%% objects. For instance, let us assume a transformation of an
+%% object-level term~$x + x$ into~ he term~$2 + 2$. A low-level patch
+%% would represents the transformation as the replacement of the first
+%% sub-term $x$ by the sub-term~$2$ followed by the replacement of the
+%% second sub-term $x$ by the sub-term~$2$. If we had an object-level type
+%% derivation for $x + x$, the integration function would have to build
+%% two sub-derivations, one for each replaced sub-terms.  Instead, a
+%% high-level patch would represent that transformation as a substitution
+%% of the free occurrences of~$x$ by the term $2$ in the term~$x + x$. In
+%% that case, the integration function has the opportunity to apply a
+%% metatheorem about the stability of typing derivations under
+%% substitution and finally reuse the initial typing derivation
+%% directly. Inferring automatically such a high-level patch seems an
+%% unreachable objective~: there is clearly no most general high-level
+%% patch. Nonetheless, an interactive process can be designed to help the
+%% user building his high-level patch from a set of pre-computed
+%% interpretations of the low-level patch.
+
+\remtext{Fri Jun 18, 2010 1:38 PM. Il faut différencier deux arbres de
+  syntaxe. Une méthode : la distance d'édition syntaxique permet de
+  déduire des applications des règles d'élimination et d'introduction
+  que l'on peut utiliser pour construire $\Delta$. Référence sur la
+  littérature sur les distances d'édition entre arbres. Discussion sur
+  l'élaboration de patchs de haut niveau (comme le renommage etc). }
+
+\paragraph{Propagating changes through dependencies}
+\-
+
+There is several ways of integrating a patch $\Delta$ inside a
+repository~$R$.  The naive attempt would be a simple concatenation
+of~$\Delta$ at the end of~$R$.  This kind of integration, though
+possible and correct, is of little interest because it does not take
+into account the fact that $\Delta$ probably defines new versions of
+objects already present in~$R$.
+
+A more useful integration propagates changes to the context that uses
+the modified object in order to trigger the updating of this context
+(which may trigger the updating of other tree, and so forth). Again,
+in full generality, it is not possible to update the context
+automatically. Instead, we choose to generate \textit{challenges},
+which are adaptation patches with holes. These challenges can be
+addressed by the author that wrote the patch to be integrated, by the
+author of the context or automatically when there is no ambiguity
+(think of a context that uses a function whose body has changed but
+not its type).
+
+\remtext{Fri Jun 18, 2010 1:42 PM. Si on se contente de concaténer
+  $\Delta$ à $R$, on n'a intégré qu'une nouvelle version de l'objet
+  initial~$t$ dans $R$ mais on n'a pas propagé ces modifications
+  auprès des clients de $t$. Cette propagation n'est \textit{a priori}
+  pas triviale~: rien ne dit que $t'$ à un sens équivalent à $t$. Il
+  faut donc adapter les clients en demandant un patch d'adaptation à
+  l'utilisateur. On présente ces demandes sous la forme de patch à
+  compléter (on fournit un peu de contexte et on a un trou pour y
+  injecter une nouvelle sous-dérivation mais on peut aussi modifier le
+  contexte pour l'adapter). La construction d'un patch d'adaptation
+  est un processus interactif~: on ne sait pas a priori borner le
+  contexte nécessaire à la construction du patchs d'adaptation donc on
+  peut imaginer un sorte de jeu où le système fait augmenter le
+  contexte (en suivant les dépendances) si l'utilisateur ne sait pas
+  construire le patch d'adaptation. En passant, quand on parle
+  d'utilisateur ici, ce peut être aussi bien un programme, comme un
+  type-checker pour le langage objet, ou bien un programmeur.}
+
+\subsection{Application on simply typed $\lambda$-calculus}
+
