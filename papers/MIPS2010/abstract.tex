@@ -330,8 +330,8 @@ projection~$\pi$.  The user transforms the view $w$ into a view $w'$
 which must be $\textit{put back}$ into the metatheory as a modified
 object $t'$ using a $\textit{putback}$ function $\sigma(t, w)$.  In
 concrete syntax, an object~$t$ may be denoted simply using its
-syntactic definition but also, more interestingly, by a reference into
-the repository or even as the application of a metatheorem.
+syntactic definition but also, more interestingly, by a reference to this 
+object into the repository.
 
 The implementation of this architecture raises some interesting
 technical difficulties that can be handled, but only partially, 
@@ -385,32 +385,38 @@ is a NP-hard problem that has been heavily studied, in particular in
 bio-informatics.  We guess that, in practice, we can restrict the
 search to local transformations that preserve substructures (that
 roughly consist in inserting, removing or moving around entire
-sub-trees). In that case, an existing polynomial algorithm might be
-used~\cite{REF!}. Besides, abstract trees are relatively small in
+sub-trees). In that case, an existing polynomial algorithm may be
+used~\cite{Touzet05alinear}. Besides, abstract trees are relatively small in
 practice. 
 
-We are more concerned about our ability to elaborate high-level patches
-from these low-level edition scripts. Actually, it is easy to deduce
-from a low-level edition script, a low-level patch, based on object
-syntax constructor elimination and introduction. However, such a
-low-level patch may forbid a more efficient reuse of existing
-objects. For instance, let us assume a transformation of an
-object-level term~$x + x$ into~ he term~$2 + 2$. A low-level patch
-would represents the transformation as the replacement of the first
-sub-term $x$ by the sub-term~$2$ followed by the replacement of the
-second sub-term $x$ by the sub-term~$2$. If we had an object-level type
-derivation for $x + x$, the integration function would have to build
-two sub-derivations, one for each replaced sub-terms.  Instead, a
-high-level patch would represent that transformation as a substitution
-of the free occurrences of~$x$ by the term $2$ in the term~$x + x$. In
-that case, the integration function has the opportunity to apply a
-metatheorem about the stability of typing derivations under
-substitution and finally reuse the initial typing derivation
-directly. Inferring automatically such a high-level patch seems an
-unreachable objective~: there is clearly no most general high-level
-patch. Nonetheless, an interactive process can be designed to help the
-user building his high-level patch from a set of pre-computed
-interpretations of the low-level patch.
+We are more concerned about the fact that existing algorithms are not
+aware of binders that occur in proof-terms. Indeed, some standard
+edition scripts must be forbidden because they could break
+well-scopedness. As a consequence, we will have to adapt standard
+algorithms to only look for scope-preserving edition scripts.
+
+%% We are more concerned about our ability to elaborate high-level patches
+%% from these low-level edition scripts. Actually, it is easy to deduce
+%% from a low-level edition script, a low-level patch, based on object
+%% syntax constructor elimination and introduction. However, such a
+%% low-level patch may forbid a more efficient reuse of existing
+%% objects. For instance, let us assume a transformation of an
+%% object-level term~$x + x$ into~ he term~$2 + 2$. A low-level patch
+%% would represents the transformation as the replacement of the first
+%% sub-term $x$ by the sub-term~$2$ followed by the replacement of the
+%% second sub-term $x$ by the sub-term~$2$. If we had an object-level type
+%% derivation for $x + x$, the integration function would have to build
+%% two sub-derivations, one for each replaced sub-terms.  Instead, a
+%% high-level patch would represent that transformation as a substitution
+%% of the free occurrences of~$x$ by the term $2$ in the term~$x + x$. In
+%% that case, the integration function has the opportunity to apply a
+%% metatheorem about the stability of typing derivations under
+%% substitution and finally reuse the initial typing derivation
+%% directly. Inferring automatically such a high-level patch seems an
+%% unreachable objective~: there is clearly no most general high-level
+%% patch. Nonetheless, an interactive process can be designed to help the
+%% user building his high-level patch from a set of pre-computed
+%% interpretations of the low-level patch.
 
 \remtext{Fri Jun 18, 2010 1:38 PM. Il faut différencier deux arbres de
   syntaxe. Une méthode : la distance d'édition syntaxique permet de
@@ -430,14 +436,15 @@ into account the fact that $\Delta$ probably defines new versions of
 objects already present in~$R$.
 
 A more useful integration propagates changes to the context that uses
-the modified object in order to trigger the updating this context
-too. Again, in full generality, it is not possible to update the
-context automatically. Instead, we choose to generate
-\textit{challenges}, which are adaptation patches with holes. These
-challenges can be addressed by the author that wrote the patch to be
-integrated, by the author of the context or automatically when there
-is no ambiguity (think of a context that uses a function whose
-body has changed but not its type). 
+the modified object in order to trigger the updating of this context
+(which may trigger the updating of other tree, and so forth). Again,
+in full generality, it is not possible to update the context
+automatically. Instead, we choose to generate \textit{challenges},
+which are adaptation patches with holes. These challenges can be
+addressed by the author that wrote the patch to be integrated, by the
+author of the context or automatically when there is no ambiguity
+(think of a context that uses a function whose body has changed but
+not its type).
 
 \remtext{Fri Jun 18, 2010 1:42 PM. Si on se contente de concaténer
   $\Delta$ à $R$, on n'a intégré qu'une nouvelle version de l'objet
