@@ -4,15 +4,14 @@
 \usepackage[utf8x]{inputenc}
 \usepackage{mathpartir}
 \usepackage{color}
-\usepackage[pdftex,backref=page,colorlinks=true]{hyperref}
+\usepackage[backref=page,colorlinks=true]{hyperref}
 \usepackage{amsmath, amstext, amsthm, amsfonts}
 \usepackage{stmaryrd}
 \usepackage{geometry}
 \usepackage{natbib}
 \usepackage{fancyhdr}
-\input xy
-\xyoption{all}
-\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage[all,cmtip]{xy}
+%\usepackage[protrusion=true,expansion=true]{microtype}
 
 \definecolor{bwgreen}{rgb}{0.183,1,0.5}
 \definecolor{bwmagenta}{rgb}{1,0.169,0.909}
@@ -27,7 +26,11 @@
 \newcommand{\gdecl}[2]{{#1}\ &::=\ {#2}}
 \newcommand{\subst}[2]{\{#1/#2\}}
 
-\newcommand{\rem}[1]{$\triangleright$ \textcolor{bwblue}{#1}}
+% Commandes à désactiver avant la soumission.
+% Remarques sur la structure.
+\newcommand{\remplan}[1]{\noindent\textcolor{bwblue}{$\triangleright$ \textbf{#1}}}
+% Remarques sur le contenu.
+\newcommand{\remtext}[1]{\textcolor{bwgreen}{$\triangleright$ \textsl{#1}}}
 
 \title{Towards Semantic Patches}
   % pas sûr que le nom soit encore adapté
@@ -41,7 +44,9 @@
 
 \section{Motivations}
 
-It is interesting to investigate the possible relationship between the
+\remplan{Motivations générales}
+
+It may be fruitful to investigate the possible relationship between the
 very \emph{methodologies} or even \emph{daily workflow} employed in
 both fields of mathematics and computer science: one trying to prove a
 theorem, the other constructing a program to fulfill a task. How does
@@ -49,16 +54,18 @@ one or the other elaborates his object of study? What kind of \emph{a
   posteriori} modification is he prone to doing? What do these
 modifications imply on the validity of the whole edifice or the other
 way around, how do one rely on existing work to build up new results?
+% Y: Je ne comprends pas tout à fait la dernière question: 
 Finally, how to relate how both scientists collaborate in a team?
 
 Recent efforts in the formalization of mathematical results have
 naturally led to these questions and many of them remain largely
 unanswered, but the tendency seems to be to adapt existing methods
-coming from software development, witness for example the recent
-introduction of modules, file-based scripts and separate compilation
-in proof assistants like \textsf{Coq} or \textsf{Matita}, the use of
-dependency management tools (\textsf{make}) or version control system
-(\textsf{git}, \textsf{svn}) to build and manage versions of a
+coming from software development, as illustrated for example by the
+recent introduction of modules, file-based scripts and separate
+compilation in proof assistants like \textsf{Coq}~{\cite{CoqDocWeb}}
+or \textsf{Matita}~{\cite{Asperti06userinteraction}}, the use of
+dependency management tools (\textsf{Make}) or version control system
+(\textsf{GIT}, \textsf{Subversion}) to build and manage versions of a
 project. Both for the development of proofs or programs, these tools
 attempt to cope with the fact that most of a mathematician or
 programmer's time is actually spent \emph{editing}, not
@@ -76,10 +83,29 @@ discovery process: once a concept contained in a file is compiled, it
 is considered frozen and any changes to it require the recompilation
 of the whole file; the linearity of the development also gives no room
 for alternate, inequivalent definitions. This fact has nonetheless
-been shown to be of crucial to the mathematical discovery process by
-\cite{lakatos1964proofs}, and we believe that they should be taken
-into account in the realization of mathematical assistants like
-\textsf{Coq} or \textsf{Matita}.
+been shown to be of crucial to the mathematical discovery
+process~\cite{lakatos1964proofs}, and we believe that they should be
+taken into account in the realization of mathematical assistants.
+% \textsf{Coq} or \textsf{Matita}.
+
+\remtext{Fri Jun 18, 2010 9:55. AM Ici, on pourrait rajouter un
+  paragraphe pour dire qu'il existe des travaux sur la formalisation
+  de metatheories dans les assistants de preuve, que ce soit en TWELF
+  ou Coq. Puis, on explicite notre but général qui est de construire
+  un système/framework qui remplace la chaîne d'outils traditionnelle
+  en important/adaptant la technologie issue de la formalisation de
+  metatheories.}
+
+\remplan{Sujet du papier : on focalise sur un problème bien précis}
+
+\remtext{Fri Jun 18, 2010 10:00 AM.
+  Un peu de liant. Pour arriver à notre but, il y a une
+  question importante à résoudre: si on te donne une méta-théorie
+  formalisée, es-tu capable de décrire l'historique d'un développement
+  dans cette théorie? Cela induit deux questions : dans quel langage
+  et est-ce que ce langage est utilisable (parce qu'a priori, ce n'est
+  pas gagné car le développeur travaille en mode ``instantané'' et ne
+  veut pas se trimballer ses casseroles tout le temps\ldots).}
 
 We propose to discuss a small part of these questions, namely the
 enhancement and adaptation of version control paradigms to the
@@ -94,39 +120,55 @@ them efficiently and incrementally, and manage distributed
 repositories of mathematics with it, guaranteeing \emph{by typing} the
 stepwise global consistency of the repository.
 
-In the light of the propositions-as-types paradigms where
-proof-checking boils down to type-checking, we abstract from whether
-we are talking about proofs or programs, so that our development could
-eventually also be used in traditional software development.
+\remtext{Fri Jun 18, 2010 10:06 AM.  Le paragraphe précédent n'est pas
+  assez précis je pense et en même temps en dit trop. À la place, je
+  propose d'énoncer succintement les contributions de ce papier puis 
+  le plan. Ce serait quelque chose comme:
+  1. A description language for semantic repositories.
+  2. Theory development through semantic patches. 
+  3. Related work
+  4. Further work
+}
 
-\section{Methodologies}
+\remplan{Fri Jun 18, 2010 10:08 AM. Du coup, je restructure un peu la suite.}
 
-We propose here to devise a system for \emph{semantic patches}. It
-% TODO changer le nom?
-substitutes the idea of textual transformation by:
-\begin{itemize}
-\item First preferring an abstract syntax tree representation instead
-  of plain text;
-\item Secondly embedding semantic, or typing data into the
-  transformations, in order to be able to reason on them.
-\item Finally, perform type-checking in an incremental way, that is
-  type only the syntactic difference and reuse derivation for the
-  already known subprograms.
-\end{itemize}
+\section{A kernel language to describe semantic repositories}
 
-We want to design a \emph{language of patches}, able to represent
-% TODO changer le nom?
-these transformations and their semantic properties, thus capturing
-local syntactic changes in programs (the abstract syntax tree), as
-well as their global effect on the whole project (the typing
-derivations). We can see this goal as a refinement of the former idea
-of ``dependency''.
+\subsection{How to describe a development?}
 
-\subsection{Data \emph{vs.} patch-oriented}
+\remplan{Fri Jun 18, 2010 10:09 AM. Pour commencer, on peut essayer 
+  de répondre à la question: ``À quoi sert ce langage?''. }
 
-\subsection{Related Works}
+\remtext{Fri Jun 18, 2010 10:10 AM. Il sert à décrire des objets d'une
+  théorie et, surtout, des transformations de ces objets (valides) en
+  de nouveaux objets (valides). Il sert donc à décrire des applications
+  de méta-théorèmes.}
 
-\section{A kernel for incremental type-checking}
+\remplan{Fri Jun 18, 2010 10:13 AM. Ensuite, est-ce qu'il n'existe pas déjà
+  des langages adaptés à ça? }
+
+\remtext{Fri Jun 18, 2010 10:15 AM. Pas tout à fait. Certes, LF
+  fournit un cadre qui autorise la représentation des metathéories et
+  des objets, construits par application de règles
+  admissibles/métathéorèmes. Cependant, la syntaxe de ces objets 
+  est statique/extensionnel~: on décrit l'objet comme le résultat
+  de sa construction en oubliant son histoire. Pour représenter 
+  l'historique d'un développement, notre langage
+  doit au contraire maintenir l'ordre dans lequel les objets ont
+  été construits ainsi que la façon dont ils l'ont été.}
+
+\remtext{Fri Jun 18, 2010 10:26 AM. Ce n'est pas peut être pas tout à fait vrai que personne n'a
+  fait de proposition de langages qui décrivent un développement ...
+  On peut peut-être citer Pfenning, Klint and co et faire une référence
+  en avant vers le related work.}
+
+\remtext{Fri Jun 18, 2010 10:20 AM. Remarque annexe: je pense qu'à ce
+  stade de l'explication, il n'est pas nécessaire de parler
+  d'incrémentalité et de partage maximal. Je crois que c'est une
+  conséquence pratique heureuse de notre formalisation mais qui ne
+  fait pas réellement partie des nécessités/besoins initiaux.
+  Ce que je veux dire, c'est que l'incrémentalité est une propriété
+  orthogonale à la capacité de dénoter une historique.}
 
 Representing syntax and logics is nicely done in a \emph{logical
   framework} like LF (\cite{harper1993framework}): both the syntactic
@@ -156,8 +198,22 @@ Our system will have these properties \emph{wrt.} LF:
   typing.
 \end{itemize}
 
+\remtext{Fri Jun 18, 2010 10:26 AM. 
+  Du coup, il faudrait reformuler un peu les paragraphes précédents.}
+
+\subsection{Formalization}
+
+\remplan{On rentre dans les détails techniques. Je crois qu'il faut
+  prendre un peu de temps pour définir précisément les termes utilisés
+  (repository, patch, etc) et expliquer/paraphraser les règles.}
+
 \paragraph{Syntax} There are three syntactic categories: applicative
 terms $a$, types $t$ and environments $\Gamma$.
+
+% Y: Remarque en passant: pour maintenir des notations cohérentes, il
+% vaut mieux se définir des macros pour absolument tout
+% (metavariables, jugements, ...). Ca passe mieux à l'échelle.  On
+% verra ca pour le prochain papier :-).
 
 \begin{align*}
  \gdecl{a}{x \gor a\ x } \\
@@ -229,6 +285,138 @@ rules, the syntactic objects and derivations recorded in it along with
 the patches that let the repository evolve. If $\cdot\vdash t:\sort$,
 then the repository is well-typed.
 
+\section{Development through semantic patches}
+
+\remplan{Fri Jun 18, 2010 10:50 AM. L'objectif ici, c'est de décrire
+  une (possible) architecture pour rendre utilisable le langage 
+  décrit dans la section précédente. En gros, on énumère les 
+  opérations qui interviennent dans l'utilisation et on les décrit
+  informellement à l'aide d'un exemple.}
+
+\remtext{Fri Jun 18, 2010 10:52 AM. Par contre, je ne sais pas quel
+  exemple utilisé. Le STLC? Est-ce que ça fait ``assez'' système
+  logique pour ce workshop?}
+
+\subsection{A layered architecture}
+
+% À mettre dans une figure. 
+\begin{figure}
+\begin{center}
+% FIXME: il y a un problème avec la flèche double phi/psi.
+\xymatrix{
+\textrm{History of metatheory objects}
+&R 
+\ar@{->}[d]_{\phi}
+& \Delta \ar@{->}[r]^{\theta(R)} & R' \\
+\textrm{Metatheory objects} 
+&t \ar@{->}[d]^{\pi}
+\ar@{->}[u]_{\psi}
+& t' \ar@{->}[u]_{\nabla(t)}\\
+\textrm{Concrete views on metatheory objects} 
+&w \ar@{.>}[r] & w' \ar@{->}[u]_{\sigma(t, w)}
+}
+\end{center}
+\label{fig:architecture}
+\caption{A layered architecture for a semantic patch framework.}
+\end{figure}
+
+\remtext{Fri Jun 18, 2010  1:32 PM. Ici, on décrit la figure en suivant
+  le modèle de flot du système. On décrit le rôle des fonctions, 
+les problèmes posés.}
+
+\paragraph{From an abstract proof tree to a concrete view, and back}
+\-
+
+\remtext{Fri Jun 18, 2010  1:36 PM. Un arbre de preuves, ce n'est
+  pas très pratique. Pourtant, c'est moralement sur cet objet 
+  que s'opère le développement et non sur le code source, qui
+  n'en est qu'une représentation. On justifie la nécessité de
+  projection et on fait référence aux lentilles de Pierce pour
+  expliquer $\sigma$ et $\pi$.}
+
+\remtext{Fri Jun 18, 2010 1:46 PM. Autre point important sur les vues
+  concrètes~: elles peuvent servir à parler de l'historique.  Voir le
+  module MetaAST de l'implémentation. Ces vues sont utiles par exemple
+  lorsque l'utilisateur doit construire un patch d'adaptation. Il a
+  alors toute la puissance des métathéorèmes ainsi que tous les objets
+  déjà construits pour décrire son patch.}
+
+\paragraph{Capturing the evolution of abstract proof trees}
+\-
+
+\remtext{Fri Jun 18, 2010 1:38 PM. Il faut différencier deux arbres de
+  syntaxe. Une méthode : la distance d'édition syntaxique permet de
+  déduire des applications des règles d'élimination et d'introduction
+  que l'on peut utiliser pour construire $\Delta$. Référence sur 
+  la littérature sur les distances d'édition entre arbres. Discussion
+  sur l'élaboration de patchs de haut niveau (comme le renommage etc). }
+
+\paragraph{Propagating changes through dependencies}
+\-
+
+\remtext{Fri Jun 18, 2010 1:42 PM. Si on se contente de concaténer
+  $\Delta$ à $R$, on n'a intégré qu'une nouvelle version de l'objet
+  initial~$t$ dans $R$ mais on n'a pas propagé ces modifications
+  auprès des clients de $t$. Cette propagation n'est \textit{a priori}
+  pas triviale~: rien ne dit que $t'$ à un sens équivalent à $t$. Il
+  faut donc adapter les clients en demandant un patch d'adaptation à
+  l'utilisateur. On présente ces demandes sous la forme de patch à
+  compléter (on fournit un peu de contexte et on a un trou pour y
+  injecter une nouvelle sous-dérivation mais on peut aussi modifier le
+  contexte pour l'adapter). La construction d'un patch d'adaptation
+  est un processus interactif~: on ne sait pas a priori borner le
+  contexte nécessaire à la construction du patchs d'adaptation donc on
+  peut imaginer un sorte de jeu où le système fait augmenter le
+  contexte (en suivant les dépendances) si l'utilisateur ne sait pas
+  construire le patch d'adaptation. En passant, quand on parle d'utilisateur
+  ici, ce peut être aussi bien un programme, comme un type-checker
+  pour le langage objet, ou bien un programmeur.}
+
+\subsection{Application on simply typed $\lambda$-calculus}
+
+\section{Related work}
+
+\remtext{Dolphin, Twelf, etc}
+
+\remtext{Semantic patches à la coccinnelle}
+
+\section{Further work}
+
+\remtext{Extension vers une version constructiviste?}
+
+\remtext{Algorithme d'élaboration de patchs?}
+
+\remtext{Parler du bootstraping?}
+
+\section{Conclusion}
+
+%% In the light of the propositions-as-types paradigms where
+%% proof-checking boils down to type-checking, we abstract from whether
+%% we are talking about proofs or programs, so that our development could
+%% eventually also be used in traditional software development.
+
+%% \section{Methodologies}
+
+%% We propose here to devise a system for \emph{semantic patches}. It
+%% % TODO changer le nom?
+%% substitutes the idea of textual transformation by:
+%% \begin{itemize}
+%% \item First preferring an abstract syntax tree representation instead
+%%   of plain text;
+%% \item Secondly embedding semantic, or typing data into the
+%%   transformations, in order to be able to reason on them.
+%% \item Finally, perform type-checking in an incremental way, that is
+%%   type only the syntactic difference and reuse derivation for the
+%%   already known subprograms.
+%% \end{itemize}
+
+%% We want to design a \emph{language of patches}, able to represent
+%% % TODO changer le nom?
+%% these transformations and their semantic properties, thus capturing
+%% local syntactic changes in programs (the abstract syntax tree), as
+%% well as their global effect on the whole project (the typing
+%% derivations). We can see this goal as a refinement of the former idea
+%% of ``dependency''.
 
 \bibliographystyle{plainnat}
 
