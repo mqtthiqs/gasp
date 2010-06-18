@@ -1,0 +1,2784 @@
+\documentclass[twoside,a4paper,12pt]{article}
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{mathpartir}
+\usepackage{color}
+\usepackage[pdftex,backref=page,colorlinks=true]{hyperref}
+\usepackage{amsmath, amstext, amsthm, amsfonts}
+\usepackage{stmaryrd}
+\usepackage{geometry}
+\usepackage{natbib}
+\usepackage{fancyhdr}
+\input xy
+\xyoption{all}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+\newcommand{\Coq}{\textsf{Coq} }
+\newcommand{\Matita}{\textsf{Matita} }
+\newcommand{\letin}[3]{\textsf{let}\ #1=#2\ \textsf{in}\ #3}
+\newcommand{\To}{\longrightarrow}
+
+\newtheorem{example}{Example}
+\newtheorem{theorem}{Theorem}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{definition}{Definition}
+\newtheorem{property}{Property}
+
+\definecolor{bwgreen}{rgb}{0.183,1,0.5}
+\definecolor{bwmagenta}{rgb}{1,0.169,0.909}
+\definecolor{bwblue}{rgb}{0.317,0.161,1}
+\hypersetup{
+  linkcolor=blue,
+  citecolor=blue
+}
+
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancyhf{}
+\fancyhead[LE,RO]{\bfseries\thepage}
+\fancyhead[LO]{\small\slshape\rightmark}
+\fancyhead[RE]{\small\slshape\leftmark}
+\renewcommand{\sectionmark}[1]
+  {\markboth{\MakeUppercase{\thesection.\ \ #1}}
+  {\MakeUppercase{\thesection.\ \ #1}}}
+
+
+\date{\normalsize February 28, 2010}
+
+\title{{\small Thesis Proposal --
+    Dottorato di Ricerca in Informatica} \\[1em]
+  Towards formalized mathematics repositories based on type theory}
+
+\author{Matthias \textsc{Puech}\thanks{\texttt{\href{mailto:puech@cs.unibo.it}{puech@cs.unibo.it}}}\\[0.5em]
+  \footnotesize \it Dipartimento di Scienze dell'Informazione ---
+  Universit\`a di Bologna \\[-0.4em]
+  \footnotesize \it Laboratoire PPS --- Université Paris 7--Denis Diderot \\[1em]
+  \small \emph{dir.} Andrea \textsc{Asperti}\ \ {\it\&}\ \ Hugo
+  \textsc{Herbelin}
+  \\[1.3em]
+}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\tableofcontents
+
+\section*{Introduction
+  \markboth{INTRODUCTION}{INTRODUCTION}}
+\pagenumbering{roman}
+
+The fields of formal proofs, automated reasoning and verified
+software, have made great advances in the last forty years, since the
+seminal works of on the checkable proof language \textsf{Automath} by
+\cite{de1970mathematical} and the automated theorem prover
+\textsf{Nqthm} from \cite{boyer1988theorem}.  They appear today as a
+mature technology, used not only academically but also in the
+industry; the diversity of the approaches also witnesses the vivacity
+of the field: there are plethora of systems implemented for various,
+more-or-less specific uses, from the all-automated theorem prover for
+a domain specific application to the general-purpose, interactive
+mathematical assistant embedding a rich and expressive logic.
+
+In particular, \emph{proof assistants}, also known as interactive
+theorem provers, are tools intended to help the human to develop
+formal proofs: the proof itself is constructed and checked by the
+machine, but guided by the human in an interactive collaboration.
+Among these, we count \textsf{Isabelle/HOL}, \textsf{PVS},
+\textsf{Coq}, \textsf{Mizar}, \textsf{Matita} and much more. These
+tools have recently enjoyed a great success, leading to rich formal
+mathematics libraries and complex developments, see
+\cite{asperti2009social} for a critical and historical account on
+formal verification.
+
+The factors of this success are in our opinion threefold: first,
+advances on computational logic have lead to the development of
+powerful and solid foundational languages of proofs, not only made
+intuitive for the mathematician by borrowing their methods, but also
+suitable to the exploitation of the computational power of modern
+computers. Secondly, the wealth of implementation efforts has lead to
+a well-understood architecture (\cite{asperti2007crafting}), and
+efficient methods for the multitude of algorithmic tasks performed in
+this context. Finally, the tight interaction between users and
+developers of these systems (it is actually far from exceptional to be
+both) has helped creating rich and usable interfaces, witness for
+example the reinterpretation of the proof language of \textsf{Coq} by
+\cite{gonthier2008small} originally intended as domain-specific but
+inspiring new generations of systems.
+
+However, a lot of the paradigms now taken for granted in the
+development of formal mathematics are inherited from programming. For
+example, most proof assistant are based on an LCF-like, procedural
+tactic language for devising proofs, making the act of proving alike
+to the one of programming and strayed from the common vernacular used
+in informal mathematics. Moreover, the validation process of a formal
+proof, stepwise and linear because modelled after the automatic
+process of compilation, do not reflect the way a user would like to
+interact with the system: not only would he like to make progress and
+advance toward the solution (the only choice today), but also to
+retract from previous declaration, refine and modify his idea\ldots\
+Also, this rigidity does not leave room at all for team-work, where
+several people interact on the same (large) document, possibly
+modifying concurrently the main development in an incompatible way,
+between each other or with respect to previous developments.
+
+If, following \cite{dowek2007metamorphoses}, we believe that
+machine-checkable proofs and the mechanization of proof-search made
+mathematics enter its \emph{``industrial era''} after a long history
+of handicraft, an era where unverified, one-man work is not acceptable
+anymore due to the increased complexity of the manipulated concepts,
+then we are in urge of finding techniques to adapt these new tools to
+the practice of mathematics.
+
+We believe that the simultaneous work on two aspects of this problem
+would bring up new potentialities and ways of formalizing mathematics.
+Increasing the inference power of the proof language is one of them:
+most of today's proof languages are tightly bound to the underlying
+logic, whereas informal mathematics use extensively and implicitly
+notations, isomorphisms and shortcuts. Most proof assistants provide
+the strict minimum to deal with them, usually in a more-or-less ad-hoc
+way; increasing the capability of automating ``trivial'' parts of the
+reasoning would be a first step to the design of a high-level, highly
+ambiguous but still fully checkable proof language. A second step,
+concerning the interactivity of the formal development process, is the
+study of the impact of changes in large developments. A high-level
+proof language comes with possibly high computational power required,
+and one cannot afford then to recheck the whole development after each
+change, as small and insignificant as they may be. Moreover, we want
+to develop the interactive aspect of these tools, to be able to use
+them even during the discovery phase, where change happen often and
+deeply into the structure of the development. By analyzing finely the
+dependency between concepts and even intra-concept, we hope to render
+this interaction between the computer and the user, but also even
+between several users.
+
+All these tools are, in a nutshell, implementations of a particular
+logic, along with a rich language to conduct the construction of
+proofs, mechanisms of inference to relieve the user from the most
+tedious and repetitive tasks, and input facilities. While the ideas
+underlying the input of proofs are shared by most of these tools, a
+particularly interesting subclass of them are those based on
+\emph{type theory}. Type theory is a calculus having the notable
+feature of being able to be seen dually as an intuitionistic logic and
+as a programming language allowing to give and check rich
+specifications to programs. This duality, also known as the
+Curry-Howard correspondence, opened a whole new field of research,
+both practical and theoretical.
+\\[-0.5em]
+
+We propose here to tackle the two issues developed above in the
+context of proof assistants relying on type theory, and especially the
+two developed in both our universities: \textsf{Matita} for the
+University of Bologna, \textsf{Coq} for the University Paris 7. 
+This proposal is therefore organized in
+% three parts. The first is an
+% overview of the history and main ideas underlying type theory and its
+% impact on both programming languages and proof assistants. The second
+two parts.
+The first
+is an account of the state-of-the art in terms of automation of
+proofs, both on a proof-theoretic point of view and on existing
+solutions implemented.  It finishes with some directions considered
+for further work and works in progress in this area. 
+%The last part
+The second part
+presents an ongoing work on \emph{semantic patches}, a preliminary
+theoretical study for the management of changes in type theory that
+could eventually serve as a basis for an integration into an existing
+system. It finishes also with some possible directions for further
+work.
+We begin with a short overview of the architecture of the proof
+assistants we plan to work on.
+
+\newpage
+\pagenumbering{arabic}
+
+% \section{From construction to programming}
+
+% When Brouwer proposed at the turn of the twenties its vision of an
+% intuitionistic logic, what is in question is to reject all forms of
+% formalism, proofs referring to thought experiments and nothing more:
+% it is what he call the \emph{constructions}. The mathematician do not
+% verify his proofs, but he must convince himself of their legitimacy,
+% as he says:
+% \begin{quote}
+%   {\it [\ldots] in his most profound hearth}
+%   (\cite{brouwer1927intuitionistic}, in \cite{van1967frege}).
+% \end{quote}
+
+% This profoundly subjectivist view of logics contrasts interestingly
+% with the contemporary work on formalizing set theory by Zermelo, and
+% Hilbert's dream of making mathematics so formal that an automatic
+% process could generate all valid and interesting theorems of
+% mathematics. He actually leaves almost entire the question, yet
+% crucial, of the nature of these constructions. The interpretation by
+% Heyting in the thirties of his work and the partial formalization of
+% the notion gave birth to what we now call ``intuitionistic logic'', or
+% constructive mathematics.
+
+% Fifty years later, computer systems emerge that can verify the
+% validity of proofs, totally automatically, and even efficient
+% processes to discover proofs. A large amount of these tools, as we
+% will see, are profoundly linked with the ideas that have emerged from
+% the notion of constructive mathematics: in fact, many of them
+% implement at their very core an ``intuitionistic logic'': the theory
+% of types. Moreover, underlying the proofs that one can carry in these
+% logics, there are real programs, that can be executed by the machine.
+% How has the notion of construction shifted so much as to change nature
+% almost entirely? It is the question we will try to explore here.
+
+% For this, we will draw the material for this analysis in two, strongly
+% dependent discoveries: one is the Curry-Howard correspondence which
+% appears today as the first tangible incarnation of the idea of
+% construction, the second is one of its sequel, that gave birth to a
+% whole field of research at the boundaries between Mathematics, Logics
+% and Computer Sciences: type theory.
+
+% Finally, we will expose the formal definitions, the variants and some
+% of the issues regarding the incarnation of type theory that will be
+% the framework of this proposal: the Calculus of Constructions. It is
+% this type theory that is implemented in the proof assistants
+% \textsf{Coq} and \textsf{Matita}.
+
+% \subsection{Constructive mathematics}
+
+% We shall try in this section to give some historical references and
+% clues that will help us comprehend this paradoxical development of
+% history: how, from the subjectivism of Brouwer, could emerge these
+% tools, that witness such an externalist vision of Logic?  How this
+% intimate, almost mystical experience -- the construction -- could be
+% subject to such a change of nature as to become a process, an
+% algorithm for the totally external verification of proofs?
+
+% \subsubsection{The constructivist program}
+
+% At the turn of the 20\textsuperscript{th} century, the dominant
+% ideology in mathematical logic was that of \emph{formalism}. This
+% theory, as advocated among others by the mathematicians Hilbert,
+% Bernays and von Neumann, holds that mathematics, and in particular
+% logic, are nothing but a game on formulas and statements, and that
+% theorems and their proofs can be assimilated to a bare manipulation of
+% strings. For example, Euclidean geometry can be thought as a game,
+% whose goal is to transform a series of axioms by a number of
+% transformations into a given statement, and once this goal is
+% attained, the statement has been proven. It is then a theory about,
+% and only about axiomatic systems: for these mathematicians, the system
+% of axioms and rules considered is of practically no importance except
+% for its intrinsic properties, and the meaning of the actual choice of
+% a system is (almost) totally irrelevant.
+
+% In spite of the many deceptions that arose at the beginning of the
+% century when attempting to devise a general enough formalism -- among
+% others, Frege's \emph{Begriffschrift} attempt to build a universal
+% formal language was doomed by Russell's paradox, see
+% \cite{van1967frege} -- this view was so much anchored in its time that
+% David Hilbert, maybe the earliest proponent of formalism, proposed his
+% \emph{program}. From the ``foundational crisis'' mathematics were
+% suffering, that is the search for a proper foundation for mathematics,
+% he proposed to ground all existing theories to a finite, complete set
+% of axioms, and provide a proof that these axioms were consistent, in
+% order to provide mathematics with a universal, solid foundation: a
+% complete and consistent axiomatization of \emph{all of mathematics}.
+% However, a few years later, this program was mathematically shown to
+% be unattainable by Gödel's incompleteness theorem.
+% \\[-.5em]
+
+% In this context, \emph{constructivism} emerged as a strong opponent to
+% the formalist school. Lead by Brouwer, Markov, Bishop and late Hilbert
+% and Bernays with their ``finitism'', constructivism, as a
+% philosophical view on the existence of the mathematical objects,
+% asserts that it is necessary to find (or "construct") a mathematical
+% object in order to prove that it exists.  Therefore, the ``game''
+% of applying inference rules from axioms is not necessarily a proof of
+% existence of an object: only the \emph{construction} -- the exhibit of
+% such an object -- is able to convince the mathematician of its
+% validity. Thus, the formalist notion of inference disappears almost
+% entirely here: the choice of the system is not only the only valuable
+% question, since it would make no sense to conduct a proof in a system
+% that doesn't allow to perform the construction of a witness of
+% existence of the object, but it also looses all reason to be: only one
+% system is capable of producing such a witness to perform constructive
+% mathematics.
+
+% In particular, one form of reasoning is therefore strongly rejected:
+% when one assumes that an object does not exist and derives a
+% contradiction fromc that assumption, one still has not found the object
+% and therefore not proved its existence, according to constructivists:
+% the \emph{law of excluded middle} is therefore rejected. Often,
+% constructivism is assimilated with this rejection; it is in fact only
+% a consequence of the foundation of the notion of proofs on the
+% construction.
+
+% Brouwer's \emph{intuitionism} is one of the form taken by the
+% constructivists' thesis statements. It was strongly influenced by
+% Kant's notion of intuition and redefined the notion of truth as it was
+% considered by traditional mathematics. In classical logic like in set
+% theory, truth is a static property of a proposition (or as Brouwer
+% prefers to name it after Kant, a \emph{judgement}): it is either true
+% or false, depending on its \emph{real nature}. This is expressed by
+% the interpretation of the logical statements in a model of truth
+% values: traditionally, the meaning of a proposition was interpreted in
+% an algebra of two values, true and false. On the contrary, the major
+% methodological turning point of Brouwer is to abandon the semantical
+% interpretation of propositions. He suggests that this usual denotation
+% of propositions as truth values is simply inadequate, this for four
+% reasons:
+% \begin{itemize}
+% \item It is first a philosophical platitude: Tarski for example
+%   interprets the conjunction as: $A\wedge B$ is true if $A$ is true
+%   and $B$ is true.  The \emph{meta} operator ``and'' doesn't help us
+%   to understand $\wedge$ in any way.
+% \item Justify the quantification in this way is undecidable in most
+%   cases, since we have to verify it on the whole ``domain of the
+%   discourse''.
+% \item Fermat's theorem denotes in this case the same object as
+%   $2+2=4$. It is really reasonable to let so little room to the notion
+%   of proof?
+% \item Finally, this interpretation simply doesn't scale to
+%   higher-order logic.
+% \end{itemize}
+
+% He takes a much more subjectivist approach to the notion of proof. For
+% him, it is even close to the juridical notion of \emph{evidence}: a
+% proof of $A$ is the set of processes that make one be convinced of
+% $A$. It is in some way an incriminating evidence, an object the
+% observer -- the judge or the mathematician -- can convince himself,
+% either directly (the immediate proof), or through a series of steps, a
+% mechanism (the mediate proof, like the mediate jurisdiction) that can
+% be ``replayed'' at will, as many times as one needs to convince
+% himself. The intuitionistic slogan of Brouwer's ``there are no
+% unexperienced truth'' takes then all its meaning. The experience, that
+% Brouwer call construction, is the only evidence that constitutes
+% truth. In this sense, the act of ``proving'' that $12$ is not a prime
+% number is to exhibit the computation of $4*3$ as an evidence.
+
+% Heyting, and later Kolmogorov will formulate this idea more precisely
+% (in some of the articles in \cite{benacerraf1983philosophy}): the
+% proposition (statement, judgement) must be understood as a problem, an
+% expectation or an intention. Better, a task. To prove a statement (a
+% problem, a task) is to know what constitutes a solution to its
+% problem, a fulfilment to its task. Heyting and Kolmogorov
+% (\cite{heyting1971intuitionism}) even propose a full interpretation of
+% the logical statements in terms of these analogy: the famous BHK
+% interpretation: \newcommand{\subst}[2]{[{#1}/{#2}]}
+% \begin{align*}
+%   \llbracket A\Rightarrow B \rrbracket &= f \in \llbracket
+%   A\rrbracket\to \llbracket B\rrbracket\\
+%   \llbracket\forall x\in A,\ B\rrbracket &= f \in
+%   \{\llbracket B_x\rrbracket\}_{x\in \llbracket A\rrbracket} \\
+%   \llbracket \exists x\in A,\ B\rrbracket &= \langle a,b\rangle \in
+%   \llbracket A\rrbracket\times \llbracket B\subst{x}{a}\rrbracket \\
+%   \llbracket A\wedge B\rrbracket &= \langle a, b \rangle \in
+%   \llbracket A\rrbracket\times \llbracket B\rrbracket
+% \end{align*}
+
+% This interpretation gave birth to the first formalization by Heyting
+% of the intuitionistic logic. It is nowadays presented as a natural
+% deduction, minus the rule \emph{Reduction ad absurdum} which justifies
+% the excluded middle.
+
+% This interpretation put one idea forward that takes the form of two
+% properties. A logic that would satisfy this interpretation will see
+% its connectives $\exists$ and $\vee$ act more precisely, with more
+% control than in usual, classical logics: they are the properties of
+% the witness and of the disjunction.
+% \begin{property}[Witness]
+%   From a proof of a statement of the form $\exists x, P(x)$, one can
+%   \emph{extract} a \emph{witness} $a$ such that $P(a)$ is provable.
+% \end{property}
+% \begin{property}[Disjunction]
+%   From a proof of a statement of the form $A\vee B$, one can decide
+%   which of $A$ or $B$ is provable.
+% \end{property}
+
+% As we can see, the excluded middle $A\vee¬A$ is obviously not provable
+% in such a logic: if it were, one of $A$ or $¬A$ would be provable
+% (without any other knowledge about $A$), which is obviously false.
+% \\[-.5em]
+
+% The first real incarnation of what we could call a guideline for the
+% elaboration of logics, was discovered in the sixties, almost by
+% accident, by linking two notions that had previously no commonalities,
+% the $\lambda$-calculus and the intuitionistic logic. This link
+% actually turned out to be an exact and astonishing correspondence.
+
+% \subsubsection{The Curry-Howard correspondence}
+
+% In the 1930s, Church introduced, as part of an investigation into the
+% foundation of mathematics, a very simple yet powerful formal system to
+% reason on function definition and their application: the
+% $\lambda$-calculus. 
+
+% After the failure of Frege's (variant of) na\"ive set theory,
+% logicians were left with the difficult problem of finding a natural
+% yet consistent formulation of set theory. Two direction were taken
+% from this point. Zermelo and Fr\"ankel on one side modified Frege's
+% formulation to obtain ZF, an axiomatic set theory. Church on the other
+% side, took the approach of expressing higher-order logic (a set
+% theory) with the help of a minimal language for functions. In his
+% seminal article, \cite{church1940formulation} introduced, with the
+% help of the $\lambda$-calculus, a formulation of classical,
+% higher-order logic based on first-order logic with the addition of
+% only three symbols: $\lambda$ which represents an anonymous function,
+% the application of a function to its argument, and the arrow $\to$ to
+% express what he call the \emph{type} of these functions. This
+% formulation is called the Simple Theory of Types. It has the
+% peculiarity of introducing, for the first time explicitly, a notion of
+% computation or \emph{reduction}: the $\beta$-reduction. 
+
+% This reduction is at the heart of the higher-order character of his
+% logics: in fact, it mimics the behavior of an axiom of set theory, the
+% \emph{comprehension scheme}: \[ \forall x_1\ldots x_n, \exists y,
+% \forall z (z\in y \Leftrightarrow P)\] This scheme states that it is
+% possible to define sets \emph{in comprehension}, i.e. by a property on
+% its elements. At each property corresponds a set. In fact, by
+% skolemizing this scheme and introducing the notation $\{ x\ |\ P \}$
+% for the function associated to $y$, we obtain: \[ \forall x_1\ldots
+% x_n, z, (z \in \{z\ |\ P\} \Leftrightarrow P)\] This is read: if I
+% constructed the set $z$ from the property $P$, and if in fact, $z$ is
+% in this set, then $P$ is true.
+
+% Some years later, Church, extracting the computational content of his
+% logic, was left with a very simple formal system that had nothing to
+% do with logic anymore, but with computational complexity:
+% \[ t\ ::=\ x\ |\ \lambda x. t\ |\ t\ t \qquad\qquad (\lambda x. t)\ u
+% \to t[x/u]\]. This systems supposedly allowed to represent \emph{any}
+% kind of computation, and still today is a touchstone for the notion of
+% computation. One problem with it is that, viewed as a set theory, it
+% allows to define the set of all sets that do not belong to themselves,
+% Russel's paradox: \[ \{x\ |\ ¬x\in x\}\in\{x\ |\ ¬x\in x\}\]. Thus,
+% the above system is not only logically inconsistent but Russel's
+% paradox is also a counter-example to its termination: the
+% corresponding term $(\lambda x. x\ x)(\lambda x. x\ x)$ reduces on
+% itself \emph{ad infinitum}. Obviously, the problem with the above
+% system is that it allows the variable $x$ is applied to itself, which
+% lead Church to put each variable in a distinct \emph{type}. A variable
+% denoting a function would have a type $A\to B$, and could be applied
+% only to an argument of type $A$. This lead to the Simple Type Theory,
+% an isolation of a subset of well-behaved terms, the typed terms. They
+% are defined inductively as follows:
+% \begin{mathpar}
+%   \infer[Init]{(x:A)\in\Gamma}{\Gamma\vdash x:A} \and
+%   \infer[Abs]{\Gamma, x:A\vdash t:B}
+%   {\Gamma\vdash\lambda x. t : A\to B} \and 
+%   \infer[App]{\Gamma\vdash t:A\to B \and \Gamma\vdash
+%   u:A}{\Gamma\vdash t\ u: B}
+% \end{mathpar}
+% These three rules formed so to say the core of the functional aspect
+% of the logic discovered by Church, but also a universal programming
+% language, in which all possible programs are expressible as terms. For
+% a full history of $\lambda$-calculus and their applications, see
+% \cite{cardone2006history}.
+% \\[-.5em]
+
+% This idea of a well-behaved fragment of the $\lambda$-terms stayed
+% contained to the study of computable functions and higher-order
+% logics, for example by \cite{russell1908mathematical} in his Ramified
+% Theory of Types. In the 1960's however, H. Curry and W. A. Howard
+% noted a striking similarity between these three rules and those of the
+% minimal fragment of intuitionistic logic: in fact, if one removes all
+% information concerning terms in these rules, he obtains exactly the
+% rules of minimal intuitionistic logic:
+% \begin{mathpar}
+%   \infer[Init]{A\in\Gamma}{\Gamma\vdash A} \and
+%   \infer[Intro]{\Gamma,A\vdash B}{\Gamma\vdash A\Rightarrow B} \and
+%   \infer[Elim]{\Gamma\vdash A\Rightarrow B \and \Gamma\vdash A}{\Gamma\vdash B} \and
+% \end{mathpar}
+
+% This remark, yet so simple, circulated on an unpublished note that was
+% published only twenty years after by \cite{howard1980formulae}, and
+% was called the \emph{proposition-as-types} paradigm. It is easily
+% expanded to full first-order intuitionistic propositional logic by
+% adding new connectives in the types and new constructions in the term:
+% pairs and conjunctions, pattern-matching and disjunction, empty type
+% and $\bot$, unit type and $\top$\ldots\ and allows then to build a
+% very precise correspondence between notions of proof-theory and their
+% now-equivalent in computation theory and programming language
+% theory:
+% \\
+
+% \begin{center}
+%   \begin{tabular}{|l|l|}
+%     \hline 
+%     \bf proof-theory & \bf computation \\ \hline
+%     proposition & type \\ \hline
+%     proof & program \\ \hline
+%     deduction rules & typing rules \\ \hline
+%     cut-elimination & evaluation \\ \hline
+%     cut-free proof & value \\ \hline
+%   \end{tabular}
+% \end{center}
+% \vspace{1em}
+% However, the problem of extending this correspondence to full
+% first-order logic, and besides to higher-order logic stayed
+% entire. One of the (many) answer to this problem appeared at the end
+% of the seventies under the name of \emph{Intuitionistic Type Theory}.
+
+% \subsection{Type theory as a foundational language}
+
+% Among the formalisms proposed to extend the Curry-Howard
+% correspondence, two of them were particularly successful. One is the
+% system F, discovered independently by \cite{girard1972interpr} and
+% \cite{reynolds1983types}. It is a functional programming language with
+% polymorphism that can be viewed logically through the Curry-Howard
+% correspondence as the minimal second-order fragment of intuitionistic
+% logic. The second, which will be our interest in this section is
+% Martin-L\"of's Intuitionistic Type Theory
+% (\cite{martin1984intuitionistic}). It differs from the previous
+% formalisms in an important way, as it is \emph{dependent}, that is, it
+% makes no distinction anymore between types and terms and allows
+% computation to be performed not only on terms but also on types.
+
+% We will expose this formalism and try to hint its correspondence to
+% the intuitionistic program of Brouwer, but before that we will have to
+% expose one of its major underlying philosophical idea, taking its
+% ground directly in the notion of judgement of Kant's. We will then see
+% that it allows a very general presentation, unifying most of the
+% variants proposed, including system F: pure type systems.
+
+% \subsubsection{The judgemental method}
+% \label{sec:jmeth}
+
+% To justify the notion of dependency as introduced in his type theory,
+% Martin-L\"of proposes a new method for constructing a logic, that we
+% will call the \emph{judgemental method} following Pfenning. It is a
+% shift of focus from the notion of formula to the one of judgement,
+% allowing a new flexibility in the definition and justification of the
+% meaning of the rules. This method is exposed in the course notes
+% \cite{martin1996meanings}.
+
+% What is the object of a rule of inference? What are $A$ and $A\vee B$
+% when I write the rule: $$\infer{A}{A\vee B}$$ The traditional answer
+% to that question is that they are \emph{formulas}, or
+% \emph{propositions}. They constitute in the traditional course on
+% logic, e.g. when natural deduction is explained, the central notion,
+% the one on which all other are depending on: inference, axioms,
+% models\ldots\ A formula is an inductively defined expression,
+% that is fixed before starting to define the rules of inference, and is
+% generally represented as a BNF grammar:
+% $$ A,B\ ::=\ P(t_1,\ldots,t_n)\ |\ A\wedge B\ |\ A\vee B\ |\ \forall x, A\ |\
+% \exists x, A\ |\ \top\ |\ \bot$$ \emph{Expressions} on the contrary
+% form so to say an open concept: they are tree-like objects that one
+% can represent, \emph{``can recognize in its many occurrences and can
+%   reproduce in many copies''} (\cite{martin1996meanings}). From this
+% traditional view, we can draw an implicit order of precedence of
+% concepts:
+% \begin{quotation}
+%   expression $<$ formula $<$ logical rule
+% \end{quotation}
+
+% This vision has a severe conceptual flaw however. When I define
+% natural deduction, the \emph{signature}, i.e. the set of predicates,
+% function symbols and axioms, are to be defined before the formulas
+% since formulas depend on them, and \emph{a fortiori} before logical
+% rules. Then, if I define the reasoning on arithmetics (natural
+% deduction on Peano's arithmetic), and then set theory (natural
+% deduction on ZF axioms), I define to totally disjoints theories that
+% don't even share their logical connectives: we will have
+% $\vee_{\text{Peano}}$ and $\vee_{\rm ZF}$ etc. And yet, these
+% connectives behave exactly the same way on the formulas: they are so
+% to say two unnecessarily specific versions of the same logical
+% concept.
+
+% This remark suggests a more liberal, a looser handling of the notion
+% of formula. In the above conception, an important point is missing:
+% when a rule is stated, it is implicitly stated that if the premises
+% are true, then the conclusion must be true as well. If we make this
+% character explicit, the rule above must be read as:
+% \[ \infer{A\vee B\text{ is true}}{A\text{ is true}}\] The previously
+% implicit modality applied to the formulas -- the fact that they are
+% true, make up what we will call a \emph{judgement}. As it was done by
+% Bolzano and Frege, we can even declare different forms of judgement,
+% like the fact that a statement is true or false, the fact that an
+% expression is a natural number\ldots\ provided that we provide a way
+% to verify these forms of judgments: provided that we know what counts
+% as a proof of these judgements. Introducing this intermediate concept
+% of judgment allows us to liberate ourself completely from the too
+% restrictive notion of formula. Let's even replace it completely with
+% the open notion of expression, and constrain \emph{by the rules} their
+% character of formula or proposition. We introduce two different forms
+% of judgements:
+% \begin{itemize}
+% \item $A$ is a proposition ($A\text{ prop}$)
+% \item $A$ is true ($A\text{ true}$)
+% \end{itemize}
+% The previous rule becomes:
+% \[ \infer{A\text{ prop}\and B\text{ prop}\and A\text{ true}}{A\vee
+%   B\text{ true}}\]
+% So to say, the charge of work let previously to the definition of
+% formula -- discriminate against well- or ill-formed propositions -- is
+% deferred on the inference rules, and a derivation in the obtained
+% system not only constitutes the establishment of the truthfulness of
+% a formula, but also of this well-forming. For each symbol, we now have
+% to give the adequate rules:
+% \begin{mathpar}
+%   \infer{A\text{ prop}\and B\text{ prop}}{A\vee B\text{ prop}} \and
+%   \infer{A\text{ prop}}{¬A\text{ prop}} \and \ldots
+% \end{mathpar}
+
+% The syntax of formulas, deferred this way to the logical rules, allows
+% a tight control of the system, because judgement types can be mixed
+% together. This remark, as innocent as it seems, is in fact a central
+% point of the theory of types as we will see.
+
+% \subsubsection{Martin-L\"of type theory}
+
+% The original presentation of Martin-L\"of's type theory
+% (\cite{martin1984intuitionistic}) is an extensible theory composed of
+% a core \emph{calculus of judgements}, on top of which one declares the
+% logical connectives and their rules.
+
+% It relies on two primitive notions: the first is called indifferently
+% \emph{set} or \emph{type} and corresponds intuitively to the --
+% intuitionistic -- idea that a type is nothing but the set of its
+% values. Beware though: ``set'' is not to be understood in the broad
+% sense of set theory only as ``what we can define inductively''. We
+% will write following the original presentation $\in$ the membership of
+% such a set. The second notion is the one of \emph{judgmental
+%   equality}. It is a form of judgement that defines the set of purely
+% computation substitution operations allowed on respectively the sets
+% and their inhabitants. Think for the moment of this equality as a
+% quotient on the other forms of judgment.
+
+% \paragraph{Forms of judgment}
+
+% \newcommand\set{\text{ set}}
+
+% We introduce the following forms of judgment:
+% \begin{enumerate}
+% \item $A$ is a set ($A\set$)
+% \item $A$ and $B$ are equal judgments ($A=B$)
+% \item $a$ is an element of $A$ ($a\in A$)
+% \item $a$ and $b$ are two equal elements of $A$ ($a=b\in A$)
+% \end{enumerate}
+
+% They come with constraints on the rules they will apply to: if we want
+% to define a particular set $S$, $S\set$ can be introduced as a rule
+% only if we introduce at the same time all rules that describe all
+% elements of this set, and how to compare two elements of this set. For
+% example, this is a valid introduction of a set:
+% \begin{mathpar}
+%   \infer{ }{\textsf{0}\in\mathbb N} \and
+%   \infer{n\in\mathbb N}{\textsf{S}\ n\in\mathbb N} \and
+%   \infer{ }{\textsf{0}=\textsf{0}\in \mathbb N} \and
+%   \infer{n=m\in\mathbb N}{\textsf{S}\ n = \textsf{S}\ m \in\mathbb N}
+% \end{mathpar}
+
+% All of these judgements form in fact families of judgement by what is
+% introduced under the name of \emph{hypothetical judgement}. An
+% hypothetical judgement is a family of judgements indexed by another
+% judgement, and will be written $$ (J_1)\ldots(J_n)\ J $$ 
+
+% Hypothetical judgements are judgements of their conclusion $J$ whose
+% proof can be made complete by the substitution of their ``holes'' by
+% judgements of their hypothesis $J_1\ldots J_n$. An important novelty
+% is that it is an inductive construct: an hypothesis $J_i$ is also
+% supposed to be an hypothetical judgement, parameterized by all $J_j$
+% with $j<i$, and this is reflected even in its statement. This
+% mechanism allows a very natural expression of mathematical statements.
+% \begin{example} The mathematical(ly void) statement:
+%   \begin{quote}
+%     Let $R$ be a relation on a set $A$, and $R*$ its reflexive
+%     closure. Then for all $x\in A$, $R*(x,x)$.
+%   \end{quote}
+%   is translated into the hypothetical judgement:
+%   \begin{quote}
+%     ($A$ is a set) \\
+%     ($R$ is a relation on $A$) \\
+%     ($R*$ the reflexive closure of $R$) \\
+%     ($x$ an element of $A$) \\
+%     $R*(x,x)$
+%   \end{quote}
+  
+% \end{example}
+
+
+% \paragraph{Interpretation}
+
+% You won't be surprised to learn that each of these forms of judgement
+% accept several reading, as based on the BHK interpretation:
+
+% \begin{center}
+%   \begin{tabular}{l|l}
+%     $\bf A\ \rm\bf set$ & $\bf a\in A$ \\ \hline
+%     $A$ is a set & $a$ is an element of $A$ 
+%     \emph{or} $A$ is non-empty \\\hline
+%     $A$ is a proposition & $a$ is a proof of $A$ 
+%     \emph{or} $A$ is true \\ \hline
+%     $A$ is a problem & $a$ is a method to solve $A$
+%     \emph{or} $A$ is solvable \\ \hline
+%     $A$ is a specification & $a$ is a program realizing $A$
+%     \emph{or} $A$ is inhabited
+%   \end{tabular}
+% \end{center}
+
+% In other words, $A\set$ can be viewed (interpreted) as the judgment
+% $A\text{ prop}$ introduced in \ref{sec:jmeth}. The same way, by
+% ``degrading'' the judgement $a\in A$ and forgetting the $a$, it is
+% read as $A\text{ true}$. These remarks have for Martin-L\"of only an
+% indicative value though: they only allow us to give intuitions on
+% their meaning, and do not constitute an formal interpretation: they
+% will allow, once the logic fully defined, to verify that the logical
+% constants introduced have the meaning we intended to give them.
+
+% \paragraph{Typing rules}
+
+% We can now begin to construct the system of rules for the core
+% theory. All rules can be justified by the underlying construction, but
+% we detail only some of them.
+% \\[-.5em]
+
+% \underline{\bf Equality rules}
+% \begin{mathpar}
+%   \infer[Refl/EqS]{A\set}{A=A} \and
+%   \infer[Refl/EqE]{a\in A}{a=a\in A} \\
+%   \infer[Sym/EqS]{A=B}{B=A} \and
+%   \infer[Sym/EqE]{a=b\in A}{b=a\in A} \\
+%   \infer[Trans/EqS]{A=B \\ B=C}{A=C} \and
+%   \infer[Trans/EqE]{a=b\in A \\ b=c\in A}{a=c\in A} \and
+% \end{mathpar}
+
+% These rules reflect the fact that the equality is an equivalence
+% relation, on elements and on sets. They are justified by the fact that
+% they define a congruence on elements and sets. Remark the use of other
+% kind of judgments as premises of the reflexivity rules. They ensure
+% that equality is always done in a ``typed setting'': one cannot prove
+% $2=2$, but only $2=2\in\mathbb N$.
+% \\[-.5em]
+
+% \label{sec:mltt}
+% \underline{\bf Set conversion}
+% \begin{mathpar}
+%   \infer[Conv/E]{a\in A \\ A=B}{a\in B} \and
+%   \infer[Conv/EqE]{a=b\in A\\ A=B}{a=b\in B}
+% \end{mathpar}
+
+% These rules state that equal elements of different sets can be
+% assimilated provided that the sets are equal. They will be of crucial
+% importance and are the key to the comprehension of type theory and its
+% sequel, because they break the usual discrepancy made between types as
+% static values and terms as dynamic entities that can be evaluated: in
+% type theory, sets are also subject to computation. For example, the
+% set of vectors of length $x+y$ is the same as the set of vectors of
+% length $y+x$ up to conversion.
+% \\
+
+% \newcommand{\hypo}[2]{(#1)\ #2}
+
+% \underline{\bf Substitution}
+% \begin{mathpar}
+%   \infer[Subst/E/S]{a\in A \\ \hypo{x\in A}{B\set}}{B\subst{x}{a}\set} \and
+%   \infer[Subst/E/EqS]{a\in A \\ \hypo{x\in
+%       A}{B=D}}{B\subst{x}{a}=D\subst{x}{a}} \and
+%   \infer[Subst/E/E]{a\in A \\ \hypo{x\in A}{b\in B}}{b\subst{x}{a}\in
+%     B\subst{x}{a}} \and
+%   \infer[Subst/E/EqE]{a\in A \\ \hypo{x\in A}{b=d\in
+%       B}}{b\subst{x}{a}=d\subst{x}{a}\in B\subst{x}{a}} \and
+%   \infer[Subst/EqE/S]{a=c\in A \\ \hypo{x\in
+%       A}{}B\set}{B\subst{x}{a}=B\subst{x}{c}} \and
+% \end{mathpar}
+
+% Substitution is the basic operation on hypothetical judgements. They
+% state that an hypothetical judgement can be completed by the knowledge
+% of its hypothesis; there are theoretically one rule by pair of
+% judgement, but we keep only the useful ones here. Here we have the
+% witness of the \emph{operationality} of this language: this mechanism
+% of completion of partial knowledge forms already an algorithm for the
+% reduction of a proof, or the execution of the solution to a problem in
+% Martin-L\"of's words. This basic system, forms the core of
+% Martin-L\"of's type theory, in which one can define the usual logical
+% as well as general connectives such as the dependent products and
+% sum. 
+
+% This language, by its operationality and its ability to represent
+% logical concepts in an intuitionistic way, is the basis of many modern
+% proof assistants. In fact, Martin-L\"of goes further and declares:
+
+% \begin{quote} \textit{ ``If programming is understood not as the
+%     writing of instructions for this or that computing machine but as
+%     the design of methods of computation that it is the computer's
+%     duty to execute (a difference that Dijkstra has referred to as the
+%     difference between computer science and computing science), then
+%     it no longer seems possible to distinguish the discipline of
+%     programming from constructive mathematics. This explains why the
+%     intuitionistic theory of types [\ldots], which was originally
+%     developed as a symbolism for the precise codification of
+%     constructive mathematics, may equally well be viewed as a
+%     programming language.''} --- \cite{martin1984constructive}
+% \end{quote}
+
+% \subsection{Architecture of a proof assistant}
+\subsection*{Architecture of a proof assistant}
+
+Both our proof assistants of interest, \textsf{Coq} and
+\textsf{Matita} are based on the \emph{Calculus of Inductive
+  Constructions (CIC)} of \cite{paulin1996definitions}. It is a very
+expressive logic, built on a variant of Martin-L\"of's type theory
+with polymorphism \`a la System F and a hierarchy of predicative
+universes. It supports, as in Martin-L\"of presentation of his type
+theory, the inductive definitions of objects, and supports the
+proofs-as-types paradigm. Among other features, it provides recursive
+function definitions and an impredicative universe for dealing with
+logical propositions.
+
+Numerous systems based on a variant of this framework have been
+implemented: \textsf{Agda}, \textsf{NuPRL}, \textsf{Epigram} and much
+more. As time went by, the architecture of these tools has become
+better and better understood. One particularly important criterion in
+their conception is the so-called \emph{De Bruijn criterion}. They all
+share a common layered software architecture, as sketched for
+\textsf{Matita} in \cite{asperti2007crafting} for example, and are
+often qualified of ``skeptical proof assistants''. We give a brief
+overview of each layer from the innermost to the outermost one, as it
+is implemented in \textsf{Matita} (this may vary for other systems):
+
+\begin{description}
+\item[Kernel] Their principle is to isolate a little portion of
+  human-understandable code, the \emph{kernel}, only dedicated to the
+  task of proof-checking, i.e. the verification of the well-typing.
+  This component is responsible for the validation of all generated
+  proofs, and is this way the only piece of code that must be trusted
+  in order to trust the whole system.
+
+\item[Refiner] Writing directly proofs in the language of the CIC is
+  an almost impossible operation: not only would it be very hard to
+  follow, but also very boring, because the language is very
+  redundant. On top of the kernel, the \emph{refiner} is in charge of
+  completing all logical information omitted by the user, with the
+  help of dedicated mechanisms: \emph{type inference} allows you to
+  omit some type constraints if they can be inferred by the system
+  from the context. \emph{Coercions} simulate a common practice in the
+  mathematical discourse, i.e. the use of a super-structure in place
+  of one of its components (example, a group instead of its carrier
+  set). The more recent \emph{canonical structures} and \emph{type
+    classes} allow to avoid mentioning the context by choosing, on one
+  side a canonical representative of the context (a particular
+  mathematical structure) or relying on inheritance between
+  structures.
+
+\item[Library management] All proofs and definitions in these proof
+  assistants are devised thanks to a mechanism of definitional
+  equality (in the sense of definition expansion). All the definitions
+  are stored in a library, with the ability to import and reuse
+  previous development. This layer is in charge of the management of
+  such a library: loading, saving, managing namespaces as well as
+  modifying previous definitions.
+
+\item[Proof management] Some of the systems mentioned allow the
+  stepwise construction of proofs thanks to a library of tactics,
+  which are tools to build proofs incrementally by refining the
+  previous state of the proof. This layer manages the call to tactics
+  in this process, and the verification of their result by the refiner
+  (which in turns calls the kernel).
+
+\item[Tactics] This layer makes up the set of specific tactics of
+  proof refinement. It is usually built in a hierarchical manner, some
+  tactics calling some others for specific subtasks.
+
+\item[Disambiguation] Very often in the context of informal
+  mathematical vernacular, ambiguity of the notations used happens.
+  This layer is responsible for mapping potentially ambiguous
+  notations and names to their logical, non-ambiguous counterpart by
+  inferring it from the context.
+
+\item[User interface] Then, some logic-independent layers are in
+  charge of the parsing of formulas, their display, and graphical user
+  interface management etc. The traditional model of GUI for a big
+  family of these tools (implemented in the emacs editor as
+  \textsf{ProofGeneral}) is a text editor with three panes: one
+  displaying the actual script, the second the state of the current
+  proof, and the last the possible messages to the user. One compiles
+  a part of the script by moving a cursor forward and backward.
+\end{description}
+
+\newpage
+
+\section{Automation in proof assistants}
+\label{sec:auto}
+
+The kernel of interactive theorem provers based on type theory, namely
+the logic they implement and their typing algorithm, is now a
+well-understood part of such systems. But the very fine granularity of
+the proofs one can write directly for the kernel to check makes this
+act almost impossible for any relatively involved proofs. This led to
+the direction of improving the capacity of these systems to receive
+partial proofs, possibly with omitted parts or information, and infer
+them back fully, to the point where the kernel can check them. Many
+different mechanisms fulfill this task on different levels:
+\emph{coercions} permit to assimilate notions corresponding to
+different underlying objects, \emph{implicit arguments} allow to omit
+redundant arguments of functions and theorems, the recent \emph{type
+  classes} are an incarnation of the ad-hoc polymorphism present in
+some programming languages. To a certain extent, most of the tactics
+of \textsf{Matita} or \textsf{Coq} belong to this category as well:
+their application triggers the construction of complex proof objects.
+
+In this section, we will focus on one of the most involved of such
+mechanism, commonly called \emph{automation} tactics or mechanism. As
+opposed to the others, the goal of these is to provide a high-level
+method for (more-or-less blindly) searching a proof of a given
+statement. The utility of these helpers are needless to be proved
+anymore, but we want to advocate here a particular use of them. Two
+problems arise from the current, low-level view on formalization.
+First, devising proofs directly in type theory or with the help of
+low-level tactics is a tedious exercise and reading an already proof
+is often difficult. Secondly, the different variations and
+peculiarities of each proof assistants make their proofs not
+interoperable, resulting in isolated, balkanized formalizations and
+duplicated efforts. The development of the automation techniques of
+all kind are a direction towards the compensation of both these
+problems: they allow to alleviate the proof burden and are a required
+step towards the design of very light proof languages that can be
+embedded in different foundational dialects and proof assistants, and
+is therefore necessary for the design of large, formalized mathematics
+repositories.
+
+\subsection{State of the art}
+
+We begin by reviewing some of the common techniques of automated
+theorem proving, and discuss their adaptation and limitations in the
+setting of type theory, along with implemented generic methods of
+proof search in proof assistants.
+
+\subsubsection{First-order theorem proving}
+
+\paragraph{Automated theorem proving}
+
+Automated theorem proving, or automated deduction, is the field
+dedicated to the search of proofs of mathematical theorems by computer
+software. Theorem provers are tools taking a mathematical statement as
+input, and outputting a proof of it (or just succeed) or fail or loop
+forever if the statement isn't provable. Most general purpose theorem
+provers rely on classical first-order logic (FOL).  These include for
+example \textsf{Vampire}, \textsf{Ergo}, \textsf{Waldmeister},
+\textsf{Mace4/Prover9}, \textsf{SPASS} or more recently
+\textsf{Imogen}. In this part we will review some of the popular
+techniques and framework for classical and intuitionistic first-order
+theorem proving and discuss their potential use in type theory.
+
+\emph{Resolution} of \cite{robinson1965machine} is the one, if not the
+most popular complete method for semi-deciding the refutation proof
+problem: given a statement, we can apply this method; if the statement
+is unsatisfiable in FOL, the method will eventually terminate with a
+refutation of it. The design and implementation of such a method is
+discussed at length in \cite{riazanov2002design}.  Many recent provers
+rely on resolution, which has proved empirically to be the most
+efficient. Since Robinson's discovery, many complete refinements have
+been proposed since its introduction: ordered resolution,
+selection etc. (see \cite{bachmair2001resolution} for an overview).
+It consists of two phases: the transformation of the problem into
+clausal form, and the resolution itself, which is the iterated
+application of a (single, complete) rule mimicking the \emph{cut} rule
+of natural deduction.
+
+Equality is an ubiquitous notion in mathematics. Yet, FOL doesn't
+include any special treatment for this symbol, which makes it very
+inefficient to use in practice. A better way to treat the equality is
+by means of rewriting. It is the goal of \emph{paramodulation}
+(\cite{wos1968paramodulation}), \emph{superposition} and their
+derivatives (see \cite{nieuwenhuis2001paramodulation} for a complete
+survey).  They all are dedicated inference rules for treating equality
+externally to the logic, as a mean to replace equals by equals in
+formulas. For this purpose, \emph{completion}
+(\cite{bachmair2001resolution})is a useful tool to orient equations
+and avoid uncontrolled rewriting as much as possible.
+
+Besides these popular techniques, the \emph{tableaux} method and their
+variants (see \cite{hahnle2001tableaux}) is a proof search method for
+first-order sequent calculus. It has been implemented in various
+theorem provers, e.g. 3TAP (\cite{beckert1996tableau}) and the one
+from \cite{paulson99}. FOL extended with inductive definitions has
+been also the object of studies in ATP systems, resulting in methods
+like \emph{rippling} (\cite{bundy1993rippling},
+\cite{bundy2001automation}), or \emph{inductionless induction}
+(\cite{comon2001inductionless}). The first is a method to cope with
+the proofs of inductive cases by syntactic methods, the second is an
+efficient embedding of induction into a extension of FOL.
+Intuitionistic theorem proving is still an active field of research, a
+recent success being \textsf{Imogen} from
+\cite{mclaughlin2009efficient}, relying on the focusing discipline
+(\cite{andreoli1992logic}).
+
+\subsubsection{Proof search in ITP systems}
+
+In order to give more inference power to existing proof assistants,
+recent efforts have been put on adapting the efficient proof-search
+methods designed by the automated deduction community to proof
+assistants, by adapting them in order to generate proofs and translate
+them to the tool's format, for it to recheck them afterward. We will
+first do a quick review of the efforts in this domain.
+
+\paragraph{Embedding first-order calculi}
+
+First-order theorem automated theorem provers and the paradigms they
+rely on are rich and very efficient. It would seem quite natural to
+make use of these advanced tools for interactive theorem proving. One
+can achieve this in two ways, either by interfacing an existing tool
+through e.g. a dedicated tactic, or by designing a purpose-built
+theorem prover that fits the particular needs of the interactive
+system. \textsf{PVS} has a rich collection of decision procedures and
+generic proof search tools. \textsf{HOL} was interfaced with various
+first-order theorem provers such as resolution-based \textsf{Gandalf}
+(\cite{hurd1999integrating}) and \textsf{Metis}
+(\cite{hurd2003first}). \textsf{Isabelle} was first interfaced with
+its dedicated prover based on the tableaux method by \cite{paulson99}
+and more recently with \textsf{Vampire} (\cite{meng2006automation}). A
+generic communication protocol between \textsf{Coq} and external
+provers is being developed (the tactic \textsf{extern}). Since
+recently, \textsf{Matita} uses its own paramodulation-based tool
+(\cite{asperti2010paramodulation}).
+
+\paragraph{Generic proof search in type theory}
+
+Besides the embedding of first-order automation techniques, proof
+assistants generally come with some generic proof search facilities,
+devised this time entirely in the type theory. These tactics, known as
+\textsf{auto} in \textsf{Coq} and \textsf{//} in \textsf{Matita}, have
+at their core a mechanism analogous to the resolution process
+introduced earlier. There are important differences with the
+integration of external tools as introduced above: their integration
+directly into the type theory allows them to exploit its full
+higher-order nature, along with their implementation details like
+definitions unfolding or inference mechanisms.
+
+\subsection{Issues in ITP automation}
+
+\subsubsection{Embedding first-order calculi}
+
+The deep conceptual differences between both approaches (interactive
+and automated theorem proving, higher-order vs. first-order) raises
+questions that still need generic answers. We plan on developing the
+line of work initiated by \cite{asperti2010paramodulation} in
+\textsf{Matita}.
+
+\paragraph{Proof translation}
+
+Some of the interfaces from interactive systems to automatic ones
+share the same architecture, at least in systems based on type theory.
+We will expose here the approach taken in
+\cite{asperti2010paramodulation} With the exception of \textsf{PVS}
+which doesn't require a proof and trusts its decision procedures, they
+all need to get back a \emph{trace} from the external tool to
+reconstruct a proof in their own language. The architecture is then
+composed of:
+\begin{enumerate}
+\item A forgetful translation from the type theory to the
+  (first-order) language of the tool. It takes the current goal along
+  with a set of hypothesis to a (axioms, problem) pair. This pair is
+  run by the external tool and possibly returns a trace of the proof;
+\item An interpretation function, which interprets the trace into a
+  (possibly incomplete) proof object in the type theory;
+\item A retyping mechanism, which infers the missing part of the
+  returned proof object and checks it in the type theory.
+\end{enumerate}
+
+From this methodology, we see that the integration of external tools
+relying on weaker or at least different logics is necessarily an
+incomplete method based on heuristics, and it is often difficult to
+predict their behavior.
+
+The forgetful translation is not only the operation of removing all
+type information from a statement to get a first-order term: type
+theory possibly performs computations in statements, has defined
+objects that can be unfolded. For example, how do we translate the
+higher-order goal $\forall n\ m\ p, (n+1) * m \leq (n+1) * p \to m <
+p$? Possibilities are numerous: $S\ n * m \leq S\ n * p \vdash S\
+m\leq p$ or $m + n * m \leq p + n * p \to m+1 \leq p$ or any
+intermediate steps of unfolding the constants $+$, $*$ or $<$ and
+reducing their content. Depending on the set of axioms provided to the
+external tool, some will be provable, some not.
+
+The interpretation of trace object is also a delicate operation,
+heavily depending on the calculus used by the external tool. Traces
+are representations of the success of the proof process: they could be
+the list of rewriting steps from the axioms to the problem statement
+for paramodulation, or the list of clauses and literals used by the
+resolution. The interpretation of a paramodulation step is pretty easy
+since its logical meaning (rewriting) is admissible in type theory (by
+means of the induction scheme of equality). It becomes quite involved
+when considering a \emph{blind} method like resolution: the initial
+preprocessing transforming the problem into a set of clause, which is
+not admissible in intuitionistic logic, has to be traced carefully and
+checked for validity. The same goes for another blind method, SMT
+solving.
+
+Finally the last part of the process -- retyping the result of the
+interpretation -- is not guaranteed to be feasible since the type
+information was lost in the first place. Sometimes the external prover
+would success and return a valid trace of the first-order translated
+goal, which has no meaning in the type theory and couldn't be
+retyped. The inference of the missing type information can also be
+quite involved and may itself rely on proof search (see
+\cite{asperti2010paramodulation} for details).
+
+\paragraph{Automated vs. interactive paradigms}
+
+But the conceptual differences between automated and interactive
+theorem proving go beyond the only untyped vs. typed or first-order
+vs. higher-order problems. 
+
+One lies in the very purpose of automation in these two paradigms: ATP
+systems are usually provided with a small set of axioms for a given
+theory, often minimal, and deduce new facts from these onwards, until
+the goal is reached. Thus, they generate \emph{cut-free} proofs, in
+the sense that they don't infer useful intermediate lemmas that would
+need to be proved afterward. On the other hand, automation in ITP
+system usually relies on a huge set of objects, both axioms defined by
+the user, logical rules in the form of constructors and destructors
+for logical connectives, and intermediate proved lemmas, and this set
+grows each time a new object is introduced. 
+
+From this emerges two difficulties of integrating ITP techniques into
+ATP. The first is that provers are not necessarily optimized for
+treating big sets of initial axioms, nor for dynamically extending
+those sets as is required for an efficient integration. The
+pre-treatment of generating and translating these sets might be
+prohibitive if not correctly designed in the ITP software from the
+beginning. The second and most important difficulty is the one of
+choosing among those sets the needed objects. Usually, the whole
+library of proof assistants contain very redundant objects: proofs
+trivially subsuming other proofs (e.g. by computation, or by
+superposition of two results), different proofs of the same statement,
+different implementations of the same logical connective\ldots\ To be
+treated efficiently and avoiding duplicated work, one would have to
+choose in the whole set of objects of the library the relevant subset
+for the given problem, minimal but with enough information for the
+proof to succeed. This issue has not been throughly tackled and would
+need a careful study.
+
+
+\subsubsection{Generic proof search in type theory}
+\label{sec:psitp}
+
+The tactics and methods of proof search as implemented in \textsf{Coq}
+and \textsf{Matita} can fulfill different purposes and usages, that we
+can classify according to two criteria. First, we discriminate on the
+\emph{purpose} intended by the user: it might be used to automatically
+fill in some of the small ``trivial'' gaps leaved by the user in a
+proof (what we call small-scale automation), for example leaving to
+the machine the inference of one trivial case among others; it might
+also be intended as a help to devise the proof when the user totally
+lacks intuition of it (large-scale automation). This second purpose is
+obviously more difficult to achieve, and it is probably unrealistic
+considering the results obtained in the dedicated field of automated
+theorem proving. Secondly, we separate two different \emph{modus
+  operandi} of the automation mechanism: some of them allow to
+automatically finish a proof and fill in the proof tree until its
+leaves, may it be a trivial step of reasoning (small-scale) or a more
+involved one requiring to explore deeply the search space
+(large-scale). These take the form of classic tactics like
+\textsf{auto} or \textsf{//}. Some of them on the other hand are
+\emph{interleaved} in the proof process and allow to incarnate a
+certain \emph{quotient} on applicable proof steps or statements. This
+is the case of \textsf{Coq}'s type classes, or the recent \emph{smart
+  apply} tactic of \textsf{Matita}.
+
+\paragraph{Intuitionistic resolution}
+
+As explained earlier, the resolution mechanism as usually presented is
+classical by nature. However, it is well known that this appears as
+nothing more than a notational facility, and its core reasoning scheme
+is in fact intuitionistic. It proceeds simply by maintaining a list of
+hypothesis and lemmas along with the goal; at each step, it applies in
+turn all hypothesis and lemmas whose head unifies with the current
+goal:
+\begin{mathpar}
+  \infer[Intro]{\Gamma,x:A\vdash B}{\Gamma\vdash \Pi x:A. B} \and
+  \infer[Apply]{\Gamma\vdash A_1\ \ldots\ \Gamma\vdash A_n \and
+    \Gamma\vdash B\equiv C \and f:\Pi (x_1:A_1)\ldots(x_n:A_n). B \in
+    \Gamma}{\Gamma\vdash C}
+\end{mathpar}
+
+This \emph{backward-chaining} method (from the goal to the
+hypothesis), although not complete, helps the completion of easy
+goals. Because of the dependent nature of the statements in the CIC
+however, this process is made more complex by the fact that the
+application of a \textsc{Apply} rule can introduce
+\emph{metavariables} in the goal, that is holes in a term of a known
+type. For example, the application of a transitivity lemma on the
+relation $R$ to a goal of the form $R(a,b)$ produces two goals sharing
+a metavariable: $R(a,\mathsf{X})$ and $R(\mathsf{X},b)$. This
+complicates greatly the control of the proof-search process: one could
+na\"ively think of it as a backtracking process on each \textsc{Apply}
+rules in turn, but this is erroneous: a goal, even closed by the
+application of a 0-ary application (an instance of the \textsc{Init}
+rule of natural deduction), could result in a backtracking if a
+metavariable was instantiated. Imagine in our example that the goal
+$R(a,\mathsf{X})$ is closed by a proof of $R(a,c)$, but that the
+second instantiated branch $R(c,b)$ fails to be closed. One has then
+to backtrack on the first goal rather than on the previous one, to be
+able to find a second, successful instantiation e.g. $R(a,d)$ and
+$R(d,b)$.
+
+Due to some limitation of its implemented tactic language, this
+subtlety is not taken into account in \textsf{Coq}; whereas it is
+solved correctly by \textsf{Matita}. Both implement a depth-first
+algorithm of the search tree.
+
+\paragraph{Choice of hypothesis}
+
+Contexts of proof assistants are not simple objects as are their
+theoretical counterparts above: they are composed of many segments and
+many kind of different objects, like definitions, inductive objects,
+constructors, axioms. One question relative to these sort of
+automation is: should we consider all of them as equally probable
+candidates? Both proof assistants solve the question quite
+differently. They both implement a mechanism of priority among these
+objects, taking some heuristics to determine them like the number of
+goals opened by the application or the number of metavariables
+introduced. Besides that, \textsf{Matita} takes however the approach
+of considering all objects as candidates except the most general ones
+(induction principles for example that can be applied to any goal),
+whereas \textsf{Coq} chose the approach of user-defined \emph{hints}
+databases, associating to each lemma a priority and a strategy such as
+\textsf{Resolve} (general strategy) or \textsf{Immediate} (the goal
+has to be closed in one step after its application). Possible
+directions like the refinement of these heuristics as well as the fine
+control of the strategies are discussed in \ref{sec:strat}.
+
+\paragraph{Definitions and computations} 
+
+Due to its higher-order nature and its definitional mechanism, the
+logics underlying these proof assistants are subject to some notions
+of reduction. Actually, the conversion rule of the CIC ensures that
+the statements of the logic are all quotiented w.r.t computation.
+These computations can be split into two different forms, that serve
+different uses: first, some real computation can occur, as in $P(2+2)
+= P(4)$ or $Q(S\ n * m) = Q(n * m + n)$, and a lemma applicable to one
+of its part should be equally applicable to the other. The second is
+the use of the \emph{definitional mechanism} to abbreviate some
+often-used statement forms: for example, one might want to define
+$\mathrm{transitive}(R)$ to expand to $\forall xyz, R(x,y) \to
+R(y,z)\to R(x,z)$.
+
+This is the responsibility of the \emph{unification} algorithm to
+generally determine when these situation happen, when applying a lemma
+for example. It is a complex part of a proof system, and often
+involves expansive computations. Thus, iterating this process again
+and again when trying to \textsc{Apply} all possible lemmas during
+proof search can lead to substantial delays. To achieve good
+performance, indexing techniques are generally used to rule out as
+fast as possible lemmas that don't need to be treated for a given goal
+because they won't ever unify. However, these data structures are
+purely first-order, and it is non-trivial to use them enough so as to
+improve the efficiency but not to restrict too much the candidates and
+miss some possibly successful ones. These techniques have been
+experimented, and are discussed in more details in
+\ref{sec:implem}. In particular, the adaptation of these
+data structures to take abbreviation-unfolding is a non-trivial, open
+problem.
+
+\subsection{Further directions}
+
+Besides the integration of the first-order prover in \textsf{Matita},
+We would like to improve the existing general-purpose proof search
+techniques available in these proof assistants. The general
+methodology adopted is to design a procedure directly for the Calculus
+of Inductive Constructions, by focusing as much as we can on the
+user's need. A preliminary analysis has been done by identifying clear
+examples of situations where automation is wanted but that the tools
+available (in \textsf{Coq} for the moment) are unable to cope with.
+
+\subsubsection{Sequent calculus proof search}
+
+The calculus of constructions is usually implemented in a natural
+deduction fashion, at least in \textsf{Coq} and \textsf{Matita}: the
+context is used only to retrieve previously defined object, and there
+is no way to modify it after its introduction. This proof style is
+supported by the \textsf{apply} family of tactics that applies a lemma
+or an hypothesis to the goal, progressing in a
+\emph{backward-reasoning} fashion: one progresses from the goal to the
+assumptions. This approach is however not always intuitive, and a
+second kind of reasoning is supported in both tools. The
+\textsf{lapply} family of tactics (or \textsf{apply with}) apply a
+lemma or an hypothesis to another hypothesis in the dual
+\emph{forward-reasoning} fashion. In this case, one progresses by
+transforming the assumptions until they eventually match the goal.
+These two complementary approaches correspond to two presentation of
+the theory of types, respectively the natural deduction and sequent
+calculus style. Pure Type Sequent Calculus (PTSC) was introduced in
+\cite{lengrand2006normalisation}.
+
+\paragraph{Forward-reasoning}
+
+The automation methods described in \ref{sec:psitp} are, to the best
+of our knowledge, relying on a \emph{backward-reasoning} mechanism:
+the system applies iteratively all possible applicable lemma and
+hypothesis. This method has severe disadvantages: consider the sequent
+$A\wedge B\vdash A$. The only way of proving it automatically is to
+introduce a metavariable and apply the projection $proj2 : \forall X
+Y, X\wedge Y \to X$ to produce the sequent $A\wedge B\vdash A\wedge
+\mathsf{Y}$ and to conclude by instantiating \textsf{Y} to
+$B$. However, allowing the application of these projections, and most
+lemmas that produce metavariables leads to an enormous search space
+since they can be applied to any goals. They should be avoided as much
+as possible, preferring simpler proofs: here an obvious solution is to
+apply the rule of sequent calculus:
+$$ \infer{\Gamma, A, B\vdash C}{\Gamma, A\wedge B\vdash C} $$
+to obtain the sequent $A,B\vdash A$ and conclude immediately.
+
+In the CIC, the conjunction is a defined object. In fact, $\wedge$ is
+an inductively defined non-recursive predicate with one constructor
+and two independent hypothesis: $A\wedge B := conj : A \to B \to
+A\wedge B$. By $\alpha$-conversion, the above rule of the sequent
+calculus is valid if we replace $\wedge$ by any connective of the same
+shape. It is also valid for connectives of the same ``kind'': if we call
+conjunctions all inductive definitions having an unique constructor,
+we can devise rules of forward-reasoning for all of them.
+\begin{example} All of $\exists$, $\wedge$ and record types are
+  conjunctions. Therefore we can devise the rules:
+  \begin{mathpar}
+    \infer{\Gamma, A, B\vdash C}{\Gamma, A\wedge B\vdash C} \and
+    \infer{\Gamma, x:A, B(x)\vdash C}{\Gamma, \exists x:A. B\vdash C}
+    \and \infer{\Gamma, x_1:A_1, x_n:A_n\vdash C}{\Gamma,
+      \{x_1:A_1;\dots;x_n:A_n\}\vdash C}
+  \end{mathpar}
+\end{example}
+
+\paragraph{The case of disjunction}
+
+Can we treat inductive definitions with several constructors the same
+way? The na\"ive application of the previous idea leads to a very
+redundant proof search. Consider the goal $A\vee B\vdash C$. If we
+apply the rule of left disjunction to it, we are left with two goals
+$A\vdash C$ and $B\vdash C$. If we can prove the sequent $\vdash \pi :
+C$ without using either $A$ or $B$, then the previous application
+doubles the work: we have to copy the proof $\pi$ in both
+sequent. Therefore, the left rules are to be applied more carefully
+for disjunctions.
+
+A second (but wrong) idea is to apply them lazily: we keep them
+intact, until the moment where we meet one of their components in the
+goal. Then we can destruct them and continue with the second branch:
+$$ \infer*{\infer*{\infer*{\infer*{ }{\Gamma, A\vdash A} \and
+      \infer*{\vdots}{\Gamma,B\vdash A}}{\Gamma, A\vee B\vdash
+      A}}{\vdots}}{\Gamma, A\vee B\vdash C}
+$$ Unfortunately this method is not complete, as it may be possible to
+prove $\Gamma, B\vdash C$ but not the degraded judgement $\Gamma,
+B\vdash A$.
+
+We propose the following improvement: each disjunction sees its
+components recorded, and proof search continues leaving the
+disjunction untouched. If an instance of one of the component is met
+later once a proof $\pi$ has been generated, we backtrack to the point
+where the disjunction was introduced, break the disjunction, apply
+$\pi$ on its corresponding component, and we are left with the second
+branch of the disjunction in the hypothesis.
+\begin{mathpar}
+  \infer*{\infer*{\infer*{\vdots}{\Gamma,A\vee B\vdash A}}{\pi\left\{\vdots\right.}}{\Gamma,A\vee B\vdash C}
+  \and \Longrightarrow \and
+  \infer*{\infer*{\infer*{\infer*{ }{\Gamma,A\vdash
+          A}}{\left.\vdots\right\}\pi}}{\Gamma,A\vdash C} \and
+    \infer*{\vdots}{\Gamma,B\vdash C}}{\Gamma,A\vee B\vdash C}
+\end{mathpar}
+
+To sum up, this technique allows to rewrite part of a proof
+\emph{during} proof search to optimize its number of inferences. This
+way, the depth of a proof can be reduced and since most automated
+proof search have their depth bound, we increase the inference power
+of these techniques.
+
+\newcommand{\nat}{\ensuremath{\mathbb N}}
+
+Our goal is to generalize these techniques to all ``kinds'' of
+inductive. The strategy described above could be generalized to
+recursive inductive by taking into account the induction hypothesis,
+then performing induction by itself:
+\begin{mathpar}
+  \infer*{\infer*{\infer*{\vdots}{\Gamma,n:\nat\vdash
+        C(0)}}{\pi\left\{\vdots\right.}}{\Gamma,n:\nat\vdash C(n)}
+  \and \Longrightarrow \and \infer*{\infer*{\infer*{\infer*{
+        }{\Gamma,C(0)\vdash
+          C(0)}}{\left.\vdots\right\}\pi}}{\Gamma\vdash C(0)} \and
+    \infer*{\vdots}{\Gamma,m:\nat,C(m)\vdash
+      C(\textsf{S}(m))}}{\Gamma,n:\nat\vdash C}
+\end{mathpar}
+
+By combining forward- and backward-reasoning step in an efficient way
+and respecting the underlying logic, we believe that we can build an
+automatic proof search method, not only more efficient than the
+currently implemented methods, but also more expressive and able to
+cope with the problem of deferring ``trivial'' proof steps to the
+theorem prover, leaving to the user the load of only sketching the
+proof.
+
+\subsubsection{Strategic proof search}
+\label{sec:strat}
+
+Proof search however is not only about data structures and inference
+rules. It is a dynamic process involving complex backtracking among
+goals, and even more complex in the presence of metavariables. The
+goal of fast automation requires a fine control on backtracking on the
+search tree, as was already hinted in the previous section: attaining
+a given goal made us backtrack to a special position and remember some
+pieces of information (the proof $\pi$) to replay it without possible
+backtracking on the next goal.
+
+\paragraph{Focusing}
+
+We can go further in this idea by putting into practice ideas that
+emerged in the \emph{focusing} discipline of \cite{andreoli1992logic}.
+Focusing was introduced as a winning strategy for proof search in the
+Linear Logic of \cite{girard1995linear}, exploiting the redundancies
+present in na\"ive proof search. These redundancies are actually not
+on space, but on time, i.e. it is not a problem of data structure for
+the proofs (as was solved by \emph{proof nets}), but a problem of
+backtracking in the proof search. Indeed, it was identified that some
+rules of Linear Logic are \emph{invertible}, that is, they can be read
+in both directions, from top to bottom or from bottom to top. Thus the
+application of such a rule does not change the provability of a
+sequent and can be applied \emph{eagerly}. The eager application of a
+rule is its application without the need to backtrack before them:
+these rules just simplify the goal without modifying their
+provability. Examples of invertible rules are the rules on conjunction
+and disjunction, both left and right. This remark led to the
+specification of \emph{polarities} defined on sub-formulas: the
+\emph{negative} parts of a formula comprises all chain of invertible
+connectives, whereas the \emph{positive} parts make up for the
+non-invertible one. A \emph{phase change} occurs during proof search
+when a connective is met that is not of the same polarity as the
+previous one. Focusing is the strategy defined by:
+\begin{itemize}
+\item Applying eagerly all the connectives during the negative phase,
+\item Focusing on an arbitrary hypothesis during the positive phase
+  and apply eagerly all possible rules,
+\item Backtracking occurs only at phase change.
+\end{itemize}
+
+These ideas, although having been defined for linear logic, can apply
+to intuitionistic logic as well, by embedding one logic into another
+by a (non-unique) polarized translation. The automated theorem prover
+\textsf{Imogen} by \cite{mclaughlin2009efficient} is based on these
+ideas, and proved to be a success.
+
+A focusing approach applied to dependent type theory is still to
+devise though, and would constitute a theoretical advance with clear
+applications to automated proof search in type theory.
+
+\paragraph{Backtracking strategies}
+
+More generally, an efficient proof search requires a control of
+backtracking that goes beyond what is currently implemented in
+\textsf{Coq} and \textsf{Matita}: both proof assistants consider the
+all leaf of the search tree as potential backtrack nodes, and don't
+provide a way to specify strategies in a general way. Furthermore, no
+distinction is made in the search between logical objects like the
+defined connectives or the equality, and full lemmas with non-trivial
+proofs. \textsf{Coq}'s $\mathcal L_{tac}$
+(\cite{delahaye2001conception}) is an attempt to provide a
+full-featured programming language for automatic tactic application.
+It provides a recursion operator as well as a matching construct on
+the current goal. However, it fails to define general and extensible
+way of defining general-purpose automation tactics, specifically to
+deal with non-determinism, and is confined to domain-specific
+application, like the propositional fragment of logic
+(\textsf{tauto}), or the decision of some order-related statements
+(\textsf{order}).
+
+We propose, as a first step towards the design of strategies, to have
+a clear developer-side language of specification of these strategies,
+expressive enough to cope with previous ideas: backtracking by keeping
+a (partial) proof, focusing on a particular formula, eagerly advance
+on the application of a particular rule. Also, we would like to
+abstract from the \emph{names} of the inductive objects to select them
+according to their \emph{kind}: (dependent, indexed, recursive)
+disjunctions, conjunctions\ldots\ The design of such a general method
+is of course interleaved with, and will be nurtured by the discovery
+of particular wanted strategies. A good starting point could be the
+backtracking monad of \cite{kiselyov2005backtracking}.
+
+\subsubsection{Implementation issues}
+\label{sec:implem}
+
+When it comes to implementation, all the techniques mentioned above
+require the manipulation of large sets of terms, and a recurring
+problem is to retrieve terms satisfying some structural conditions,
+like unification with a given pattern. One-to-one unification has a
+well-known, simple and efficient algorithm, but it becomes
+under-optimal when applied iteratively on large sets of terms, because
+a lot of sharing is lost. Term indexes are data structure used to
+store these sets, making the retrieval of unifiers to a given pattern
+more efficient.
+
+One data structure used for this purpose has been \emph{discrimination
+  trees} or \emph{nets} (\cite{mccune1992experiments}). It operates on
+the same principle as \emph{tries}, viewing the terms as flattened
+strings and retrieving following a given prefix (the pattern), like a
+dictionary. A critical inefficiency of this structure is due to the
+loss of information resulting from the flattening of
+terms. \emph{Substitution trees} (\cite{graf1995substitution}) are a
+popular alternative. Their main idea is to index the terms according
+to their \emph{mgu}'s, and form a tree of substitutions. All these
+techniques are devised for first-order term algebras. With the
+emergence of automated provers for higher-order logics like
+\textsf{Twelf}, some attention has been drawn on the problem of
+\emph{higher order indexing}, i.e. indexing of $\lambda$-terms modulo
+$\beta$-reduction (\cite{pientka2003higher}).
+
+This problem is in general undecidable, but such a behavior is
+definitely a wanted feature for our use. We will focus at first on a
+subproblem, already interesting and not yet tackled: the goal of
+adapting these structure to be used modulo definitional equality to
+abstract from certain abbreviations used commonly.
+
+Moreover, if we decide to tackle the problem of the implementation of
+sequent calculus proof search in a proof assistant, where the search
+is not only goal-directed anymore but to some extend also directed by
+the hypotheses, we then want to index hypothesis and be able to
+retrieve efficiently a term having e.g. a given form of hypothesis.
+However, due to the set nature of the context, the pair (hypothesis,
+goal) cannot be presented as a term since it is to a certain extend
+possible to permute all hypothesis. We then need to devise an
+efficient data structure of term indexing taking into account to these
+permutations. It seems not trivial to adapt existing term indexing
+methods for this purpose. Moreover, hypothesis in a context are in
+type theory possibly dependent: the instantiation of one hypothesis
+triggers the modification of all subsequent dependent hypothesis. Our
+data structure should be able to instantiate the variables
+accordingly. This is however a known problem, and most of the time a
+simple solution exists: the carry of a closure substitution during the
+instantiation.
+
+\subsubsection{Isomorphisms in the CIC}
+
+The calculus of inductive constructions has the nice property of being
+a very minimal foundational language, in which even very low-level
+mathematical concepts can be defined. For example, the usual logical
+connectors $\vee, \exists, \wedge\ldots$, even the equality are not
+elementary objects but defined ones, thanks to the dependent and
+inductive types features. However, this freedom implies that a given
+usual \emph{concept} can have a lot of different
+\emph{implementations}. Some of them will be convenient or efficient
+for a given task, other for other tasks. 
+
+A simple example is the definition of the logical equivalence in
+\textsf{Coq}'s standard library. It is historically defined as
+$A\Leftrightarrow B := A\to B \land B\to A$, but a recent idea was to
+change it to an inductive definition $A\Leftrightarrow B :=
+\mathsf{build\_iff} : (A\to B)\to(B\to A)\to A\Leftrightarrow
+B$. Although both definitions are strictly equivalent and represent
+the same ``usual'' notion, such a change implied to rewrite almost all
+proofs relying on the first definition and was then aborted.
+
+Another less-trivial example is the representation of (natural)
+numbers. They accept a wealth of different structural definitions ---
+Peano, binary, machine, axiomatic integers\ldots --- each supporting
+its own reasoning style, having different efficiency properties
+etc. but, in the end, representing the same usual notion. When one
+wants to begin a new development using natural numbers, she has to
+choose from the beginning her implementation and stick to it
+throughout the development. A change of representation would require
+to rewrite a large part of the development and is therefore not
+affordable; moreover, accessing the results, or using properties of
+another representation is simply forbidden.
+
+These facts suggest that a certain notion of \emph{isomorphism}, or
+simply of \emph{morphisms} between the \emph{concepts} to be
+formalized and their (possibly numerous) \emph{implementation} would
+be a valuable study for both the modularity of the proofs (more
+results to share among developments) and the abstraction of the proof
+language, which would rely not on the actual implementation details of
+structures but on higher-level concepts. The notion of type
+isomorphisms has been already well-studied in the setting of
+functional programming languages like ML, notably by
+\cite{di1995isomorphisms} and proposals of integration in type theory
+by \cite{barthe2001type} have been made.
+
+There seem to be many different approaches to this problem, some
+already considered, some not. A first approach is the definition of
+axiomatic \emph{interfaces} for data structures or concepts, by means
+of records or module system in the fashion of modular programming,
+like it is done in the formalizations of algebra undertaken in the
+CIC. A natural number is a ``\emph{complete}'' set of its
+``\emph{atomic}'' properties (terms to be defined): successor lemmas,
+recursion\ldots\ Individual representations of natural numbers are
+then implementations of the interface. But what are these properties,
+and how can one be sure that they are ``minimal'' or ``complete''
+wrt. the common concepts, or appropriate for her particular needs?
+Another pragmatic approach is to ``elect'' a canonical representation,
+and to have translation functions/morphisms from each of the other
+representations to it. This way, we lose their interesting structural
+properties (e.g. efficiency), but we inherit from all properties
+proved on them. A more \emph{bottom-up} but automatizable proposition
+is to work directly at the syntactic level and assimilate isomorphic
+terms in the calculus. Contrary to the other suggestions, this is a
+meta-investigation of the isomorphisms in the logical framework that
+could lead to the (partial) automation of reasoning modulo some
+implementational details (like e.g. the \emph{iff} example
+above). Inductive types seem to provide a rich framework for studying
+these isomorphisms, since their purpose is precisely to provide
+one-to-one correspondence between a ``concept'' (the inductive type)
+and its possible alternative ``implementations'' (the
+constructors). For example, we could assimilate function types which
+are equal modulo permutation of arguments, or inductive types sharing
+the same structure, types defined on an inductive type and the
+corresponding substituted inductive type\ldots\ Building up on this
+principle, we can hope to capture a large class of equivalences. A
+third proposition is to rely on existing automation techniques to deal
+with isomorphisms. Most instances of these isomorphisms can be
+expressed as equalities, for example curryfying propositions: $\forall
+A B C, A\to(B\to C) = (A\wedge B)\to C$. By providing a way to apply
+logical rules up-to these equalities, we can somehow abstract from a
+part of the logical specificities. This is the approach taken in the
+new \texttt{sapply} facility of \textsf{Matita} described in
+\cite{asperti2010paramodulation}.
+
+The applications of such a study are numerous: abstract proof and
+logical language mapped ``by construction'' to the foundational
+language, modularity of the developments, increased automation\ldots
+
+% \subsubsection{Proof mining}
+
+% Over the years, large developments of formally verified proofs have
+% been made in various fields of science, from mathematics to hardware
+% verification, with the help of various interactive proof
+% assistants. These large proofs along with many others are stored in
+% repositories and can be rechecked at will. Yet, the information
+% provided by these developments remains largely unexploited. Most proof
+% assistants provide a very minimal set of interaction with previous
+% developments: loading, reusing a result, searching by statement, and
+% usually some statement-based automation like described above. In these
+% interactions, the proofs themselves are totally passive, kept only to
+% testify of the validity of the reasoning. Unlike their equivalents in
+% programming languages---libraries---proof assistants repositories do
+% not only consist of names of objects (functions, classes etc.)  but
+% they also form a very structured and valuable source of information,
+% both on the proof process and on the use one makes of the logical
+% framework.
+
+% By analyzing these large databases of already human-formalized proofs
+% with the help of \emph{empirical methods} (statistics, data-mining,
+% information theory, machine-learning), one could extract some useful
+% information. It is expected to be of interest for a number of
+% tasks. By analyzing them ``by hand'', some common reasoning schemes
+% could be isolated and serve as a basis for improving or designing
+% high-level proof languages and procedures, validating their design
+% \emph{by the usage}.  It could also, as a side-effect, be treated
+% automatically or semi-automatically, to provide a valuable help to the
+% user in a given situation about what has been previously done in
+% similar situations -- taking the form of suggestions or hints, or even
+% to fully automatize some easy parts of proofs in a machine-learning
+% fashion. The analysis of proof patterns could help also to
+% automatically factorize large proofs, to infer useful intermediate
+% lemmas or to compress the representation of a proof. This methodology
+% has already been advocated and experimented in \cite{duncan2004udm}
+% with the help of standard data-mining concepts, and \cite{urban08} in
+% a machine-learning fashion, both leading to some interesting
+% results. Their approaches however, concentrates on some features of
+% the proofs. For example, they analyze the uses of lemmas and axioms in
+% a given proof, preferring in a future situation a more productive
+% lemma over one that hasn't been used at all. Proofs are complex
+% objects, which structure itself is much richer than these features,
+% and it might be even more productive to reflect the structure itself
+% in the analysis.
+
+% Among all information contained in the databases of formal proofs
+% consisting proof assistants' standard libraries, the order of chaining
+% of logical rules in the proofs, i.e. their very \emph{structure}, is
+% already of crucial interest: it could contain enough information to
+% both spot previously unknown practices of mathematicians, and even
+% help the resolution of analogous cases, as an automation procedure. By
+% extracting from these big databases of proof trees the common,
+% recurring or generally interesting chaining of rules, that is some
+% sub-trees of our trees, we can expect to isolate some information
+% about the proof process, even some useful methods for future proofs.
+
+% We propose to data-mine proofs by means of \emph{frequent subtree
+%   mining}. Frequent subtree mining is a relatively new research field,
+% dedicated to the extraction of recurring patterns inside the structure
+% of trees (see an overview in \cite{chi2005frequent}). These methods
+% will have to be adapted for our purpose: proof-terms have a certain
+% structure that follows from the logical framework they were written
+% in, whereas most algorithms in the literature have been devised for
+% general trees. The direct reuse of a known algorithm has been proved
+% in a preliminary investigation to be unadapted: the large majority of
+% results are be non-relevant and the interesting ones drowned in this
+% mass. Also, some of the notions used in the algorithms will have to be
+% redefined: the notion of subtree differs in presence of (proof-)terms,
+% and we will have to refine the definition of frequency to capture what
+% are ``interesting'' patterns. Some preliminary results have been
+% exposed by the author in \cite{puech2009formal}.
+
+\newpage
+
+\section{Semantic patches}
+
+The second, complementary axis of this proposal is the attempt to
+tackle the problem of modularity and evolution in formally checked
+mathematical developments.
+
+Even beside the notion of constructivism and the assimilation of
+proving and programming in type theory, it is interesting to
+investigate the possible relationship between the very
+\emph{methodologies} employed in both fields, mathematics and computer
+science. And by that we even intend the comparison of the \emph{daily
+  workflow} of both scientist: one trying to prove a theorem, the
+other constructing a program to fulfill a task. How does one or the
+other elaborates his object of study? What kind of \emph{a posteriori}
+modification is he prone to doing? What do these modifications imply
+on the validity of the whole edifice? How to relate how both
+scientists collaborate in a team? How do they rely on existing work to
+build up new results?
+
+Recent efforts in the formalization of mathematical results have
+naturally led to these questions and many of them remain largely
+unanswered, but the tendency seems to be to adapt existing methods
+coming from software development, witness for example the recent
+introduction of modules or separate compilation in proof assistants
+like \Coq or \Matita, the use of dependency management tools
+(\textsf{make}) or version control system (\textsf{git}, \textsf{svn})
+to build and manage versions of a project. The use of software
+engineering techniques for the management of a large formalization
+project is even the thesis advocated in the manifesto of the
+Mathematical Components team (\cite{gonthiermanifesto}).
+\\[-0.5em]
+
+We propose to address a small part of these questions, namely the
+enhancement and adaptation of version control systems to the
+management of mathematical repositories, by means of what we
+preliminarily call a \emph{semantic patch system}\footnote{Joint work
+  with \href{http://www.pps.jussieu.fr/~yrg/}{Yann R\'egis-Gianas}}.
+It is a generic system allowing one to express \emph{transformations}
+on formal developments, and check that some semantic properties are
+preserved by the transformations, for example well-typing or
+operational equivalence. Eventually, we hope to be capable of
+expressing complex transformations on formal proofs, check them
+efficiently, and manage distributed repositories of mathematics with
+it, guaranteeing \emph{by typing} the stepwise global consistency of
+the repository.
+
+In the light of the Curry-Howard isomorphism though, we abstract
+totally from whether we are talking about proofs or programs. That is
+why, in the following, we start from today's situation, where existing
+version control system are used both in software and proof
+development, and we will not make any difference between both
+use. Depending on his interest, the reader can thus choose his own
+side of the isomorphism by translating program into proof, type into
+statement\ldots\ or vice versa.
+
+\subsection{Motivations}
+
+The programmer and the mathematician know very well that developing a
+new theory or program is not a linear task: one do not open her text
+editor and write down her ideas in a unique pass. In the case of
+program development, most of the time is actually spent editing
+previously written code, correcting bugs or implementing new features
+which are interleaved with previous ones. This idea is not present at
+all in the text-editor/compiler paradigm, but to reflect it,
+\emph{version control systems} usually rely on a textual
+differentiation mechanism (\emph{diff}s): the comparison between two
+versions of a text file generates a \emph{patch} which indicates which
+lines of text are to be added or deleted to transform one into the
+other.
+
+Developments, may it be proofs or programs, are usually split into
+files, each of these containing a self-contained module of the whole
+development, an ``atom'' in some sense. To compile -- or check -- the
+whole developments, we use dependency management tools like
+\texttt{make}. These tools generate dependencies among the files, and
+launch the compilation only on files that have been changed since last
+compilation, and their dependencies. This process, known as
+\emph{separate compilation} has files as atomic objects, and
+dependency generation is performed uniquely on them, ignoring their
+internal structure.
+
+As intelligent and widely adopted as these tools have gotten, we
+believe that they are not adapted for proof developments. Indeed,
+whereas compilation of a program is usually fast enough for the
+programmer to rely on the usual interaction loop ((edit; compile)*;
+commit)*, the operation of proof checking is usually too expensive
+computationally to mimic this workflow. But even besides the time
+factor, this ``traditional'' way of formalizing mathematics hinders
+the process of mathematical discovery process: once a concept
+contained in a file is compiled, it is considered frozen and any
+changes to it require the recompilation of all files depending on it;
+the linearity of the development also gives no room for alternate,
+inequivalent definitions. This fact has nonetheless been shown to be
+of crucial to the mathematical discovery process by
+\cite{lakatos1964proofs}, and we believe that they should be taken
+into account in the realization of mathematical assistants like
+\textsf{Coq} or \textsf{Matita}.
+
+Actually, we even dare to state that these tools and the workflow they
+suggest were not even adapted for program development in the first
+place, but were just a convenient approximation of the user's intent.
+Here are some hints to justify this argument: first of all, \emph{any}
+change in a source file requires full recompilation of all files
+depending on it, whereas a finer management of dependencies is
+possible (function-wise for example). The basic operations of a
+version control system such as \texttt{svn} or \texttt{git} are often
+very sensitive, error-prone and based on heuristics (example, a
+\emph{merge}). This is among other due to the fact that the
+signal-to-noise ratio of a textual \emph{diff} is often high, because
+semantically void changes like altering indentation have the same
+value as changing the argument of a function. Finally, as they are not
+aware of the meaning of the text they are managing, these tools don't
+provide any consistency guarantee on the resulting files (except
+textual ones).
+
+All these facts, if they are not a major drawbacks when applied to
+weakly structured languages (e.g. assembler, or a \LaTeX\ document),
+gain a crucial importance when considering a typed language (a
+functional programming language for example) : we would like to make
+sure that a patch does not break the well-typing (or any other
+property) of a source code.  One more step forward, more
+structure-awareness becomes \emph{essential} when they apply to a
+proof language, where the structure (the typing) \emph{is} the only
+valuable information.
+
+\subsection{Methodology}
+
+We propose here to devise a system for \emph{semantic patches}. It
+substitutes the idea of textual transformation by:
+\begin{itemize}
+\item First preferring an abstract syntax tree representation instead
+  of plain text;
+\item Secondly embedding semantic data into the transformations, in
+  order to be able to reason on them.
+\end{itemize}
+
+We want to design a \emph{language of patches}, able to represent
+these transformations and their semantic properties, thus capturing
+local changes in programs, as well as their global effect on the whole
+project. We can see this goal as a refinement of the former idea of
+``dependency''.
+
+A semantic patch is a program intended to transform a program written
+in an \emph{object language} $\mathcal L$. We focus, on the first
+iteration of the project, on the semantic assertion of well-typing:
+from the object language's syntax and typing rules $\mathcal L$, we
+derive typing rules for the patch languages $\mathcal P(\mathcal L)$,
+and we can then type the patch. Our motto is:
+
+\begin{quote} \label{motto}
+  A well-typed patch is the guarantee that it transforms a well-typed
+  program into a well-typed program.
+\end{quote}
+
+In this sense, it is closely related to \emph{incremental typing}: if
+a modification has been made on a program, it is expressible by a
+patch. To ensure that it will result in a valid program, it suffices
+to type the patch, and not the whole resulting program.
+
+Moreover, our approach is meant to be totally formal, so that we can
+prove not only validity of our transformations, but also the
+completeness of our patch language and other properties. For this, we
+place ourselves in a constructive, higher-order metalanguage, namely
+the Calculus of Inductive Constructions (CIC), in which we will
+formalize in turn:
+\begin{enumerate}
+\item The object language $\mathcal L$ of our choice
+\item Its metatheory
+\item The patch language $\mathcal P(\mathcal L)$, parameterized by
+  $\mathcal L$.
+\item Its metatheory
+\end{enumerate}
+
+
+\subsection{Related work}
+
+Both the study of metatheorical properties as proof transformations
+and of change impact in structured documents (e.g. proofs, programs)
+is not a new subject.
+
+The \textsf{Twelf} project (\cite{pfenning1999system}) is an
+implementation of the Logical Framework (LF,
+\cite{harper1993framework}). It is a logic programming language able
+to represent logics or programming languages, and embeds an inductive
+metatheorem prover able to construct transformations of the
+$\Pi\Sigma$ form. It was used in \cite{anderson1993program} to devise
+transformations of proofs in order to extract efficient programs.
+
+The problems of managing a formal mathematical library have been dealt
+with in various proof assistant and mathematical repositories. The
+HELM project (\cite{asperti2000content}, \cite{asperti2006content})
+was an attempt to create a large library of mathematics, importing
+\textsf{Coq}'s developments into a searchable and browsable database.
+Most ideas from this project were imported into the \textsf{Matita}
+proof assistants (\cite{asperti2007hop}), especially a mechanism of
+\emph{invalidation and regeneration} to ensure the global consistency
+of its library w.r.t changes, with granularity the whole definitions
+or proofs and their dependencies. The MBase project
+(\cite{kohlhase2001mbase}) attempts at creating a web-based,
+distributed mathematical knowledge database putting forward the idea
+of \emph{development graph} (\cite{hutter2000management},
+\cite{autexier2000towards}) to manage changes in the database,
+allowing semantic-based retrieval and object-level dependency
+management.
+
+This idea, generalized over structured, semi-formal documents gave
+birth to \texttt{\it locutor} (\cite{muller2008fine}), a fine-grained
+extension of the \texttt{svn} version control system for XML
+documents, embedding ontology-driven, user-defined semantic knowledge
+which allows to go across the filesystem border. It embeds a
+\emph{diff} algorithm, operating on the source text modulo some
+equality theory to quotient the syntax. On the same line of work, we
+should mention the \emph{Coccinelle} tool
+(\cite{padioleau2008documenting}). It is an evolution over textual
+patches, specialized on the C language, allowing more flexibility in
+the matching process, and was developed to deal with the problem of
+\emph{collateral evolutions} in the Linux kernel. It embeds a
+declarative language for matching and transforming C source code,
+operating on text modulo defined isomorphisms.
+
+Our approach to the ``impact of changes'' problem seems novel on
+several aspects: first, it applies uniformly on proofs and programming
+languages by virtue of the Curry-Howard isomorphism, and because we
+operate at the AST level. Secondly, by taking \emph{types} as a
+witnesses for the evolution of a development, we refine the usual,
+dependency-based approach for a finer granularity. Thirdly, the
+formality of our approach ensures not only a maximal trust in the
+system, but also the ability to ``meta-reason'' on the defined
+language.
+\\
+
+In the following, we will give preliminary hints on the construction
+of such a system, and how it could be useful to supersede not only
+textual \emph{diff}s and version control systems, but also other
+paradigms for modular programming and go towards an eased mathematical
+discovery process with the help of proof assistants.
+
+\subsection{Patches as metatheorem composition}
+
+The approach we propose is the following: to transform a program into
+another and preserve well-typing, we need to transform accordingly the
+typing derivation of the source program into a valid derivation for
+the target program. On one hand, these transformations, if performed
+by hand, are very error-prone: the theory of the object language may
+be tricky and side conditions are frequently omitted in informal
+presentations. On the other hand, there is a wealth of formalization
+techniques of programming languages in the literature, and numerous
+implementations in proof assistants. Theoretical results on the object
+language are called \emph{metatheorems}; if these metatheorems are
+proved in a constructive formalism, like the one of the proof
+assistants \textsf{Coq} or \textsf{Matita}, they constitute algorithms
+of program transformation. Then we just have to choose an adequate,
+``complete'' set among those. Take the simply typed $\lambda$-calculus
+(STLC) for instance. Examples of metatheorems are:
+\begin{itemize}
+\item \textsf{app} : from two terms $t$ and $u$, we can always form
+  the application $tu$. This is a purely syntactical constructor of
+  the object language, promoted as a metatheorem;
+\item \textsf{typ\_app} : if $\Gamma \vdash t : A \to B$ and $\Gamma
+  \vdash u : A$ then $\Gamma\vdash tu : B$. It is part of the typing
+  definition of the language, and its proof constitutes a
+  transformation building an application node at the root of a
+  program;
+\item \textsf{inv\_app} : if $\Gamma \vdash tu : B$ then there is a
+  type $A$ such that $\Gamma\vdash t:A\to B$ and $\Gamma\vdash
+  u:A$. Its proof is a transformation decomposing an application into
+  its two subprograms: the function and its argument;
+\item \textsf{weaken} : if $\Gamma\vdash t : A$ and $x$ is not free in
+  $t$ then $\Gamma, x:B\vdash t:A$. Its proof has no effect on the
+  program itself, but enlarges the context in which it is typed.
+\item \textsf{strengthen} : if $\Gamma,x:B\vdash t:A$ and $x$ is not
+  free in $t$ then $\Gamma\vdash t:A$.  \\\ldots
+\end{itemize}
+Considering a formalization working directly on the abstract syntax
+tree of the programming language (named, possibly implicitly
+typed\ldots), our patch language is formed on the composition of a
+given, carefully chosen set of metatheorems. 
+
+\subsubsection{Definitions}
+
+\paragraph{Transformers}
+
+We consider only a subset of the possible metatheorems, those of the
+following form. A \emph{patch variable} is an element $x,y,\ldots$
+taken in a countable, infinite set $\mathcal X$. An \emph{atom} is
+either a syntactic category of the object language, or a meta property
+we want to reason on, i.e. for STLC:
+\begin{align*}
+  A,B\ ::=\ &\mathrm{var}\ |\ \mathrm{term}\ |\ \mathrm{env}\ |\
+  \mathrm{type}\\
+  |\ &{}\mathrm{deriv}\ {of}\ (\mathcal X \times \mathcal
+  X\times\mathcal X)\\
+  |\ &{}\mathrm{variable}\ of\ (\mathcal X\times
+  \mathcal X\times\mathcal X) \\
+  |\ &{}\ldots
+\end{align*}
+
+A \emph{judgement} $j$ can be of two kinds: $x$ is an atom $A$, or $x$
+has form $\mathsf{T}(x_1,\ldots,x_n)$, where \textsf{T} is a transformer.
+\[ j,k\ ::=\ x:A\ |\ x=\mathsf{T}(x_1,\ldots,x_n)\]
+
+Now a \emph{transformer} $\emph{T}$ corresponds to a metatheorem in
+$\Pi\Sigma$ form, with added definitional constraints. The statement
+of the metatheorem is ``reified'' into a syntactical \emph{signature}
+of the form:
+\[ \mathsf{T}\ ::\ j_1, \ldots, j_n \longrightarrow k_1,\ldots, k_m \]
+
+The semantics of these signature is: all tuples on the left of the
+arrow are arguments, all tuples on the right are results. Arguments of
+kind $x:A$ are interpreted as bare arguments to the transformer,
+arguments of kind $x=\mathsf{T}(\vec x)$ as \emph{constraining
+  arguments}: the actual argument supplied must be the result of
+applying $\mathsf{T}$ to $\vec x$. Dually, results of kind $x:A$ are
+bare results of unknown form, whereas results of kind
+$x=\mathsf{T}(\vec x)$ are results ensured to be constructed from the
+application of $\mathsf{T}$.
+
+\begin{example}
+Here are the signatures of some of the metatheorems given above:
+\begin{align*}
+  \mathsf{app} :: {} & (t\ u : \mathrm{term}) \longrightarrow
+  (v : \mathrm{term}) \\
+  \mathsf{typ\_app} ::{}& (\Gamma:\mathrm{env}) (A\ B:\mathrm{type})
+  (C=\mathsf{arrow}(A,B)) (t\ u:\mathrm{term}) \\
+  {}& (d_1 : \mathrm{deriv}(\Gamma,t,C)) (d_2 :
+  \mathrm{deriv}(\Gamma,u,A)) \longrightarrow (v=\mathsf{app}(t,u))
+  (d:\mathrm{deriv}(\Gamma,v,B)) \\
+  \mathsf{inv\_app} ::{}& (\Gamma:\mathrm{env}) (t\ u:\mathrm{term})
+  (v=\mathsf{app}(t,u))(d:\mathrm{deriv}(\Gamma,v,B)) \longrightarrow
+  \\ {}&
+  (A:\mathrm{type})(C=\mathrm{arrow}(A,B))(d_1:\mathrm{deriv}(\Gamma,t,C))
+  (d_2:\mathrm{deriv}(\Gamma,u,A))
+\end{align*}
+but we can also imagine higher-level transformers:
+\begin{align*}
+  \mathsf{cps} ::{}& (t:\mathrm{term}) \longrightarrow (u:\mathrm{term}) \\
+  \mathsf{aa\_trans} ::{}& (A:\mathrm{type}) \longrightarrow
+  (B:\mathrm{type}) \\
+  \mathsf{typ\_cps} ::{}& (\Gamma:\mathrm{env}) (t:\mathrm{term}) 
+  (A:\mathrm{type}) (d:\mathrm{deriv}(\Gamma,t,A)) 
+  \longrightarrow \\ {}&
+  (t'=\mathsf{cps}(t))
+  (A'=\mathsf{aa\_trans}(A)) (d':\mathrm{deriv}(\Gamma,t',A'))
+\end{align*}
+\end{example}
+
+\paragraph{Patches}
+
+Given a set of transformers $\Sigma$ and their signatures, a
+\emph{patch} $\Delta$ is a sequence of variable assignment constructed
+from the application of a transformer $\mathsf{T}_i\in\Sigma$ to bound
+variables, much like a \textsf{let} construct:
+\begin{align*}
+  \Delta\ {}::=& \vec x_1 = \mathsf{T_1}(\vec y_1);\ \ldots;
+  \\ {}& \vec x_n = \mathsf{T_n}(\vec y_n)
+\end{align*}
+
+Here, all $\vec x_i$ are bound in subsequent assignments.  A
+\emph{repository} is a patch with no free variable. A patch therefore
+represents the evolution of a set of atoms: the free variables
+represent what the patch expects as input, all bound variables the
+newly constructed objects. A repository represents the history of
+modification of a program, starting from ground up. Each variable has
+an implicit type, taken into the set of atoms.
+
+We now describe informally a typing discipline for the patches: a
+transformer should be applied to exactly its number and type of
+arguments, and bind exactly its number of results, which take their
+type from the signature. Results of kind $x=\mathsf{T}(\vec y)$ are to
+be interpreted as additional assignments specifying the structure of
+the variable bound. A transformer with an argument of kind
+$x=\mathsf{T}(\vec y)$ should be applied to a variable having exactly
+been created by the definiens $\mathsf{T}(\vec y)$: same transformer
+name \textsf{T}, same variable names $\vec y$.
+
+As we said earlier, a well-typed repository (in the way we just
+hinted) describes well-typed changes of its objects, for examples
+programs and derivations. An important property of this typing
+discipline is its independence w.r.t the metatheorems associated to
+the transformers in $\Sigma$. All the typing process is done
+\emph{entirely syntactically}, without having to peak into the
+semantics of transformers. This allows the patch language to be only
+parametric on $\Sigma$.
+
+\newcommand{\interp}[1]{\llbracket{#1}\rrbracket}
+
+\paragraph{Interpretation}
+
+The same way we reified our metatheorem's types into a syntax (the
+transformers) to obtain the patch language, we can do the opposite
+transformation, i.e. interpret a patch or a repository $\Delta$ into
+an object of the language. This is done the obvious way, by following
+the definitions in $\Delta$ and interpreting transformers by their
+associated metatheorem:
+\begin{align*}
+  \interp x_\Delta &= \Delta(x) \\
+  \interp{\mathsf{T}(\vec y)} &= T(\interp{\vec y})
+\end{align*}
+
+The following result ensures that our motto (\autoref{motto}) is correct:
+\begin{theorem}[Soundness]
+    If $\Delta$ is well-typed and $d : \mathrm{deriv}(\Gamma,t,A) \in
+    \Delta$, then $\interp d_\Delta$ is a derivation of
+    $\interp\Gamma_\Delta\vdash\interp t_\Delta : \interp{A}_\Delta $
+\end{theorem}
+
+\subsubsection{Examples}
+
+We make a pause here and carry on a simple example of repository
+construction, assuming the object language to be the simply typed
+$\lambda$-calculus. The transformers involved are the following:
+
+\begin{align*}
+  \mathsf{int}::{}&\mathrm{type} \\
+  \mathsf{string}::{}&\mathrm{string}\To\mathrm{var}\\
+  \mathsf{var}::{}&\mathrm{var} \longrightarrow \mathrm{term} \\
+  \mathsf{nil}::{}&\mathrm{env} \\
+  \mathsf{cons}::{}&(x:\mathrm{var})(A:\mathrm{type})(\Gamma:\mathrm{env})
+  \To
+  \mathrm{env} \\
+  \mathsf{init}::{}&(\Gamma:\mathrm{env}) (x:\mathrm{var})
+  (t=\mathsf{var}(x)) (A:\mathrm{type}) \\ {}&
+  (v:\mathrm{variable}(\Gamma,x,A)) \To
+  (d:\mathrm{deriv}(\Gamma,t,A))
+  \\
+  \mathsf{zero}::{}& (\Gamma:\mathrm{env})(x:\mathrm{var})
+  (A:\mathrm{type})(\Gamma'=\mathsf{cons}(\Gamma,x,A)) \To \\ {}&
+  (v:\mathrm{variable}(\Gamma',x,A)) \\
+  \mathsf{succ}::{}& (\Gamma:\mathrm{env}) (x\ y:\mathrm{var}) (A\
+  B:\mathrm{type}) (v:\mathrm{variable}(\Gamma,x,A)) \\ {}&
+  (\Gamma'=\mathsf{cons}(\Gamma,y,B)) \To
+  (v':\mathrm{variable}(\Gamma',x,A)) \\
+  \mathsf{typ\_lam}::{}& (\Gamma:\mathrm{env})(x:\mathrm{var})(A\
+  B:\mathrm{type}) (t:\mathrm{term}) \\ {}&
+  (\Gamma'=\mathsf{cons}(x,A,\Gamma))(d:\mathrm{deriv}(\Gamma',t,B))\To
+  \\ {}&
+  (t'=\mathsf{lam}(t,x,A))(C=\mathsf{arrow}(A,B))(d':\mathrm{deriv}
+  (\Gamma,t',C)) \\
+  \mathsf{typ\_app}::{}&(\Gamma:\mathrm{env})(t\ u:\mathrm{term})(A\
+  B:\mathrm{type}) (C=\mathsf{arrow}(A,B)) \\ {}&
+  (d_1:\mathrm{deriv}(\Gamma,t,C))(d_2:\mathrm{deriv}(\Gamma,u,A))
+  \To (d_3:\mathrm{deriv}(\Gamma,v,B)) \\
+  \mathsf{weak}::{}&(\Gamma:\mathrm{env})(x:\mathrm{var})(A\
+  B:\mathrm{type})(t:\mathrm{term})(\Gamma'=\mathsf{cons}(\Gamma,x,A))
+  \\{}& (d_1:\mathrm{deriv}(\Gamma,t,B)) \To
+  (d_2:\mathrm{deriv}(\Gamma',t,B))
+\end{align*}
+
+\begin{example}
+  From the empty repository, we build a derivation for $\lambda^{int} x. x$
+  by constructing the repository:
+  \begin{align}
+    \Gamma &= \mathsf{nil} \\
+    A &= \mathsf{int} \\
+    x &= \mathsf{string}(\mathtt{"x"}) \\
+    t_0 &= \mathsf{var}(x) \\
+    \Gamma' &= \mathsf{cons}(\Gamma,x,A) \\
+    V_0 &= \mathsf{zero}(\Gamma,x,A,\Gamma') \\
+    D_0 &= \mathsf{init}(\Gamma,x,t_0,A,V_0) \\
+    (t_1,C,D_1) &= \mathsf{typ\_lam}(\Gamma,x,A,A,t_0,\Gamma',D_0)
+  \end{align}
+  The last variable, $D_1$ is of type $\mathrm{deriv}(\Gamma,t_1,C)$.
+  By unfolding the definitions and interpreting back the transformers,
+  this expression becomes $\vdash\lambda^{int}x.x : int\to int$ which
+  is what is expected.
+
+\end{example}
+
+In this example, we didn't use anything more than the transformers
+already provided by the language construction, so this was just a
+simple derivation. By now it should be clear that we can already build
+whatever derivation we need: we just reified the object language into
+the patch language by means of its constructors.
+
+\begin{example}
+  \label{ex:transf}
+  Suppose now that we want to transform our program $D_1$ into a
+  program $\lambda x^{int} f^{int\to int}.\ f x$. We need to transform
+  the derivations as well. We add the following to our previous
+  repository:
+  \begin{align}
+    f &= \mathsf{string}(\mathtt{"f"}) \\
+    t_2 &= \mathsf{var}(f) \\
+    \Gamma'' &= \mathsf{cons}(\Gamma',f,C) \\
+    V_1 &= \mathsf{zero}(\Gamma',f,C,\Gamma'') \\
+    D_2 &= \mathsf{init}(\Gamma'',f,t_2,C,V_1) \\
+    D_3 &= \mathsf{weak}(\Gamma',f,C,A,t_0,\Gamma'',D_1) \\
+    (t_3,D_4) &= \mathsf{typ\_app}(\Gamma'',t_2,t_0,A,A,C,D_2,D_3) \\
+    (t_4,D_5) &= \mathsf{typ\_lam}(\Gamma',f,C,A,D_4) \\
+    (t_5,D_6) &= \mathsf{typ\_lam}(\Gamma,x,A,D,D_5)
+  \end{align}
+
+  The resulting objects $t_5$ and $D_6$ are respectively interpreted
+  back as the term $\lambda x^{int} f^{int\to int}.fx$ and its
+  derivation $\vdash \lambda x^{int} f^{int\to int}.fx : int\to
+  (int\to int)\to int$.
+\end{example}
+
+\subsection{Directions}
+
+This formalization of proof/program transformations is a simple, yet
+powerful idea, which opens numerous perspectives. The remaining
+points of this sections will be directions for further investigations,
+not definitive results \emph{per se}.
+
+\paragraph{A basis for transformers}
+
+In order to be able to represent \emph{any} transformation on the
+object language $\mathcal L$, we need to specify the set of
+metatheorems that we choose to promote as transformers. Let's try to
+identify a minimal set of transformers able to represent all
+transformations, a \emph{basis} so to speak for the construction of
+the patch language.
+
+One approach would be to identify, with the help of justified
+examples, a set of common transformations on $\mathcal L$, as they are
+used in practice when programming in $\mathcal L$. We would then need
+to prove that they are \emph{complete} w.r.t all possible
+transformations (more on completeness later). For a common, functional
+programming language, we can imagine the following transformations:
+\begin{itemize}
+\item Rename a function or an argument, and all its subsequent
+  occurrences in their scope
+\item Add an argument to a function, and add a default parameter to
+  all its calls
+\item Replace a name by another name of the same type
+\item add a constructor to a type declaration, adding a branch to all
+  its \texttt{match\ldots with} constructs
+\end{itemize}
+
+We prefer a more low-level, syntactical approach based on the tree
+representation of all objects, both syntactical and of typing: we
+promote as transformers all operations of \emph{construction} and
+\emph{destruction} on these trees, namely the constructors and
+destructors of all syntactical objects, and the typing rules and their
+inversion. Both these categories of operations manipulate directly the
+tree structures (insert/delete a node) and provide a unifying way to
+describe transformations. This way, we are not only guaranteed to be
+complete, but also to help the design of an important piece of the
+architecture of our system that what we will introduce later: the diff
+algorithm.
+
+\paragraph{Maximal sharing and completeness}
+
+Variables assignments by transformer application is a simple way to
+serve two different purposes. The first is to implement a dependent,
+multi-hypothesis, multi-conclusion logic if we see transformers as
+logical connectives. The second is to name all intermediate
+construction steps of all objects, to allow free non-linear reuse of
+previously constructed object so as to maximize sharing between
+objects in a repository. This is the \emph{memoizing} function of
+variable assignments, and it is the way we do incremental typing.
+
+Maximal sharing of constructed object in a repository is a wanted
+property. Not only does it ensures that we save the most work, which
+is simply an efficiency concern, but it also ensures that we can
+address objects by their variables: It states
+
+\begin{definition}[Maximal sharing]
+  A patch $\Delta$ has \emph{maximal sharing} if every object is
+  assigned to a patch variable only once, namely that for all
+  $x,y\in\Delta$, $\interp x_\Delta\neq\interp y_\Delta$.
+\end{definition}
+
+Knowing this, what is completeness in our system? A first, trivially
+true and not very interesting statement is the following:
+\begin{theorem}[Dummy completeness]
+  All valid transformation from $\Delta$ to a program $p$ and its
+  derivation $\vdash p : A$ are expressible as a program in $\mathcal
+  P(\mathcal L)$.
+\end{theorem}
+\begin{proof}
+  Since our patch language contains all typing rules, we just have to
+  reconstruct the derivation of $\vdash p:A$ entirely (without using
+  $\Delta$ in any ways).
+\end{proof}
+
+Obviously, this notion of completeness is not the one intended, as we
+want to maximally reuse previous results from $\Delta$. It suggests
+another notion of completeness, that we still to formalize and prove:
+
+\begin{conjecture}[Completeness]
+  All valid transformation from $\Delta$ to a program $p$ and its
+  derivation $\vdash p : A$ are expressible as a program in $\mathcal
+  P(\mathcal L)$ with maximal sharing.
+\end{conjecture}
+
+\paragraph{Bootstrapping the system}
+
+We thus have a method, which can be automated, to generate from an
+object language $\mathcal L$ and its typing rules, a patch language
+$\mathcal P(\mathcal L)$ that, we saw, is also typed. Then nothing
+prevents us from reapplying the functor $\mathcal P$ to the resulting
+object. What do we obtain? Following what we just said, $\mathcal
+P(\mathcal P(\mathcal L))$ is a language describing repository
+transformations. For example, it should be able to describe the
+application of patches at the end of a repository, the way we
+implicitly did in our example \ref{ex:transf}.
+
+Can this transformation help us describe what would be the core of a
+version control system? To answer this, we would need to describe all
+primitive operation of these systems (application, merge, commutation
+of patches\ldots), and encode them as programs into the language. In
+particular, we should try carefully to define a certain notion of
+concurrency: what are patches that can be applied concurrently, what
+are those that need a special sequentiality? Many interesting, open
+questions concerning this bootstrapping arise.  Here are some of them:
+
+\begin{itemize}
+\item What metatheorem can we prove about the language $\mathcal
+  P(\mathcal L)$
+\item Which of them shall we choose as transformers for $\mathcal
+  P(\mathcal P(\mathcal L))$?
+\item Do they depend on the object language $\mathcal L$?
+\item What can we say about the ``free'' language $\forall \mathcal X,
+  \mathcal P(\mathcal X)$
+\end{itemize}
+
+\paragraph{A \emph{diff} algorithm}
+
+The user of such a system surely does not want to write by hand what
+we wrote in our previous example. It is both very verbose, as it shows
+and names all intermediate constructs, and not useful as the
+construction of a typing derivation is usually not his responsibility
+but the work of the type inference algorithm. Moreover, one does not
+want to change as drastically their habits as not to write
+programs/proofs anymore, but only patches applied to previous versions
+of its project.
+
+Therefore, an interesting line of work would be to devise an algorithm
+for computing the \emph{diff} between a repository and a file. It
+would take a program and return the patch from the current repository
+to that program. This patch could be typed afterwards, to guarantee
+that the program given was well-typed with minimum effort.
+
+If we see the patch language as a dependent, multi-hypothesis,
+multi-conclusion logic, the work of searching for a resembles
+proof-search as in \autoref{sec:auto}. Indeed, starting from a repository
+$\Delta$ and having written the target program $t : A$, we are looking
+for a composition of transformers $\Theta$ (viewed as logical
+constants) realizing: \[ \Theta\quad:\quad\Delta \To (x = t) (d =
+\mathrm{deriv(\Gamma_0,t,A)}) \] (the actual logic in which this proof
+search is conducted still need to be specified formally).
+
+But we have to be careful in this process, not to redo previous
+searches, i.e. reusing maximally the objects of $\Delta$. This is
+usually absent from traditional proof search, in which the proof
+accounts only for its existence. Recall that we chose as transformers
+the exact set of insert/delete operation on the derivation tree built.
+Our process in this sense resembles much more a \emph{tree edit
+  distance} algorithm: the best ``proof'' we can find is the one
+minimizing the distance between (one of) the trees already built in
+$\Delta$, and the new program we are willing to commit to $\Delta$. Of
+course, these techniques will have to be adapted to the case of trees
+with binders.
+
+This algorithmic search is a challenging direction as it needs to be
+very efficient, to be transparent to the user and not make us loose
+the time we gained by typing incrementally. Moreover, the dual view of
+this process as algorithmic content of proofs in automated proof
+search seems a novel approach.
+
+\paragraph{Functors as first-class patches}
+
+Describing transformation of proofs/programs seems not only
+interesting to implement a type-safe version control system as we
+hinted above, but can be useful to encode other mechanisms commonly
+used in proof development and programming, like modules.
+
+Modules were designed as a tool for generic programming, and was
+integrated in many functional programming languages, its archetype
+being \textsf{SML}. One implements a given \emph{module} (a set of
+functions and values), and give it a \emph{signature}, i.e. the bare
+specification of its exported objects. Then, \textsf{functors} are
+second-class functions, mapping a module of a certain signature to
+another module. These functors can be applied, resulting in a new
+module.
+
+Given a language including modules but not functors, we conjecture
+that we can represent functors as patches in the patch language.
+Applying a functor would be the operation of applying the patch in a
+given place in the repository.
+
+Consider the following, toy language for libraries:
+\begin{mathpar}
+  A ::= \alpha\ |\ A\to A \and
+  t ::= x\ |\ \lambda x. t\ |\ t\ t \\
+  D ::= \{x:A; D\}\ |\ \cdot \and
+  d :: \textsf{let}\ x=t; d\ |\ \cdot \\
+  
+  \infer[Nil]{ }{\Gamma\vdash\cdot\Rightarrow\cdot} \and
+  \infer[Cons]{\Gamma\vdash t:A \\ \Gamma, x:A\vdash d\Rightarrow D}
+  {\Gamma\vdash \textsf{let}\ x=t; d \Rightarrow\{x:A; D\}} \\
+  \infer[Init]{(x:A)\in\Gamma}{\Gamma\vdash x:A} \and
+  \infer[Lambda]{\Gamma;x,A\vdash t:B}{\Gamma\vdash\lambda x.t:A\to B}
+  \and \infer[App]{\Gamma\vdash t:A\to B\\\Gamma\vdash
+    u:A}{\Gamma\vdash t u:B} \and
+\end{mathpar}
+
+As opposed to the STLC, this language does not represents programs but
+\emph{libraries} of programs (simple modules), having an
+implementation ($\mathsf{let}\ x=t;\ \mathsf{let}\ y=u;\ \ldots$) and
+a signature ($\{x:A;\ y:B;\ \ldots\ \}$).
+
+A functor in this language can be encoded as a patch, taking as input
+(i.e. having as free variable) a declaration $d$ of type the signature
+$D$ expected, from which it constructs a typing environment $\Gamma$
+and a new library, well-typed in $\Gamma$. This way, we encoded
+functors as transformation operations on modules and we provided a
+unified approach to them. Although this approach would require to be
+formaized more carefully, we can already raise an interesting question
+besides it: in the second-order language ($\mathcal P(\mathcal L)$) we
+encoded functors, but we know that we can iterate this process
+\emph{ad infinitum}. Can we then represent higher-order functors, like
+functors taking functors as arguments, in $\mathcal P(\ldots (\mathcal
+P(\mathcal L))\ldots)$?
+
+\paragraph{User interaction}
+
+Along with being a theoretical study on the impact of transformations
+in proofs and programs, we believe that some practical application
+could already come out, namely a simple, linear version control
+system. We can already imagine the kind of user interaction this tool
+would allow for the editing of developments: first of all, liberated
+from the separate compilation paradigm, we don't edit whole files
+anymore, but functions and values. For example, a user could ask:
+\begin{verbatim}
+> edit Set.add
+\end{verbatim}
+which would spawn a text editor with this function displayed (the
+actual text being generated by pretty-printing the associated
+\emph{term} sub-object of the current program). He then edit the
+function and save the file. At this point, a patch is generated by the
+\emph{diff} algorithm, possibly not well-typed. Then the patch is
+temporarily committed (added to the repository at the current point),
+and its type-checking begins. If it type-checks correctly, the patch
+is definitively added and the system waits for a new user interaction.
+If it doesn't type-checks, i.e. if there is a type error either in the
+edited function or in the subsequent portion, then the errors are
+displayed (possibly with additional context), and the user is asked
+how to solve them. This is done either by hand, or by calling an
+appropriate automatic strategy, defined by a high-level
+transformer. Examples of high-level automatic resolution strategies
+are:
+\begin{description}
+\item[$\alpha$-conversion] If we changed the name of an element of the
+  context, we can decide to automatically rename all its occurrences;
+\item[default argument] If we added an argument to a function, we can
+  add a default parameter to all its occurrences;
+\item[weakening] If the environment has been enlarged at some point,
+  weakening allows us to modify any subsequent type derivation with
+  the new environment;
+\item[strengthening] If a name is not used in any part of the program,
+  we can safely delete it from the environment;
+\end{description}
+
+\vspace{1em}
+
+On the long term, we see other directions on this project. They
+include:
+\begin{itemize}
+\item The use of special representations of the terms of the language
+  using forward-pointers from binders to their occurrences,
+\item The definition \emph{in the language} of patches of the
+  higher-level transformers we described above,
+\item Investigate the relationship with the version control tool
+  \texttt{git}, as the structure of our repository resembles the
+  \emph{object database} and its content-addressable namespace;
+  possibly import ideas from it,
+\item Approximation of type systems: when complex type systems are at
+  stake (like dependent type theory), we could possibly devise a
+  conservative approximation and use the real typing algorithm as a
+  black box for retyping parts of the constructions, and still remain
+  more efficient than typing the whole program,
+\item Finally, we focused here on the semantic property of typing, but
+  we could experiment other properties, like the preservation of
+  operational semantics. The applications are numerous for programming
+  (certified refactoring for example) but it seems more difficult
+  because the base property is in the general case undecidable.
+\end{itemize}
+
+\bibliographystyle{plainnat}
+
+\bibliography{../biblio}
+
+% \appendix
+
+% \section{ATP techniques}
+
+% \subsubsection{Resolution}
+
+% Resolution is the one, if not the most popular complete method for
+% semi-deciding the refutation proof problem: given a statement, we can
+% apply this method; if the statement is unsatisfiable in FOL, the
+% method will eventually terminate with a refutation of it. The design
+% and implementation of such a method is discussed at length in
+% \cite{riazanov2002design}.  Many recent provers rely on resolution,
+% which has proved empirically to be the most efficient.
+
+% It was discovered in 1965 by \cite{robinson1965machine}, but since
+% then many complete refinements have been proposed since its
+% introduction: ordered resolution, selection\ldots (see
+% \cite{bachmair2001resolution} for an overview). It consists of two
+% phases: the transformation of the problem into clausal form, and the
+% resolution itself, which is the iterated application of a (single,
+% complete) rule mimicking the \emph{cut} rule of natural deduction.
+% This is done with the help of a \emph{unification} algorithm to select
+% relevant clause.  
+
+% Consider a set of formulas $H_i$ (the hypotheses) and a particular
+% formula $G$ (the goal) of classical FOL. The satisfiability problem is
+% the problem of finding assignations to the variables in $H_i, G$ such
+% that the interpretation, in a boolean model satisfying all $H_i$, of
+% the formula $G$ has truth value ``true''. Given a model of such type,
+% it is easy to verify the satisfiability of the formula $G$ but the
+% search for such a model is a very impractical exercise for a computer.
+% We thus have to rely on \emph{syntactical methods} rather than such a
+% semantic one, and resolution is one of them. It is easy to prove (by
+% the De Morgan laws) that for all formula $B$, there is an
+% equisatisfiable formula $B'$ which is in clausal normal form, i.e. has
+% the form: \[ B = \bigwedge_{i=0}^{m}\left(\bigvee_{j=0}^n \pm
+%   A_{ij}\right) \] where $A_{ij}$ are all \emph{literals}, i.e. terms
+% of the signature and all variables in the literals are implicitly
+% universally quantified.  Moreover, the satisfiability of the goal $G$
+% provided that all $H_i$ are satisfiable is equivalent to the
+% satisfiability of: $$\bigwedge_i(-H_i) \vee G$$ This allows us to work
+% directly on sets of \emph{clauses}, or disjunctive set of literals and
+% treat the literal as plain terms, without having to consider their
+% semantics. 
+
+% Now let's take the negation of our starting formulas, and put it into
+% clausal normal form. The resolution procedure works by iteratively
+% enlarging this set of clauses with new clauses (the resolvants) until
+% it generates an empty clause. The empty clause, writted $\bot$,
+% denotes the unsatisifability of the clause, thus the unsatisifability
+% of the whole set of clause, and if the method is sound, deriving
+% $\bot$ means that the starting set of clause was unsatisfiable, i.e.
+% that our formula is satisfiable, since the negation of a satisfiable
+% formula is unsatisfiable. Here are the two rules of resolution:
+
+% \begin{mathpar}
+%   \infer[Resolution]{C,+A \and C',-A'}{(C, C')\sigma}\ 
+%   \sigma=mgu(A,A') \and \infer[Factoring]{C,+A,+A'}{(C,+A)\sigma}
+%   \ \sigma=mgu(A,A')
+% \end{mathpar}
+
+% The function $mgu$ computes the \emph{most general unifier} of two
+% literals, and the resolution rule states that two unifiable literals
+% of inverse signs in two sets of clauses can help generate a new clause
+% formed by the concatenation of the previous sets, provided that we
+% instantiate their variable by the result of the unification. The
+% factoring rule, which is unnecessary in the degraded case of Horn
+% clauses (clause with \emph{at most} one positive literal) but
+% necessary for general clauses, states that two positive (resp.
+% negative) unifiable literals can be factorized into one, provided that
+% we instantiate the rest of the clause. We see that only a resolution
+% step can lead to the final result: in the case where both premises
+% are singleton clauses containing two unifiable literals, resolution
+% leads to the empty clause.
+
+% This method enjoys soundness and completeness. 
+
+% \begin{theorem}[Soundness]
+%   Let $S$ be a set of clauses and $S'$ a set obtained by resolution from
+%   $S$. All models of $S$ are models of $S'$.
+
+%   In particular, if $\bot$ is deducible from $S$, then $S$ is
+%   unsatisfiable.
+% \end{theorem}
+
+% Soundness is trivial to prove: both rules are interpreted valid in any
+% model of first-order logic. From a proof-theoretic point-of-view, the
+% resolution rule is much alike to the \emph{cut} rule of sequent
+% calculus, and the factoring the contraction rule:
+% \begin{mathpar}
+%   \infer[Cut]{\Gamma,A \vdash \Delta \and \Gamma\vdash A,\Delta}
+%   {\Gamma\vdash\Delta} \and
+%   \infer[CR]{\Gamma\vdash\Delta, A, A}{\Gamma\vdash\Delta, A}
+% \end{mathpar}
+
+% \begin{theorem}[Completeness]
+%   Let $S$ be a set of clause. It is unsatisfiable \emph{iff} we can
+%   derive $\bot$ by the only application of \textsc{Resolution} and
+%   \textsc{Factoring}.
+% \end{theorem}
+
+% Completeness is harder and requires complex proof techniques. A
+% popular one is the \emph{semantic tree method}: we construct a
+% \emph{Herbrand tree} of the set of clause, and consider the
+% \emph{failure} nodes where the set becomes unsatisfiable. We see that
+% resolution let these nodes climb up the tree, until it arrives to the
+% root. Thus we prove that the iterated application of resolution is
+% terminating, and that for an unsatisfiable $S$, $\bot$ is eventually
+% derived. Note that this does not guarantee the termination of the
+% process in all cases: if the given clauses are satisfiable, it
+% \emph{will} loop forever. See \cite{goubault2005blossom} for an
+% overview of this proof method.
+% \\[-0.5em]
+
+% The high non-determinism of this rule makes the bare resolution rather
+% inefficient. Indeed, the number of clause in the system during
+% resolution keeps growing exponentially: each application of resolution
+% of factoring leads to a new clause which is added in the global pool
+% and ready to be in turn combined with other at the next iteration. The
+% search space is huge (unless a trivial case is met), and refinements of
+% the resolution principle have been devised to reduce it when possible,
+% i.e. by still remaining complete.
+
+% \paragraph{Ordered resolution} One of the inefficiencies of this
+% method is the possibility to combine every literal of a clause with
+% every literal from another (or possibly the same) clause. It is
+% possible to restrict the application of resolution to \emph{maximal}
+% literal in every clause, according to an ordering on terms respecting
+% some criteria. The rule becomes:
+% \[ \infer {C,+A_1,\ldots,+A_n \and C', -A'}
+% {(C,C')\sigma}\quad\sigma=mgu(A_1,\ldots,A_n,A') \] where $n\geq 1$,
+% and $A_1\ldots A_n$ are all maximal in the first premise, $A$ in the
+% second with respect to a strict, stable order $\succ$. Stable means
+% that $A\succ B$ implies $A\sigma\succ B\sigma$ for all $A,B$ literals
+% and $\sigma$ substitution. We emit the same restriction for the
+% factoring rule.
+
+% In practice, stable orders are chosen among reduction orderings, i.e.
+% ordering expressing the fact that a term is ``smaller'' than another,
+% so that unification has to do the minimum job possible.
+
+% \paragraph{Ordered resolution with selection} An even bigger
+% restriction on the application of the resolution principle is to
+% parameterize it with respect to a special \emph{selection function}
+% $sel : C \to \wp(C)$ that selects negative literals, whose role is to
+% select a default choice of literals to resolve in a clause. The rule
+% becomes:
+% \[ \infer
+% {\{C_i,A_{i1},\ldots,A_{in_i}\}_{1\leq i\leq l} \and
+%   C',-A'_1,\ldots,-A'_l}
+% {(C_1,\ldots,C_l,C')\sigma}
+% \]
+% where:
+% \begin{enumerate}
+% \item $n_i\geq 1$ for all $i$, $1\leq i\leq l$,
+% \item $\sigma = mgu\{ A_{ij} = A'_i\}_{1\leq i\leq l,\ 1\leq j\leq n_i}$,
+% \item $sel(C_i, A_{i1},\ldots,A_{in_i}) = \emptyset$ and
+%   $A_{i1},\ldots,A_{in_i}$ maximals in their clause,
+% \item either $sel(C',-A'_1,\ldots,-A'_l) = -A'_1,\ldots,-A'_l$ with
+%   $l\geq 1$, or $sel(C',-A'_1,\ldots,-A'_l) = \emptyset$ and $-A'1$
+%   maximal in its clause.
+% \end{enumerate}
+
+% As counter-intuitive as it may sound, even with an arbitrary selection
+% function, this method remains complete.
+% \\[-0.5em]
+
+% As we have seen, these method of proof search are based on the
+% decomposition of a first-order formula into a set of clauses by
+% applying the De Morgan laws. Most of these laws are well-known to be
+% false in intuitionistic logic, in fact most of them are true only in
+% one direction. One could easily drop to the conclusion that these
+% methods are inapplicable to an intuitionistic framework. In fact, it
+% turns out that the process of resolution in itself is well-applicable
+% in this case, and the preprocessing into clausal normal form is only a
+% commodity. One could translate this process into a fully
+% intuitionistic one by basing the system, not on clausal forms anymore,
+% but on implicative form. What we get by doing this is a system that
+% applies its hypothesis to the goal creating new goals, until all of
+% them vanish. We will discuss this approach in more depth in
+% \ref{sec:psitp}.
+
+% \subsubsection{Equality treatment}
+
+% Equality is an ubiquitous notion in mathematics. Yet, FOL doesn't
+% include any special treatment for this symbol: it is defined
+% axiomatically inside the logic (as the smallest congruent equivalence
+% relation), which makes it very inefficient to use in practice: proving
+% an equality triggers the blind application of the transitivity and
+% symmetry lemmas in all possible ways:
+% \begin{align*}
+%   x=x & \qquad (reflexivity)\\
+%   x=y \to y=x & \qquad (symmetry) \\
+%   x=y \to y=z \to x=z & \qquad (transitivity)\\
+%   x=y \to f(x)=f(y) & \qquad (congruence,\ \forall f)
+% \end{align*}
+
+% A better way to treat the equality is by means of rewriting. It is the
+% goal of paramodulation, superposition and their derivatives. They all
+% are inference rules for treating equality externally to the logic, as
+% a mean to replace equals by equals in formulas. Again, a wealth of
+% variants have been devised from the main, relatively inefficient idea:
+% E-unification (paramodulation treated inside the unification
+% algorithm), oriented paramodulation with selection. Completion is an
+% important ingredient to the treatment of equality: Given a set of
+% equalities, it is an algorithm for transforming it, when possible,
+% into a set of confluent rewrite rules.  This accelerates the procedure
+% of paramodulation without loss of completeness: we know that for some
+% rules rewriting isn't necessary in both directions. Finally,
+% congruence closure is a decision method for equalities in ground
+% equational theories, used in practice in the SMT provers, a new
+% generation of provers that has proved to be very efficient.
+
+% \paragraph{Paramodulation}
+
+% Paramodulation (See \cite{nieuwenhuis2001paramodulation} for a
+% complete survey) originated as a development of resolution, introduced
+% soon after it by \cite{wos1968paramodulation}: for improving
+% resolution-based methods, the study of the equality predicate has been
+% particularly important because its axiomatic treatment was unusable.
+% This lead to the design of an additional, dedicated inference rule:
+% \[ \infer{C, s=t \and D}{(C, D[t]_p)\sigma}\quad\sigma=mgu(s,D|_p)\]
+% where $D|_p$ is the subterm at position $p$, and $D[t]_p$ denotes the
+% result of replacing in $D$ the subterm at position $p$ with $t$. It is
+% based on Leibnitz's law of replacing equal by equal: every instance of
+% a member of an equation inside a clause can be rewritten to the other
+% member of the equation. This applies as well to clauses containing
+% equations. The addition of this rule to general resolution was proven
+% to be a complete way to semi-decide FOL with equality, but, the rule
+% being so general, it is almost unusable as-is.
+
+% Later on, it was proved that paramodulation was unnecessary to perform
+% into variables, that is, paramodulations where $D|_p$ is a variable.
+% However, even under these restrictions, paramodulation is difficult to
+% control: unless additional refinements are considered, it quickly
+% produces a large amount of unnecessary clauses, expanding the search
+% space excessively.
+
+% \paragraph{Superposition}
+
+% Superposition is a way to control the rule of paramodulation by
+% restricting the application of the rule with respect to an
+% \emph{order}, similarly to ordered resolution. The intuition behind
+% superposition is to only rewrite \emph{big} terms into \emph{smaller}
+% ones, these predicates being defined by a special \emph{rewriting
+%   order} (a monotone, stable, well-founded order). Superposition
+% consist in these two rules, parameterized on the order $\succ$:
+% \begin{align}
+%   \infer{C, l=r\and C',\pm (s=t)} {C,C', \pm (s[r]_p=t)}\qquad
+%   &\text{if}\quad
+%   \begin{array}{l}
+%     s|_p\cong l, l\succ r, s\succ t \\
+%     l\succ u\text{ for all } u\in C \\
+%     s\succ v\text{ for all } v\in C' 
+%   \end{array} \\
+%   \infer{C, - (s = s)}{C}\qquad
+%   &\text{if}\quad\ \ 
+%   s\succ v \text{ for all } v\in C
+% \end{align}
+
+% Numerous term orderings have been proposed in the literature that
+% tackle the problem of finding an ordering compatible with the
+% requirements of superposition, general enough to capture the intuitive
+% notion of the size of a term, and efficiently computable. Among the
+% \emph{syntactic} term orderings, the Recursive Path Ordering (RPO) and
+% the Knuth-Bendix ordering are the most successful. They both contain
+% the subterm order, and satisfy the required properties: they are
+% congruences (or monotone), stable under substitution and
+% well-founded. By their syntactical nature, they are easily computable.
+% \emph{Semantic} term ordering are rewriting orders based on semantical
+% properties rather than their syntactic form. It usually requires to
+% find a model of the pair of term which is often undecidable but can be
+% approximated. Examples of such models are graph models (dependency
+% pairs) or polynomial models (which requires to solve diophantine
+% equations).
+
+% \paragraph{Completion}
+
+% The first use of the superposition rule has been by Knuth and Bendix
+% for \emph{completion}. Completion is a procedure that attempts to
+% transform a given rewrite system into an equivalent confluent one. It
+% finds critical pairs in the rewrite system by superposing its
+% equations, orienting them according to the given order. During the
+% completion procedure, equations are simplified by rewriting and
+% tautologies are removed. For example, group theory can be defined as
+% the set of equations:
+% \[ E\ :=\ \{ x\cdot e=x; I(x)=e; x\cdot(y\cdot z)=(x\cdot y)\cdot z
+% \} \] and is transformed by the completion procedure into the
+% confluent rewrite system:
+% \[ R\ :=\ \{ x\cdot e\to x; I(x)\to e; x\cdot(y\cdot z)\to (x\cdot
+% y)\cdot z \} \]
+
+\end{document}
