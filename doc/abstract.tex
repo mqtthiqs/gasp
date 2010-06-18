@@ -1,0 +1,233 @@
+\documentclass{article}
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{mathpartir}
+\usepackage{color}
+\usepackage[pdftex,backref=page,colorlinks=true]{hyperref}
+\usepackage{amsmath, amstext, amsthm, amsfonts}
+\usepackage{stmaryrd}
+\usepackage{geometry}
+\usepackage{natbib}
+\usepackage{fancyhdr}
+\input xy
+\xyoption{all}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+\definecolor{bwgreen}{rgb}{0.183,1,0.5}
+\definecolor{bwmagenta}{rgb}{1,0.169,0.909}
+\definecolor{bwblue}{rgb}{0.317,0.161,1}
+\hypersetup{
+  linkcolor=blue,
+  citecolor=blue
+}
+
+\newcommand{\sort}{\textsf{s}}
+\newcommand{\gor}{\ |\ }
+\newcommand{\gdecl}[2]{{#1}\ &::=\ {#2}}
+\newcommand{\subst}[2]{\{#1/#2\}}
+
+\title{Semantic Patches
+  % pas sûr que le nom soit encore adapté
+}
+\author{Matthias Puech $\quad\Leftrightarrow\quad$ Yann Régis-Gianas}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Motivations}
+
+It is interesting to investigate the possible relationship between the
+very \emph{methodologies} or even \emph{daily workflow} employed in
+both fields of mathematics and computer science: one trying to prove a
+theorem, the other constructing a program to fulfill a task. How does
+one or the other elaborates his object of study? What kind of \emph{a
+  posteriori} modification is he prone to doing? What do these
+modifications imply on the validity of the whole edifice or the other
+way around, how do one rely on existing work to build up new results?
+Finally, how to relate how both scientists collaborate in a team?
+
+Recent efforts in the formalization of mathematical results have
+naturally led to these questions and many of them remain largely
+unanswered, but the tendency seems to be to adapt existing methods
+coming from software development, witness for example the recent
+introduction of modules, file-based scripts and separate compilation
+in proof assistants like \textsf{Coq} or \textsf{Matita}, the use of
+dependency management tools (\textsf{make}) or version control system
+(\textsf{git}, \textsf{svn}) to build and manage versions of a
+project. Both for the development of proofs or programs, these tools
+attempt to cope with the fact that most of a mathematician or
+programmer's time is actually spent \emph{editing}, not
+\emph{writing}.
+
+As intelligent and widely adopted as this tool chain has gotten, we
+believe that they are not adapted for the new, demanding requirements
+of proof developments. Indeed, whereas compilation of a program is
+usually fast enough for the programmer to rely on the usual
+interaction loop ((edit; compile)*; commit)*, the operation of proof
+checking is usually too expensive computationally to mimic this
+workflow. But even besides the time factor, this ``traditional'' way
+of formalizing mathematics hinders the process of mathematical
+discovery process: once a concept contained in a file is compiled, it
+is considered frozen and any changes to it require the recompilation
+of the whole file; the linearity of the development also gives no room
+for alternate, inequivalent definitions. This fact has nonetheless
+been shown to be of crucial to the mathematical discovery process by
+\cite{lakatos1964proofs}, and we believe that they should be taken
+into account in the realization of mathematical assistants like
+\textsf{Coq} or \textsf{Matita}.
+
+We propose to discuss a small part of these questions, namely the
+enhancement and adaptation of version control paradigms to the
+management of mathematical repositories, to witness with more
+precision the \emph{impact of changes}. By studying the dependencies
+between objects in a proof, we can get a much finely grained vision of
+what a future evolution would impact. In proof assistants based on the
+propositions-as-types paradigm, Type Theory offers a powerful tool to
+witness the effect of changes finely, \emph{i.e.} types. Eventually,
+we hope to be capable of expressing evolutions on formal proofs, check
+them efficiently and incrementally, and manage distributed
+repositories of mathematics with it, guaranteeing \emph{by typing} the
+stepwise global consistency of the repository.
+
+In the light of the propositions-as-types paradigms where
+proof-checking boils down to type-checking, we abstract from whether
+we are talking about proofs or programs, so that our development could
+eventually also be used in traditional software development.
+
+\section{Methodologies}
+
+We propose here to devise a system for \emph{semantic patches}. It
+% TODO changer le nom?
+substitutes the idea of textual transformation by:
+\begin{itemize}
+\item First preferring an abstract syntax tree representation instead
+  of plain text;
+\item Secondly embedding semantic, or typing data into the
+  transformations, in order to be able to reason on them.
+\item Finally, perform type-checking in an incremental way, that is
+  type only the syntactic difference and reuse derivation for the
+  already known subprograms.
+\end{itemize}
+
+We want to design a \emph{language of patches}, able to represent
+% TODO changer le nom?
+these transformations and their semantic properties, thus capturing
+local changes in programs, as well as their global effect on the whole
+project. We can see this goal as a refinement of the former idea of
+``dependency''.
+
+\subsection{Data \emph{vs.} patch-oriented}
+
+\subsection{Related Works}
+
+\section{A kernel for incremental type-checking}
+
+Representing syntax and logics is nicely done in a \emph{logical
+  framework} like LF (\cite{harper1993framework}): both the syntactic
+elements and the typing derivations can sit in the same tree
+structure, and both can be rechecked at the same time, thanks to
+dependent types.
+
+For the purpose of incremental type checking though, our needs are a
+little bit different: first, we need to record, that is to name all
+intermediate values of our developments, so as to be able to address
+and reuse them multiple times. Secondly, we need to make sure that
+those intermediate values (sub-terms) are not recorded twice, so as to
+not type-check them twice. Thus we are looking to represent syntactic
+and typing objects as a \emph{DAG} rather than a tree, and ensure
+\emph{maximal sharing} among its sub-DAGs.
+
+Our system will have these properties \emph{wrt.} LF:
+\begin{itemize}
+\item In this first iteration of the project, we do not need
+  computations to take place within our DAGs. Our syntax will then be
+  restricted to product types and applications;
+\item Every term should be a flat application of variables, so that we
+  don't introduce compound terms without naming them;
+\item Finally we need a way to record intermediate definitions: we
+  introduce a new kind of binder, the equality binder. We maintain the
+  invariant that not two same definition can sit in the context while
+  typing.
+\end{itemize}
+
+\paragraph{Syntax} There are three syntactic categories: applicative
+terms $a$, types $t$ and environments $\Gamma$.
+
+\begin{align*}
+ \gdecl{a}{x \gor a\ x } \\
+ \gdecl{t}{a \gor \sort \gor (x:t)\cdot t \gor (x=a:t)\cdot t} \\
+ \gdecl{\Gamma}{\cdot \gor \Gamma[x:t] \gor \Gamma[x=a:t]}
+\end{align*}
+
+Following the standard syntax, we denote by $(x:t)\cdot u$ the
+dependent product (elsewhere written with a $\Pi$). The new construct
+$(x=a:t)\cdot u$ is a definition, whose value is $a$. We write as
+usual $(x_1:t_1)(x_2:t_2)\ldots(x_n:t_n)\cdot t$ for
+$(x_1:t_1)\cdot(x_2:t_2)\cdot\ldots\cdot(x_n:t_n)\cdot t$, $t \to u$
+for $(x:t)\cdot u$ where $x\notin u$, and $(x\ y : t)\cdot u$ for
+$(x:t)(y:t)\cdot u$. The lookup in the environment is written either
+$\Gamma(x):t$, denoting ``$\Gamma$ contains a declaration $[x:t]$
+\emph{or} a definition $[x=a:t]$'', or $\Gamma(x)=a:t$ denoting
+``$\Gamma$ contains a definition $[x=a:t]$''. Capture-avoiding
+renaming of variables in a term $t$ is written $t\subst{x}{y}$ for
+``replace all occurences of $x$ by $y$'' and is defined the usual way.
+
+\paragraph{Typing} The typing of our system is a restriction of the
+usual typing rules for dependently-typed systems with the additional
+two rules for typing a singleton product and the application of a
+singleton argument (featuring the syntactic verification in the
+environment). It depends on: 
+\begin{itemize}
+  \item$\mathcal S$ a set of sorts \sort,
+  \item$\mathcal A \in \mathcal S^2$ the axioms of the system,
+  \item$\mathcal R \in \mathcal S^3$ the allowed products.
+\end{itemize}
+It relies on two distincts judgments:
+\begin{itemize}
+\item $\Gamma\vdash a : t$ ($a$ has type $t$ in $\Gamma$),
+\item $\Gamma\vdash t : \sort$ ($t$ has sort $s$ in $\Gamma$).
+\end{itemize}
+The rules are:
+\begin{mathpar}
+  \infer[Axiom]{
+  }{\Gamma\vdash\sort_1:\sort_2}
+  \quad(\sort_1,\sort_2)\in\mathcal A
+  \and
+  \infer[Init]{
+    \Gamma(x):t
+  }{\Gamma\vdash x:t}
+  \and
+  \infer[Prod]{\Gamma\vdash t:\sort_1 \and 
+    \Gamma[x:t]\vdash u:\sort_2
+  }{\Gamma\vdash(x:t)\cdot u : \sort_3}
+  \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
+  \and
+  \infer[Sing]{\Gamma\vdash a:t \and
+    \Gamma\vdash t:\sort_1 \and
+    \Gamma[x=a:t]\vdash u:\sort_2
+  }{\Gamma\vdash(x=a:t)\cdot u : \sort_3} 
+  \quad(\sort_1,\sort_2,\sort_3)\in\mathcal R
+  \and
+  \infer[App]{
+    \Gamma\vdash a:(y:t)\cdot u \and \Gamma(x):t
+    }{\Gamma\vdash a\ x : u\subst{x}{y}}
+  \and
+  \infer[Skip]{
+    \Gamma\vdash a:(y=b:t)\cdot u \and \Gamma(x)=b:t
+    }{\Gamma\vdash a : u\subst{x}{y}}
+\end{mathpar}
+
+A term $t$ represents a state of the repository at a given moment. It
+contains the declaration of the object language's syntax, its typing
+rules, the syntactic objects and derivations recorded in it along with
+the patches that let the repository evolve. If $\cdot\vdash t:\sort$,
+then the repository is well-typed.
+
+
+\bibliographystyle{plainnat}
+
+\bibliography{english}
+
+\end{document}
