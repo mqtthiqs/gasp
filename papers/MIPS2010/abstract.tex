@@ -137,41 +137,56 @@ among syntax objects is done by sharing common subterms or
 subderivations.
 
 Representing syntax and logics is nicely done in a \emph{logical
-  framework} like LF: both the syntactic
-elements and the typing derivations can sit in the same tree
-structure, and both can be rechecked at the same time, thanks to
-dependent types. For the purpose of incremental type checking though,
-our needs are a little bit different: first, we need to record, that
-is to name all intermediate values of our developments, so as to be
-able to address and reuse them multiple times. Secondly, we need to
-make sure that those intermediate values (sub-terms) are not recorded
-twice, so as to not type-check them twice: we are looking to represent
-syntactic and typing objects as a DAG rather than a tree.
-
-Our system will have these properties w.r.t. LF:
+  framework} like LF: both the syntactic elements and the typing
+derivations can sit in the same tree structure, and both can be
+rechecked at the same time, thanks to dependent types. For the purpose
+of incremental type checking though, our needs are a little bit
+different: first, we need to record, that is to name all intermediate
+values of our developments, so as to be able to address and reuse them
+multiple times. Secondly, we need to make sure that those intermediate
+values (sub-terms) are not recorded twice, so as to not type-check
+them twice: we are looking to represent syntactic and typing objects
+as a DAG rather than a tree. Moreover, we enforce by typing a property
+of \emph{maximal sharing}: every different subterm can be constructed
+exactly once. Our system will have these properties w.r.t. LF:
 \begin{itemize}
 \item In this first iteration of the project, we do not need
   computations to take place within our DAGs. Our syntax will then be
   restricted to product types and applications;
 \item Every term should be a flat application of variables, so that we
-  don't introduce compound terms without naming them;
+  don't introduce compound terms without naming them and recording
+  their types;
 \item Finally we need a way to record intermediate definitions: we
   introduce a new kind of binder, the equality binder. We maintain the
   invariant that not two same definition can sit in the context while
-  typing.
+  typing, thus guaranteeing \emph{maximal sharing} among terms and
+  derivations.
 \end{itemize}
 
-We describe the state of a repository at a given moment by a type in
-the following syntax. Well-typed types in the repository meta-language
-guarantee that it contains only well-typed proofs in the object
-language.
+We describe the state of a repository at a given moment by a type $t$
+in the following syntax. Well-typed types in the repository
+meta-language guarantee that it contains only well-typed proofs in the
+object language.
 \begin{align*}
  \gdecl{a}{x \gor a\ x } \\
- \gdecl{t}{a \gor \sort \gor (x:t)\cdot t \gor (x=a:t)\cdot t} \\
- \gdecl{\Gamma}{\cdot \gor \Gamma[x:t] \gor \Gamma[x=a:t]}
+ \gdecl{t}{a \gor \sort \gor (x:t)\cdot t \gor (x=a:t)\cdot t}
 \end{align*}
 
-\paragraph{Related work}
+From an implementation point of view, following \textsf{GIT}, we store
+these terms in a database of objects indexed by \emph{keys}, which are
+hash values of their contents, so that retreiving the type of a whole
+term boils down to compute its hash, and look for it in the database.
+
+Note that in this system, computation has no existence: we only
+provide ways to verify that syntax and typing rules of an object
+language are correct. Therefore, patches -- functions from
+repositories to repositories -- have no existence \emph{per se}. A
+necessary enhancement of our theory would be to consider computation
+as a way to apply patches as if they were constructive
+metatheorems. We conjecture that it would be done by re-extending the
+system towards LF (adding abstraction and reduction).
+
+\paragraph{Related works}
 \label{rw}
 
 The \textsf{Twelf} project (\cite{pfenning1999system}) is an
