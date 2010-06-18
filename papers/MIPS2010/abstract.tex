@@ -108,13 +108,19 @@ repository consistency.
 We propose to discuss a small part of these questions, namely the
 enhancement and adaptation of version control paradigms to the
 management of mathematical repositories, to witness with more
-precision the \emph{impact of changes}. In proof assistants based on
-the propositions-as-types paradigm, Type Theory offers a powerful tool
-to witness the effect of changes finely: types, and we base our work
-on these.
+precision the \emph{impact of changes}. Following the Type Theory
+approach, our work is based on an algebra of expressive types that are
+meant to assign precise specifications to object-level term
+constructors and, in the meantime, to capture fine-grained
+dependencies between these objects.
+
+%% In proof assistants based on
+%% the propositions-as-types paradigm, Type Theory offers a powerful tool
+%% to witness the effect of changes finely: types, and we base our work
+%% on these.
 
 We will describe some of the possible directions to develop a tool to
-analyze the impact of change through types. It involves at its core a
+analyze the impact of changes through types. It involves at its core a
 typed description language for repositories, and is strongly related
 to incremental type-checking: only differences between versions are
 type-checked and not the entire development. In the first iteration of
