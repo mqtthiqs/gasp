@@ -128,7 +128,7 @@ let infer_term pos env a =
 	 with Not_found -> error_not_bound pos x)
     | App (a,x) -> 
 	aux (x::al) !a 
-    | Unknown -> 
+    | Unknown -> assert false (* FIXME *)
   in
   aux [] a
 
