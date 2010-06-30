@@ -127,7 +127,9 @@ let infer_term pos env a =
 	(try check_term pos env al (Env.lookup env x)
 	 with Not_found -> error_not_bound pos x)
     | App (a,x) -> 
-	aux (x::al) !a in
+	aux (x::al) !a 
+    | Unknown -> 
+  in
   aux [] a
 
 let prod_rule = function

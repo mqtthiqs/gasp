@@ -3,6 +3,7 @@ type id = Name.t
 type term = 
   | Var of id
   | App of term' * id
+  | Unknown 
 
 and term' = term Position.located
 

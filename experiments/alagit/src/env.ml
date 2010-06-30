@@ -91,6 +91,7 @@ module Subst = struct
 
   let rec fold_app f acc = function
     | Var x -> f x acc
+    | Unknown -> acc
     | App (a,x) -> f x (fold_app f acc (Position.value a))
 
   let keys_of sigma a = 

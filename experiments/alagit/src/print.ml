@@ -9,6 +9,7 @@ let id fmt x =
 let rec term fmt = function
   | Var x -> fprintf fmt "@[%a@]" id x
   | App (t, x) -> fprintf fmt "@[%a @,@[%a@]@]" term' t id x
+  | Unknown -> fprintf fmt "@[?@]"
 
 and term' fmt t = term fmt !t
 

@@ -13,12 +13,12 @@ module ListExt = struct
   let rec cut n l = 
     let rec aux n accu l = 
       match n, l with
-	| 0, _  -> List.rev accu
+	| 0, _  -> List.rev accu, l
 	| _, [] -> raise Not_found
 	| n, x :: xs -> aux (n - 1) (x :: accu) xs
     in
     aux n [] l
-	  
+
 end
 
 module FilenameExt = struct

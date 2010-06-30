@@ -14,7 +14,7 @@
 # (enclosed in the file LGPL).
 
 # where to install the binaries
-prefix=/home/yann/usr
+prefix=/usr/local
 exec_prefix=${prefix}
 BINDIR=${exec_prefix}/bin
 
