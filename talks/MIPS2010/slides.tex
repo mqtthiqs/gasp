@@ -8,9 +8,7 @@
 \usepackage{stmaryrd}
 \usepackage[utf8x]{inputenc}
 \usepackage[protrusion=true,expansion=true]{microtype}
-\usepackage{dot2texi}
-\usepackage{tikz}
-\usetikzlibrary{shapes,arrows}
+\usepackage{setspace}
 
 \title{Towards typed repositories of proofs}
 
@@ -28,11 +26,11 @@ Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
 \setbeamertemplate{footline}[frame number]
 \setbeamertemplate{navigation symbols}{}
 
-\AtBeginSection[]
-{\begin{frame}<beamer>{Outline}
-    \tableofcontents[currentsection]
-  \end{frame}
-}
+% \AtBeginSection[]
+% {\begin{frame}<beamer>{Outline}
+%     \tableofcontents[currentsection]
+%   \end{frame}
+% }
 
 \usefonttheme{serif}
 
@@ -44,24 +42,33 @@ Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
     \newcommand\url\texttt
     \maketitle}
 \end{frame}
-\section*{Introduction}
+
+\section{Motivation}
 
 This talk will be about some remarks and directions on the way the
 edition of formal proof is done in proof assistants.
 
 \begin{frame}{A paradoxical situation}
-  Most time is spent \emph{editing}, not \emph{writing} proofs.
-
-  Workflow of formal mathematics is largely inspired by software
-  development:
-  \begin{itemize}
-  \item Text-based
-  \item Separate compilation (\textsf{make})
-  \item Versioning (\textsf{cvs}, \textsf{svn}, \textsf{diff}s\ldots)
-  \end{itemize}
+  \begin{block}{Observation 1}
+    Most of a programmer/mathematician's time is spent \emph{editing}, not \emph{writing}
+  \end{block}
+  \begin{block}{Observation 2}
+    Workflow of formal mathematics was largely inspired by software
+    development:
+    \begin{itemize}
+    \item File-based scripts
+    \item Separate compilation (\textsf{make})
+    \item Text-based versioning (\textsf{cvs}, \textsf{svn},
+      \textsf{diff}s\ldots)
+    \end{itemize}
+  \end{block}
+  \begin{block}{Postulate}
+    \it Current administrative toolchain should be adapted to proof languages
+  \end{block}
+  {\Large }
 \end{frame}
 
-Let me start with two simple observations relating the activity of
+Let me start with some simple observations relating the activity of
 both the working mathematician and the programmer. A first, obvious
 fact is that both spend more time \emph{editing} than \emph{writing}:
 their workflow is highly non-linear, involving experiments, fixes,
@@ -74,36 +81,124 @@ assistants, large bodies of mathematics have been formalized and the
 way people managed these developments is very similar to the one used
 in software development: we write proofs in text buffers, which are
 linear, and launch proof-checking when we are done. To avoid
-re-checking the whole development, we split it into mutually dependent
+re-checking the whole development, we split it into inter-dependent
 files and re-check only those who have changed. To keep track of old
 versions, we use line-based version control systems that have no
 awareness of the actual content of the files. The separation into
-multiple files then serves two different purpose, and the fact that
-they coincide is pure contingency: the purpose of splitting a
-development into logical units, and the purpose of easing the
-non-linear process of proof editing. Also, recording the actual text
-of the proofs for versioning is often non-satisfactory: on one side it
-contains mostly non-relevant informations (line breaks, spaces\ldots),
-on the other the relevant ones, the validity of the proof, the
-dependency between objects, is absent.
+multiple files serves two different purpose, and the fact that they
+coincide is pure contingency: the purpose of splitting a development
+into logical units, and the purpose of easing the non-linear process
+of proof editing. Also, recording the actual text of the proofs for
+versioning is often non-satisfactory: on one side it contains mostly
+non-relevant informations (line breaks, spaces\ldots), on the other
+the relevant ones, the validity of the proof, the dependency between
+objects, is absent.
 
 The paradox in this situation is that these very tools can be used to
 reason about formal languages and especially proof languages. Couldn't
-we adapt the methods developped to reason about a formal language to
-the proof language of proof assistants itself? Could we replace this
-legacy toolchain and make it language-aware?
+we adapt the methods developped to reason about formal languages to
+the language of proof assistants itself? Could we replace this legacy
+toolchain and make it language-aware?
 
-\begin{frame}{Expectations}
+\begin{frame}{Motivations}
+  Current toolset is not adapted to proof edition:
+  \begin{itemize}
+  \item ((edit; compile)*; commit)* loop does not scale to proofs
+  \item Concept freeze inhibits the discovery process
+  \item Any change in a file requires full recompilation of
+    dependencies
+  \item No room for alternate definitions (linearity of scripts)
+  \item Textual scripts \textsf{diff}s do not reflect the semantics
+  \item Not even the syntax
+  \end{itemize}
+  \vspace{2em}
+  {\tiny \ldots\ Maybe it wasn't adapted to software development}
+\end{frame}
+
+More precisely, here are some problems that arise with the traditional
+tools when editing proofs. Whereas the usual edit, compile, commit
+loop may be a satisfactory approximation when developing software, the
+additional demands of proof-checking makes it unsatisfactory as the
+development grows: often the time of recompilation is prohibitive. 
+
+But it is not only a matter of time: once a concept is proof-checked,
+it is frozen and any future modification of it will require to
+re-check a large part of the development, often much more than what is
+actually required. We believe that this facts inhibits the use of
+proof assistants as tools to help the mathematician in the discovery
+process, and not only to formally transcribe paper proofs.
+
+The same way, the linearity of proof scripts does not allow any
+flexibility in the alternate definition of concepts.
+
+Finally of course, the way we store mathematical developments, that is
+as textual files or textual diffs does not reflect neither their syntax
+nor their semantics, and as I will try to show, there is a lot to gain
+in changing this base representation.
+
+In fact, some will say that this model of interaction wasn't even
+adapted to programming in the first place.
+
+\begin{frame}{The impact of changes}
+  These problems were addressed by a number of (ad-hoc) fixes:
+  \begin{itemize}
+  \item File-based separate compilation
+  \item Interface/implementation
+  \item Interaction loop with global undo
+  \end{itemize}
+  \vspace{2em}
+  \begin{center} \Large
+    \begin{spacing}{1.3}
+      \textit{Need for a refined notion of dependency to analyze the
+        impact of changes}
+    \end{spacing}
+  \end{center}
+\end{frame}
+
+We can then see a number of extra-logical features of modern proof
+assistants as ways to cope with these problems. Starting from a
+hypothetical ``dark age'' of proof assistants where one would write
+its complete development in one unique file and let the program check
+it when done, were added:
+\begin{itemize}
+\item The ability to split it into files organized in a dependency
+  graph as discussed earlier, which is a coarse approximation of
+  actual dependencies amongst objects
+\item The ability to separate interfaces (statements) from
+  implementations (proofs), and recheck dependencies only if
+  implementations changed.
+\item Most proof assistants base their interactivity on a mechanism
+  for backtracking their entire states globally, as a way to make
+  changes to already checked parts.
+\end{itemize}
+
+\begin{frame}{Example: \textsf{coqide}}
   
 \end{frame}
 
-\begin{frame}{\mode<beamer>{Outline}}
-  \tableofcontents
+\begin{frame}{Methodology}
+  \begin{center}
+    \only<1-2>{\fbox{\parbox{20em}{\only<2>\alert{version control}\\[1em]%
+        \fbox{\parbox{18em}{script files\\[1em]%
+            \fbox{\parbox{16em}{parsing\\[1em]%
+                \fbox{\parbox{14em}{proof-checking\\} }}}}}}}}%
+    \only<3>{\fbox{\parbox{20em}{script files\\[1em]%
+        \fbox{\parbox{18em}{\alert{version control}\\[1em]%
+            \fbox{\parbox{16em}{parsing\\[1em]%
+                \fbox{\parbox{14em}{proof-checking\\} }}}}}}}}%
+    \only<4->{\fbox{\parbox{20em}{script files\\[1em]%
+        \fbox{\parbox{18em}{parsing\\[1em]%
+            \fbox{\parbox{16em}{\alert{version control \only<5->{+ proof-checking}}\\[1em]%
+                \uncover<4>{\fbox{\parbox{14em}{proof-checking\\}}}}}}}}}}%
+  \end{center}
+  \uncover<6>{
+    \begin{itemize}
+    \item AST representation
+    \item Typing annotations
+    \item Incremental type-checking
+    \end{itemize}
+  }
 \end{frame}
-
-\section{}
-
-\subsection{Practical applications}
 
 \section{A core meta-language for proof repositories}
 
