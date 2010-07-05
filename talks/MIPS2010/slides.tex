@@ -1,0 +1,65 @@
+\documentclass[red]{beamer}
+\usepackage{ucs}
+\usepackage{mathpartir}
+\usepackage{amsfonts,amsmath,amscd}
+\usepackage{stmaryrd}
+\usepackage[utf8]{inputenc}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+\title{Towards typed repositories of proofs}
+
+\date{July 10, 2010}
+
+\author[Matthias Puech \& Yann Régis-Gianas] {
+Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
+{\small \url{puech@cs.unibo.it}} \and {\small \url{yrg@pps.jussieu.fr}}
+}
+\institute {
+  \inst 1 {\small Dept. of Computer Science, University of Bologna} \and
+  \inst 2 {\small University Paris 7, CNRS, and INRIA, PPS, team ${\pi}r^2$}
+}
+
+\setbeamertemplate{footline}
+{ \sf
+  \hbox{%
+  \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.25ex,dp=1ex,left]{button}%
+    \usebeamerfont{title in head/foot} MIPS 2010
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.25ex,dp=1ex,right]{frame
+    number}%
+    \usebeamerfont{date in head/foot}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+%\setbeamertemplate{footline}[frame number]
+\usenavigationsymbolstemplate{}
+
+\AtBeginSection[]
+{\begin{frame}<beamer>{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\usefonttheme{serif}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\section*{Introduction}
+
+\frame{un \pause deux}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+\section{Section 1}
+\frame{bla}
+\section{Section 2}
+\frame{blo}
+
+
+
+\end{document}
