@@ -1,4 +1,7 @@
-\documentclass[red]{beamer}
+% \documentclass[ignorenonframetext,red]{beamer}
+
+\documentclass{article} \usepackage{beamerarticle}
+
 \usepackage{ucs}
 \usepackage{mathpartir}
 \usepackage{amsfonts,amsmath,amscd}
@@ -11,7 +14,7 @@
 \date{July 10, 2010}
 
 \author[Matthias Puech \& Yann Régis-Gianas] {
-Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
+Matthias Puech\inst{1,2} \and Yann Régis-Gianas\inst{2} \\
 {\small \url{puech@cs.unibo.it}} \and {\small \url{yrg@pps.jussieu.fr}}
 }
 \institute {
@@ -19,22 +22,8 @@ Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
   \inst 2 {\small University Paris 7, CNRS, and INRIA, PPS, team ${\pi}r^2$}
 }
 
-\setbeamertemplate{footline}
-{ \sf
-  \hbox{%
-  \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.25ex,dp=1ex,left]{button}%
-    \usebeamerfont{title in head/foot} MIPS 2010
-  \end{beamercolorbox}%
-  \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.25ex,dp=1ex,right]{frame
-    number}%
-    \usebeamerfont{date in head/foot}
-    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
-  \end{beamercolorbox}}%
-  \vskip0pt%
-}
-
-%\setbeamertemplate{footline}[frame number]
-\usenavigationsymbolstemplate{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
 
 \AtBeginSection[]
 {\begin{frame}<beamer>{Outline}
@@ -46,20 +35,46 @@ Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
 
 \begin{document}
 
-\frame{\titlepage}
-
+\begin{frame}
+  \titlepage
+  \mode<article>{\newcommand\url\texttt\maketitle}
+\end{frame}
 \section*{Introduction}
 
-\frame{un \pause deux}
+This talk will be about some remarks and directions on the way the
+edition of formal proof is done in proof assistants, especially those
+based on type theory like \textsf{Coq} or \textsf{Matita}.
+
+\begin{frame}{A paradoxical situation}
+  \begin{itemize}
+  \item Most time spent \emph{editing}, not \emph{writing}
+  \item Workflow of formal mathematics largely inspired by software development
+  \end{itemize}  
+\end{frame}
+
+Let me start with two simple observations relating the activity of
+both the working mathematician and the programmer. A first, obvious
+fact is that both spend more time \emph{editing} than \emph{writing}:
+their workflow is highly non-linear, involving experiments, fixes,
+backtrack on previous modifications\ldots, eventually validated or
+invalidated by some criteria like the absence of bugs, the conformance
+to a specifications on one side, or the validity of a proof, the
+adequacy of a definition on the other.
+
+The second observation is that since the advent of modern proof
+assistants, large bodies of mathematics have been formalized and the
+way people managed these developments is very similar to the one used
+in software development: we write proofs in text buffers, split the
+development into separate files
 
 \begin{frame}{Outline}
   \tableofcontents
 \end{frame}
-\section{Section 1}
-\frame{bla}
-\section{Section 2}
-\frame{blo}
 
+\section{}
 
+\subsection{Practical applications}
+
+\section{A core meta-language for proof repositories}
 
 \end{document}
