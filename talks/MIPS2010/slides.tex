@@ -1,6 +1,9 @@
+% Mode d'emploi: Switcher les deux lignes suivantes pour passer du
+% mode présentation au handout
+% ===================================================
 \documentclass[ignorenonframetext,red]{beamer}
-
 % \documentclass{article} \usepackage{beamerarticle}
+% ===================================================
 
 \usepackage{ucs}
 \usepackage{mathpartir}
@@ -192,8 +195,10 @@ it when done, were added:
                 \uncover<4>{\fbox{\parbox{14em}{proof-checking\\}}}}}}}}}}%
   \end{center}
   \uncover<6>{
+    Ingredients:
     \begin{itemize}
     \item AST representation
+    \item Explicit dependency DAG
     \item Typing annotations
     \item Incremental type-checking
     \end{itemize}
