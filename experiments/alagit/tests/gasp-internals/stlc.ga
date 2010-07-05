@@ -5,7 +5,7 @@
 (* Language definition *)
 
 (type : Type).
-(nat : type).
+(A B C : type).
 (arr : type -> type -> type).
 
 (env : Type).
@@ -17,10 +17,10 @@
 (s : (a b : type).(e : env).(f=cons a e : env). var e b -> var f b).
 
 (term : env -> type -> Type).
-(V : (e:env).(a:type). var e a -> term e a).
-(L : (e:env).(a b:type).(c=arr a b : type).(f=cons a e:env). 
+(Var : (e:env).(a:type). var e a -> term e a).
+(Lam : (e:env).(a b:type).(c=arr a b : type).(f=cons a e:env). 
    term f b -> term e c).
-(A : (e:env).(a b:type).(c=arr a b : type).
+(App : (e:env).(a b:type).(c=arr a b : type).
    term e c -> term e a -> term e b).
 
 (* Weakening here is just another rule, no way to prove it is admissible *)
@@ -29,25 +29,25 @@
 
 (* Definition of some terms *)
 
-(e1 = cons nat nil : env).
-(v1 = o nil nat : var e1 nat).	        (* nat ⊢ nat *)
-(t1 = V e1 nat v1 : term e1 nat).	(* nat ⊢ nat *)
+(e1 = cons A nil : env).
+(v1 = o nil A : var e1 A).	        (* A ⊢ A *)
+(t1 = Var e1 A v1 : term e1 A).	(* A ⊢ A *)
 
-(e2 = cons nat e1 : env).
-(t1w = W e1 nat nat t1 : term e2 nat). (* nat,nat ⊢ nat *)
-(* But t1w is not decomposable into a V rule, since W doesn't compute *)
+(e2 = cons A e1 : env).
+(t1w = W e1 A A t1 : term e2 A). (* A,A ⊢ A *)
+(* But t1w is not decomposable into a Var rule, since W doesn't compute *)
 
-(nn = arr nat nat : type).
-(t2 = L nil nat nat t1 : term nil nn).	(* ⊢ nat → nat *)
+(nn = arr A A : type).
+(t2 = Lam nil A A t1 : term nil nn).	(* ⊢ A → A *)
 
 (* The same parameterized by a base type *)
 
 (P : (a : type).
      (e1 = cons a nil : env).
      (v1 = o nil a : var e1 a).	        (* a ⊢ a *)
-     (t1 = V e1 a v1 : term e1 a).	(* a ⊢ a *)
+     (t1 = Var e1 a v1 : term e1 a).	(* a ⊢ a *)
      (nn = arr a a : type).
-     (t2 = L nil a a t1 : term nil nn).	(* ⊢ a → a *)
+     (t2 = Lam nil a a t1 : term nil nn).	(* ⊢ a → a *)
      Type).
 
 (* We can apply this "patch" to nn as well  *)
@@ -55,6 +55,16 @@
 (p = P nn : Type).			(* at this point inside the typing of 
 					   P nn, the environment contains a 
 					   derivation of 
-					   ⊢ (nat → nat) → (nat → nat) *)
+					   ⊢ (A → A) → (A → A) *)
+
+(* Proof of A(AB)(BC)C: *)
+
+(AB = arr A B : type).
+(BC = arr B C : type).
+(ABC = arr A BC : type).
+(eA = cons A nil : env).
+(eAAB = cons AB eA : env).
+(eAABBC = cons eAAB BC : env).
+(t1 = : term eAABC)
 
 Type

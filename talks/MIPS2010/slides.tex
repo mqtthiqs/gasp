@@ -1,20 +1,23 @@
-% \documentclass[ignorenonframetext,red]{beamer}
+\documentclass[ignorenonframetext,red]{beamer}
 
-\documentclass{article} \usepackage{beamerarticle}
+% \documentclass{article} \usepackage{beamerarticle}
 
 \usepackage{ucs}
 \usepackage{mathpartir}
 \usepackage{amsfonts,amsmath,amscd}
 \usepackage{stmaryrd}
-\usepackage[utf8]{inputenc}
+\usepackage[utf8x]{inputenc}
 \usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{dot2texi}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
 
 \title{Towards typed repositories of proofs}
 
 \date{July 10, 2010}
 
 \author[Matthias Puech \& Yann Régis-Gianas] {
-Matthias Puech\inst{1,2} \and Yann Régis-Gianas\inst{2} \\
+Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
 {\small \url{puech@cs.unibo.it}} \and {\small \url{yrg@pps.jussieu.fr}}
 }
 \institute {
@@ -37,19 +40,25 @@ Matthias Puech\inst{1,2} \and Yann Régis-Gianas\inst{2} \\
 
 \begin{frame}
   \titlepage
-  \mode<article>{\newcommand\url\texttt\maketitle}
+  \mode<article>{
+    \newcommand\url\texttt
+    \maketitle}
 \end{frame}
 \section*{Introduction}
 
 This talk will be about some remarks and directions on the way the
-edition of formal proof is done in proof assistants, especially those
-based on type theory like \textsf{Coq} or \textsf{Matita}.
+edition of formal proof is done in proof assistants.
 
 \begin{frame}{A paradoxical situation}
+  Most time is spent \emph{editing}, not \emph{writing} proofs.
+
+  Workflow of formal mathematics is largely inspired by software
+  development:
   \begin{itemize}
-  \item Most time spent \emph{editing}, not \emph{writing}
-  \item Workflow of formal mathematics largely inspired by software development
-  \end{itemize}  
+  \item Text-based
+  \item Separate compilation (\textsf{make})
+  \item Versioning (\textsf{cvs}, \textsf{svn}, \textsf{diff}s\ldots)
+  \end{itemize}
 \end{frame}
 
 Let me start with two simple observations relating the activity of
@@ -57,17 +66,38 @@ both the working mathematician and the programmer. A first, obvious
 fact is that both spend more time \emph{editing} than \emph{writing}:
 their workflow is highly non-linear, involving experiments, fixes,
 backtrack on previous modifications\ldots, eventually validated or
-invalidated by some criteria like the absence of bugs, the conformance
-to a specifications on one side, or the validity of a proof, the
-adequacy of a definition on the other.
+invalidated by some criteria like the absence of bugs or the validity
+of a proof.
 
 The second observation is that since the advent of modern proof
 assistants, large bodies of mathematics have been formalized and the
 way people managed these developments is very similar to the one used
-in software development: we write proofs in text buffers, split the
-development into separate files
+in software development: we write proofs in text buffers, which are
+linear, and launch proof-checking when we are done. To avoid
+re-checking the whole development, we split it into mutually dependent
+files and re-check only those who have changed. To keep track of old
+versions, we use line-based version control systems that have no
+awareness of the actual content of the files. The separation into
+multiple files then serves two different purpose, and the fact that
+they coincide is pure contingency: the purpose of splitting a
+development into logical units, and the purpose of easing the
+non-linear process of proof editing. Also, recording the actual text
+of the proofs for versioning is often non-satisfactory: on one side it
+contains mostly non-relevant informations (line breaks, spaces\ldots),
+on the other the relevant ones, the validity of the proof, the
+dependency between objects, is absent.
 
-\begin{frame}{Outline}
+The paradox in this situation is that these very tools can be used to
+reason about formal languages and especially proof languages. Couldn't
+we adapt the methods developped to reason about a formal language to
+the proof language of proof assistants itself? Could we replace this
+legacy toolchain and make it language-aware?
+
+\begin{frame}{Expectations}
+  
+\end{frame}
+
+\begin{frame}{\mode<beamer>{Outline}}
   \tableofcontents
 \end{frame}
 
@@ -76,5 +106,29 @@ development into separate files
 \subsection{Practical applications}
 
 \section{A core meta-language for proof repositories}
+
+\begin{frame}{Inspiration: the \textsf{git} storage model}
+  \begin{itemize}
+  \item ``Content-adressable''
+  \item Name reflects content
+  \item Maximal sharing (or hashconsing)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Incremental type-checking}
+  A small language for representing proofs:
+  \only<1>{\[ t\ ::=\ (x:t)\cdot t\ |\ x\ |\ t\ t\ |\ *\] \[\]}%
+  \only<2>{\[ t\ ::=\ (x:t)\cdot t\ |\ \alert x\ |\ \alert{t\ t}\ |\ *\] \[\]}%
+  \only<3>{\[ t\ ::=\ (x:t)\cdot t\ |\ \alert a\ |\ *\]%
+    \[ a\ ::=\ x\ |\ a\ x \]} 
+  \only<4>{\[ t\ ::=\ (x:t)\cdot t\ |\ a\
+    |\ *\ |\ \alert{(x = a)\cdot t}\]%
+    \[ a\ ::=\ x\ |\ a\ x \]}
+  \begin{example}
+    \[ \infer[Lam]{\Gamma,A\vdash B}{\Gamma\vdash A\to B} \]
+    \[ \textsc{Lam}\ :\ (\Gamma : env)\cdot(A B : type)\cdot
+    (d : \Gamma,A\vdash B)\cdot \Gamma\vdash A\to B \]
+  \end{example}
+\end{frame}
 
 \end{document}
