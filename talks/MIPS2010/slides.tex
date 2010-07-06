@@ -98,10 +98,14 @@ assistant.
     \end{itemize}
   \end{block}
   \pause
-  \begin{block}{Mission}
-    \large \it Isn't it time to adapt these tools to proofs?
+  \begin{block}{\ldots\ And yet,}
+    Powerful tools to mechanize the metatheory of (proof) languages
   \end{block}
-  {\Large }
+  \vspace{0.6em}
+  \pause
+  \begin{center}
+    {\large \it Isn't it time to make these tools metatheory-aware?}
+  \end{center}
 \end{frame}
 \hrule
 
@@ -118,10 +122,10 @@ development is managed outside the scope of the tool, by manual,
 textual transformations that are often very unsatisfactory.
 
 The paradox about this situation is that these very tools can be used
-to reason about formal languages and especially proof
-languages: some of these tools are even dedicated to the formalization
-of proof systems and their properties. But we still use the legacy
-generic tools to manage our developments.
+to reason about formal languages and especially proof languages: some
+of these tools are even dedicated to the mechanization of the
+metatheory of proof languages. But we still use the legacy generic
+tools to manage our developments.
 
 Couldn't we adapt the methods developed to reason about formal
 languages to the language of the proof assistant itself? Could we
@@ -308,8 +312,8 @@ In the following, I will present a preliminary implementation of these
 ideas. It is a meta-language for incremental proof-checking, that is a
 language in which one can define abstract syntaxes, logical rules and
 proofs, and allows to check validity, and express the incrementality
-of the constructions. It can be viewed as a kernel for a typed version
-control system.
+of the constructions. It can be viewed as a kernel for a generic,
+typed version control system.
 
 \begin{frame}{Inspiration: the \textsf{git} storage model}
   \begin{itemize}
