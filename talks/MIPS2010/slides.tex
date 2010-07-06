@@ -157,8 +157,8 @@ semantic-aware?
 More precisely, here are some problems that arise with the traditional
 tools when editing proofs. Whereas the usual edit, compile, commit
 loop may be a satisfactory approximation when developing software, the
-additional demands of proof-checking makes it unsatisfactory as the
-development grows: often the time of recompilation is prohibitive.
+extra computational cost of proof-checking makes it unsatisfactory as
+the development grows: often the time of recompilation is prohibitive.
 
 But it is not only a matter of time: once a concept is proof-checked,
 it is frozen and any future modification of it will require to
@@ -182,7 +182,9 @@ adapted to programming in the first place.
 \begin{frame}{The impact of changes}
   \vspace{0.5em}
   \begin{center}
-    \only<1-3>{\includegraphics[width=0.75\textwidth]{images/coqide.png}}%
+    \only<1>{\includegraphics[width=0.75\textwidth]{images/coqide00.png}}%
+    \only<2>{\includegraphics[width=0.75\textwidth]{images/coqide0.png}}%
+    \only<3>{\includegraphics[width=0.75\textwidth]{images/coqide.png}}%
     \only<4>{\includegraphics[width=0.75\textwidth]{images/coqide2.png}}%
     \only<5>{\includegraphics[width=0.75\textwidth]{images/coqide4.png}}%
     \only<6>{\includegraphics[width=0.75\textwidth]{images/coqide5.png}}%
@@ -316,14 +318,50 @@ of the constructions. It can be viewed as a kernel for a generic,
 typed version control system.
 
 \begin{frame}{Inspiration: the \textsf{git} storage model}
-  \begin{itemize}
-  \item ``Content-adressable''
-  \item Name reflects content
-  \item Maximal sharing (or hashconsing)
-  \end{itemize}
-
-  Let's design a \emph{typed} \textsf{git} to do incremental type-checking
+  \begin{center}
+    \begin{overlayarea}{\textwidth}{12em}
+      \only<2>{\includegraphics[width=0.85\textwidth]{images/git1.pdf}}%
+      \only<3>{\includegraphics[width=0.85\textwidth]{images/git2.pdf}}%
+      \only<4>{\includegraphics[width=0.85\textwidth]{images/git3.pdf}}%
+      \only<5>{\includegraphics[width=0.85\textwidth]{images/git4.pdf}}%
+      \only<6-9>{\includegraphics[width=0.85\textwidth]{images/git5.pdf}}%
+      \only<10>{
+        \begin{center}
+          \vspace{5em}
+          {\Large Let's design a \emph{typed} \textsf{git}}
+        \end{center}
+      }%
+    \end{overlayarea}
+  \end{center}%
+  \begin{itemize}\small %
+  \item<7-> ``Content-adressable''%
+  \item<8-> Name reflects content%
+  \item<9-> Maximal sharing (or hash-consing)%
+  \end{itemize}%
 \end{frame}
+
+\textsf{Git} is one of the most successful version control system, and
+part of its success is due to the very simple, yet very efficient
+storage model. It doesn't keep track of changes \emph{per se}, but of
+similarities between version. Given a base directory structure,
+already committed in its database, and a new version of it with, let's
+say, one file changed -- \texttt{f3.txt}, it stores the new version by
+linking all common subdirectory structure to the previous version.
+This is possible because every node in the tree, directories and
+files, have a unique name. So actually, the database of \textsf{git}
+looks like this.
+
+Moreover, similarities are easily tracked because every name is
+carefully chosen to reflect the \emph{content} of a file or directory.
+In practice, \texttt{git} uses a hash function to produce all names in
+the database: files are given the hash of their content, and
+directories are given the hash of the hash of all the files it
+contains, recursively.
+
+This way, we ensure that no two subdirectories with different content
+appear in the database, that is, we enforce maximal sharing among
+subdirectories. In functional programming, this is called
+hash-consing.
 
 \begin{frame}{Incremental type-checking}
   A small language for representing proofs:
