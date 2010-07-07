@@ -66,9 +66,9 @@ edition of formal proof is done in proof assistants.
 \hrule
 
 Let me start with a simple observation relating the activity of both
-the working mathematician and the computer scientist. Whereas both
-activities are percieved, from the outside, as apodictic because the
-final object of their study, the proof or the program, seems to be
+the working mathematician and the computer scientist. Both activities
+could be percieved, from the outside, as apodictic because the final
+object of their study, the proof or the program, seems to be
 unquestionably valid (or not).
 
 If we observe the day-to-day work of these scientists though, their
@@ -269,7 +269,7 @@ Here is a schematic view of the traditional way to manage formal
 developments. The user writes scripts which are version controlled,
 and these scripts are parsed and checked on demand. By pushing version
 management inwards, we abstract from syntax, and more informations
-become available. For instance we can compute the graph of
+become available. For instance we can compute the acyclic graph of
 dependencies. At this level already, the situation is greatly
 enhanced: syntax, and file-based development, get the place they
 deserve: they are relegated to a tool for user interaction, the actual
@@ -300,6 +300,7 @@ development and their global effect, in a minimal way. We can perform
         \begin{itemize}
         \item Typing
         \item Incrementality
+        \item Dependency
         \end{itemize}
       \end{block}
     \end{column}
@@ -313,9 +314,9 @@ development and their global effect, in a minimal way. We can perform
 In the following, I will present a preliminary implementation of these
 ideas. It is a meta-language for incremental proof-checking, that is a
 language in which one can define abstract syntaxes, logical rules and
-proofs, and allows to check validity, and express the incrementality
-of the constructions. It can be viewed as a kernel for a generic,
-typed version control system.
+proofs, and allows to check validity, express the incrementality of
+the constructions, and their dependency. It can be viewed as a kernel
+for a generic, typed version control system.
 
 \begin{frame}{Inspiration: the \textsf{git} storage model}
   \begin{center}
@@ -341,7 +342,7 @@ typed version control system.
 \end{frame}
 
 \textsf{Git} is one of the most successful version control system, and
-part of its success is due to the very simple, yet very efficient
+part of its success is due to the very simple, yet very powerful
 storage model. It doesn't keep track of changes \emph{per se}, but of
 similarities between version. Given a base directory structure,
 already committed in its database, and a new version of it with, let's
@@ -349,11 +350,13 @@ say, one file changed -- \texttt{f3.txt}, it stores the new version by
 linking all common subdirectory structure to the previous version.
 This is possible because every node in the tree, directories and
 files, have a unique name. So actually, the database of \textsf{git}
-looks like this.
+looks like this: it associates to every name, a content (for files) or
+a list of names (for directories). The invariant is that this database
+forms a DAG. This naming policy makes all content adressable.
 
 Moreover, similarities are easily tracked because every name is
 carefully chosen to reflect the \emph{content} of a file or directory.
-In practice, \texttt{git} uses a hash function to produce all names in
+In practice, \textsf{git} uses a hash function to produce all names in
 the database: files are given the hash of their content, and
 directories are given the hash of the hash of all the files it
 contains, recursively.
@@ -363,20 +366,101 @@ appear in the database, that is, we enforce maximal sharing among
 subdirectories. In functional programming, this is called
 hash-consing.
 
-\begin{frame}{Incremental type-checking}
-  A small language for representing proofs:
-  \only<1>{\[ t\ ::=\ (x:t)\cdot t\ |\ x\ |\ t\ t\ |\ *\] \[\]}%
-  \only<2>{\[ t\ ::=\ (x:t)\cdot t\ |\ \alert x\ |\ \alert{t\ t}\ |\ *\] \[\]}%
-  \only<3>{\[ t\ ::=\ (x:t)\cdot t\ |\ \alert a\ |\ *\]%
-    \[ a\ ::=\ x\ |\ a\ x \]} 
-  \only<4>{\[ t\ ::=\ (x:t)\cdot t\ |\ a\
-    |\ *\ |\ \alert{(x = a)\cdot t}\]%
-    \[ a\ ::=\ x\ |\ a\ x \]}
-  \begin{example}
-    \[ \infer[Lam]{\Gamma,A\vdash B}{\Gamma\vdash A\to B} \]
-    \[ \textsc{Lam}\ :\ (\Gamma : env)\cdot(A B : type)\cdot
-    (d : \Gamma,A\vdash B)\cdot \Gamma\vdash A\to B \]
-  \end{example}
+\begin{frame}{A typed repository}
+  % exemple
+\end{frame}
+
+on va plus loin grace a l'approche LF où tous les objets ont un type,
+et font partie de l'arbre de syntaxe. Donc tout est hash-consé
+(règles logiques, syntaxe, preuves).
+
+\begin{frame}{Incremental type-checking, incrementally}%
+  \begin{block}{Syntax}%
+    \only<1>{\[ t\ ::=\ [x:t]\cdot t\ |\ (x:t)\cdot t\ |\ x\ |\ t\ t\ %
+      |\ *\] \[\]}%
+    \only<2>{\[ t\ ::=\ [x:t]\cdot t\ |\ (x:t)\cdot t\ |\ \alert x\ |\ %
+      \alert{t\ t}\ |\ *\] \[\]}%
+    \only<3>{\[ t\ ::=\ [x:t]\cdot t\ |\ (x:t)\cdot t\ |\ \alert a\ |\ %
+      *\]%
+      \[ a\ ::=\ x\ |\ a\ x \]}%
+    \only<4>{\[ t\ ::=\ [x:t]\cdot t\ |\ (x:t)\cdot t\ |\ a\ |\ *\ |\ %
+      \alert{(x = a)\cdot t}\]%
+      \[ a\ ::=\ x\ |\ a\ x \]}%
+    \only<5>{\[ t\ ::=\ \alert{[x:t]\cdot t}\ |\ (x:t)\cdot t\ |\ a\ %
+      |\ *\ |\ (x = a)\cdot t\]%
+      \[ a\ ::=\ x\ |\ a\ x \]}%
+    \only<6->{\[ t\ ::=\ (x:t)\cdot t\ |\ a\ |\ *\ |\ (x = a)\cdot t\]%
+      \[ a\ ::=\ x\ |\ a\ x \]}%
+  \end{block}
+  \begin{block}{Semantics}
+      \[ \Gamma\ ::=\ \cdot\ |\ \Gamma [x:t]\only<4>{\ |\
+        \alert{\Gamma[x=a:t]}}
+      \only<5->{\ |\ \Gamma[x=a:t]}\] 
+      \vspace{1em}
+      \begin{center}
+        \begin{overlayarea}{0.8\textwidth}{5em}
+          \only<-6>{ $ \Gamma \vdash t : u $ \hfill `` In environment
+            $\Gamma$, term $t$ has type $u$ '' } \only<7>{ $ \Gamma
+            \vdash t : u \alert{\Rightarrow \Delta} $ \hfill ``
+            From \alert{repository} $\Gamma$, term $t$ of type $u$ \alert{leads to
+            the new repository $\Delta$}'' }
+        \end{overlayarea}
+      \end{center}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Typing rules}
+  \begin{block}{Product - Init}
+  \begin{mathpar}
+    \large
+    \infer                      % prod
+    {\Gamma\vdash t : *\uncover<2->{ \Rightarrow \_} \and \Gamma[x:t]\vdash u :
+      *\uncover<2->{\Rightarrow\Delta}}
+    {\Gamma\vdash(x:t)\cdot u : *\uncover<2->{\Rightarrow\Delta}}
+    \and
+    \uncover<3->{                               %init
+      \infer{ }
+      {\Gamma\vdash x : t \uncover<4->{\Rightarrow\Gamma}}
+      \quad {\small [x:t]\in\Gamma}
+    }
+  \end{mathpar}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Typing rules}
+  \begin{block}{Equality binder}
+    \begin{mathpar}
+      \large
+      \infer
+      {\Gamma\vdash a : u \Rightarrow \_ \and \Gamma[x=a:u]\vdash t :
+        *\Rightarrow\Delta }
+      {\Gamma\vdash (x=a)\cdot t : * \Rightarrow\Delta}
+      \quad {\small [y=a:u] \notin\Gamma}
+      \and \pause
+      \infer
+      {\Gamma\vdash t \{y/x\} : * \Rightarrow\Delta}
+      {\Gamma\vdash(x=a)\cdot t : * \Rightarrow\Delta}
+      \quad {\small [y=a:u] \in\Gamma}
+    \end{mathpar}
+  \end{block}
+  \pause
+  \begin{block}{Application}
+    \[ \infer
+      {\Gamma\vdash a : (y:u)\cdot t \Rightarrow\Delta}
+      {\Gamma\vdash a\ x : t \{x/y\} \Rightarrow\Delta}
+      \quad [x : u] \in \Gamma
+      \]
+  \end{block}
+\end{frame}
+
+\begin{frame}{Naming}
+  
+\end{frame}
+
+environnement : nom -> contenu * type
+
+\begin{frame}{Conclusion}
+  
 \end{frame}
 
 \end{document}
