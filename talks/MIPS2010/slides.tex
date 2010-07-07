@@ -179,6 +179,7 @@ to gain in changing this base representation.
 In fact, some will say that this model of interaction wasn't even
 adapted to programming in the first place.
 
+\hrule
 \begin{frame}{The impact of changes}
   \vspace{0.5em}
   \begin{center}
@@ -200,6 +201,7 @@ adapted to programming in the first place.
     \end{itemize}
   }
 \end{frame}
+\hrule
 
 We can then see a number of extra-logical features of modern proof
 assistants as ways to cope with these problems. 
@@ -239,6 +241,7 @@ recheck only minimal parts of the developments.
 
 This is what we will try to do in the following.
 
+\hrule
 \begin{frame}{Methodology}
   \begin{center}
     \only<1-2>{\fbox{\parbox{20em}{\only<2>\alert{version
@@ -264,6 +267,7 @@ This is what we will try to do in the following.
   \item<8-> Incremental type-checking
   \end{itemize}
 \end{frame}
+\hrule
 
 Here is a schematic view of the traditional way to manage formal
 developments. The user writes scripts which are version controlled,
@@ -284,6 +288,7 @@ same time, and decide to type-check only local changes of the
 development and their global effect, in a minimal way. We can perform
 \emph{incremental type-checking}.
 
+\hrule
 \begin{frame}{A core meta-language for incremental type-checking}
   \begin{columns}[t]
     \begin{column}{0.5\textwidth}
@@ -310,6 +315,7 @@ development and their global effect, in a minimal way. We can perform
     \emph{A kernel for a typed version control system?}
   \end{center}
 \end{frame}
+\hrule
 
 In the following, I will present a preliminary implementation of these
 ideas. It is a meta-language for incremental proof-checking, that is a
@@ -318,6 +324,7 @@ proofs, and allows to check validity, express the incrementality of
 the constructions, and their dependency. It can be viewed as a kernel
 for a generic, typed version control system.
 
+\hrule
 \begin{frame}{Inspiration: the \textsf{git} storage model}
   \begin{center}
     \begin{overlayarea}{\textwidth}{12em}
@@ -340,6 +347,7 @@ for a generic, typed version control system.
   \item<9-> Maximal sharing (or hash-consing)%
   \end{itemize}%
 \end{frame}
+\hrule
 
 \textsf{Git} is one of the most successful version control system, and
 part of its success is due to the very simple, yet very powerful
@@ -366,14 +374,17 @@ appear in the database, that is, we enforce maximal sharing among
 subdirectories. In functional programming, this is called
 hash-consing.
 
+\hrule
 \begin{frame}{A typed repository}
   % exemple
 \end{frame}
+\hrule
 
 on va plus loin grace a l'approche LF où tous les objets ont un type,
 et font partie de l'arbre de syntaxe. Donc tout est hash-consé
 (règles logiques, syntaxe, preuves).
 
+\hrule
 \begin{frame}{Incremental type-checking, incrementally}%
   \begin{block}{Syntax}%
     \only<1>{\[ t\ ::=\ [x:t]\cdot t\ |\ (x:t)\cdot t\ |\ x\ |\ t\ t\ %
@@ -392,11 +403,11 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
     \only<6->{\[ t\ ::=\ (x:t)\cdot t\ |\ a\ |\ *\ |\ (x = a)\cdot t\]%
       \[ a\ ::=\ x\ |\ a\ x \]}%
   \end{block}
-  \begin{block}{Semantics}
+  \begin{block}{Typing}
       \[ \Gamma\ ::=\ \cdot\ |\ \Gamma [x:t]\only<4>{\ |\
         \alert{\Gamma[x=a:t]}}
       \only<5->{\ |\ \Gamma[x=a:t]}\] 
-      \vspace{1em}
+      \vspace{0em}
       \begin{center}
         \begin{overlayarea}{0.8\textwidth}{5em}
           \only<-6>{ $ \Gamma \vdash t : u $ \hfill `` In environment
@@ -408,7 +419,38 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
       \end{center}
   \end{block}
 \end{frame}
+\hrule
 
+Let's construct a typed language for this. We start from the usual
+Pure Type Systems here, and we will modify it gradually to fit our
+needs.
+
+First, we want to name all intermediate results, that is we don't want
+to allow compound, deep applications. We remove general application
+and make it a list of variables. Then, we need a new binder to
+remember these flat applications. It will behave like a \textsf{let}
+binding, and we add a corresponding entry to the environment. Note
+that in terms, the type is not present whereas it is in the
+environment.
+
+We will use this syntax in quite an unusual way as we will write and
+check only \emph{types}. Terms will be sequences of binders declaring
+and defining inter-depentent pieces of syntax, and what finishes them
+(* or $a$) does not matter in most cases. For the moment, we remove
+the abstraction, and with it all notion of computation.
+
+These simple modifications allow us to see this system as a typed
+repository of proofs with a last modification: the usual judgement
+becomes ``From repository Γ, term t of type u leads to repository
+∆''. The analogy here is: Γ is the current database of versions, $t$
+is a working directory with possible redundancies (it's not maximally
+shared), and integration of $t$ into $\Gamma$ leads to $\Delta$, which
+is maximally shared.
+
+We thread the environment along the typing process and return it as
+the result.
+
+\hrule
 \begin{frame}{Typing rules}
   \begin{block}{Product - Init}
   \begin{mathpar}
@@ -418,7 +460,7 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
       *\uncover<2->{\Rightarrow\Delta}}
     {\Gamma\vdash(x:t)\cdot u : *\uncover<2->{\Rightarrow\Delta}}
     \and
-    \uncover<3->{                               %init
+    \uncover<3->{               %init
       \infer{ }
       {\Gamma\vdash x : t \uncover<4->{\Rightarrow\Gamma}}
       \quad {\small [x:t]\in\Gamma}
@@ -426,7 +468,9 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
   \end{mathpar}
   \end{block}
 \end{frame}
+\hrule
 
+\hrule
 \begin{frame}{Typing rules}
   \begin{block}{Equality binder}
     \begin{mathpar}
@@ -452,15 +496,20 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
       \]
   \end{block}
 \end{frame}
+\hrule
 
+\hrule
 \begin{frame}{Naming}
   
 \end{frame}
+\hrule
 
 environnement : nom -> contenu * type
 
-\begin{frame}{Conclusion}
+\hrule
+\begin{frame}{Further Work}
   
 \end{frame}
+\hrule
 
 \end{document}
