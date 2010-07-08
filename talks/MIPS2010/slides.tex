@@ -1,8 +1,8 @@
 % Mode d'emploi: Switcher les deux lignes suivantes pour passer du
 % mode présentation au handout
 % ===================================================
-\documentclass[ignorenonframetext,red]{beamer}
-% \documentclass[12pt]{article} \usepackage{beamerarticle} \usepackage{fullpage}
+%\documentclass[ignorenonframetext,red]{beamer}
+\documentclass[12pt]{article} \usepackage{beamerarticle} \usepackage{fullpage}
 % ===================================================
 
 \usepackage{ucs}
@@ -441,11 +441,11 @@ the abstraction, and with it all notion of computation.
 
 These simple modifications allow us to see this system as a typed
 repository of proofs with a last modification: the usual judgement
-becomes ``From repository Γ, term t of type u leads to repository
-∆''. The analogy here is: Γ is the current database of versions, $t$
-is a working directory with possible redundancies (it's not maximally
-shared), and integration of $t$ into $\Gamma$ leads to $\Delta$, which
-is maximally shared.
+becomes ``From repository $\Gamma$, term $t$ of type $u$ leads to
+repository $\Delta$''. The analogy here is: $\Gamma$ is the current
+database of versions, $t$ is a working directory with possible
+redundancies (it's not maximally shared), and integration of $t$ into
+$\Gamma$ leads to $\Delta$, which is maximally shared.
 
 We thread the environment along the typing process and return it as
 the result.
