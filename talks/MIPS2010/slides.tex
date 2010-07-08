@@ -1,8 +1,8 @@
 % Mode d'emploi: Switcher les deux lignes suivantes pour passer du
 % mode présentation au handout
 % ===================================================
-%\documentclass[ignorenonframetext,red]{beamer}
-\documentclass[12pt]{article} \usepackage{beamerarticle} \usepackage{fullpage}
+\documentclass[ignorenonframetext,red]{beamer}
+%\documentclass[12pt]{article} \usepackage{beamerarticle} \usepackage{fullpage}
 % ===================================================
 
 \usepackage{ucs}
@@ -376,7 +376,11 @@ hash-consing.
 
 \hrule
 \begin{frame}{A typed repository}
-  % exemple
+  \only<2>{\includegraphics[width=\textwidth]{images/gasp1.pdf}}%
+  \only<3>{\includegraphics[width=\textwidth]{images/gasp2.pdf}}%
+  \only<4>{\includegraphics[width=\textwidth]{images/gasp3.pdf}}%
+  \only<5>{\includegraphics[width=\textwidth]{images/gasp4.pdf}}%
+  \only<6>{\includegraphics[width=\textwidth]{images/gasp5.pdf}}%
 \end{frame}
 \hrule
 
@@ -403,21 +407,23 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
     \only<6->{\[ t\ ::=\ (x:t)\cdot t\ |\ a\ |\ *\ |\ (x = a)\cdot t\]%
       \[ a\ ::=\ x\ |\ a\ x \]}%
   \end{block}
-  \begin{block}{Typing}
+  \begin{block}{Environments}
       \[ \Gamma\ ::=\ \cdot\ |\ \Gamma [x:t]\only<4>{\ |\
         \alert{\Gamma[x=a:t]}}
-      \only<5->{\ |\ \Gamma[x=a:t]}\] 
-      \vspace{0em}
-      \begin{center}
-        \begin{overlayarea}{0.8\textwidth}{5em}
-          \only<-6>{ $ \Gamma \vdash t : u $ \hfill `` In environment
-            $\Gamma$, term $t$ has type $u$ '' } \only<7>{ $ \Gamma
-            \vdash t : u \alert{\Rightarrow \Delta} $ \hfill ``
-            From \alert{repository} $\Gamma$, term $t$ of type $u$ \alert{leads to
-            the new repository $\Delta$}'' }
-        \end{overlayarea}
-      \end{center}
-  \end{block}
+      \only<5->{\ |\ \Gamma[x=a:t]} \] 
+    \end{block}
+    \begin{block}{Judgement}
+        \begin{tabular}{ll}
+          $\Gamma\vdash t : u \uncover<7>{\alert{\Rightarrow\Delta}}$
+          &
+          \only<-6>{`` In environment $\Gamma$, term $t$ has type $u$
+            ''}
+          \uncover<7>{`` From
+            \alert{repository} $\Gamma$, term $t$ of type $u$ \\ &
+            \alert{\hspace{1.2em}leads to the new repository $\Delta$}''
+          }
+        \end{tabular}
+    \end{block}
 \end{frame}
 \hrule
 
@@ -450,19 +456,21 @@ $\Gamma$ leads to $\Delta$, which is maximally shared.
 We thread the environment along the typing process and return it as
 the result.
 
+\newcommand\g[1]{\textcolor{gray}{#1}}
+
 \hrule
 \begin{frame}{Typing rules}
   \begin{block}{Product - Init}
   \begin{mathpar}
     \large
     \infer                      % prod
-    {\Gamma\vdash t : *\uncover<2->{ \Rightarrow \_} \and \Gamma[x:t]\vdash u :
-      *\uncover<2->{\Rightarrow\Delta}}
-    {\Gamma\vdash(x:t)\cdot u : *\uncover<2->{\textcolor{gray}{\Rightarrow\Delta}}}
+    {\Gamma\vdash t : *\uncover<2->{ \textcolor{gray}{\ \Rightarrow \_}} \and \Gamma[x:t]\vdash u :
+      *\uncover<2->{\textcolor{gray}{\ \Rightarrow\Delta}}}
+    {\Gamma\vdash(x:t)\cdot u : * \uncover<2->{\textcolor{gray}{\ \Rightarrow\Delta}}}
     \and
     \uncover<3->{               %init
       \infer{ }
-      {\Gamma\vdash x : t \uncover<4->{\Rightarrow\Gamma}}
+      {\Gamma\vdash x : t \uncover<4->{\textcolor{gray}{\ \Rightarrow\Gamma}}}
       \quad {\small [x:t]\in\Gamma}
     }
   \end{mathpar}
@@ -476,22 +484,22 @@ the result.
     \begin{mathpar}
       \large
       \infer
-      {\Gamma\vdash a : u \Rightarrow \_ \and \Gamma[x=a:u]\vdash t :
-        *\Rightarrow\Delta }
-      {\Gamma\vdash (x=a)\cdot t : * \Rightarrow\Delta}
+      {\Gamma\vdash a : u \textcolor{gray}{\ \Rightarrow \_} \and \Gamma[x=a:u]\vdash t :
+        *\textcolor{gray}{\ \Rightarrow\Delta} }
+      {\Gamma\vdash (x=a)\cdot t : * \textcolor{gray}{\ \Rightarrow\Delta}}
       \quad {\small [y=a:u] \notin\Gamma}
       \and \pause
       \infer
-      {\Gamma\vdash t \{y/x\} : * \Rightarrow\Delta}
-      {\Gamma\vdash(x=a)\cdot t : * \Rightarrow\Delta}
+      {\Gamma\vdash t \{y/x\} : * \textcolor{gray}{\ \Rightarrow\Delta}}
+      {\Gamma\vdash(x=a)\cdot t : * \textcolor{gray}{\ \Rightarrow\Delta}}
       \quad {\small [y=a:u] \in\Gamma}
     \end{mathpar}
   \end{block}
   \pause
   \begin{block}{Application}
     \[ \infer
-      {\Gamma\vdash a : (y:u)\cdot t \Rightarrow\Delta}
-      {\Gamma\vdash a\ x : t \{x/y\} \Rightarrow\Delta}
+      {\Gamma\vdash a : (y:u)\cdot t \textcolor{gray}{\ \Rightarrow\Delta}}
+      {\Gamma\vdash a\ x : t \{x/y\} \textcolor{gray}{\ \Rightarrow\Delta}}
       \quad [x : u] \in \Gamma
       \]
   \end{block}
@@ -520,15 +528,15 @@ the result.
   \large
   \infer
       {\Gamma\vdash a : u \Rightarrow \_ \and \Gamma[|a|=a:u]\vdash t\{x/|a|\} :
-        *\Rightarrow\Delta }
-      {\Gamma\vdash (x=a)\cdot t : * \Rightarrow\Delta}
+        *\textcolor{gray}{\ \Rightarrow\Delta} }
+      {\Gamma\vdash (x=a)\cdot t : * \textcolor{gray}{\ \Rightarrow\Delta}}
       \quad {\small [y=a:u] \notin\Gamma}
    \and
    \large
    \infer                      % prod
        {\Gamma\vdash t : *\uncover<2->{ \Rightarrow \_} \and \Gamma[k:t]\vdash u\{x/k\} :
-         *\uncover<2->{\Rightarrow\Delta}}
-       {\Gamma\vdash(x:t)\cdot u : * \textcolor{gray}{\Rightarrow\Delta}}
+         *\uncover<2->{\textcolor{gray}{\ \Rightarrow\Delta}}}
+       {\Gamma\vdash(x:t)\cdot u : * \textcolor{gray}{\textcolor{gray}{\ \Rightarrow\Delta}}}
        \quad{\small k=\nu()}
 
 \end{mathpar}
