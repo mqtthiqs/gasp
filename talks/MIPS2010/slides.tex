@@ -428,10 +428,10 @@ needs.
 First, we want to name all intermediate results, that is we don't want
 to allow compound, deep applications. We remove general application
 and make it a list of variables. Then, we need a new binder to
-remember these flat applications. It will behave like a \textsf{let}
-binding, and we add a corresponding entry to the environment. Note
-that in terms, the type is not present whereas it is in the
-environment.
+remember these flat applications and give a name to them. It will
+behave like a \textsf{let} binding, and we add a corresponding entry
+to the environment. Note that in terms, the type is not present
+whereas it is in the environment.
 
 We will use this syntax in quite an unusual way as we will write and
 check only \emph{types}. Terms will be sequences of binders declaring
@@ -458,7 +458,7 @@ the result.
     \infer                      % prod
     {\Gamma\vdash t : *\uncover<2->{ \Rightarrow \_} \and \Gamma[x:t]\vdash u :
       *\uncover<2->{\Rightarrow\Delta}}
-    {\Gamma\vdash(x:t)\cdot u : *\uncover<2->{\Rightarrow\Delta}}
+    {\Gamma\vdash(x:t)\cdot u : *\uncover<2->{\textcolor{gray}{\Rightarrow\Delta}}}
     \and
     \uncover<3->{               %init
       \infer{ }
@@ -499,16 +499,56 @@ the result.
 \hrule
 
 \hrule
-\begin{frame}{Naming}
+\begin{frame}{Content-aware names (implementation details)}
   
+\begin{itemize}
+\item Given ``$a$'', how to decide efficiently ``$[y = a : u] \in \Gamma$''?
+
+\item Inspiration from \textsf{Git}~:
+\begin{center}
+\begin{math}
+\begin{array}{lllr}
+| \dots | &:& \kappa^\star \rightarrow \kappa & \text{Hash function}\\
+\equiv    &:& \kappa \rightarrow \kappa \rightarrow \mathbb{B} & \text{Efficient comparison}\\
+\nu       &:& \textsf{unit} \rightarrow \kappa & \text{Fresh key generator}
+\end{array}
+\end{math}
+\end{center}
+\end{itemize}
+
+\begin{mathpar}
+  \large
+  \infer
+      {\Gamma\vdash a : u \Rightarrow \_ \and \Gamma[|a|=a:u]\vdash t\{x/|a|\} :
+        *\Rightarrow\Delta }
+      {\Gamma\vdash (x=a)\cdot t : * \Rightarrow\Delta}
+      \quad {\small [y=a:u] \notin\Gamma}
+   \and
+   \large
+   \infer                      % prod
+       {\Gamma\vdash t : *\uncover<2->{ \Rightarrow \_} \and \Gamma[k:t]\vdash u\{x/k\} :
+         *\uncover<2->{\Rightarrow\Delta}}
+       {\Gamma\vdash(x:t)\cdot u : * \textcolor{gray}{\Rightarrow\Delta}}
+       \quad{\small k=\nu()}
+
+\end{mathpar}
+
+environnement : nom -> contenu * type
+
 \end{frame}
 \hrule
 
-environnement : nom -> contenu * type
 
 \hrule
 \begin{frame}{Further Work}
   
+\begin{itemize}
+\item What if we reintroduce the lambda?
+\begin{enumerate}
+\item Constructive metatheory.
+\item A language to express patches?
+\end{enumerate}
+\end{itemize}
 \end{frame}
 \hrule
 
