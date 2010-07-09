@@ -11,11 +11,11 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="623.53003"
-   height="305.01999"
+   height="376.01999"
    id="svg2"
    version="1.1"
    inkscape:version="0.47pre4 r22446"
-   sodipodi:docname="gasp5.pdf">
+   sodipodi:docname="gasp5.svg">
   <defs
      id="defs4">
     <inkscape:perspective
@@ -200,6 +200,41 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_x="0 : 0.5 : 1"
        sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3136"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3150"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective5241"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective5263"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective5263-8"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -208,9 +243,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="280.53311"
-     inkscape:cy="95.194803"
+     inkscape:zoom="1.4"
+     inkscape:cx="213.7867"
+     inkscape:cy="151.1169"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -239,7 +274,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -247,7 +282,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(6.9971423,-38.45984)">
+     transform="translate(6.9971423,32.540952)">
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Courier"
@@ -328,14 +363,6 @@
        width="154.23419"
        xlink:href="/home/puech/inkscape_pasted_image_20100708_165753.png" />
     <image
-       sodipodi:absref="/home/puech/inkscape_pasted_image_20100708_165834.png"
-       y="150.5336"
-       x="192.21715"
-       id="image3311"
-       height="18.547899"
-       width="73.671562"
-       xlink:href="/home/puech/inkscape_pasted_image_20100708_165834.png" />
-    <image
        sodipodi:absref="/home/puech/inkscape_pasted_image_20100708_165930.png"
        y="47.462177"
        x="136.93143"
@@ -367,14 +394,6 @@
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 497.04467,230.95358 50,-70"
        id="path2988-6" />
-    <image
-       sodipodi:absref="/home/puech/inkscape_pasted_image_20100708_165834.png"
-       y="239.125"
-       x="479.26184"
-       id="image3311-2"
-       height="18.547899"
-       width="73.671562"
-       xlink:href="/home/puech/inkscape_pasted_image_20100708_165834.png" />
     <image
        sodipodi:absref="/home/puech/inkscape_pasted_image_20100708_174223.png"
        y="325.46472"
@@ -504,5 +523,35 @@
        height="129.70551"
        x="-5.2427502"
        y="212.37706" />
+    <image
+       y="149.55125"
+       x="163.49098"
+       id="image3138"
+       height="19.642857"
+       width="102.79762"
+       xlink:href="file:///home/puech/Code/gasp/talks/MIPS2010/images/inkscape_pasted_image_20100709_113120.png" />
+    <image
+       y="236.51555"
+       x="448.38977"
+       id="image3138-2"
+       height="19.642857"
+       width="102.79762"
+       xlink:href="file:///home/puech/Code/gasp/talks/MIPS2010/images/inkscape_pasted_image_20100709_113120.png" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 3;stroke-dashoffset:10"
+       d="m 49.502858,39.318323 0,-53.928571 0,0"
+       id="path4459" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 3;stroke-dashoffset:10"
+       d="m 159.28857,39.318322 0,-53.928571 0,0"
+       id="path4459-4" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 3;stroke-dashoffset:10"
+       d="m 260.07429,39.318323 0,-53.928571 0,0"
+       id="path4459-4-1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 3;stroke-dashoffset:10"
+       d="m 545.78857,124.51475 0,-53.92857 0,0"
+       id="path4459-4-7" />
   </g>
 </svg>
