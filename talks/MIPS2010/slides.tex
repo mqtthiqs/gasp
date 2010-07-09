@@ -50,8 +50,11 @@ Matthias Puech\inst{1} \and Yann Régis-Gianas\inst{2} \\
 
 \section{Motivation}
 
-This talk will be about some remarks and directions on the way the
-edition of formal proof is done in proof assistants.
+I am going to present a work-in-progress, realized together with Yann
+Régis-Gianas. It is far from a finished product, so feel free to
+interrupt, comment or criticize. So this talk will be about some
+observations and directions to improve the way we edit and store
+formal proofs in proof assistants.
 
 \hrule
 \begin{frame}{How are \emph{constructed} formal mathematics?}
@@ -121,11 +124,11 @@ actual content of the files. In a sense, the non-linearity of proof
 development is managed outside the scope of the tool, by manual,
 textual transformations that are often very unsatisfactory.
 
-The paradox about this situation is that these very tools can be used
-to reason about formal languages and especially proof languages: some
-of these tools are even dedicated to the mechanization of the
-metatheory of proof languages. But we still use the legacy generic
-tools to manage our developments.
+The paradox about this situation is that these very tools (Coq,
+Matita, Agda) can be used to reason about formal languages and
+especially proof languages, some of these tools are even dedicated to
+the mechanization of the metatheory of proof languages. But we still
+use this legacy generic tools to manage our developments.
 
 Couldn't we adapt the methods developed to reason about formal
 languages to the language of the proof assistant itself? Could we
@@ -322,7 +325,9 @@ ideas. It is a meta-language for incremental proof-checking, that is a
 language in which one can define abstract syntaxes, logical rules and
 proofs, and allows to check validity, express the incrementality of
 the constructions, and their dependency. It can be viewed as a kernel
-for a generic, typed version control system.
+for a generic, typed version control system, and for the first
+iteration of this project, we were inspired by the way \textsf{git}
+stores the history of directories.
 
 \hrule
 \begin{frame}{Inspiration: the \textsf{git} storage model}
@@ -355,12 +360,14 @@ storage model. It doesn't keep track of changes \emph{per se}, but of
 similarities between version. Given a base directory structure,
 already committed in its database, and a new version of it with, let's
 say, one file changed -- \texttt{f3.txt}, it stores the new version by
-linking all common subdirectory structure to the previous version.
-This is possible because every node in the tree, directories and
-files, have a unique name. So actually, the database of \textsf{git}
-looks like this: it associates to every name, a content (for files) or
-a list of names (for directories). The invariant is that this database
-forms a DAG. This naming policy makes all content adressable.
+linking all common subdirectory structure to the previous
+version. This way, similarities are physically relalized by this kind
+of ``compression''. This is possible because every node in the tree,
+directories and files, have a unique name. So actually, the database
+of \textsf{git} looks like this: it associates to every name, a
+content (for files) or a list of names (for directories). The
+invariant is that this database forms a DAG. This naming policy makes
+all content adressable.
 
 Moreover, similarities are easily tracked because every name is
 carefully chosen to reflect the \emph{content} of a file or directory.
@@ -374,19 +381,29 @@ appear in the database, that is, we enforce maximal sharing among
 subdirectories. In functional programming, this is called
 hash-consing.
 
+Let's apply the same discipline to proofs, and validate them by
+typing. What would we get?
+
 \hrule
 \begin{frame}{A typed repository}
-  \only<2>{\includegraphics[width=\textwidth]{images/gasp1.pdf}}%
-  \only<3>{\includegraphics[width=\textwidth]{images/gasp2.pdf}}%
-  \only<4>{\includegraphics[width=\textwidth]{images/gasp3.pdf}}%
-  \only<5>{\includegraphics[width=\textwidth]{images/gasp4.pdf}}%
-  \only<6>{\includegraphics[width=\textwidth]{images/gasp5.pdf}}%
+  \only<1>{\includegraphics[width=\textwidth]{images/gasp1.pdf}}%
+  \only<2>{\includegraphics[width=\textwidth]{images/gasp2.pdf}}%
+  \only<3>{\includegraphics[width=\textwidth]{images/gasp3.pdf}}%
+  \only<4>{\includegraphics[width=\textwidth]{images/gasp4.pdf}}%
+  \only<5>{\includegraphics[width=\textwidth]{images/gasp5.pdf}}%
 \end{frame}
 \hrule
 
-on va plus loin grace a l'approche LF où tous les objets ont un type,
-et font partie de l'arbre de syntaxe. Donc tout est hash-consé
-(règles logiques, syntaxe, preuves).
+On the same model, let's start with a proof of $C$ already committed,
+and starting with this structure. $\pi_1$, $\pi_2$ and $\pi_3$ are the
+rest of the proof, upwards. Each node is labelled with the logical
+rule (or constructor) used, but also annotated by the judgement it
+proves. Now let's imagine that we come up with a new, better proof for
+$B$. Integrating it in the repository means, like before, to share all
+common sub-derivations. But now, we don't need to retype the whole new
+proof, just the new parts (in red). Like before, this is possible if
+we give a name to all sub-derivations, and the database looks like
+this: it associates with every name, how it is formed.
 
 \hrule
 \begin{frame}{Incremental type-checking, incrementally}%
@@ -413,7 +430,8 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
       \only<5->{\ |\ \Gamma[x=a:t]} \] 
     \end{block}
     \begin{block}{Judgement}
-        \begin{tabular}{ll}
+      \vspace{1em}
+        \begin{tabular}{ll} \Large
           $\Gamma\vdash t : u \uncover<7>{\alert{\Rightarrow\Delta}}$
           &
           \only<-6>{`` In environment $\Gamma$, term $t$ has type $u$
@@ -427,31 +445,33 @@ et font partie de l'arbre de syntaxe. Donc tout est hash-consé
 \end{frame}
 \hrule
 
-Let's construct a typed language for this. We start from the usual
-Pure Type Systems here, and we will modify it gradually to fit our
-needs.
+Let's construct a calculus for this. We start from the usual Pure Type
+Systems, with abstraction, products, variables, applications and just
+one sort for the sake of simplicity. Typing is done in the usual
+name-type environment, by the usual judgement: ``In $\Gamma$, $t$ has
+type $u$. We modify it gradually, keeping its expressivity but
+tailoring the syntax to name all subterms.
 
-First, we want to name all intermediate results, that is we don't want
-to allow compound, deep applications. We remove general application
-and make it a list of variables. Then, we need a new binder to
-remember these flat applications and give a name to them. It will
-behave like a \textsf{let} binding, and we add a corresponding entry
-to the environment. Note that in terms, the type is not present
-whereas it is in the environment.
+First we don't want to allow compound, deep applications. We remove
+general application and make it a list of variables. Then, we need a
+new binder to remember these flat applications and give a name to
+them. It will behave like a \textsf{let} binding, and we add a
+corresponding entry to the environment. Note that in terms, the type
+is not present whereas it is in the environment.
 
-We will use this syntax in quite an unusual way as we will write and
-check only \emph{types}. Terms will be sequences of binders declaring
-and defining inter-depentent pieces of syntax, and what finishes them
-(* or $a$) does not matter in most cases. For the moment, we remove
-the abstraction, and with it all notion of computation.
+It happens that the system is already interesting enough for our
+purpose without abstraction: the notions of dependency and
+incrementality do not need the abstraction. For the moment, we remove
+it, and with it all notion of computation.
 
 These simple modifications allow us to see this system as a typed
 repository of proofs with a last modification: the usual judgement
 becomes ``From repository $\Gamma$, term $t$ of type $u$ leads to
 repository $\Delta$''. The analogy here is: $\Gamma$ is the current
-database of versions, $t$ is a working directory with possible
-redundancies (it's not maximally shared), and integration of $t$ into
-$\Gamma$ leads to $\Delta$, which is maximally shared.
+repository, $t$ is a piece of proof that has to be checked and
+committed, it can have redundancies (it's not maximally shared), and
+integration of $t$ into $\Gamma$ leads to $\Delta$, which is maximally
+shared.
 
 We thread the environment along the typing process and return it as
 the result.
@@ -460,23 +480,28 @@ the result.
 
 \hrule
 \begin{frame}{Typing rules}
-  \begin{block}{Product - Init}
-  \begin{mathpar}
-    \large
+  \begin{block}{Product}
+    \[ \large
     \infer                      % prod
     {\Gamma\vdash t : *\uncover<2->{ \textcolor{gray}{\ \Rightarrow \_}} \and \Gamma[x:t]\vdash u :
       *\uncover<2->{\textcolor{gray}{\ \Rightarrow\Delta}}}
     {\Gamma\vdash(x:t)\cdot u : * \uncover<2->{\textcolor{gray}{\ \Rightarrow\Delta}}}
-    \and
-    \uncover<3->{               %init
-      \infer{ }
+    \]
+  \end{block}
+  \pause\pause
+  \begin{block}{Init}
+    \[\infer{ }
       {\Gamma\vdash x : t \uncover<4->{\textcolor{gray}{\ \Rightarrow\Gamma}}}
       \quad {\small [x:t]\in\Gamma}
-    }
-  \end{mathpar}
+      \]
   \end{block}
 \end{frame}
 \hrule
+
+I will present briefly some of the typing rules of this calculus. Here
+is for example the usual product: we thread the return environment in
+its main branch. Here is the usual init rule, we return the enlarged
+environment.
 
 \hrule
 \begin{frame}{Typing rules}
@@ -506,58 +531,99 @@ the result.
 \end{frame}
 \hrule
 
+The rules for the equality binder are two. The first resembles a lot
+that of the \textsf{let} binding: we check the body, then the rest by
+putting a new definition in the environment. But it applies only when
+there is \emph{no} other equal definitions with body $a$ in the
+environment. If there is, then the second rule apply.
+
+In this case, we just ignore the first premise, as $a$ was already
+type-checked. This rule is the key to incrementality.
+
+Last rule, the application, is not very different from the usual one,
+except that since there can be only a variable in the argument
+position, we inline the Init rule and get rid of the second premise.
+
 \hrule
-\begin{frame}{Content-aware names (implementation details)}
-  
-\begin{itemize}
-\item Given ``$a$'', how to decide efficiently ``$[y = a : u] \in \Gamma$''?
-
-\item Inspiration from \textsf{Git}~:
-\begin{center}
-\begin{math}
-\begin{array}{lllr}
-| \dots | &:& \kappa^\star \rightarrow \kappa & \text{Hash function}\\
-\equiv    &:& \kappa \rightarrow \kappa \rightarrow \mathbb{B} & \text{Efficient comparison}\\
-\nu       &:& \textsf{unit} \rightarrow \kappa & \text{Fresh key generator}
-\end{array}
-\end{math}
-\end{center}
-\end{itemize}
-
-\begin{mathpar}
-  \large
-  \infer
-      {\Gamma\vdash a : u \Rightarrow \_ \and \Gamma[|a|=a:u]\vdash t\{x/|a|\} :
-        *\textcolor{gray}{\ \Rightarrow\Delta} }
-      {\Gamma\vdash (x=a)\cdot t : * \textcolor{gray}{\ \Rightarrow\Delta}}
-      \quad {\small [y=a:u] \notin\Gamma}
-   \and
-   \large
-   \infer                      % prod
-       {\Gamma\vdash t : *\uncover<2->{ \Rightarrow \_} \and \Gamma[k:t]\vdash u\{x/k\} :
-         *\uncover<2->{\textcolor{gray}{\ \Rightarrow\Delta}}}
-       {\Gamma\vdash(x:t)\cdot u : * \textcolor{gray}{\textcolor{gray}{\ \Rightarrow\Delta}}}
-       \quad{\small k=\nu()}
-
-\end{mathpar}
-
-environnement : nom -> contenu * type
-
+\begin{frame}{Content-aware names (implementation)}
+  Given ``$a$'', how to decide efficiently ``$[y = a : u] \in
+  \Gamma$''?
+  \pause
+  \[ \begin{array}{lllr}
+    | \cdot | &:& \vec\kappa \rightarrow \kappa & \text{Hash function}\\
+    \equiv    &:& \kappa \rightarrow \kappa \rightarrow \mathbb{B} & \text{Efficient comparison}\\
+    \nu       &:& \textsf{unit} \rightarrow \kappa & \text{Fresh key generator}
+  \end{array} \]
+  \pause
+  \begin{mathpar}
+    \infer
+    {\Gamma\vdash a : u \textcolor{gray}{\ \Rightarrow \_} 
+      \and \Gamma[|a|=a:u]\vdash t\{x/|a|\} :
+      *\textcolor{gray}{\ \Rightarrow\Delta} }
+    {\Gamma\vdash (x=a)\cdot t : * \textcolor{gray}{\ \Rightarrow\Delta}}
+    \quad {\small [y=a:u] \notin\Gamma}
+    \and
+    \pause
+    \infer
+    {\Gamma\vdash t : *\uncover<2->{ \Rightarrow \_} \and \Gamma[k:t]\vdash u\{x/k\} :
+      *\uncover<2->{\textcolor{gray}{\ \Rightarrow\Delta}}}
+    {\Gamma\vdash(x:t)\cdot u : * \textcolor{gray}{\textcolor{gray}{\ \Rightarrow\Delta}}}
+    \quad{\small k=\nu()}
+  \end{mathpar}
+  \pause
+  \Large
+  \[ \Gamma\ :\ \kappa \to \vec\kappa * \tau \]
 \end{frame}
 \hrule
 
+Let's delve a moment into a particular implementation detail: how to
+choose names. We saw a quite unusual query to the environment before:
+look for all variables with body exactly $a$. How to decide this query
+efficiently?
+
+We inspire once more from \textsf{git}, and give \emph{internal}
+names, or keys, to all objects, that reflect their contents. We
+introduce a morally injective hash function, from lists of keys to
+keys, an efficient comparison function between two hashes, and a fresh
+key generator.
+
+Here are the introduction rules of the system: When we introduce a
+definition $a$, we choose the hash of $a$ as a name for it, and do the
+substitution in the rest of the term. When we introduce a declaration
+(a product), we choose a new key for its name, and do the
+substitution.
+
+Therefore, the environment is then a function from a key to the
+content of its definition (if it's a definition) and its type.
+
+But let me finish with a remark: all of this is very static, content
+is determined exactly by its syntactic shape. There seems to lack a
+notion of computation into the calculus.
 
 \hrule
 \begin{frame}{Further Work}
-  
-\begin{itemize}
-\item What if we reintroduce the lambda?
-\begin{enumerate}
-\item Constructive metatheory.
+  \Large
+What if we reintroduce {\Huge $[x:t]\cdot t$} ?
+\begin{enumerate} \normalsize
+\pause
+\item Constructive metatheory
+\pause
 \item A language to express patches?
 \end{enumerate}
-\end{itemize}
 \end{frame}
 \hrule
+
+What would happen if we reintroduce computation, and in particular the
+abstraction? We could not only declare logics but also develop its
+metatheory, as we do in Pure Type Systems. For example, the weakening
+property would have an existence, and we could even compute it since
+it's constructively defined. In a sense, there is hope to relax the
+very strict notion of equality implicit in the calculus, from
+syntactic equality to ``semantic'' equality.
+
+Moreover, we would be able to express functions that transform the
+syntax, that is \emph{patches}. This opens a set of research
+directions : are they valid with respect to a logic? what can we say
+about dependencies between patches? Their commutation etc.
 
 \end{document}
