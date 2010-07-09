@@ -20,54 +20,42 @@
 
 \maketitle
 
-I am going to present a work-in-progress, realized together with Yann
-Régis-Gianas. It is far from a finished product, so feel free to
-interrupt, comment or criticize. So this talk will be about some
-observations and directions to improve the way we edit and store
-formal proofs in proof assistants.
-
-\slide
-
-Let me start with a simple observation relating the activity of both
-the working mathematician and the computer scientist. Both activities
-could be percieved, from the outside, as apodictic because the final
-object of their study, the proof or the program, seems to be
-unquestionably valid (or not).
-
-If we observe the day-to-day work of these scientists though, their
-workflow resembles a lot more that of experimental sciences: it is
-highly non-linear, involving multiple parallel experiments, fixes,
-backtrack on previous modifications\ldots\ eventually validated or
-invalidated by some \emph{a posteriori} criterion, the absence of
-bugs, the validity of a proof.
+Let me start with a simple observation on the activity of both the
+working mathematician and the computer scientist. If we observe the
+day-to-day work of these scientists, their workflow resembles a lot
+that of researchers in experimental sciences: it is highly non-linear,
+involving multiple parallel experiments, fixes, backtrack on previous
+modifications\ldots\ eventually validated or invalidated by some
+\emph{a posteriori} criterion, the absence of bugs, the validity of a
+proof.
 
 In other words, the mathematician and the programmer spend more time
 \emph{editing} their developments non-linearly than monotonously
 \emph{writing} new material.
 
-It is the case for programs, for classical, paper mathematics so it
-should be the case for formal mathematics, edited in a proof
-assistant.
+I am going to present a work-in-progress, realized together with Yann
+Régis-Gianas. It is far from a finished product, so feel free to
+interrupt, comment or criticize. It will be about some observations
+and directions to improve the way we edit and store formal proofs in
+proof assistants.
 
 \slide
 
-Since the advent of modern proof assistants, large bodies of
-mathematics have been formalized and the way people managed these
-developments is very similar to the one used in software development
-for years: we write proofs in text files, which are linear, and launch
-proof-checking when we are done. To avoid re-checking the whole
-development, we split it into inter-dependent files and re-check only
-those who have changed. To keep track of old versions, we use
-line-based version control systems that have no awareness of the
-actual content of the files. In a sense, the non-linearity of proof
-development is managed outside the scope of the tool, by manual,
-textual transformations that are often very unsatisfactory.
+We now have very capable tools available to reason about formal
+languages and especially proof languages. Some of these tools are even
+dedicated to the mechanization of the metatheory of proof languages.
 
-The paradox about this situation is that these very tools (Coq,
-Matita, Agda) can be used to reason about formal languages and
-especially proof languages, some of these tools are even dedicated to
-the mechanization of the metatheory of proof languages. But we still
-use this legacy generic tools to manage our developments.
+But still, the way people managed large development of formal proofs
+is very similar to the one used in software development for years: we
+write proofs in text files, which are linear, and launch
+proof-checking when we are done. To avoid re-checking the whole
+development, we split it into files. To keep track of old versions, we
+use line-based version control systems that have no awareness of the
+actual content of the files. 
+
+In a sense, the non-linearity of proof development is managed outside
+the scope of the tool, by manual, textual transformations that are
+often very unsatisfactory.
 
 Couldn't we adapt the methods developed to reason about formal
 languages to the language of the proof assistant itself? Could we
@@ -103,28 +91,25 @@ adapted to programming in the first place.
 
 \slide
 
-
 We can then see a number of extra-logical features of modern proof
 assistants as ways to cope with these problems. 
 
-Instead of writing our complete development in one unique file and let
-the program check it when done, we can split it in several files or
-modules and establish dependencies among them: only those who changed
-(and their dependencies) have to be rechecked.
+Instead of writing our complete development in one unique file, we can
+split it in several files or modules and establish dependencies among
+them: only those who changed (and their dependencies) have to be
+rechecked upon a change.
 
 But this separation serves two different purpose, and the fact that
 they coincide is pure contingency: the purpose of splitting a
-development into logical units, and the purpose of providing a coarse
-notion of dependency to ease the non-linear process of proof editing
-by accelerating recompilation upon changes.
+development into logical units, and the purpose of accelerating
+recompilation upon changes.
 
-Secondly, the traditional interaction loop makes unnecessary the
-recompilation upon local changes by providing a global undo feature of
-the whole state of the proof assistant. But if I want to change this
-proof, I have to backtrack all the way here (because the green region
-is locked), do my changes and then replay the whole proofs in between,
-even if my change had no impact on this one, even if I just added a
-comment.
+Secondly, the traditional interaction loop facilitates local changes
+by providing a global undo feature of the whole state of the tool. But
+if I want to change this proof, I have to backtrack all the way here
+(because the green region is locked), do my changes and then replay
+the whole proofs in between, even if my change had no impact on this
+one, even if I just added a comment.
 
 So both these facilities provide a coarse approximation of the
 dependency between objects. But this notion of dependency \emph{is} a
@@ -163,38 +148,38 @@ ideas. It is a meta-language for incremental proof-checking, that is a
 language in which one can define abstract syntaxes, logical rules and
 proofs, and allows to check validity, express the incrementality of
 the constructions, and their dependency. It can be viewed as a kernel
-for a generic, typed version control system, and for the first
-iteration of this project, we were inspired by the way \textsf{git}
-stores the history of directories.
+for a generic, typed version control system.
 
 \slide
 
-\textsf{Git} is one of the most successful version control system, and
-part of its success is due to the very simple, yet very powerful
-storage model. It doesn't keep track of changes \emph{per se}, but of
-similarities between version. Given a base directory structure,
-already committed in its database, and a new version of it with, let's
-say, one file changed -- \texttt{f3.txt}, it stores the new version by
-linking all common subdirectory structure to the previous
-version. This way, similarities are physically relalized by this kind
-of ``compression''. This is possible because every node in the tree,
-directories and files, have a unique name. So actually, the database
-of \textsf{git} looks like this: it associates to every name, a
-content (for files) or a list of names (for directories). The
-invariant is that this database forms a DAG. This naming policy makes
-all content adressable.
+As an inspiration, let's see a very simple, common technique for
+storing history of directories. We won't keep track of changes
+\emph{per se}, but of similarities between version. Given a base
+directory structure, already committed in its database, and a new
+version of it with, let's say, one file changed -- \texttt{f3.txt}, we
+stores the new version by linking all common subdirectory structure to
+the previous version. This way, similarities are physically relalized
+by this kind of ``compression''. This is possible if we give to every
+node in the tree, directories and files, a unique name. So actually,
+our database looks like this: it associates to every name, a content
+(for files) or a list of names (for directories). The invariant is
+that this database forms a DAG. This naming policy makes all content
+adressable.
 
-Moreover, similarities are easily tracked because every name is
-carefully chosen to reflect the \emph{content} of a file or directory.
-In practice, \textsf{git} uses a hash function to produce all names in
-the database: files are given the hash of their content, and
-directories are given the hash of the hash of all the files it
-contains, recursively.
+Moreover, similarities are easily tracked if every name is carefully
+chosen to reflect the \emph{content} of a file or directory.  In
+practice, a hash function is used to produce all names in the
+database: files are given the hash of their content, and directories
+are given the hash of the hash of all the files it contains,
+recursively.
 
 This way, we ensure that no two subdirectories with the same content
 appear in the database, that is, we enforce maximal sharing among
 subdirectories. In functional programming, this is called
 hash-consing.
+
+This is exactly the storage model of \textsf{git}, a popular version
+control system.
 
 Let's apply the same discipline to proofs, and validate them by
 typing. What would we get?
