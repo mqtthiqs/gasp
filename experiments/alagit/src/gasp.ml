@@ -112,7 +112,7 @@ let _ =
 	   and a set of declarations). In the future, we will have 
 	   others views like type derivations views (i.e. signatures) 
 	   for instance. *)
-	let _internal_name, AST.Patch p = 
+	let internal_name, AST.Patch p = 
 	  match extension with
 	    | "module" -> StlcdecInternalize.named_fragment_view_from_file name filename
 	    | _ -> Error.global_error "during commit" 
@@ -135,17 +135,30 @@ let _ =
 
 	  | "update" ->
 	      (** The user wants a higher level of integration by updating 
-		  the older version of the subtree called [name] in an
+		  the latest version of the subtree called [name] in an
 		  existing subtree A. 
 
 		  For instance, if the fragment is used by another
 		  typing derivation, then the integration patch must
 		  produce a new version of A.  *)
-	      assert false (* FIXME: soon. *)
-	
-	  | cmd -> 
-	      Error.global_error "During integration" 
-		(Printf.sprintf "Unknown integration kind `%s'." cmd)
 
-	  
+	    (* FIXME: The default context name is a point inside the
+	       DAG that defines what is "under focus" (that is, what
+	       should be synchronized now) and what is "outside focus", 
+	       (that is, what is a considered, maybe temporarily, as 
+	       a fixed reference). We should provide a command to 
+	       define such a point inside the repository. *)
+	    let context = "head_root" in 
+
+	    let repository = 
+	      StlcdecRepository.update repository context name internal_name
+		(fun x -> x)
+	    in
+	    StlcdecRepository.save repository !repository_filename
+	      
+	  | cmd -> 
+	    Error.global_error "During integration" 
+	      (Printf.sprintf "Unknown integration kind `%s'." cmd)
+
+	      
 
