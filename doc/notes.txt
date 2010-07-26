@@ -1,6 +1,80 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Mon Jul 26, 2010  5:39 PM
+
+
+Je poursuis les expérimentations sur le prototype de fãçon à exercer
+la première version de notre formalisme. Je vais maintenant écrire un
+vérificateur de type pour le STLC dans le cadre d'une architecture du
+système _avec_ métathéorèmes constructifs.
+
+
+Le type à donner à ce métathéorème TC (comme Type-Checking) ne me
+semble plus évident dans notre formalisme à la PTS. En effet,
+intuitivement, j'aimerais écrire :
+
+
+  TC :: (Γ : env) (t : term) → ∃ (τ : type). (Δ : Γ ⊢ t : τ)
+
+
+(Ce qui est clairement une réminescence de l'ancien formalisme et qui
+montre que je n'ai pas encore intégré le nouveau.)
+
+
+Est-ce que je devrais plutôt décomposer ce méta-théorème en deux? Par
+exemple, je pourrais avoir type_of :
+
+
+  type_of :: (Γ : env) (t : term) → type
+
+
+et ensuite :
+
+
+  TC :: (Γ : env) (t : term). (Γ ̌⊢ t : type_of (Γ, t))
+
+
+ce qui rentre dans notre formalisme si je ne me trompe pas.
+
+
+Par contre, d'un point de constructif, ça semble peu élégant : le type
+checking serait implémenté dans "type_of" et réimplémenté, dans une
+version plus "verbose" - avec construction explicite de la dérivation
+-, dans "TC". 
+
+
+J'ai dû manquer quelque chose.
+
+
+Mon Jul 12, 2010  9:48 PM
+
+[extrait d'un mail de Matthias après l'exposé MIPS 2010]
+
+
+Il y a eu deux questions on-line, une de S. Autexier sur comment
+réaliser les définitions alternatives qu'on promettait au début (et
+faisant référence au lambda-bar-mu-mu-tilde, à regarder): réponse
+facile. L'autre était plus critique, de M. Kohlhase qui a dit qu'il
+avait fait un travail très similaire, et qu'on avait sans doutes un
+approche trop ad-hoc (?), et que leur projet bénéficiait déjà d'une
+implémentation qu'il suffirait de réutiliser.
+
+
+J'ai eu d'assez bons échos off-line: 3 personnes sont venu me dire que
+c'était très intéressant, 2 ont posé des questions très pertinentes
+qui m'ont fait réaliser plus précisément le boulot qu'il restait à
+faire. En particulier Andrei Paskevich qui a beaucoup aimé le projet
+et ses applications (on a parlé du coqtop idéal au déjeuner)
+
+
+J'ai aussi discuté assez longuement avec le post-doc de Kohlhase à
+propos de ce projet similaire (dont le nom m'échappe maintenant). En
+fait je crois que Kohlhase n'avait pas bien compris l'exposé, il me
+semble justement que leur projet est moins général que le nôtre :)
+Bon, c'est à première vue, il faudra lire précisément leurs papiers...
+
+
 Fri May 21 17:44:10 CEST 2010
 
 
