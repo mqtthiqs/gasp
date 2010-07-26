@@ -64,7 +64,7 @@
 (ABC = arr A BC : type).
 (eA = cons A nil : env).
 (eAAB = cons AB eA : env).
-(eAABBC = cons eAAB BC : env).
-(t1 = : term eAABC)
+(* (eAABBC = cons eAAB BC : env). *)
+(* (t1 = : term eAABC) *)
 
 Type
