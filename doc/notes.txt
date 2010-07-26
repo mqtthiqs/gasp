@@ -47,6 +47,43 @@ version plus "verbose" - avec construction explicite de la dérivation
 J'ai dû manquer quelque chose.
 
 
+M: Tentative de réponse: pourquoi pas ajouter la définition de la
+somme dépendante, et travailler avec elle? En Twelf ça donnerait:
+
+
+  sig : {A:type} (A -> type) -> type.
+
+  exist : {A:type} {P:A -> type} {x:A} P x -> sig A P.
+
+  proj1 : {A:type} {P:A -> type} sig A P -> A.
+
+  proj2 : {A:type} {P:A -> type} {sg : sig A P} P (proj1 A P sg).
+
+
+Puis le type de l'algo de type-checking:
+
+
+  error : type.
+
+  typeError : error.
+
+  union : {A B : type} type.
+
+  inl : {A B : type} A -> union A B.
+
+  inr : {A B : type} B -> union A B.
+
+  
+
+  type_of : {Γ : env} {t : term} union (sig term (λτ. Γ ⊢ t : τ)) error.
+
+
+A condition de réintégrer le λ ça marche chez nous, en
+aplatissant tout ces termes composés... la question est évidemment
+comment le réintégrer :) 
+
+  
+
 Mon Jul 12, 2010  9:48 PM
 
 [extrait d'un mail de Matthias après l'exposé MIPS 2010]
