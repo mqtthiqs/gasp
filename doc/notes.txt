@@ -1,10 +1,121 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Tue Sept 14 15:26:00 CEST 2010
+
+
+Refamiliarisation avec le système actuel, Revue des objectifs "big
+picture", nouvelles idées sur les dépendances intra-programme.
+
+
+Le système actuel est une implémentation d'un type-checker pour un
+méta-langage, dérivé des PTS, permettant d'exprimer non seulement des
+logiques et dérivations objet, mais aussi leur incrémentalité: en
+nommant toutes les applications intermédiaires et en les annotant avec
+leur type, on permet de maintenir plusieurs arbres de preuves dans le
+même environnement (un répository), en partageant les sous-preuves
+égales. Une grande limitation de ce système est que pour pouvoir être
+partagées, les sous-preuves en question doivent voir l'annotation de
+type de leur noeud racine s'écrire syntaxiquement exactement comme
+celle attendue. Une conséquence est qu'un type correct mais dans un
+environnement différent par exemple ne passe pas du tout. Du coup on
+perd tous les avantages de l'incrémentalité dans le cas où le
+changement effectué influe sur le type d'une variable: le reste du
+programme est à retyper.
+
+
+En interlude de cette difficile question, quelques remarques générales
+sur l'architecture du système et les objectifs concrets. Dans la
+version actuelle (MIPS), on a spécifié une seule opération Γ ⊢ t : A ⇒
+Δ, qui correspondrait plus ou moins à commit. Plus ou moins parce que:
+commit devrait prendre un répo, un terme du langage objet, c'est à
+dire non-typé et profond. En revanche, le terme t dans le système
+appartient au langage méta et est aplati. Bref, pas très cohérent me
+semble-t-il.
+
+Yann – a raison – insiste sur la nature interactive du système: il
+faut pouvoir interagir avec les erreurs du noyau pour les corriger, de
+façon manuelle ou automatique (stratégies de correction).
+
+De plus, il faut dégager une architecture plus claire pour le
+noyau. La proposition de Yann, discutée ci-dessous, est de séparer le
+processus de typage actuel en deux parties:
+
+- grâce au répo actuel Γ et au contenu édité t, générer un "patch"
+comme la différence syntaxique entre les termes t et celui de Γ. C'est
+ce que faisait le partage bottom-up de notre typeur avec son système
+de noms unique et de partage maximal de sous-dérivations.
+
+- puis vérification des types pour ce "patch" (et les endroits où il
+se branche dans Γ.
+
+
+Un exemple où cette architecture pêche est le suivant: changeons le
+programme [ let x = false in ...] en [let x = 1 in ...] (les ... c'est
+le reste t du programme, très long). le "patch" généré syntaxiquement
+est [let x = 1 in t], qui ne type pas parce qu'au moment de vouloir
+typer le nouveau t, on cherche une dérivation de x : nat ⊢ t : unit
+alors qu'on en a une de x : bool ⊢ t : unit. Résultat, on devrait sans
+doutes retyper l'intégralité du t, ce qui est trop (il suffirait de
+retyper au moins aux occurences de x dans t p.ex.). Moralité: le
+système actuelle utilise un DAG pour représenter les différentes
+versions d'un même arbre de preuve/dérivation de programme, mais n'y
+stocke pas les dépendances entres les objets, qui permettraient le
+typage plus fin promis.
+
+
+Première proposition/réplique: oui mais le let est une structure
+spéciale qui nécessite un traitement particulier puisqu'il n'est pas
+nécessaire de voir une série de lets à toplevel comme des "peignes"
+séquentiels: on peut les voir comme des définitions simultanées, en
+réduisant le contexte à son minimum dans chaque définitions et en
+s'assurant juste que le graphe des appels est acyclique (pas de
+dépendance circulaire). Réponse: le problème se pose déjà dans
+l'exemple suivant, un peu artificiel mais repris dans la suite: on
+veut transformer (λx. x+1) 2 en (λx. x+1) true. Evidemment la version
+cible est mal typée, mais on veut pouvoir le vérifier rapidement en
+type-checkant à partir de l'occurence de x dans le corps de la
+fonction: x a le type bool dans le contexte x : bool, ok, maintenant
+on applique ce x a +, et c'est là que ça échoue car + attend deux
+nats. Se dégage une idée de causalité *à l'intérieur* d'une dérivation
+donnée, qui donnerait une bonne base pour tracker les dépendances à
+l'intérieur d'un terme. Encore faut-il trouver un bonne représentation
+des preuves, qui intègre cette notion de dépendance.
+
+
+Un arbre de preuve est un arbre dont chaque noeud est une instance
+d'une règle logique. Il est facile de vérifier que chaque application
+est bien une instance d'une règle existante, mais difficile d'évaluer
+l'impact du changement d'une sous-dérivation: cela nous obligerait
+potentiellement à modifier d'autres parties de la preuve et il est
+difficile de savoir lesquelles sans revérifier l'intégralité de la
+preuve. Il semblerait que ceci est dû au fait que la preuve de départ
+nous est donnée de façon statique, sans l'historique de la
+vérification de chacune de ses parties et le flot d'information qui en
+découle. En annotant les arbres de preuve avec cette information, qui
+semble pouvoir prendre la forme de contraintes accumulées et
+vérifiées, et chaque contrainte par la sous-dérivation qui l'a généré,
+on retrace la *dynamique du type-checking*. Cette information peut
+être lue aussi comme un rapport de causalité entre différentes parties
+d'une preuve: si tel atome est A, c'est parce qu'il a été
+contraint par l'application d'une règle à l'être, peut-être à un tout
+autre endroit de sa preuve. Ainsi, si on change cet atome en B, on
+peut observer son effet on suivant cette chaîne de causalité: si on
+découvre une incohérence, le changement est impossible et on saura
+précisément pourquoi. Ceci devrait aider à implémenter l'interactivité
+du vérificateur incrémental.
+
+
+On s'écarte donc un peu de l'implémentation actuelle mais on a
+l'espoir de résoudre un problème grave (comparaison syntaxique, trop
+stricte pour observer finement les modifications, dans l'environnement
+notamment).
+
+
 Mon Jul 26, 2010  5:39 PM
 
 
-Je poursuis les expérimentations sur le prototype de fãçon à exercer
+Je poursuis les expérimentations sur le prototype de façon à exercer
 la première version de notre formalisme. Je vais maintenant écrire un
 vérificateur de type pour le STLC dans le cadre d'une architecture du
 système _avec_ métathéorèmes constructifs.
