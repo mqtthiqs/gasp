@@ -1,6 +1,88 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Sep 16 19:04:58 CEST 2010
+
+
+On continue la discussion d'hier et fixe des objectifs concrets pour
+la suite.
+
+
+Il semble se dessiner que le graphe non-orienté de dépendance des
+informations dans les dérivations (voir tableau d'hier) est une
+structure à investiguer pour notre problème. J'espérais (M.) pouvoir
+trouver une structure d'arbre avec partage (DAG) qui se superposerait
+aux dérivations et indiquerait pour chaque sous-terme d'un jugement
+son effet sur le reste de la dérivation. Yann remarque à juste titre
+que cette information est sûrement contenue dans le graphe qu'on a
+dessiner, le DAG n'en serait qu'un arbre de couverture. D'autre part,
+il semble important de ne pas maintenir une direction (cause -> effet)
+dans ce graphe, puisque ceci induirait une dissymétrie arbitraire de
+certaines règles. Yann fait remarquer le cas de l'application: ce
+n'est ni l'argument qui impose le type du domaine de la fonction
+(vision 'checking'), ni le contraire (vision 'inference' dans les
+algos de TC bidirectionnel): les deux sont inter-dépendants. Deux
+exemple ont étés étudiés:
+
+- le sempiternel (λx. x+1) 42 ——> (λx. x+1) tt
+
+- (λx. π₁ (¬x)) <<tt, 42> ——> (λx. π₁ (¬x)) <<42, tt>
+
+
+La version actuelle du noyau a deux problèmes majeurs:
+
+- il ne prend pas *vraiment* en compte les "dépendances" comme on les
+entend depuis le début. Exemple: faisons une modification à une
+sous-dépendance qui ne change syntaxiquement pas le jugement, tout va
+bien; si par contre une jugement change d'une façon qui n'influe pas
+sur le reste de la preuve (weakening par exemple, mais aussi
+suppression d'un binding non utilisé — strengthening), ça ne se
+branche plus du tout à l'endroit voulu, on doit reconstruire une
+nouvelle dérivatione.
+
+- On ne sait toujours pas comment reconstruire automatiquement une
+vraie dérivation à partir d'un terme, même à la Church: l'utilisateur
+doit fournir les deux lui même. Trois pistes:
+
+     - fournir un outil externe réentrant qui calcule incrémentalement
+     la dérivation à partir du terme (algo de checking ou
+     d'inférence... paramétré par une fonctionnelle qui fait le
+     memoizing)
+
+     - réflechir à un système de vues: le terme est une version
+     incomplète de la dérivation, c'est lui qu'on modifie et qui
+     implique des changements automatiques sur la dérivation.
+
+     - toutes les règles du système sont visible par le kernel: on
+     peut donc faire de la proof search pour reconstituer la
+     dérivation à partir du terme (type ? : (Γ ⊢ t :
+     ?)). Inconvénient: suivant comment on a spécifié le système, la
+     PS peut ne pas terminer.    
+
+On a conclu que la dernière solution était la plus simple et sera
+implémentée.
+
+
+Une refonte du métalangage est aussi à prévoir. Au menu des
+changements:
+
+- les termes devraient être profonds, l'applatissement et le nommage
+de tous les sous-termes réservé à l'environnement. Cela évite d'avoir
+à utiliser des "bouchons" à la fin des déclarations de termes.
+
+- le jugement correspondant au commit devra renvoyer le nom (hash) de
+la tête du terme committé.
+
+
+On se fixe donc deux versions successives:
+
+- v1: refonte du kernel avec termes profonds, renvoi des noms et
+surtout recherche de preuves pour la reconstruction des dérivations.
+
+- v2: prise en charge du graphe de dépendance et vérification
+"minimale" des sous-termes.
+
+
 Tue Sept 14 15:26:00 CEST 2010
 
 
