@@ -1,5 +1,3 @@
-let (_ : unit) =
-  MonoLam.init ()
 
 let options = Arg.align
   [
@@ -15,5 +13,23 @@ let filenames =
     Arg.parse options (fun f -> filenames := f :: !filenames) usage_msg;
     !filenames
 
+let parse_file filename =
+  let parser lexer lexbuf = try
+    Parser.program lexer lexbuf
+  with
+    | Parser.Error -> Error.error "Parsing" (Position.cpos lexbuf) "Unknown error.\n"
+  in
+  SyntacticAnalysis.process
+    ~lexer_init: (fun filename -> 
+		    let lexbuf = Lexing.from_channel (open_in filename) in 
+		    lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = filename };
+		    lexbuf
+		 )
+    ~lexer_fun: Lexer.main
+    ~parser_fun: parser
+    ~input: filename
+
 let _ =
-  ()
+  LF_pp.sign
+    (LF.sign_of_ast
+       (parse_file (List.hd filenames)))

@@ -8,3 +8,10 @@ PACKAGE  = gasp-$(VERSION)
 
 include Makefile.generic
 include Makefile.config
+
+%.elf.out: %.elf $(TARGET)
+	@echo " * Test" $<.; \
+	LOG=`./$(TARGET) $<` && \
+	echo $$LOG > $@
+
+check: $(addsuffix .out,$(wildcard tests/*.elf))
