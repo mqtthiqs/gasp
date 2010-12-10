@@ -45,7 +45,7 @@ let tax_of_term (sign:signature) =
 	    begin match tax_of_term env t, tax_of_term env u with
 	      | Fam a, Kind k -> Kind(p(KProd(Anonymous,a,k)))
 	      | Fam a, Fam b -> Fam(p(FProd(Anonymous,a,b)))
-	      | _ -> error_not_bound pos "coucou"
+	      | _ -> assert false
 	    end
 	| LF_AST.Lam(x,t,u) ->
 	    begin match tax_of_term env t with

@@ -1,3 +1,4 @@
+open Pp
 
 let options = Arg.align
   [
@@ -29,7 +30,9 @@ let parse_file filename =
     ~parser_fun: parser
     ~input: filename
 
+let sig_prec x = 42
+
 let _ =
-  LF_pp.sign Format.std_formatter
+  LF_pp.signature Format.std_formatter
     (LF_pretype.sign_of_ast
        (parse_file (List.hd filenames)))
