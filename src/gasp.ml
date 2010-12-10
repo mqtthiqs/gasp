@@ -30,6 +30,6 @@ let parse_file filename =
     ~input: filename
 
 let _ =
-  LF_pp.sign
-    (LF.sign_of_ast
+  LF_pp.sign Format.std_formatter
+    (LF_pretype.sign_of_ast
        (parse_file (List.hd filenames)))

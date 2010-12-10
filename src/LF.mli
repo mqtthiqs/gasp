@@ -1,11 +1,9 @@
 type constant = string
 type variable = string
 
-type name' =
-  | Name of variable
+type name =
+  | Name of variable Position.located
   | Anonymous
-
-type name = name' Position.located
 
 type fam' =
   | FConst of constant
@@ -35,5 +33,3 @@ type entry =
 
 type signature = (constant * entry) list
 type environ = (variable * fam) list
-
-val sign_of_ast : LF_AST.signature -> signature

@@ -2,21 +2,24 @@ nat : type.
 z : nat.
 s : nat -> nat.
 
+bla : nat -> type.
+bla_x : {X : nat} bla X -> bla X.
+
 nt : nat -> type.
 nt_z : nt z.
-nt_s : {X : nat} nt (s X) <- nt X.
+nt_s : {X : nat} {Y : nt (s X)} nt X.
 
 plus : nat -> nat -> nat -> type.   %name plus P.
-p_z : plus z Y Y.
-p_s : plus (s X) Y (s Z)
+p_z : {Y : nat} plus z Y Y.
+p_s : {X : nat} {Y : nat} {Z : nat} plus (s X) Y (s Z)
        <- plus X Y Z.
 
 acker : nat -> nat -> nat -> type.
 %mode acker +X +Y -Z.
 
-a_1   : acker z Y (s Y).
-a_2   : acker (s X) z Z 
+a_1   : {Y : nat} acker z Y (s Y).
+a_2   : {X : nat} {Z : nat} acker (s X) z Z 
      <- acker X (s z) Z.
-a_3   : acker (s X) (s Y) Z
+a_3   : {X : nat} {Y : nat} {Z : nat} {Z' : nat} acker (s X) (s Y) Z
      <- acker (s X) Y Z'
      <- acker X Z' Z.
