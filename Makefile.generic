@@ -34,17 +34,17 @@ HEADACHE = headache
 # Rules #
 #########
 
-.PHONY: configure all-generic byte opt doc clean dist \
+.PHONY: all-generic byte opt doc clean dist \
 	install uninstall headers clear all check
 
 all : all-generic check
-all-generic: configure clear $(STARGET) $(TARGET)
+all-generic: clear $(STARGET) $(TARGET)
 
 $(TARGET):
 	ln -s $(STARGET) $(TARGET)
 
 clear:
-	rm -f $(STARGET)
+	@rm -f $(STARGET)
 
 opt: $(OTARGET)
 
@@ -99,5 +99,7 @@ dist:
           fi;					                \
         done
 	tar cvfz $(PACKAGE).tar.gz $(PACKAGE)
+
+$(addsuffix .out,$(wildcard tests/*.elf)): $(TARGET)
 
 check: $(addsuffix .out,$(wildcard tests/*.elf))

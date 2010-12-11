@@ -11,7 +11,3 @@ type 'a precedence = 'a -> level
 val pr : 
   ('a printing_fun -> formatter -> 'a -> unit) ->
   'a precedence -> level -> 'a printing_fun
-
-val print : 
-  ('a printing_fun -> formatter -> 'a -> unit) -> 
-  'a precedence -> 'a -> unit

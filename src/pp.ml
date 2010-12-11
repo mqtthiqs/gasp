@@ -15,6 +15,3 @@ let rec pr term (prec:'a precedence) oldl (rel:level_rel) fmt t =
   if rel newl oldl
   then term (pr term prec newl) fmt t
   else surround fmt (term (pr term prec newl)) t
-
-let rec print prf prec (t:'a) =
-  pr prf prec 100 (<) std_formatter t

@@ -7,7 +7,6 @@ TARGET   = gasp
 PACKAGE  = gasp-$(VERSION)
 
 include Makefile.generic
-include Makefile.config
 
 %.elf.out: %.elf $(TARGET)
 	@echo " * Test" $<.; \
