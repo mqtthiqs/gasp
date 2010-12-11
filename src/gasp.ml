@@ -16,7 +16,7 @@ let filenames =
 
 let parse_file filename =
   let parser lexer lexbuf = try
-    Parser.program lexer lexbuf
+    Parser.signature lexer lexbuf
   with
     | Parser.Error -> Error.error "Parsing" (Position.cpos lexbuf) "Unknown error.\n"
   in

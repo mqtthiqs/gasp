@@ -1,0 +1,7 @@
+nat : type.
+o : nat.
+s : nat -> nat.
+P : nat -> type.
+Q : {x : nat} P x -> P x.
+R : {x : nat} P x -> P (s o).
+S : {x y : nat} P x y.

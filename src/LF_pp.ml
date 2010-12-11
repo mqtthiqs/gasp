@@ -28,7 +28,7 @@ let kind_prec k = match P.value k with
 
 let list_prec = function
   | [] -> 0
-  | _::_ -> 10
+  | _::_ -> 50
 
 let entities_prec = function
   | Fam a -> fam_prec a
@@ -44,6 +44,7 @@ let pp pp fmt t =
   let obj rel fmt a = pp rel fmt (Obj a) in
   let kind rel fmt a = pp rel fmt (Kind a) in
   let signature rel fmt a = pp rel fmt (Sign a) in
+
   match t with
     | Fam a -> 
 	begin
@@ -61,6 +62,7 @@ let pp pp fmt t =
 	    | FApp (a,t) -> fprintf fmt "@[%a@ %a@]" 
 		(fam (<=)) a (obj (<)) t
 	end
+
     | Obj t ->
 	begin
 	  match P.value t with
@@ -82,13 +84,14 @@ let pp pp fmt t =
 	    | KProd (Name x,a,k) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
 		variable (P.value x) (fam (<)) a (kind (<=)) k
 	end
+
     | Sign s ->
 	begin
 	  match s with
 	    | [] -> ()
-	    | (c, EKind k) :: tl -> fprintf fmt "@[%a@ :@ %a@]@\n%a"
+	    | (c, EKind k) :: tl -> fprintf fmt "@[%a@ :@ %a@].@.%a"
 		constant c (kind (<=)) k (signature (<=)) tl
-	    | (c, EFam a) :: tl -> fprintf fmt "@[%a@ :@ %a@]@\n%a"
+	    | (c, EFam a) :: tl -> fprintf fmt "@[%a@ :@ %a@].@.%a"
 		constant c (fam (<=)) a (signature (<=)) tl
 	end
 

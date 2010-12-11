@@ -74,7 +74,7 @@ let tax_of_term (sign:signature) =
   in
   tax_of_term
 
-let sign_of_ast : LF_AST.signature -> signature =
+let sign_of_ast s =
   let rec sign_of_ast (sign:signature) = function
     | [] -> sign
     | (id, t)::tl -> 
@@ -83,4 +83,4 @@ let sign_of_ast : LF_AST.signature -> signature =
 	| Kind k -> sign_of_ast ((id, EKind k) :: sign) tl
 	| _ -> assert false
   in
-  sign_of_ast []
+  List.rev (sign_of_ast [] s)
