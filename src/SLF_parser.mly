@@ -1,5 +1,5 @@
 %{
-  open LF_AST
+  open SLF
 
   let parse_error = Error.error "during parsing"
 %}
@@ -9,39 +9,42 @@
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
 
-%nonassoc LBRACKET LBRACE
-%right RARROW LARROW
-%nonassoc LPAREN
-%left APPLY TYPE ID
-
-%start<LF_AST.signature> signature
+%start<SLF.sign> signature
 
 %%
 
 signature:
-| ds=declaration* EOF { ds }
+  ds=declaration* EOF { ds }
 | error { parse_error (Position.lex_join $startpos $endpos) "Syntax error." }
 
 declaration:
-| x=ID COLON t=loc(term) DOT { (x,t) }
+  x=ID COLON t=loc(term) DOT { (x, Decl t) }
 
-term: 
-| LPAREN t=term RPAREN {t}
-| x=ID { Var x }
-| TYPE { Type }
-| t=loc(term) RARROW u=loc(term) { Arr(t,u) }
-| t=loc(term) LARROW u=loc(term) { Arr(u,t) }
-| LBRACE xs=loc(ID)+ COLON t=loc(term) RBRACE u=loc(term) %prec LBRACE 
+term1:
+  t=loc(term2) RARROW u=loc(term1) { Arr(t,u) }
+| t=loc(term1) LARROW u=loc(term2) { Arr(u,t) }
+| LBRACE xs=loc(ID)+ COLON t=loc(term2) RBRACE u=loc(term1)
     { Position.value 
 	(List.fold_left 
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Prod(x, t, acc))) u (List.rev xs)) }
-| LBRACKET xs=loc(ID)+ COLON t=loc(term) RBRACKET u=loc(term) %prec LBRACKET
+| LBRACKET xs=loc(ID)+ COLON t=loc(term2) RBRACKET u=loc(term1)
     { Position.value 
 	(List.fold_left 
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
-| t=loc(term) u=loc(term) %prec APPLY { App (t, u) }
+| x=term2 { x }
+
+term2:
+  t=loc(term2) u=loc(term3) { App (t, u) }
+| x=term3 { x }
+
+term3: 
+  LPAREN t=term1 RPAREN {t}
+| x=ID { Var x }
+| TYPE { Type }
+
+term: x=term1 { x }
 
 %inline loc(X): t=X 
 {

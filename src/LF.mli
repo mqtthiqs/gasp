@@ -31,5 +31,11 @@ type entry =
   | EKind of kind
   | EFam of fam
 
-type signature = (constant * entry) list
-type environ = (variable * fam) list
+type sign = (constant * entry) list
+type env = (variable * fam) list
+
+type entity =
+  | Kind of kind
+  | Fam of fam
+  | Obj of obj
+  | Sign of sign

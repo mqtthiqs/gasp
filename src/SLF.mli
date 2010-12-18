@@ -13,4 +13,7 @@ type term' =
 
 and term = term' Position.located
 
-type signature = (ident * term) list
+type entry =
+  | Decl of term
+
+type sign = (ident * entry) list

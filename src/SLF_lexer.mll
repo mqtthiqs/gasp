@@ -1,5 +1,5 @@
 {
-  open Parser
+  open SLF_parser
   open Lexing
   open Error
 

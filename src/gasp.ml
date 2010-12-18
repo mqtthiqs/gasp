@@ -16,9 +16,9 @@ let filenames =
 
 let parse_file filename =
   let parser lexer lexbuf = try
-    Parser.signature lexer lexbuf
+    SLF_parser.signature lexer lexbuf
   with
-    | Parser.Error -> Error.error "Parsing" (Position.cpos lexbuf) "Unknown error.\n"
+    | SLF_parser.Error -> Error.error "Parsing" (Position.cpos lexbuf) "Unknown error.\n"
   in
   SyntacticAnalysis.process
     ~lexer_init: (fun filename -> 
@@ -26,13 +26,15 @@ let parse_file filename =
 		    lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = filename };
 		    lexbuf
 		 )
-    ~lexer_fun: Lexer.main
+    ~lexer_fun: SLF_lexer.main
     ~parser_fun: parser
     ~input: filename
 
 let sig_prec x = 42
 
-let _ =
-  LF_pp.signature Format.std_formatter
-    (LF_pretype.sign_of_ast
-       (parse_file (List.hd filenames)))
+let s = SLF_LF.sign_to_sign (parse_file (List.hd filenames))
+  
+let _ =  
+  LF_pp.signature Format.std_formatter s;
+  Format.printf "********************\n";
+  SLF_pp.sign Format.std_formatter (SLF_LF.sign_from_sign s)
