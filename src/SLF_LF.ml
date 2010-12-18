@@ -1,3 +1,4 @@
+open Name
 module P = Position
 
 (* Typing errors *)
@@ -26,26 +27,24 @@ let term_to_entity sign =
 	| SLF.Prod(x,t,u) ->
 	    begin match term_to_entity env t with
 	      | LF.Fam a -> 
-		  let env = (P.value x,a) :: env in
-		  begin match term_to_entity env u with
-		    | LF.Kind k -> LF.Kind(p(LF.KProd(LF.Name x,a,k)))
-		    | LF.Fam b -> LF.Fam(p(LF.FProd(LF.Name x,a,b)))
+		  begin match term_to_entity ((x,a) :: env) u with
+		    | LF.Kind k -> LF.Kind(p(LF.KProd(Named x,a,k)))
+		    | LF.Fam b -> LF.Fam(p(LF.FProd(Named x,a,b)))
 		    | _ -> assert false
 		  end
 	      | _ -> assert false
 	    end
 	| SLF.Arr(t,u) ->
 	    begin match term_to_entity env t, term_to_entity env u with
-	      | LF.Fam a, LF.Kind k -> LF.Kind(p(LF.KProd(LF.Anonymous,a,k)))
-	      | LF.Fam a, LF.Fam b -> LF.Fam(p(LF.FProd(LF.Anonymous,a,b)))
+	      | LF.Fam a, LF.Kind k -> LF.Kind(p(LF.KProd(Anonymous,a,k)))
+	      | LF.Fam a, LF.Fam b -> LF.Fam(p(LF.FProd(Anonymous,a,b)))
 	      | _ -> assert false
 	    end
 	| SLF.Lam(x,t,u) ->
 	    begin match term_to_entity env t with
 	      | LF.Fam a ->
-		  let env = (P.value x, a) :: env in
-		  begin match term_to_entity env u with
-		    | LF.Obj o -> LF.Obj(p(LF.OLam(LF.Name x,a,o)))
+		  begin match term_to_entity ((x,a) :: env) u with
+		    | LF.Obj o -> LF.Obj(p(LF.OLam(Named x,a,o)))
 		    | _ -> assert false
 		  end
 	      | _ -> assert false
@@ -82,17 +81,17 @@ let sign_to_sign s =
 let rec term'_from_obj' : LF.obj' -> SLF.term' = function
   | LF.OConst c -> SLF.Var c
   | LF.OVar c -> SLF.Var c
-  | LF.OLam (LF.Anonymous, a, t) -> 
-      SLF.Lam (P.with_pos P.dummy "_", term_from_fam a, term_from_obj t) (* TODO: "_" *)
-  | LF.OLam (LF.Name x, a, t) -> SLF.Lam (x, term_from_fam a, term_from_obj t)
+  | LF.OLam (Anonymous, a, t) -> 
+      SLF.Lam ("_", term_from_fam a, term_from_obj t)
+  | LF.OLam (Named x, a, t) -> SLF.Lam (x, term_from_fam a, term_from_obj t)
   | LF.OApp (t,u) -> SLF.App (term_from_obj t, term_from_obj u)
 
 and term_from_obj t = P.map term'_from_obj' t
 
 and term'_from_fam' : LF.fam' -> SLF.term' = function
   | LF.FConst c -> SLF.Var c
-  | LF.FProd (LF.Anonymous, a, b) -> SLF.Arr(term_from_fam a, term_from_fam b)
-  | LF.FProd (LF.Name x, a, b) -> SLF.Prod(x, term_from_fam a, term_from_fam b)
+  | LF.FProd (Anonymous, a, b) -> SLF.Arr(term_from_fam a, term_from_fam b)
+  | LF.FProd (Named x, a, b) -> SLF.Prod(x, term_from_fam a, term_from_fam b)
   | LF.FApp (a,t) -> SLF.App (term_from_fam a, term_from_obj t)
 
 and term_from_fam a =
@@ -100,8 +99,8 @@ and term_from_fam a =
 
 let rec term'_from_kind' : LF.kind' -> SLF.term' = function
   | LF.KType -> SLF.Type
-  | LF.KProd(LF.Anonymous,a,k) -> SLF.Arr(term_from_fam a, term_from_kind k)
-  | LF.KProd(LF.Name x,a,k) -> SLF.Prod(x, term_from_fam a, term_from_kind k)
+  | LF.KProd(Anonymous,a,k) -> SLF.Arr(term_from_fam a, term_from_kind k)
+  | LF.KProd(Named x,a,k) -> SLF.Prod(x, term_from_fam a, term_from_kind k)
 
 and term_from_kind (k:LF.kind) : SLF.term = 
   P.with_pos (P.position k) (term'_from_kind' (P.value k))

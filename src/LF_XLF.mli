@@ -1,4 +1,5 @@
 
-val obj_to_obj : LF.sign -> LF.env -> LF.obj -> XLF.obj
-val fam_to_fam : LF.sign -> LF.env -> LF.fam -> XLF.fam
-val kind_to_kind : LF.sign -> LF.env -> LF.kind -> XLF.kind
+val obj : XLF.sign -> XLF.env -> LF.obj -> XLF.obj * XLF.fam
+val fam : XLF.sign -> XLF.env -> LF.fam -> XLF.fam
+val kind : XLF.sign -> XLF.env -> LF.kind -> XLF.kind
+val sign : XLF.sign -> LF.sign -> XLF.sign

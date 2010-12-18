@@ -1,5 +1,4 @@
 open Ocamlbuild_plugin
-open Myocamlbuild_config
 
 let run_and_read = Ocamlbuild_pack.My_unix.run_and_read
 let blank_sep_strings = Ocamlbuild_pack.Lexers.blank_sep_strings
@@ -45,10 +44,5 @@ let _ = dispatch begin function
        end (find_syntaxes ());
        flag ["ocaml"; "pkg_threads"; "compile"] (S[A "-thread"]);
        flag ["ocaml"; "pkg_threads"; "link"] (S[A "-thread"]);
-
-       if use_ledit then begin
-         ocaml_lib ~extern:true ~dir:"+camlp5" "camlp5";
-         ocaml_lib ~extern:true ~dir:"+ledit" "ledit"
-       end
    | _ -> ()
 end

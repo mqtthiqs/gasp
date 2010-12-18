@@ -1,42 +1,84 @@
+open Name
 
 module P = Position
 
-let rec args_to_obj sign env args t =
-  match P.value t with
-    | LF.OApp (t,u) -> 
-	args_to_obj sign env (obj_to_obj sign env u :: args) t
-    | LF.OConst c -> XLF.OConst(c, args)
-    | LF.OVar x -> XLF.OVar(x, args)
-    | LF.OLam _ -> XLF.OApp(obj_to_obj sign env t, args)
-	
-and obj_to_obj sign (env:LF.env) t =
-  match P.value t with
-    | LF.OLam (LF.Name x, a, t) -> 
-	XLF.OLam(XLF.Name (P.value x), fam_to_fam sign env a, obj_to_obj sign ((P.value x,a) :: env) t)
-    | LF.OLam (LF.Anonymous, a, t) -> 
-	XLF.OLam(XLF.Anonymous, fam_to_fam sign env a, obj_to_obj sign env t)
-    | _ -> args_to_obj sign env [] t
+module List = struct
+  let assoc s l =
+    try List.assoc s l with Not_found -> failwith (s^" not found")
+end
 
-and args_to_fam sign env args a =
+let bind x a env = match x with
+  | Named x -> (x,a) :: env
+  | Anonymous -> env
+
+let rec oapp sign env args t : XLF.obj =
+  match P.value t with
+    | LF.OApp(t,u) ->
+	let (u,_) = obj sign env u in
+	begin match oapp sign env (u::args) t with
+	  | XLF.OConst (c, args, XLF.FProd(x,a,b)) -> XLF.OConst (c, args, b)
+	  | _ -> assert false		(* over application *)
+	end
+    | LF.OConst c -> 
+	begin match List.assoc c sign with
+	  | XLF.ODecl a -> XLF.OConst (c, args, a)
+	  | _ -> assert false 		(* c est une famille *)
+	end
+    | LF.OVar x -> XLF.OVar (x, args, List.assoc x env)
+    | LF.OLam _ ->
+	let (t,a) = obj sign env t in
+	XLF.OApp (t, args, a)
+
+and obj sign env t : XLF.obj * XLF.fam =
+  match P.value t with
+    | LF.OLam (x,a,t) -> 
+	let a = fam sign env a in
+	let (t,at) = obj sign (bind x a env) t in
+	XLF.OLam(x, a, t), XLF.FProd(x, a, at)
+    | _ -> 
+	match oapp sign env [] t with
+	  | XLF.OConst(c,args,a) as t -> t, a
+	  | XLF.OVar(c,args,a) as t -> t, a
+	  | XLF.OApp(c,args,a) as t -> t, a
+	  | _ -> assert false
+
+and fapp sign env args a : XLF.fam =
   match P.value a with
     | LF.FApp (a,t) ->
-	args_to_fam sign env (obj_to_obj sign [] t :: args) a
+	let (t,_) = obj sign env t in
+	begin match fapp sign env (t::args) a with
+	  | XLF.FConst (c, args, XLF.KProd(x,a,k)) -> XLF.FConst (c, args, k)
+	  | _ -> assert false 		(* over application *)
+	end
     | LF.FConst c -> 
-	XLF.FConst(c, args)
+	begin match List.assoc c sign with
+	  | XLF.FDecl k -> XLF.FConst (c, args, k)
+	  | _ -> assert false 		(* c est un objet *)
+	end
     | LF.FProd _ -> assert false	(* prod appliqué *)
 
-and fam_to_fam sign env a =
+and fam sign env a : XLF.fam =
   match P.value a with
-    | LF.FProd (LF.Name x,a,b) -> 
-	XLF.FProd(XLF.Name (P.value x), fam_to_fam sign env a, fam_to_fam sign ((P.value x,a) :: env) b)
-    | LF.FProd (LF.Anonymous,a,b) -> 
-	XLF.FProd(XLF.Anonymous, fam_to_fam sign env a, fam_to_fam sign env b)
-    | _ -> args_to_fam sign env [] a
+    | LF.FProd (x,a,b) ->
+	let a = fam sign env a in
+	let b = fam sign (bind x a env) b in
+	XLF.FProd(x,a,b)
+    | LF.FApp _ | LF.FConst _ ->
+	match fapp sign env [] a with
+	  | XLF.FConst (c, args, k) as a -> a
+	  | _ -> assert false		(* impossible *)
 
-let rec kind_to_kind sign env k =
+and kind sign env k : XLF.kind =
   match P.value k with
     | LF.KType -> XLF.KType
-    | LF.KProd (LF.Name x,a,k) -> 
-	XLF.KProd (XLF.Name (P.value x), fam_to_fam sign env a, kind_to_kind sign ((P.value x, a) :: env) k)
-    | LF.KProd (LF.Anonymous,a,k) -> 
-	XLF.KProd (XLF.Anonymous, fam_to_fam sign env a, kind_to_kind sign env k)
+    | LF.KProd(x,a,k) -> 
+	let a = fam sign env a in
+	let k = kind sign (bind x a env) k in
+	XLF.KProd(x, a, k)
+
+let rec sign s = function
+  | [] -> s
+  | (c, LF.ODecl a) :: tl ->
+      sign ((c, XLF.ODecl (fam s [] a)) :: s) tl
+  | (c, LF.FDecl k) :: tl -> 
+      sign ((c, XLF.FDecl (kind s [] k)) :: s) tl

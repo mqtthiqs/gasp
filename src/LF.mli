@@ -1,9 +1,4 @@
-type constant = string
-type variable = string
-
-type name =
-  | Name of variable Position.located
-  | Anonymous
+open Name
 
 type fam' =
   | FConst of constant

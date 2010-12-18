@@ -1,13 +1,11 @@
 
 type ident = string
 
-type name = ident Position.located
-
 type term' = 
   | Type
-  | Prod of name * term * term
+  | Prod of ident * term * term
   | Arr of term * term
-  | Lam of name * term * term
+  | Lam of ident * term * term
   | App of term * term
   | Var of ident
 

@@ -33,8 +33,8 @@ let parse_file filename =
 let sig_prec x = 42
 
 let s = SLF_LF.sign_to_sign (parse_file (List.hd filenames))
-let _ = LF_XLF.obj_to_obj (assert false)
+let s = LF_XLF.sign [] s
   
 let _ =  
-  SLF_pp.sign Format.std_formatter (SLF_LF.sign_from_sign s)
+  XLF_pp.sign Format.std_formatter s
 

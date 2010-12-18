@@ -1,9 +1,4 @@
-type constant = string
-type variable = string
-
-type name =
-  | Name of variable
-  | Anonymous
+open Name
 
 type kind =
   | KType
@@ -15,8 +10,15 @@ and fam =
 
 and obj =
   | OLam of name * fam * obj
-  | OVar of variable * args * kind
-  | OConst of constant * args * kind
-  | OApp of obj * args * kind
+  | OVar of variable * args * fam
+  | OConst of constant * args * fam
+  | OApp of obj * args * fam
 
 and args = obj list
+
+type entry =
+  | FDecl of kind
+  | ODecl of fam
+
+type sign = (constant * entry) list
+type env = (variable * fam) list
