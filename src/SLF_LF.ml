@@ -45,7 +45,6 @@ let term_to_entity sign =
 	      | LF.Fam a ->
 		  let env = (P.value x, a) :: env in
 		  begin match term_to_entity env u with
-		    | LF.Fam b -> LF.Fam(p(LF.FLam(LF.Name x,a,b)))
 		    | LF.Obj o -> LF.Obj(p(LF.OLam(LF.Name x,a,o)))
 		    | _ -> assert false
 		  end
@@ -61,8 +60,8 @@ let term_to_entity sign =
 	    if List.mem_assoc x env then LF.Obj(p (LF.OVar x))
 	    else 
 	      try match List.assoc x sign with
-		| LF.EKind _ -> LF.Fam (p (LF.FConst x))
-		| LF.EFam _ -> LF.Obj (p (LF.OConst x))
+		| LF.FDecl _ -> LF.Fam (p (LF.FConst x))
+		| LF.ODecl _ -> LF.Obj (p (LF.OConst x))
 	      with Not_found -> error_not_bound pos x
   in
   term_to_entity
@@ -72,8 +71,8 @@ let sign_to_sign s =
     | [] -> sign
     | (id, SLF.Decl t)::tl -> 
 	match term_to_entity sign [] t with
-	| LF.Fam a -> sign_of_ast ((id, LF.EFam a) :: sign) tl
-	| LF.Kind k -> sign_of_ast ((id, LF.EKind k) :: sign) tl
+	| LF.Fam a -> sign_of_ast ((id, LF.ODecl a) :: sign) tl
+	| LF.Kind k -> sign_of_ast ((id, LF.FDecl k) :: sign) tl
 	| _ -> assert false
   in
   List.rev (sign_of_ast [] s)
@@ -94,9 +93,6 @@ and term'_from_fam' : LF.fam' -> SLF.term' = function
   | LF.FConst c -> SLF.Var c
   | LF.FProd (LF.Anonymous, a, b) -> SLF.Arr(term_from_fam a, term_from_fam b)
   | LF.FProd (LF.Name x, a, b) -> SLF.Prod(x, term_from_fam a, term_from_fam b)
-  | LF.FLam (LF.Anonymous, a, b) -> 
-      SLF.Lam (P.with_pos P.dummy "_", term_from_fam a, term_from_fam b) (* TODO: "_" *)
-  | LF.FLam (LF.Name x, a, b) -> SLF.Lam (x, term_from_fam a, term_from_fam b)
   | LF.FApp (a,t) -> SLF.App (term_from_fam a, term_from_obj t)
 
 and term_from_fam a =
@@ -113,6 +109,6 @@ and term_from_kind (k:LF.kind) : SLF.term =
 let sign_from_sign s =
   List.map
     (function
-       | (id, LF.EKind k) -> (id, SLF.Decl(term_from_kind k))
-       | (id, LF.EFam a) -> (id, SLF.Decl(term_from_fam a))
+       | (id, LF.FDecl k) -> (id, SLF.Decl(term_from_kind k))
+       | (id, LF.ODecl a) -> (id, SLF.Decl(term_from_fam a))
     ) s

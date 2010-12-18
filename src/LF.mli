@@ -8,7 +8,6 @@ type name =
 type fam' =
   | FConst of constant
   | FProd of name * fam * fam
-  | FLam of name * fam * fam
   | FApp of fam * obj
 
 and fam = fam' Position.located
@@ -28,8 +27,8 @@ type kind' =
 and kind = kind' Position.located
 
 type entry =
-  | EKind of kind
-  | EFam of fam
+  | FDecl of kind
+  | ODecl of fam
 
 type sign = (constant * entry) list
 type env = (variable * fam) list
