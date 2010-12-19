@@ -34,6 +34,7 @@ let sig_prec x = 42
 
 let s = SLF_LF.sign_to_sign (parse_file (List.hd filenames))
 let s = LF_XLF.sign [] s
+let _ = XLF_XLFe.sign s
   
 let _ =  
   XLF_pp.sign Format.std_formatter s
