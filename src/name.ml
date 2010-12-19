@@ -1,0 +1,16 @@
+type constant = string
+type variable = string
+
+type name =
+  | Named of variable
+  | Anonymous
+
+let gen_name =
+  let c = ref 0 in
+  fun () ->
+    incr c; "_x" ^ (string_of_int !c)
+
+let name_of = function
+  | Named x -> x
+  | Anonymous -> gen_name()
+
