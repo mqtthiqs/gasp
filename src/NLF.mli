@@ -24,6 +24,7 @@ module rec NLF : sig
   and ohead =
     | OVar of variable * env
     | Oconst of constant * env
+    | OApp of obj * env
 end
 
 and NLFEnv : sig
