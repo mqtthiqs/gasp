@@ -12,6 +12,9 @@ end
 type names = variable list
 type arity = names CMap.t
 
+(* From XLFe to NLF: environment building and forgetting arguments
+   positions *)
+
 let rec obj arity env names : XLFe.obj -> NLF.obj * names = function
   | XLFe.OLam (x,a,t) -> 
       let (a, ns) = fam arity NLFEnv.empty [] a in
@@ -76,3 +79,6 @@ let rec sign arity s : XLFe.sign -> NLFSign.t = function
 	(CMap.add c ns arity)
 	(NLFSign.add s c (NLFSign.ODecl a))
 	tl
+
+(* ...and back *)
+

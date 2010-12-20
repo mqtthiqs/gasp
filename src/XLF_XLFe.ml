@@ -1,5 +1,7 @@
 open Name
 
+(* From XLF to XLFe (eta-expansion) *)
+
 let rec obj = function
   | XLF.OLam(x,a,t) -> XLFe.OLam(variable_for x, fam a, obj t)
   | XLF.OVar(x,l,XLF.FProd(y,a,b)) -> 
@@ -35,3 +37,32 @@ let rec sign = function
   | [] -> []
   | (c, XLF.FDecl k) :: s -> (c, XLFe.FDecl (kind k)) :: sign s
   | (c, XLF.ODecl a) :: s -> (c, XLFe.ODecl (fam a)) :: sign s
+
+(* ... and back *)
+
+let rec from_obj : XLFe.obj -> XLF.obj = function
+  | XLFe.OLam(x,a,t) -> XLF.OLam(Named x, from_fam a, from_obj t)
+  | XLFe.OHead h -> from_ohead h
+
+and from_ohead : XLFe.ohead -> XLF.obj = function
+  | XLFe.OVar(x,l,a) -> XLF.OVar(x, List.map from_obj l, from_fhead a)
+  | XLFe.OConst(c,l,a) -> XLF.OConst(c, List.map from_obj l, from_fhead a)
+  | XLFe.OApp(t,l,a) -> XLF.OApp(from_obj t, List.map from_obj l, from_fhead a)
+
+and from_fhead : XLFe.fhead -> XLF.fam = function
+  | XLFe.FConst (c,l,XLFe.KType) -> XLF.FConst(c,List.map from_obj l, XLF.KType)
+
+and from_fam : XLFe.fam -> XLF.fam = function
+  | XLFe.FProd(x,a,b) -> XLF.FProd(Named x, from_fam a, from_fam b)
+  | XLFe.FHead h -> from_fhead h
+
+let rec from_kind = function
+  | XLFe.KProd(x,a,k) -> XLF.KProd(Named x,from_fam a,from_kind k)
+  | XLFe.KHead(XLFe.KType) -> XLF.KType
+ 
+let rec from_sign s = 
+  List.map
+    (function
+       | c, XLFe.ODecl a -> c, XLF.ODecl(from_fam a)
+       | c, XLFe.FDecl k -> c, XLF.FDecl(from_kind k)
+    ) s

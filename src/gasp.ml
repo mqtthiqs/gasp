@@ -35,7 +35,7 @@ let sig_prec x = 42
 let s = SLF_LF.sign_to_sign (parse_file (List.hd filenames))
 let s = LF_XLF.sign [] s
 let s' = XLF_XLFe.sign (List.rev s) 	(* TODO rev *)
-let _ = XLFe_NLF.sign XLFe_NLF.CMap.empty NLF.NLFSign.empty s'
+let s' = XLFe_NLF.sign XLFe_NLF.CMap.empty NLF.NLFSign.empty s'
   
 let _ =  
   XLF_pp.sign Format.std_formatter s

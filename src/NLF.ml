@@ -42,7 +42,6 @@ end = struct
   let empty = []
 end
 
-
 and NLFSign : sig
   type entry =
     | FDecl of NLF.kind
