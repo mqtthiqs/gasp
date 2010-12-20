@@ -5,13 +5,13 @@ type khead =
 
 type kind =
   | KHead of khead
-  | KProd of name * fam * kind
+  | KProd of variable * fam * kind
 
 and fhead =
   | FConst of constant * args * khead
 
 and fam =
-  | FProd of name * fam * fam
+  | FProd of variable * fam * fam
   | FHead of fhead
 
 and ohead =
@@ -20,7 +20,7 @@ and ohead =
   | OApp of obj * args * fhead
 
 and obj =
-  | OLam of name * fam * obj
+  | OLam of variable * fam * obj
   | OHead of ohead
 
 and args = obj list

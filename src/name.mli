@@ -6,4 +6,4 @@ type name =
   | Anonymous
 
 val gen_name : unit -> variable
-val name_of : name -> variable
+val variable_for : name -> variable

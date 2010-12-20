@@ -10,7 +10,7 @@ let gen_name =
   fun () ->
     incr c; "_x" ^ (string_of_int !c)
 
-let name_of = function
+let variable_for = function
   | Named x -> x
   | Anonymous -> gen_name()
 
