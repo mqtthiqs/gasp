@@ -1,10 +1,4 @@
-
-type variable = string
-type constant = string
-
-type name =
-  | Name of variable
-  | Anonymous
+open Name
 
 module rec NLF : sig
   type env = NLFEnv.t
@@ -19,21 +13,21 @@ module rec NLF : sig
     | Obj of env * ohead * fhead
 	
   and fhead =
-    | FVar of variable * env
     | FConst of constant * env
 	
   and ohead =
     | OVar of variable * env
-    | Oconst of constant * env
+    | OConst of constant * env
+    | OApp of obj * env
 end = NLF
 
 and NLFEnv : sig
   type entry =
     | ODecl of NLF.fam
     | ODef of NLF.obj
-  type t = (name * entry) list
-  val add : t -> name -> entry -> t
-  val find : t -> name -> entry
+  type t = (variable * entry) list
+  val add : t -> variable -> entry -> t
+  val find : t -> variable -> entry
   val empty : t
 end = struct
 
@@ -41,7 +35,7 @@ end = struct
     | ODecl of NLF.fam
     | ODef of NLF.obj
 
-  type t = (name * entry) list
+  type t = (variable * entry) list
 
   let add env x e = (x,e)::env
   let find env x = List.assoc x env
