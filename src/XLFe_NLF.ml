@@ -5,7 +5,7 @@ module CMap' = Map.Make(struct type t = variable let compare = Pervasives.compar
 module CMap = struct
   type 'a t = 'a CMap'.t
   let add x a m = CMap'.add x a m
-  let find x m = try CMap'.find x m with Not_found -> failwith (x^" not found")
+  let find x m = try CMap'.find x m with Not_found -> failwith (x^" not found XLFe_NLF")
   let empty = CMap'.empty
 end
 

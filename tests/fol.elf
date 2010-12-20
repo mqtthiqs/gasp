@@ -1,0 +1,31 @@
+i : type.
+o : type.
+
+0 : i.
+S : i -> i.
++ : i -> i -> i.
+* : i -> i -> i.
+
+= : i -> i -> o.
+lt : i -> i -> o.
+
+not : o -> o.
+and : o -> o -> o.
+or : o -> o -> o.
+imp : o -> o -> o.
+forall : (i -> o) -> o.
+exist : (i -> o) -> o.
+
+true : o -> type.
+
+raa : {p : o} true(not(not p)) -> true p.
+imp-i : {p q : o} (true p -> true q) -> true (imp p q).
+all-e : {F : i -> o} {x : i} true(forall([x:i] F x)) -> true(F x).
+all-i : {F: i -> o} ({x : i} true (F x)) -> true(forall([x:i] F x)).
+
+some-e : {F : i -> o} {p : o} true(exist([x:i] F x)) -> ({x:i} true (F x) -> true p) -> true p.
+
+sub : {t u : i} {F : i -> o} true(= t u) -> true(F t) -> true(F u).
+ind : {F : i -> o} true (F 0) -> ({x:i} true(F x) -> true(F (S x))) -> {x:i} true (F x).
+
+% ...
