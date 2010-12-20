@@ -1,20 +1,6 @@
 open Name
+
 module P = Position
-
-(* Typing errors *)
-
-let type_error pos msg = 
-  let as_string f = 
-    let b = Buffer.create 13 in 
-    let fmt = Format.formatter_of_buffer b in
-    f fmt;
-    Format.pp_print_flush fmt ();
-    Buffer.contents b in
-  Error.error "during type checking" pos (as_string msg)
-
-let error_not_bound pos x =
-  type_error pos
-    (fun fmt -> Format.fprintf fmt "@[Variable %s is not bound.@]@." x)
 
 (* Typing: from SLF to LF *)
 
@@ -61,7 +47,7 @@ let term_to_entity sign =
 	      try match List.assoc x sign with
 		| LF.FDecl _ -> LF.Fam (p (LF.FConst x))
 		| LF.ODecl _ -> LF.Obj (p (LF.OConst x))
-	      with Not_found -> error_not_bound pos x
+	      with Not_found -> Errors.not_bound pos x
   in
   term_to_entity
 
