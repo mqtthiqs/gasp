@@ -17,7 +17,9 @@ let rec oapp sign env args t : XLF.obj =
 	let (u,_) = obj sign env u in
 	begin match oapp sign env (u::args) t with
 	  | XLF.OConst (c, args, XLF.FProd(x,a,b)) -> XLF.OConst (c, args, b)
-	  | _ -> assert false		(* over application *)
+	  | XLF.OVar (x, args, XLF.FProd(y,a,b)) -> XLF.OVar (x, args, b)
+	  | XLF.OApp (t, args, XLF.FProd(x,a,b)) -> XLF.OApp (t, args, b)
+	  | _ -> Errors.over_application (P.position t)
 	end
     | LF.OConst c -> 
 	begin match List.assoc c sign with
@@ -48,7 +50,8 @@ and fapp sign env args a : XLF.fam =
 	let (t,_) = obj sign env t in
 	begin match fapp sign env (t::args) a with
 	  | XLF.FConst (c, args, XLF.KProd(x,a,k)) -> XLF.FConst (c, args, k)
-	  | _ -> assert false 		(* over application *)
+	  | XLF.FConst (c,_,XLF.KType) -> Errors.over_application (P.position a)
+	  | _ -> assert false			       (* ??? *)
 	end
     | LF.FConst c -> 
 	begin match List.assoc c sign with
