@@ -23,7 +23,7 @@ declaration:
 term1:
   t=loc(term2) RARROW u=loc(term1) { Arr(t,u) }
 | t=loc(term1) LARROW u=loc(term2) { Arr(u,t) }
-| LBRACE xs=ID+ COLON t=loc(term2) RBRACE u=loc(term1)
+| LBRACE xs=ID+ COLON t=loc(term1) RBRACE u=loc(term1)
     { Position.value 
 	(List.fold_left 
 	   (fun acc x -> 

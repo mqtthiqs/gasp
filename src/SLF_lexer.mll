@@ -39,7 +39,7 @@ let newline = ('\010' | '\013' | "\013\010")
 let blank   = [' ' '\009' '\012']
 let lowercase = ['a'-'z']
 let uppercase = ['A'-'Z']
-let identchar = ['A'-'Z' 'a'-'z' '0'-'9' '_' '-' '\'']
+let identchar = ['A'-'Z' 'a'-'z' '0'-'9' '_' '-' '\'' '*' '+' '=']
 let integer   = [ '0'-'9' ]
 let identifier  = identchar+
 
@@ -71,8 +71,5 @@ rule main = parse
       
 and comment = parse
   | newline                               { next_line_and main lexbuf }
+  | eof                                   { EOF }
   | _                                     { comment lexbuf }
-      
-      
-{
-}
