@@ -24,7 +24,7 @@ let pp_term pp fmt t = match P.value t with
   | Arr (a,b) -> fprintf fmt "@[%a@ ->@ %a@]" 
       (pp (<)) a (pp (<=)) b
   | Prod (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
-      ident x (pp (<)) a (pp (<=)) b
+      ident x (pp (<=)) a (pp (<=)) b
   | Lam (x,a,b) -> fprintf fmt "@[[%a@ :@ %a]@ %a@]" 
       ident x (pp (<=)) a (pp (<=)) b
   | App (t,u) -> fprintf fmt "@[%a@ %a@]" 

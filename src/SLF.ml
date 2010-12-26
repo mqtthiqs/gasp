@@ -22,6 +22,8 @@ let rec equals_term t u =
     | Prod(x,a,b), Prod(x',a',b') ->
 	x=x' && equals_term a a' && equals_term b b'
     | Arr(t,u), Arr(t',u') -> equals_term t t' && equals_term u u'
+    | Lam(x,a,b), Lam(x',a',b') ->
+	x=x' && equals_term a a' && equals_term b b'
     | App(t,u), App(t',u') -> equals_term t t' && equals_term u u'
     | Var x, Var x' -> x = x'
     | _ -> false
