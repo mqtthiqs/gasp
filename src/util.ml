@@ -1,3 +1,4 @@
+let ($) f g x = g(f(x))
 
 let rec list_map_prefix (f : 'b list -> 'a -> 'b)  (l : 'a list) : 'b list =
   let rec map p = function
