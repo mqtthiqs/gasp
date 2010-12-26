@@ -12,9 +12,9 @@ let rec oapp sign env t : XLF.obj =
     | LF.OApp(t,u) ->
 	let (u,_) = obj sign env u in
 	begin match oapp sign env t with
-	  | XLF.OConst (c, args, XLF.FProd(x,a,b)) -> XLF.OConst (c, (x, u)::args, b)
-	  | XLF.OVar (y, args, XLF.FProd(x,a,b)) -> XLF.OVar (y, (x, u)::args, b)
-	  | XLF.OApp (t, args, XLF.FProd(x,a,b)) -> XLF.OApp (t, (x, u)::args, b)
+	  | XLF.OConst (c, args, XLF.FProd(x,a,b)) -> XLF.OConst (c, args@[x,u], b)
+	  | XLF.OVar (y, args, XLF.FProd(x,a,b)) -> XLF.OVar (y, args@[x,u], b)
+	  | XLF.OApp (t, args, XLF.FProd(x,a,b)) -> XLF.OApp (t, args@[x,u], b)
 	  | _ -> Errors.over_application (P.position t)
 	end
     | LF.OConst c -> 
@@ -46,7 +46,7 @@ and fapp sign env a : XLF.fam =
     | LF.FApp (a,t) ->
 	let (t,_) = obj sign env t in
 	begin match fapp sign env a with
-	  | XLF.FConst (c, args, XLF.KProd(x,a,k)) -> XLF.FConst (c, (x, t) :: args, k)
+	  | XLF.FConst (c, args, XLF.KProd(x,a,k)) -> XLF.FConst (c, args@[x,t], k)
 	  | XLF.FConst (c,_,XLF.KType) -> Errors.over_application (P.position a)
 	  | _ -> assert false			       (* ??? *)
 	end
