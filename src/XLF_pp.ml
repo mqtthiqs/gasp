@@ -44,34 +44,28 @@ let ident fmt x = fprintf fmt "@[%s@]" x
 let pp pp fmt = function
   | Kind k -> begin match k with
       | KType -> fprintf fmt "@[type@]"
-      | KProd (Named x,a,k) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
+      | KProd (x,a,k) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
 	  ident x (pp (<)) (Fam a) (pp (<=)) (Kind k)
-      | KProd (Anonymous,a,k) -> fprintf fmt "@[%a@ ->@ %a@]" 
-	  (pp (<)) (Fam a) (pp (<=)) (Kind k)
       end
   | Fam a -> begin match a with
-      | FProd (Named x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
+      | FProd (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
 	  ident x (pp (<)) (Fam a) (pp (<=)) (Fam b)
-      | FProd (Anonymous,a,b) -> fprintf fmt "@[%a@ ->@ %a@]" 
-	  (pp (<)) (Fam a) (pp (<=)) (Fam b)
       | FConst (c,l,k) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
-	  ident c (pp (<)) (Args l) (pp (<)) (Kind k)
+	  ident c (pp (<=)) (Args l) (pp (<)) (Kind k)
       end
   | Obj o -> begin match o with
-      | OLam(Named x,a,t) -> fprintf fmt "@[[%a@ :@ %a]@ %a@]" 
+      | OLam(x,a,t) -> fprintf fmt "@[[%a@ :@ %a]@ %a@]" 
 	  ident x (pp (<=)) (Fam a) (pp (<=)) (Obj t)
-      | OLam(Anonymous,a,t) -> fprintf fmt "@[[_@ :@ %a]@ %a@]" 
-	  (pp (<=)) (Fam a) (pp (<=)) (Obj t)
       | OVar(x,l,a) | OConst(x,l,a) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
-	  ident x (pp (<)) (Args l) (pp (<)) (Fam a)
+	  ident x (pp (<=)) (Args l) (pp (<)) (Fam a)
       | OApp(t,l,a) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
-	  (pp (<)) (Obj t) (pp (<)) (Args l) (pp (<)) (Fam a)
+	  (pp (<)) (Obj t) (pp (<=)) (Args l) (pp (<)) (Fam a)
       end
   | Args l -> begin match l with
       |	[] -> ()
-      | [t] -> fprintf fmt "@[%a@]" (pp (<)) (Obj t)
-      | t :: l -> fprintf fmt "@[%a@ ;@ %a@]"
-	  (pp (<)) (Obj t) (pp (<=)) (Args l)
+      | [x,t] -> fprintf fmt "@[%a=%a@]" ident x (pp (<=)) (Obj t)
+      | (x,t) :: l -> fprintf fmt "@[%a=%a@ ;@ %a@]"
+	  ident x (pp (<=)) (Obj t) (pp (<=)) (Args l)
     end
   | Entry e -> begin match e with
       | ODecl a -> (pp (<=)) fmt (Fam a)

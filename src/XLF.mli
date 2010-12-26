@@ -2,19 +2,19 @@ open Name
 
 type kind =
   | KType
-  | KProd of name * fam * kind
+  | KProd of variable * fam * kind
 
 and fam =
-  | FProd of name * fam * fam
+  | FProd of variable * fam * fam
   | FConst of constant * args * kind
 
 and obj =
-  | OLam of name * fam * obj
+  | OLam of variable * fam * obj
   | OVar of variable * args * fam
   | OConst of constant * args * fam
   | OApp of obj * args * fam
 
-and args = obj list
+and args = (variable * obj) list
 
 type entry =
   | FDecl of kind
