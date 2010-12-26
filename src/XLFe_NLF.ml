@@ -54,3 +54,52 @@ let rec sign s = function
 
 (* ...and back *)
 
+let rec from_env_kind env k =
+  NLFEnv.fold_decl
+    (fun x a acc ->
+       XLFe.KProd(x, from_fam a, acc)
+    ) env k
+
+and from_env_fam env a =
+  NLFEnv.fold_decl
+    (fun x a acc ->
+       XLFe.FProd(x, from_fam a, acc)
+    ) env a
+
+and from_env_obj env t =
+  NLFEnv.fold_decl
+    (fun x a acc ->
+       XLFe.OLam(x, from_fam a, acc)
+    ) env t
+    
+and from_app args =
+  NLFEnv.fold_def
+    (fun x t acc -> 
+       (x,from_obj t) :: acc
+    ) args []
+
+and from_fam = function 
+  | NLF.Fam (env, ha) ->
+      from_env_fam env (XLFe.FHead(from_fhead ha))
+
+and from_fhead = function
+  | NLF.FConst(c,args) -> XLFe.FConst(c, from_app args, XLFe.KType)
+
+and from_ohead ha = function
+  | NLF.OVar (x, args) -> XLFe.OVar(x, from_app args, from_fhead ha)
+  | NLF.OConst (c, args) -> XLFe.OConst(c, from_app args, from_fhead ha)
+  | NLF.OApp (t, args) -> XLFe.OApp(from_obj t, from_app args, from_fhead ha)
+
+and from_obj = function 
+  | NLF.Obj (env, ht, ha) ->
+      from_env_obj env (XLFe.OHead(from_ohead ha ht))
+
+let rec from_kind = function
+  | NLF.Kind env -> from_env_kind env (XLFe.KHead(XLFe.KType))
+
+let rec from_sign (s:NLF.sign) : XLFe.sign = 
+  NLFSign.fold 
+    (fun c e acc -> match e with
+       | NLFSign.FDecl k -> (c, XLFe.FDecl (from_kind k)) :: acc
+       | NLFSign.ODecl a -> (c, XLFe.ODecl (from_fam a)) :: acc
+    ) s []
