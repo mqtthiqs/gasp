@@ -13,4 +13,3 @@ let gen_name =
 let variable_for = function
   | Named x -> x
   | Anonymous -> gen_name()
-
