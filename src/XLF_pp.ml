@@ -63,8 +63,8 @@ let pp pp fmt = function
       end
   | Args l -> begin match l with
       |	[] -> ()
-      | [x,t] -> fprintf fmt "@[%a=%a@]" ident x (pp (<=)) (Obj t)
-      | (x,t) :: l -> fprintf fmt "@[%a=%a@ ;@ %a@]"
+      | [x,t] -> fprintf fmt "@[%a@ =@ %a@]" ident x (pp (<=)) (Obj t)
+      | (x,t) :: l -> fprintf fmt "@[%a@ =@ %a@ ;@ %a@]"
 	  ident x (pp (<=)) (Obj t) (pp (<=)) (Args l)
     end
   | Entry e -> begin match e with

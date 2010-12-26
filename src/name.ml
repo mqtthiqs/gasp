@@ -8,7 +8,7 @@ type name =
 let gen_name =
   let c = ref 0 in
   fun () ->
-    incr c; "_x" ^ (string_of_int !c)
+    incr c; "x" ^ (string_of_int !c)
 
 let variable_for = function
   | Named x -> x
