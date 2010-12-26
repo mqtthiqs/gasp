@@ -30,10 +30,12 @@ and kind = function
   | XLF.KType -> XLFe.KHead(XLFe.KType)
   | XLF.KProd(x,a,k) -> XLFe.KProd(x, fam a, kind k)
 
-let rec sign = function
-  | [] -> []
-  | (c, XLF.FDecl k) :: s -> (c, XLFe.FDecl (kind k)) :: sign s
-  | (c, XLF.ODecl a) :: s -> (c, XLFe.ODecl (fam a)) :: sign s
+let rec sign s =
+  List.map
+    (function
+       | c, XLF.FDecl k -> c, XLFe.FDecl (kind k)
+       | c, XLF.ODecl a -> c, XLFe.ODecl (fam a)
+    ) s
 
 (* ... and back *)
 

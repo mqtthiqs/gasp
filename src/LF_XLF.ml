@@ -78,9 +78,9 @@ and kind sign env k : XLF.kind =
 	let k = kind sign ((x,a) :: env) k in
 	XLF.KProd(x, a, k)
 
-let rec sign s = function
-  | [] -> s
-  | (c, LF.ODecl a) :: tl ->
-      sign ((c, XLF.ODecl (fam s [] a)) :: s) tl
-  | (c, LF.FDecl k) :: tl -> 
-      sign ((c, XLF.FDecl (kind s [] k)) :: s) tl
+let rec sign (s :LF.sign) : XLF.sign = 
+  Util.list_map_prefix 
+    (fun s -> function
+       | c, LF.ODecl a -> c, XLF.ODecl (fam s [] a)
+       | c, LF.FDecl k -> c, XLF.FDecl (kind s [] k)
+    ) s
