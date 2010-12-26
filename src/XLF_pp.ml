@@ -19,12 +19,12 @@ let fam_prec = function
   | FProd _ -> 30
 let obj_prec = function
   | OLam _ -> 20
-  | OVar _ -> 30
-  | OConst _ -> 30
+  | OVar _ -> 20
+  | OConst _ -> 20
   | OApp _ -> 30
 let args_prec = function
   | [] -> 0
-  | _::_ -> 10
+  | _::_ -> 30
 let entry_prec = function
   | FDecl _ -> 50
   | ODecl _ -> 50

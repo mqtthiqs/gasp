@@ -20,15 +20,13 @@ imp : obj(arr o (arr o o)).
 forall : {s : holtype} obj(arr (arr s o) o).
 exist : {s : holtype} obj(arr (arr s o) o).
 
-app : {s t : holtype} (obj(arr s t) -> obj s -> obj t).
-lam : {s t : holtype} ((obj s -> obj t) -> obj (arr s t)).
+app : {s t : holtype} obj(arr s t) -> obj s -> obj t.
+lam : {s t : holtype} (obj s -> obj t) -> obj (arr s t).
 
 true : obj(o) -> type.
+True : obj(o).
+tt : true(True).
 
 all-i : {s : holtype} {F : obj(arr s o)} 
 	 ({x : obj s} true(app s o F x)) -> 
 	 true(app (arr s o) o (forall s) F).
-
-% all-i : {s : holtype} {F : obj(arr s o)} 
-% 	 ({x : obj s} true(app s o F x)) -> 
-% 	 true(app (arr s o) o (forall s) F).

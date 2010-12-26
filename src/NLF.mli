@@ -5,16 +5,16 @@ module rec NLF : sig
 
   type kind = 
     | Kind of env
-	
+
   and fam = 
     | Fam of env * fhead
-	
+
   and obj =
     | Obj of env * ohead * fhead
-	
+
   and fhead =
     | FConst of constant * env
-	
+
   and ohead =
     | OVar of variable * env
     | OConst of constant * env

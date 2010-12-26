@@ -1,0 +1,10 @@
+nat : type.
+o : nat.
+
+even : nat -> type.
+
+app : {n : nat} even n.
+
+true : even o -> type.
+
+all-i : true (app o).
