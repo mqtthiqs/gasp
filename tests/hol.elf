@@ -16,7 +16,7 @@ and : obj(arr o (arr o o)).
 or : obj(arr o (arr o o)).
 imp : obj(arr o (arr o o)).
 
-= : {s : holtype} obj(arr s (arr s o)).
+eq : {s : holtype} obj(arr s (arr s o)).
 forall : {s : holtype} obj(arr (arr s o) o).
 exist : {s : holtype} obj(arr (arr s o) o).
 
@@ -30,3 +30,5 @@ tt : true(True).
 all-i : {s : holtype} {F : obj(arr s o)} 
 	 ({x : obj s} true(app s o F x)) -> 
 	 true(app (arr s o) o (forall s) F).
+all-e : {s : holtype} {F : obj(arr s o)}
+	 {x : obj s} true(app (arr s o) o (forall s) F) -> true(app s o F x).

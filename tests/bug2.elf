@@ -1,0 +1,3 @@
+o : type.
+P : (o -> o) -> type.
+p : P ([x:o] x).
