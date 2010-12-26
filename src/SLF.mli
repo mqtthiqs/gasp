@@ -15,3 +15,6 @@ type entry =
   | Decl of term
 
 type sign = (ident * entry) list
+
+val equals_term : term -> term -> bool
+val equals_sign : sign -> sign -> bool
