@@ -2,6 +2,7 @@ open Name
 
 module rec NLF : sig
   type env = NLFEnv.t
+  type sign = NLFSign.t
 
   type kind = 
     | Kind of env
@@ -28,6 +29,8 @@ and NLFEnv : sig
   type t
   val add : t -> variable -> entry -> t
   val find : t -> variable -> entry
+  val fold_decl : (variable -> NLF.fam -> 'a -> 'a) -> t -> 'a -> 'a
+  val fold_def : (variable -> NLF.obj -> 'a -> 'a) -> t -> 'a -> 'a
   val empty : t
 end
 
@@ -38,5 +41,6 @@ and NLFSign : sig
   type t
   val add : t -> constant -> entry -> t
   val find : t -> constant -> entry
+  val fold : (constant -> entry -> 'a -> 'a) -> t -> 'a -> 'a
   val empty : t
 end
