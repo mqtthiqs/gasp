@@ -1,0 +1,33 @@
+tm : type.
+lam : (tm -> tm) -> tm.
+app : tm -> tm -> tm.
+o : tm.
+s : tm.
+true : tm.
+false : tm.
+eq : tm.
+
+ty : type.
+nat : ty.
+bool : ty.
+arr : ty -> ty -> ty.
+
+of : tm -> ty -> type.
+
+of-o : of o nat.
+of-s : of s (arr nat nat).
+of-true : of true bool.
+of-false : of false bool.
+of-eq : of eq (arr nat (arr nat bool)).
+
+of-app : {t u : tm} {A B : ty}
+
+	  of t (arr A B) -> of u A ->
+	 %----------------------------
+		 of (app t u) B.
+
+of-lam : {t : tm -> tm} {A B : ty}
+
+	  ({x : tm} of x A -> of (t x) B) ->
+	  %---------------------------------
+	  of (lam ([x:tm] t x)) (arr A B).

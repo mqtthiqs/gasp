@@ -1,0 +1,4 @@
+nat : type.
+o : nat.
+P : nat -> type.
+p : P (([x:nat] x) o).
