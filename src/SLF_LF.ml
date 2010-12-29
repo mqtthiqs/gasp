@@ -16,30 +16,32 @@ let term sign =
 		  begin match term ((x,a) :: env) u with
 		    | LF.Kind k -> LF.Kind(p(LF.KProd(Named x,a,k)))
 		    | LF.Fam b -> LF.Fam(p(LF.FProd(Named x,a,b)))
-		    | _ -> assert false
+		    | _ -> Errors.not_a_kind_or_fam u
 		  end
-	      | _ -> assert false
+	      | _ -> Errors.not_a_fam t
 	    end
 	| SLF.Arr(t,u) ->
 	    begin match term env t, term env u with
 	      | LF.Fam a, LF.Kind k -> LF.Kind(p(LF.KProd(Anonymous,a,k)))
 	      | LF.Fam a, LF.Fam b -> LF.Fam(p(LF.FProd(Anonymous,a,b)))
-	      | _ -> assert false
+	      | LF.Fam _, _ -> Errors.not_a_kind_or_fam u
+	      | _ -> Errors.not_a_fam t
 	    end
 	| SLF.Lam(x,t,u) ->
 	    begin match term env t with
 	      | LF.Fam a ->
 		  begin match term ((x,a) :: env) u with
 		    | LF.Obj o -> LF.Obj(p(LF.OLam(Named x,a,o)))
-		    | _ -> assert false
+		    | _ -> Errors.not_an_obj u
 		  end
-	      | _ -> assert false
+	      | _ -> Errors.not_a_fam t
 	    end
 	| SLF.App(t,u) ->
 	    begin match term env t, term env u with
 	      | LF.Fam a, LF.Obj o -> LF.Fam(p(LF.FApp(a,o)))
 	      | LF.Obj o, LF.Obj v -> LF.Obj(p(LF.OApp(o,v)))
-	      | _ -> assert false
+	      | _, LF.Obj _ -> Errors.not_a_fam_or_obj t
+	      | _ -> Errors.not_an_obj u
 	    end
 	| SLF.Var x ->
 	    if List.mem_assoc x env then LF.Obj(p (LF.OVar x))

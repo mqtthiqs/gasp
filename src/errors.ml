@@ -18,3 +18,17 @@ let not_bound pos x =
 let over_application pos =
   type_error pos
     (fun fmt -> fprintf fmt "@[This function is over-applied.@]")
+
+let bad_application pos =
+  type_error pos
+    (fun fmt -> fprintf fmt "@[This application is invalid.@]")
+
+let not_a s t =
+  type_error (Position.position t)
+    (fun fmt -> fprintf fmt "@[The term %a is not a %s.@]" SLF_pp.term t s)
+
+let not_a_kind = not_a "kind"
+let not_a_fam = not_a "family"
+let not_an_obj = not_a "object"
+let not_a_fam_or_obj = not_a "family or object"
+let not_a_kind_or_fam = not_a "kind or family"

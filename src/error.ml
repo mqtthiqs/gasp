@@ -20,10 +20,10 @@ let error_alert positions msg =
   else raise (Error (positions, msg))
 
 let global_error kind msg =
-  error_alert [] (Printf.sprintf "Global Error (%s)\n  %s"  kind msg)
+  error_alert [] (Printf.sprintf "Global Error (%s)\n  %s\n"  kind msg)
 
 let error kind pos msg =
-  error_alert [pos] (Printf.sprintf "Error (%s)\n  %s" kind msg)
+  error_alert [pos] (Printf.sprintf "Error (%s)\n  %s\n" kind msg)
 
 let error2 kind pos1 pos2 msg =
-  error_alert [pos1; pos2] (Printf.sprintf "Error (%s)\n  %s" kind msg)
+  error_alert [pos1; pos2] (Printf.sprintf "Error (%s)\n  %s\n" kind msg)
