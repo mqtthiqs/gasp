@@ -27,17 +27,25 @@ let parse_buffer b filename =
     ~parser_fun: SLF_parser.signature
     ~input: filename  
 
-let down = (SLF_LF.sign []) $ (LF_XLF.sign []) $ XLF_XLFe.sign $ XLFe_NLF.sign NLF.NLFSign.empty
+let down = SLF_LF.sign [] $ LF_XLF.sign [] $ XLF_XLFe.sign $ XLFe_NLF.sign NLF.NLFSign.empty
 let up = XLFe_NLF.from_sign $ XLF_XLFe.from_sign $ LF_XLF.from_sign $ SLF_LF.from_sign
 
-let b = Util.buffer_of_file (List.hd filenames);;
-let s = parse_buffer b (List.hd filenames);;
-SLF_pp.sign Format.std_formatter s;;
-print_string "=================================\n";;
-let s' = (down $ up) s;;
-Buffer.reset b;;
-SLF_pp.sign (Format.formatter_of_buffer b) s';;
-let s' = parse_buffer b "generated";;
-let s' = (down $ up) s';;
-SLF_pp.sign Format.std_formatter s';;
-if SLF.equals_sign SLF.Idmap.empty s s' then exit 0 else exit 1
+let _ =
+  (* Parsing of the input file *)
+  let b = Util.buffer_of_file (List.hd filenames) in
+  let s = parse_buffer b (List.hd filenames) in
+  (* Print parsed file *)
+  SLF_pp.sign Format.std_formatter s;
+  print_string "=================================\n";
+  (* First down & up *)
+  let s' = (down $ up) s in
+  (* Printing/re-parsing of s' to/from a buffer *)
+  Buffer.reset b;
+  SLF_pp.sign (Format.formatter_of_buffer b) s';
+  let s' = parse_buffer b "generated" in
+  (* Second down & up *)
+  let s' = (down $ up) s' in
+  (* Printing of s' *)
+  SLF_pp.sign Format.std_formatter s';
+  (* Comparison of the initial and final signatures *)
+  if SLF.equals_sign SLF.Idmap.empty s s' then exit 0 else exit 1
