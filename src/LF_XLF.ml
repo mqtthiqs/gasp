@@ -18,13 +18,13 @@ let rec oapp sign env t : XLF.obj =
 	  | XLF.OConst (c, args, XLF.FProd(x,a,b)) -> XLF.OConst (c, (x,u) :: args, b)
 	  | XLF.OVar (y, args, XLF.FProd(x,a,b)) -> XLF.OVar (y, (x,u) :: args, b)
 	  | XLF.OApp (t, args, XLF.FProd(x,a,b)) -> XLF.OApp (t, (x,u) :: args, b)
-	  | XLF.OLam _ -> assert false
-	  | _ -> Errors.over_application (P.position t)
+	  | XLF.OLam _ -> assert false	(* vrai *)
+	  | _ -> Errors.over_application (SLF_LF.from_obj t)
 	end
-    | LF.OConst c -> 
+    | LF.OConst c ->
 	begin match List.assoc c sign with
 	  | XLF.ODecl a -> XLF.OConst (c, [], a)
-	  | _ -> assert false 		(* c est une famille *)
+	  | _ -> Errors.not_an_obj (SLF_LF.from_obj t)
 	end
     | LF.OVar x -> XLF.OVar (x, [], List.assoc x env)
     | LF.OLam _ ->
@@ -43,7 +43,7 @@ and obj sign env t : XLF.obj * XLF.fam =
 	  | XLF.OConst(c,args,a) as t -> t, a
 	  | XLF.OVar(c,args,a) as t -> t, a
 	  | XLF.OApp(c,args,a) as t -> t, a
-	  | _ -> assert false
+	  | _ -> assert false		(* vrai *)
 
 and fapp sign env a : XLF.fam =
   match P.value a with
@@ -51,15 +51,15 @@ and fapp sign env a : XLF.fam =
 	let (t,_) = obj sign env t in
 	begin match fapp sign env a with
 	  | XLF.FConst (c, args, XLF.KProd(x,a,k)) -> XLF.FConst (c, (x,t) :: args, k)
-	  | XLF.FConst (c,_,XLF.KType) -> Errors.over_application (P.position a)
-	  | _ -> assert false			       (* ??? *)
+	  | XLF.FConst (c,_,XLF.KType) -> Errors.over_application (SLF_LF.from_fam a)
+	  | _ -> assert false           (* vrai *)
 	end
     | LF.FConst c -> 
 	begin match List.assoc c sign with
 	  | XLF.FDecl k -> XLF.FConst (c, [], k)
-	  | _ -> assert false 		(* c est un objet *)
+	  | _ -> Errors.not_a_fam (SLF_LF.from_fam a) 		(* c est un objet *)
 	end
-    | LF.FProd _ -> assert false	(* prod appliqué *)
+    | LF.FProd _ -> Errors.bad_application (SLF_LF.from_fam a)	(* prod appliqué *)
 
 and fam sign env a : XLF.fam =
   match P.value a with
@@ -71,7 +71,7 @@ and fam sign env a : XLF.fam =
     | LF.FApp _ | LF.FConst _ ->
 	match fapp sign env a with
 	  | XLF.FConst (c, args, k) as a -> a
-	  | _ -> assert false		(* impossible *)
+	  | _ -> assert false		(* vrai *)
 
 and kind sign env k : XLF.kind =
   match P.value k with

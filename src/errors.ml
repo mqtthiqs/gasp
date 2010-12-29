@@ -15,13 +15,13 @@ let not_bound pos x =
   type_error pos
     (fun fmt -> fprintf fmt "@[Variable %s is not bound.@]@." x)
 
-let over_application pos =
-  type_error pos
-    (fun fmt -> fprintf fmt "@[This function is over-applied.@]")
+let over_application t =
+  type_error (Position.position t)
+    (fun fmt -> fprintf fmt "@[The function %a is over-applied.@]" SLF_pp.term t)
 
-let bad_application pos =
-  type_error pos
-    (fun fmt -> fprintf fmt "@[This application is invalid.@]")
+let bad_application t =
+  type_error (Position.position t)
+    (fun fmt -> fprintf fmt "@[The application %a is invalid.@]" SLF_pp.term t)
 
 let not_a s t =
   type_error (Position.position t)
