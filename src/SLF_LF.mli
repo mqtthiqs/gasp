@@ -1,6 +1,6 @@
 
 val term : LF.sign -> LF.env -> SLF.term -> LF.entity
-val sign : SLF.sign -> LF.sign
+val sign : LF.sign -> SLF.sign -> LF.sign
 
 val from_obj : LF.obj -> SLF.term
 val from_fam : LF.fam -> SLF.term

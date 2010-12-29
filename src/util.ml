@@ -1,12 +1,11 @@
 let ($) f g x = g(f(x))
 
-let rec list_map_prefix (f : 'b list -> 'a -> 'b)  (l : 'a list) : 'b list =
-  let rec map p = function
-    | [] -> p
-    | x :: xs -> map (p @ [f p x]) xs
-  in
-  map [] l
-
+let rec list_map_prefix (f : 'b list -> 'a -> 'b) (p : 'b list) : 'a list -> 'b list = function
+| [] -> []
+| x :: xs -> 
+    let x' = f p x in
+    x' :: list_map_prefix f (x'::p) xs
+      
 let buffer_of_file filename =
   let b = Buffer.create 16 in
   let ic = open_in filename in

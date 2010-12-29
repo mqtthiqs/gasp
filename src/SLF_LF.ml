@@ -53,16 +53,15 @@ let term sign =
   in
   term
 
-let sign s =
-  let rec sign_of_ast (sign) = function
-    | [] -> sign
-    | (id, SLF.Decl t)::tl -> 
-	match term sign [] t with
-	| LF.Fam a -> sign_of_ast ((id, LF.ODecl a) :: sign) tl
-	| LF.Kind k -> sign_of_ast ((id, LF.FDecl k) :: sign) tl
-	| _ -> assert false
-  in
-  List.rev (sign_of_ast [] s)
+let rec sign s' s =
+  Util.list_map_prefix
+    (fun s -> function
+       | (id, SLF.Decl t) -> 
+	   match term s [] t with
+	     | LF.Fam a -> (id, LF.ODecl a)
+	     | LF.Kind k -> (id, LF.FDecl k)
+	     | _ -> Errors.not_a_kind_or_fam t
+    ) s' s
 
 (* Detyping: from LF to SLF *)
 

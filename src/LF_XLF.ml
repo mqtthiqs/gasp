@@ -18,6 +18,7 @@ let rec oapp sign env t : XLF.obj =
 	  | XLF.OConst (c, args, XLF.FProd(x,a,b)) -> XLF.OConst (c, (x,u) :: args, b)
 	  | XLF.OVar (y, args, XLF.FProd(x,a,b)) -> XLF.OVar (y, (x,u) :: args, b)
 	  | XLF.OApp (t, args, XLF.FProd(x,a,b)) -> XLF.OApp (t, (x,u) :: args, b)
+	  | XLF.OLam _ -> assert false
 	  | _ -> Errors.over_application (P.position t)
 	end
     | LF.OConst c -> 
@@ -81,12 +82,12 @@ and kind sign env k : XLF.kind =
 	let k = kind sign ((x,a) :: env) k in
 	XLF.KProd(x, a, k)
 
-let rec sign (s :LF.sign) : XLF.sign = 
+let rec sign (s' : XLF.sign) (s :LF.sign) : XLF.sign = 
   Util.list_map_prefix 
     (fun s -> function
        | c, LF.ODecl a -> c, XLF.ODecl (fam s [] a)
        | c, LF.FDecl k -> c, XLF.FDecl (kind s [] k)
-    ) s
+    ) s' s
 
 (* ... and back: *)
 exception Done of bool
