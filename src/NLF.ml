@@ -26,11 +26,11 @@ and NLFEnv : sig
   type entry =
     | ODecl of NLF.fam
     | ODef of NLF.obj
-  type t = (variable * entry) list
+  type t
   val add : t -> variable -> entry -> t
   val find : t -> variable -> entry
-  val fold_decl : (variable -> NLF.fam -> 'a -> 'a) -> t -> 'a -> 'a
-  val fold_def : (variable -> NLF.obj -> 'a -> 'a) -> t -> 'a -> 'a
+  val fold : (variable -> entry -> 'a -> 'a) -> t -> 'a -> 'a
+  val clear : t -> t
   val empty : t
 end = struct
 
@@ -38,23 +38,17 @@ end = struct
     | ODecl of NLF.fam
     | ODef of NLF.obj
 
-  type t = (variable * entry) list
+  module Varmap = Map.Make(struct type t = variable let compare = Pervasives.compare end)
 
-  let add env x e = (x,e)::env
-  let find env x = List.assoc x env
-  let fold_decl f (e:t) acc = List.fold_left
-    (fun acc (x,e) ->
-       match e with
-	 | ODef t -> acc
-	 | ODecl a -> f x a acc
-    ) acc e
-  let fold_def f (e:t) acc = List.fold_left
-    (fun acc (x,e) ->
-       match e with
-	 | ODef t -> f x t acc
-	 | ODecl a -> acc
-    ) acc e
-  let empty = []
+  type t = entry Varmap.t * variable list
+
+  let add (m,a:t) x e = Varmap.add x e m, x::a
+  let find (m,a:t) x = Varmap.find x m
+  let fold f (m,a:t) acc = List.fold_left
+    (fun acc x -> f x (Varmap.find x m) acc
+    ) acc a
+  let clear(m,_) = m, []
+  let empty = Varmap.empty, []
 end
 
 and NLFSign : sig

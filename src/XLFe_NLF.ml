@@ -6,39 +6,39 @@ open NLF
 
 let rec obj env = function
   | XLFe.OLam (x,a,t) -> 
-      let a = fam NLFEnv.empty a in
+      let a = fam (NLFEnv.clear env) a in
       obj (NLFEnv.add env x (NLFEnv.ODecl a)) t
   | XLFe.OHead h -> 
       let (ht, ha) = ohead env h in
       NLF.Obj(env, ht, ha)
 
-and args l = 
+and args env l = 
   List.fold_left
     ( fun env (x,t) ->
-	let t = obj NLFEnv.empty t in
+	let t = obj (NLFEnv.clear env) t in
 	NLFEnv.add env x (NLFEnv.ODef t)
-    ) NLFEnv.empty l
+    ) (NLFEnv.clear env) l
 
 and ohead env = function
-  | XLFe.OVar(x,l,a) -> NLF.OVar(x, args l), fhead env a
-  | XLFe.OConst(c,l,a) -> NLF.OConst(c, args l), fhead env a
+  | XLFe.OVar(x,l,a) -> NLF.OVar(x, args env l), fhead env a
+  | XLFe.OConst(c,l,a) -> NLF.OConst(c, args env l), fhead env a
   | XLFe.OApp(t,l,a) -> 
-      let t = obj NLFEnv.empty t in
-      NLF.OApp(t, args l), fhead env a
+      let t = obj (NLFEnv.clear env) t in
+      NLF.OApp(t, args env l), fhead env a
 
 and fam env = function
   | XLFe.FProd (x,a,b) -> 
-      let a = fam NLFEnv.empty a in
+      let a = fam (NLFEnv.clear env) a in
       fam (NLFEnv.add env x (NLFEnv.ODecl a)) b
   | XLFe.FHead h -> 
       NLF.Fam(env, fhead env h)
 
 and fhead env = function
-  | XLFe.FConst(c,l,XLFe.KType) -> NLF.FConst(c, args l)
+  | XLFe.FConst(c,l,XLFe.KType) -> NLF.FConst(c, args env l)
 
 let rec kind env = function
   | XLFe.KProd(x,a,k) -> 
-      let a = fam NLFEnv.empty a in
+      let a = fam (NLFEnv.clear env) a in
       kind (NLFEnv.add env x (NLFEnv.ODecl a)) k
   | XLFe.KHead(XLFe.KType) ->
       NLF.Kind env
@@ -55,27 +55,31 @@ let rec sign s = function
 (* ...and back *)
 
 let rec from_env_kind env k =
-  NLFEnv.fold_decl
-    (fun x a acc ->
-       XLFe.KProd(x, from_fam a, acc)
+  NLFEnv.fold
+    (fun x e acc -> match e with
+       | NLFEnv.ODecl a -> XLFe.KProd(x, from_fam a, acc)
+       | NLFEnv.ODef t -> assert false
     ) env k
 
-and from_env_fam env a =
-  NLFEnv.fold_decl
-    (fun x a acc ->
-       XLFe.FProd(x, from_fam a, acc)
-    ) env a
+and from_env_fam env k =
+  NLFEnv.fold
+    (fun x e acc -> match e with
+       | NLFEnv.ODecl a -> XLFe.FProd(x, from_fam a, acc)
+       | NLFEnv.ODef t -> assert false
+    ) env k
 
 and from_env_obj env t =
-  NLFEnv.fold_decl
-    (fun x a acc ->
-       XLFe.OLam(x, from_fam a, acc)
+  NLFEnv.fold
+    (fun x e acc -> match e with
+       | NLFEnv.ODecl a -> XLFe.OLam(x, from_fam a, acc)
+       | NLFEnv.ODef t -> assert false
     ) env t
     
 and from_app args =
-  NLFEnv.fold_def
-    (fun x t acc -> 
-       (x,from_obj t) :: acc
+  NLFEnv.fold
+    (fun x e acc -> match e with
+       | NLFEnv.ODecl a -> assert false
+       | NLFEnv.ODef t ->  (x,from_obj t) :: acc
     ) args []
 
 and from_fam = function 

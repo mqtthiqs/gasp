@@ -29,8 +29,8 @@ and NLFEnv : sig
   type t
   val add : t -> variable -> entry -> t
   val find : t -> variable -> entry
-  val fold_decl : (variable -> NLF.fam -> 'a -> 'a) -> t -> 'a -> 'a
-  val fold_def : (variable -> NLF.obj -> 'a -> 'a) -> t -> 'a -> 'a
+  val fold : (variable -> entry -> 'a -> 'a) -> t -> 'a -> 'a
+  val clear : t -> t
   val empty : t
 end
 
