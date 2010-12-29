@@ -82,7 +82,7 @@ and kind sign env k : XLF.kind =
 	let k = kind sign ((x,a) :: env) k in
 	XLF.KProd(x, a, k)
 
-let rec sign (s' : XLF.sign) (s :LF.sign) : XLF.sign = 
+let sign (s' : XLF.sign) (s :LF.sign) : XLF.sign = 
   Util.list_map_prefix 
     (fun s -> function
        | c, LF.ODecl a -> c, XLF.ODecl (fam s [] a)

@@ -4,7 +4,7 @@ module P = Position
 
 (* Typing: from SLF to LF *)
 
-let term sign =
+let term sign env t =
   let rec term env = 
     fun {P.value=t; P.position=pos} ->
       let p v = P.with_pos pos v in
@@ -51,7 +51,7 @@ let term sign =
 		| LF.ODecl _ -> LF.Obj (p (LF.OConst x))
 	      with Not_found -> Errors.not_bound pos x
   in
-  term
+  term env t
 
 let rec sign s' s =
   Util.list_map_prefix
