@@ -30,6 +30,7 @@ and NLFEnv : sig
   val add : t -> variable -> entry -> t
   val find : t -> variable -> entry
   val fold : (variable -> entry -> 'a -> 'a) -> t -> 'a -> 'a
+  val merge : t -> t -> t
   val clear : t -> t
   val empty : t
 end = struct
@@ -47,6 +48,8 @@ end = struct
   let fold f (m,a:t) acc = List.fold_left
     (fun acc x -> f x (Varmap.find x m) acc
     ) acc a
+  let merge (m1,a1:t) (m2,a2:t) =
+    assert false			(* TODO *)
   let clear(m,_) = m, []
   let empty = Varmap.empty, []
 end
@@ -67,7 +70,7 @@ end = struct
     | ODecl of NLF.fam
 	
   type t = (constant * entry) list
-
+      
   let add env x e = (x,e)::env
   let find env x = List.assoc x env
   let fold f env acc = List.fold_left (fun acc (x,a) -> f x a acc) acc env

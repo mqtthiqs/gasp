@@ -30,6 +30,7 @@ and NLFEnv : sig
   val add : t -> variable -> entry -> t
   val find : t -> variable -> entry
   val fold : (variable -> entry -> 'a -> 'a) -> t -> 'a -> 'a
+  val merge : t -> t -> t
   val clear : t -> t
   val empty : t
 end
