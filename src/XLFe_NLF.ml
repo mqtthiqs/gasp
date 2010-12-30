@@ -75,7 +75,7 @@ and from_env_obj env t =
        | NLFEnv.ODef t -> assert false
     ) env t
     
-and from_app args =
+and from_env_args args =
   NLFEnv.fold
     (fun x e acc -> match e with
        | NLFEnv.ODecl a -> assert false
@@ -87,12 +87,12 @@ and from_fam = function
       from_env_fam env (XLFe.FHead(from_fhead ha))
 
 and from_fhead = function
-  | NLF.FConst(c,args) -> XLFe.FConst(c, from_app args, XLFe.KType)
+  | NLF.FConst(c,args) -> XLFe.FConst(c, from_env_args args, XLFe.KType)
 
 and from_ohead ha = function
-  | NLF.OVar (x, args) -> XLFe.OVar(x, from_app args, from_fhead ha)
-  | NLF.OConst (c, args) -> XLFe.OConst(c, from_app args, from_fhead ha)
-  | NLF.OApp (t, args) -> XLFe.OApp(from_obj t, from_app args, from_fhead ha)
+  | NLF.OVar (x, args) -> XLFe.OVar(x, from_env_args args, from_fhead ha)
+  | NLF.OConst (c, args) -> XLFe.OConst(c, from_env_args args, from_fhead ha)
+  | NLF.OApp (t, args) -> XLFe.OApp(from_obj t, from_env_args args, from_fhead ha)
 
 and from_obj = function 
   | NLF.Obj (env, ht, ha) ->

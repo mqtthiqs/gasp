@@ -9,3 +9,4 @@ val from_obj : XLFe.obj -> XLF.obj
 val from_fam : XLFe.fam -> XLF.fam
 val from_kind : XLFe.kind -> XLF.kind
 val from_sign : XLFe.sign -> XLF.sign
+val from_args : XLFe.args -> XLF.args
