@@ -1,5 +1,4 @@
 nat : type.
-vec : nat -> type.
-zeros : {n : nat} vec n.
+s : nat -> nat.
 X : (nat -> nat) -> type.
-P : X zeros.
+P : X s.
