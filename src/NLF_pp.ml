@@ -44,18 +44,18 @@ let pp pp fmt = function
       NLFEnv.fold			(* TODO les dépendances! *)
 	(fun x e () -> 
 	   match e with
-	     | NLFEnv.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]"
+	     | NLFEnv.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@,"
 		 ident x (pp (<=)) (F a)
-	     | NLFEnv.ODef t -> fprintf fmt "@[[%a@ =@ %a]@]"
+	     | NLFEnv.ODef t -> fprintf fmt "@[[%a@ =@ %a]@]@,"
 		 ident x (pp (<=)) (O t)
 	) e ()
   | S s -> 
       NLFSign.fold
 	(fun x e () -> 
 	   match e with
-	     | NLFSign.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]"
+	     | NLFSign.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@,"
 		 ident x (pp (<=)) (F a)
-	     | NLFSign.FDecl k -> fprintf fmt "@[[%a@ :@ %a]@]"
+	     | NLFSign.FDecl k -> fprintf fmt "@[[%a@ :@ %a]@]@,"
 		 ident x (pp (<=)) (K k)
 	) s ()
 
