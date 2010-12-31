@@ -22,14 +22,14 @@ and args env l =
 and ohead env = function
   | XLFe.OVar(x,l,a) -> 
       let args = args env l in
-      NLF.OVar(x, args), fhead (NLFEnv.merge env (NLFEnv.clear args)) a
+      NLF.OVar(x, args), fhead (NLFEnv.clear args) a
   | XLFe.OConst(c,l,a) -> 
       let args = args env l in
-      NLF.OConst(c, args), fhead (NLFEnv.merge env (NLFEnv.clear args)) a
+      NLF.OConst(c, args), fhead (NLFEnv.clear args) a
   | XLFe.OApp(t,l,a) -> 
       let t = obj (NLFEnv.clear env) t in
       let args = args env l in
-      NLF.OApp(t, args), fhead (NLFEnv.merge env (NLFEnv.clear args)) a
+      NLF.OApp(t, args), fhead (NLFEnv.clear args) a
 
 and fam env = function
   | XLFe.FProd (x,a,b) -> 
