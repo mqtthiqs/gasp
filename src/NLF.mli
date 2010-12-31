@@ -32,6 +32,7 @@ and NLFEnv : sig
   val fold : (variable -> entry -> 'a -> 'a) -> t -> 'a -> 'a
   val merge : t -> t -> t
   val clear : t -> t
+  val is_empty : t -> bool
   val empty : t
 end
 

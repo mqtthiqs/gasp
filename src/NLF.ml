@@ -32,6 +32,7 @@ and NLFEnv : sig
   val fold : (variable -> entry -> 'a -> 'a) -> t -> 'a -> 'a
   val merge : t -> t -> t
   val clear : t -> t
+  val is_empty : t -> bool
   val empty : t
 end = struct
 
@@ -44,13 +45,25 @@ end = struct
   type t = entry Varmap.t * variable list
 
   let add (m,a:t) x e = Varmap.add x e m, x::a
-  let find (m,a:t) x = Varmap.find x m
+  let find (m,a:t) x = 
+    (* try Varmap.find x m with Not_found -> failwith ("not found "^x) *)
+    Varmap.find x m
   let fold f (m,a:t) acc = List.fold_left
     (fun acc x -> f x (Varmap.find x m) acc
     ) acc a
-  let merge (m1,a1:t) (m2,a2:t) =
-    assert false			(* TODO *)
+  let merge e1 e2 =
+    fold
+      (fun x e acc -> 
+	 try 
+	   match e, find acc x with
+	     | ODecl _, ODef t -> add acc x (ODef t)
+	     | ODecl _, ODecl a -> add acc x (ODecl a)
+	     | _ -> assert false
+	 with Not_found ->
+	   add acc x e			(* TODO ajouter les dépendances *)
+      ) e2 e1
   let clear(m,_) = m, []
+  let is_empty (_, t) = t = []
   let empty = Varmap.empty, []
 end
 
@@ -71,7 +84,7 @@ end = struct
 	
   type t = (constant * entry) list
       
-  let add env x e = (x,e)::env
+  let add env x e = env@[x,e]
   let find env x = List.assoc x env
   let fold f env acc = List.fold_left (fun acc (x,a) -> f x a acc) acc env
   let empty = []
