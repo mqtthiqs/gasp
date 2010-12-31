@@ -20,11 +20,16 @@ and args env l =
     ) (NLFEnv.clear env) l
 
 and ohead env = function
-  | XLFe.OVar(x,l,a) -> NLF.OVar(x, args env l), fhead env a
-  | XLFe.OConst(c,l,a) -> NLF.OConst(c, args env l), fhead env a
+  | XLFe.OVar(x,l,a) -> 
+      let args = args env l in
+      NLF.OVar(x, args), fhead (NLFEnv.merge env (NLFEnv.clear args)) a
+  | XLFe.OConst(c,l,a) -> 
+      let args = args env l in
+      NLF.OConst(c, args), fhead (NLFEnv.merge env (NLFEnv.clear args)) a
   | XLFe.OApp(t,l,a) -> 
       let t = obj (NLFEnv.clear env) t in
-      NLF.OApp(t, args env l), fhead env a
+      let args = args env l in
+      NLF.OApp(t, args), fhead (NLFEnv.merge env (NLFEnv.clear args)) a
 
 and fam env = function
   | XLFe.FProd (x,a,b) -> 
@@ -102,8 +107,10 @@ let rec from_kind = function
   | NLF.Kind env -> from_env_kind env (XLFe.KHead(XLFe.KType))
 
 let rec from_sign (s:NLF.sign) : XLFe.sign = 
-  NLFSign.fold 
-    (fun c e acc -> match e with
-       | NLFSign.FDecl k -> (c, XLFe.FDecl (from_kind k)) :: acc
-       | NLFSign.ODecl a -> (c, XLFe.ODecl (from_fam a)) :: acc
-    ) s []
+  List.rev 
+    (NLFSign.fold 
+       (fun c e acc -> match e with
+	  | NLFSign.FDecl k -> (c, XLFe.FDecl (from_kind k)) :: acc
+	  | NLFSign.ODecl a -> (c, XLFe.ODecl (from_fam a)) :: acc
+       ) s []
+    )
