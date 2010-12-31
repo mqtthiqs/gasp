@@ -58,6 +58,17 @@ let _ =
   let b = Util.buffer_of_file (List.hd filenames) in
   let s = parse_buffer b (List.hd filenames) in
   let s' = down s in
-  let s'' = up s' in
-  SLF_pp.sign Format.std_formatter s'';
-  NLF_check.sign s';
+  Format.printf "*** Down ***@,@[<v 0>%a@]" NLF_pp.sign s';
+  (* let s'' = up s' in *)
+  (* Format.printf"*** Up ***@.%a" SLF_pp.sign s''; *)
+  try 
+    Format.printf "@.@[<v 0>";
+    NLF_check.sign s';
+    Format.printf "@]";
+  with 
+    | NLF_check.Not_convertible_obj(t,u) ->
+	Format.printf "@.Error: Not convertible: @[%a@] == @[%a@]@." NLF_pp.obj t NLF_pp.obj u;
+	exit 1
+    | NLF_check.Not_convertible_fam(a,b) -> 
+	Format.printf "@.Error: Not convertible: @[%a@] == @[%a@]@." NLF_pp.fam a NLF_pp.fam b;
+	exit 1
