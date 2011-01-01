@@ -1,0 +1,37 @@
+A logical framework for incremental typechecking
+------------------------------------------------
+
+- Introduction
+  - Constat: batch processing
+    - edit/compile/commit loop
+    - 
+  - 
+    
+- Approche générale
+  - Problème
+  - Applications
+- Motivations techniques
+  - "prendre le contrôle de l'environnement"
+  - définitions, paires env/tête, annotation, formes eta-longues
+  - dépendances
+- Le langage
+  - syntaxe
+  - typage
+  - réduction
+- Démo/exemple
+
+
+Abstract:
+--------
+
+In this talk, I will present an ongoing work on a variant of the LF
+metalanguage, suitable for the core implementation of an incremental
+type-checker. Such a type-checker would allow eventually to provide in
+turn different "versions" of a typing derivation, of which only the
+differing sub-derivations are to be rechecked. This involves to finely
+track the dependencies between objects, usually hidden in LF's "flat"
+term syntax. This language features a rich notion of first-class
+reduction- and typing environments, and is stripped down from all its
+positional aspects. I will discuss some of the practical applications
+of such a type-checking discipline, as well as the currently open
+questions on its metatheory.
