@@ -20,6 +20,9 @@ let ident fmt x = fprintf fmt "@[%s@]" x
 let pp pp fmt = function
   | K(Kind e) when NLFEnv.is_empty e -> fprintf fmt "kind"
   | K(Kind e) -> fprintf fmt "%a@ kind" (pp (<=)) (E e)
+  | F(Fam(e1,FConst(a,e2))) when 
+      NLFEnv.is_empty e1 && NLFEnv.is_empty e2 -> 
+      fprintf fmt "%a" ident a
   | F(Fam(e,ht)) when NLFEnv.is_empty e -> fprintf fmt "@[%a@ type@]"
       (pp (<=)) (FH ht)
   | F(Fam(e,ht)) -> fprintf fmt "@[%a@ ⊢@ %a@ type@]"
