@@ -11,8 +11,8 @@
 \usepackage{natbib}
 
 
-\date{\\[1em]January 2011\\[0.5em]
-\small PPS -- Groupe de travail théorie des types et réalisabilité}
+\date{\\[1em]$\star$ January 2011 $\star$\\[1em]
+\scriptsize PPS -- Groupe de travail théorie des types et réalisabilité}
 
 \title{A logical framework for incremental type-checking}
 
@@ -38,12 +38,16 @@
 \newcommand\postbinder{\cdot}
 \newcommand\prd[2]{\ensuremath\Pi{#1}^{#2}\postbinder}
 \newcommand\prdi[1]{\ensuremath\forall{#1}\postbinder}
-\newcommand\srt[1]{\ensuremath\mathsf{#1}}
 \newcommand\app[1]{{#1}\ }
 \newcommand\tlam[2]{\ensuremath\lambda{#1}^{#2}\postbinder}
 \newcommand\ulam[1]{\ensuremath\lambda{#1}\postbinder}
 \newcommand\letb[2]{\ensuremath\textsf{let}\ {#1}={#2}\ \textsf{in}\ }
 \newcommand\lam{\tlam}
+
+% Sorts
+\newcommand\srt[1]{\ensuremath\mathsf{#1}}
+\newcommand\type{\srt *}
+\newcommand\kind{\srt \Box}
 
 % Sequent-like application
 \newcommand\lapp[2]{{#1}[{#2}]}
@@ -54,13 +58,23 @@
 
 %Environments
 \newcommand\enil\cdot
-\newcommand\eent[1]{[{#1}]}
+\newcommand\eent[1]{\left[{#1}\right]}
 \newcommand\econs[2]{{#1}\eent{#2}}
 \newcommand\esing[1]{\econs{}{#1}}
+\newcommand\emerge[2]{{#1}{#2}}
+\newcommand\elookup[2]{{#1}({#2})}
+\newcommand\elookupdef[3]{{#1}({#2}) = {#3}}
+\newcommand\elookupdecl[3]{{#1}({#2}) : {#3}}
+\newcommand\ebind[2]{\econs{#1}{#2}}
+\newcommand\ebinddef[3]{\econs{#1}{{#2}={#3}}}
+\newcommand\ebinddecl[3]{\econs{#1}{{#2}:{#3}}}
+\newcommand\edecls[1]{\textsf{decls}({#1})}
+
 
 % Term operations
 \newcommand\subst[2]{\{{#1}/{#2}\}}
 \newcommand\repl[2]{\subst{#1}{{#2}}}
+\newcommand\conv{\equiv}
 
 % Judgements
 \newcommand\jlangt[4]{{#2}\vdash_{\mathrm{#1}}{#3}:{#4}}
@@ -79,6 +93,9 @@
 \newcommand\jnlfA[2]{\jlangA{}{#1}{#2}}
 \newcommand\jnlfK[1]{{#1}\ \mathsf{kind}} %on peut pas utiliser \jlangK
 
+\newcommand\jnlfargs[3]{\jnlft{#1}{#2}{#3}}
+\newcommand\jnlfconvA[3]{\jnlfA{#1}{{#2}\conv{#3}}}
+
 % simple judgements with no environments (NLF)
 \newcommand\jwf[1]{{#1}\ \mathsf{wf}}
 
@@ -96,6 +113,15 @@
 \newcommand\nat{\mathbb N}
 \newcommand\FV[1]{\textsf{FV}({#1})}
 \newcommand\notinfv[2]{{#1}\notin\FV{#2}}
+
+\newenvironment{smallright}{
+  \begin{flushright}
+    \footnotesize
+  }{
+  \end{flushright}
+}
+
+
 \begin{document}
 
 \frame\titlepage
@@ -105,9 +131,9 @@
 \section{The language}
 
 \begin{frame}{From LF to XLF}
-  \begin{overlayarea}{0em}{15em}
+  \begin{overlayarea}{0em}{12em}
     \begin{align*}
-      K &\gequal \prd x A K \gor \srt * \\
+      K &\gequal \prd x A K \gor \type \\
       A &\gequal \prd x A A \gor \alta{1}{2}{\app A t}
       {\alta{2}{3}{\lapp A l}{\laapp A l K}} \gor \alta{1}{2}{a}
       {\alta{2}{3}{\lapp a l}{\laapp a l K}} \\
@@ -122,22 +148,29 @@
     \end{align*}
   \end{overlayarea}
 
-  \begin{overlayarea}{\textwidth}{\textheight}
-    \uncover<4->{ \alt<-6>{
+  \begin{overlayarea}{\textwidth}{8em}
+    \begin{itemize}[<+->]\small
+    \item start from standard $\lambda_{LF}$ with definitions
+    \item sequent calculus-like applications ($\bar\lambda$)
+    \item type annotations on application spines
+    \item<6-> named arguments
+    \end{itemize}
+    \small
+    \only<4-6>{
         \begin{mathpar}
-          \infer { \Gamma\vdash t : A \and \alta{4}{5}{\Gamma,B\subst
+          \infer { \Gamma\vdash t : A \\ \alta{4}{5}{\Gamma,B\subst
               x t}{\econs\Gamma{x=t}, B}\vdash l : C} {\Gamma,\prd x A
             B \vdash \alta{5}{6}{\lcons t l}{\lncons x t l} : C}
         \end{mathpar}
-      }{
+      }
+      \only<7->{
         \begin{align*}
           \FV{\laapp t l A} &= \FV{t} \cup \FV{l} \cup (\FV{A} - \FV{l}) \\
-          \FV{\lncons x t l} &= \FV{t} \cup \FV{l} - \{x\}) \\
-          \FV{\lnil} &= \emptyset \\
+          \FV{\lncons x t l} &= \FV{t} \cup (\FV{l} - \{x\})
         \end{align*}
-      } }
+      }
   \end{overlayarea}
-  \pause\pause\pause\pause\pause\pause
+  \pause\pause
 \end{frame}
 
 \begin{frame}{XLF: Properties}
@@ -156,11 +189,10 @@
 \end{frame}
 
 \begin{frame}{From XLF to NLF}
-  \begin{overlayarea}{0em}{16em}
+  \begin{overlayarea}{0em}{15.7em}
     \begin{align*}
-      K &\gequal \alta{9}{10}{\prd x A K \gor \alta{1}{2}{\srt
-          *}{h_K}}{\Gamma\vdash h_k} \\
-      \only<2->{\alert<2>{h_K}}\only<2->{&\alert<2>{\gequal \srt *} \\}
+      K &\gequal \alta{9}{10}{\prd x A K \gor \alta{1}{2}{\type}{h_K}}{\Gamma\vdash h_k} \\
+      \only<2->{\alert<2>{h_K}}\only<2->{&\alert<2>{\gequal \type} \\}
       A &\gequal \alta{8}{9}{ \prd x A A \gor \alta{2}{3}{\laapp A l K
           \gor \laapp a l K}{h_A}}
       {\Gamma\vdash h_A}\\
@@ -182,13 +214,17 @@
       \Sigma &\gequal \enil \gor \econs\Sigma{c:A} \gor \econs\Sigma{a:K} \\
     \end{align*}
   \end{overlayarea}
-  \uncover<7->{
-    \[
+  \begin{itemize}[<+->] \small
+  \item start from XLF
+  \item isolate heads (non-binders) \pause\pause
+  \item enforce $\eta$-long forms by annotating with heads \pause
+    \only<+>{\[
     \laapp t l {\prd x A B}\quad\too_\eta\quad \lam x A ({\laapp t
       {x=x;l} B}) \qquad \notinfv{x}{t}
-    \]
-  }
-  \pause\pause\pause\pause\pause\pause\pause\pause\pause\pause\pause
+    \]}
+  \item factorize binders and environments \pause\pause\pause
+  \item abstract over environment datastructure (maps)
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{NLF}
@@ -220,7 +256,7 @@
   \begin{block}{Notations}
     \begin{itemize}
     \item ``$h_A$'' for ``$\vdash h_A$''
-    \item ``$h_A$'' for ``$\jnlfA{}{h_A}$''
+    \item ``$h_A$'' for ``$\jnlfA{\emptyset}{h_A}$''
     \item ``$a$'' for ``$\app a \emptyset$''
     \end{itemize}
   \end{block}
@@ -235,33 +271,136 @@
   \end{example}
 \end{frame}
 
-\begin{frame}{More examples}
-  \small
-    \begin{align*}
-      cons :
-      \jnlfA {
-        \econs{
-          \econs{
-            \esing{l:\nat}}
-          {hd:A}} 
-        {tl:\jnlfA{}{
-            \app {vec} 
-            {\esing{len=\jnlft{}{l}{\nat}}}}}} 
-      {\app{vec}
-        {\esing{len =\jnlft{}{\app s {\esing{n =
-                  \jnlft{}{l}{\nat}}}}{\nat}}}} 
-      \qquad\equiv \prd l
-      \nat A\to \prd {tl} {\app {vec} l} \app {vec} (\app s l) : \srt
-      *
-    \end{align*}
+\begin{frame}{Some more examples}
+  \begin{enumerate}
+  \item[$A:$] $\jnlfK\emptyset$
+    \begin{smallright}
+      $\equiv \type$
+    \end{smallright}
+  \item[$vec:$]
+    $\jnlfK{\esing{len:\nat}}$
+    \begin{smallright}
+      $\equiv \nat\to\type$
+    \end{smallright}
+  \item[$nil:$]
+    $\jnlfA{}{\app{vec}\esing{len=\jnlft{}{0}{\nat}}}$
+    \begin{smallright}
+      \footnotesize $\equiv \app{vec} 0 : \type$
+    \end{smallright}
+  \item[$cons:$]
+    $\jnlfA { \econs{ \econs{ \esing{l:\nat}} {hd:A}}
+      {tl:\jnlfA{}{ \app {vec} {\esing{len=\jnlft{}{l}{\nat}}}}}}
+    {\app{vec} {\esing{len =\jnlft{}{\app s {\esing{n =
+                \jnlft{}{l}{\nat}}}}{\nat}}}}$
+    \begin{smallright}
+      $\equiv \prd l \nat A\to \prd {tl} {\app {vec} l}
+      \app {vec} (\app s l : \nat) : \type$
+    \end{smallright}
+  \item[$fill:$]
+    $\jnlfA{\esing{n:\nat}}{\app{vec}{\esing{len=\jnlft{}{n}{\nat}}}}$
+    \begin{smallright}
+      $\equiv \prd n \nat (\app{vec} n : \type)$
+    \end{smallright}
+  \item[$empty:$]
+    $\jnlfK{\esing{e:\app{vec}\esing{len=0}}}$
+    \begin{smallright}
+      $\equiv \app{vec} 0\to \type$
+    \end{smallright}
+  \item[$-:$]
+    $\jnlfA{}{\app{empty}\esing{e=\jnlft{}{\app{fill}\esing{n=0}}{\app{vec}\esing{len=n}}}}$
+    \begin{smallright}
+      $\equiv \app{empty}(\app{fill} 0 : \app{vec} 0)$
+    \end{smallright}
+  \end{enumerate}
 \end{frame}
 
-\begin{frame}{NLF: Properties}
+\begin{frame}{Properties}
   \begin{itemize}
-  \item terms in $\eta$-expanded form
+  \item terms in $\eta$-long form
   \item terms are pairs binders $\times$ head
   \item first-class, abstract environments (telescopes)
   \item first-class judgements
   \end{itemize}
 \end{frame}
+
+\begin{frame}{Environments}
+  \ldots\ double as labeled \emph{directed acyclic graphs} of
+  dependencies:
+  \begin{overlayarea}{\textwidth}{\textheight}
+    \only<1>{
+      \begin{definition}[environment]
+        $\Gamma = (V,E)$ directed acyclic where:
+        \begin{itemize}
+        \item $V \subseteq \mathcal X \times (t \uplus A)$ and
+        \item $(x,y)\in E$ ($x$ depends on $y$) if
+          $y\in\FV{\elookup\Gamma x}$
+        \end{itemize}
+      \end{definition}
+      \begin{definition}[lookup]
+        $\elookupdecl\Gamma x A \quad\text{if}\quad (x,A)\in E$ \\
+        $\elookupdef\Gamma x t \quad\text{if}\quad (x,t)\in E$
+      \end{definition}
+      \begin{definition}[bind]
+        $\ebinddecl\Gamma x A = ( V\cup (x,A), E\cup\{(x,y)\ |\
+        y\in\FV{A}\} )$ $\ebinddef\Gamma x t = ( V\cup (x,A),
+        E\cup\{(x,y)\ |\ y\in\FV{t}\} )$
+      \end{definition}
+    } \only<2->{
+      \begin{definition}[decls]
+        $\edecls\Gamma = [x_1,\ldots, x_n]$
+        s.t. $\elookupdecl\Gamma{x_i}{A_i}$ topologically sorted
+        \emph{wrt.} $\Gamma$
+      \end{definition}
+      \begin{definition}[merge]
+        $\emerge\Gamma\Delta = \Gamma\cup\Delta$ s.t.
+        \begin{itemize}
+        % \item if $\elookupdecl\Gamma x A$ and $\elookupdecl\Gamma x B$
+        %   then $\elookupdecl{\emerge\Gamma\Delta} x B$
+        \item if $\elookupdecl\Gamma x A$ and $\elookupdef\Gamma x t$
+          then $\elookupdef{\emerge\Gamma\Delta} x t$
+        \item undefined otherwise
+        \end{itemize}
+      \end{definition}
+    }
+  \end{overlayarea}
+\end{frame}
+
+\begin{frame}{Typing \scriptsize (1)}
+  \begin{mathpar}
+    \infer[Fam]
+    {\elookupdecl\Sigma a {(\jnlfK{\Xi})} \\
+      \jnlfargs\Gamma\Delta\Xi
+    }
+    {\jnlfA\Gamma{\app a \Delta}}
+    \and\pause
+    \infer[Objc]
+    {\elookupdecl\Sigma c {(\jnlfA\Xi{h_A})} \\
+      \jnlfargs\Gamma\Delta\Xi \\
+      \jnlfconvA{\emerge{\emerge\Gamma\Xi}\Delta}{h_A'}{h_A}
+    }
+    {\jnlft\Gamma{\app c \Delta}{h_A'}}
+    \and\pause
+    \infer[Objx$_1$]
+    {\elookupdecl\Gamma x {(\jnlfA\Xi{h_A})} \\
+      \jnlfargs\Gamma\Delta\Xi \\
+      \jnlfconvA{\emerge{\emerge\Gamma\Xi}\Delta}{h_A'}{h_A}
+    }
+    {\jnlft\Gamma{\app x \Delta}{h_A'}}
+    \and\pause
+    \infer[Objx$_2$]
+    {\elookupdef\Gamma x {(\jnlft\Xi{h_t}{h_A})} \\
+      \jnlfargs\Gamma\Delta\Xi \\
+      \jnlfconvA{\emerge{\emerge\Gamma\Xi}\Delta}{h_A'}{h_A} \\\\
+      \jnlft{\emerge{\emerge\Gamma\Xi}\Delta}{h_t}{h_A}
+    }
+    {\jnlft\Gamma{\app x\Delta}{h_A'}}
+  \end{mathpar}
+\end{frame}
+
+\begin{frame}{Typing \scriptsize (2)}
+  \begin{mathpar}
+    
+  \end{mathpar}
+\end{frame}
+
 \end{document}
