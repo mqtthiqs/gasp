@@ -1,10 +1,10 @@
 nat : type.
 o : nat.
 
-even : nat -> type.
+vec : nat -> type.
 
-app : {n : nat} even n.
+fill : {n : nat} vec n.
 
-true : even o -> type.
+empty : vec o -> type.
 
-all-i : true (app o).
+all-i : empty (fill o).
