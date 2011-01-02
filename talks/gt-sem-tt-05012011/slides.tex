@@ -75,16 +75,16 @@
 \newcommand\jxlfA[2]{\jlangA{XLF}{#1}{#2}}
 \newcommand\jxlfK[2]{\jlangK{XLF}{#1}{#2}}
 
-\newcommand\jnlft[3]{{#1}\vdash{#2}:{#3}}
-\newcommand\jnlfA[2]{{#1}\vdash{#2}\ \mathsf{type}}
-\newcommand\jnlfK[1]{{#1}\ \mathsf{kind}}
+\newcommand\jnlft[3]{\jlangt{}{#1}{#2}{#3}}
+\newcommand\jnlfA[2]{\jlangA{}{#1}{#2}}
+\newcommand\jnlfK[1]{{#1}\ \mathsf{kind}} %on peut pas utiliser \jlangK
 
 % simple judgements with no environments (NLF)
 \newcommand\jwf[1]{{#1}\ \mathsf{wf}}
 
 % Animations
-\newcommand\alta[4]{\alt<-#1>{#3}{\only<#2>\alert{#4}}}
-\newcommand\uncovera[2]{\uncover<#1->{\only<#1>\alert{#2}}}
+\newcommand\alta[4]{\alt<-#1>{#3}{\alert<#2>{#4}}}
+\newcommand\uncovera[2]{\uncover<#1->{\alert<#1>{#2}}}
 \newcommand\onlya[2]{\only<#1->{\alert<#1>{#2}}}
 
 % Various
@@ -93,6 +93,7 @@
 \newcommand\To{\Rightarrow}
 \newcommand\too{\longrightarrow}
 \newcommand\Too{\Longrightarrow}
+\newcommand\nat{\mathbb N}
 
 \begin{document}
 
@@ -217,18 +218,35 @@
 \begin{frame}{NLF}
   \begin{block}{Notations}
     \begin{itemize}
-    \item ``$A$'' for ``$\jnlfA{}{A}$''
+    \item ``$h_A$'' for ``$\vdash h_A$''
+    \item ``$h_A$'' for ``$\jnlfA{}{h_A}$''
     \item ``$a$'' for ``$\app a \emptyset$''
     \end{itemize}
   \end{block}
   \begin{example}
-    \begin{itemize}
-    \item $\jnlft
+    \begin{itemize}[<+->]
+    \item 
+      $\lam f {A\to B} \lam x A \app f x : (A\to B)\to A\to B\qquad\equiv$\\[0.5em]
+      $\jnlft
       {\econs
         {\eent{f:\jnlfA{\eent{a:A}}{B}}}
         {x:A}}
       {\app f {\esing{a=x}}}
-      {B}$
+      {B}$\\[1em]
+    \item 
+      $\prd l \nat A\to \prd {tl} {\app {vec} l} \app {vec} (\app s l)
+      : \srt *
+      \qquad\equiv$\\[0.5em]
+      $\jnlfA 
+      {\econs{\econs{\esing{l:\nat}}{hd:A}}
+        {tl:\jnlfA{}{\app {vec} {\esing{len=\jnlft{}{l}{\nat}}}}}}
+      {\app{vec}
+        {\esing{len =\jnlft{}{\app s {\esing{n =
+                  \jnlft{}{l}{\nat}}}}{\nat} }
+        }
+      }$
+    \item 
+      $$
     \end{itemize}
   \end{example}
 \end{frame}
@@ -236,7 +254,7 @@
 \begin{frame}{NLF: Properties}
   \begin{itemize}
   \item terms in $\eta$-expanded form
-  \item terms are pairs (binders, head)
+  \item terms are pairs binders $\times$ head
   \item first-class, abstract environments (telescopes)
   \item first-class judgements
   \end{itemize}
