@@ -12,7 +12,7 @@
 
 
 \date{\\[1em]January 2011\\[0.5em]
-\small Groupe de travail théorie des types et réalisabilité}
+\small PPS -- Groupe de travail théorie des types et réalisabilité}
 
 \title{A logical framework for incremental type-checking}
 
@@ -94,7 +94,8 @@
 \newcommand\too{\longrightarrow}
 \newcommand\Too{\Longrightarrow}
 \newcommand\nat{\mathbb N}
-
+\newcommand\FV[1]{\textsf{FV}({#1})}
+\newcommand\notinfv[2]{{#1}\notin\FV{#2}}
 \begin{document}
 
 \frame\titlepage
@@ -114,8 +115,8 @@
         t} {\alta{2}{3}{\lapp t l}{\laapp t l A}} \gor \alta{1}{2}{x}
       {\alta{2}{3}{\lapp x l}{\laapp x l A}} \gor \alta{1}{2}{c}
       {\alta{2}{3}{\lapp c l}{\laapp c l A}} \\
-      \only<2->{l &\gequal \lnil \gor
-        \alta{5}{6}{\lcons t l}{\lncons x t l}\\}
+      \only<2->{\alert<2>l &\alert<2>{\gequal \lnil \gor
+        \alta{5}{6}{\lcons t l}{\lncons x t l}}\\}
       \Gamma &\gequal \enil \gor \econs\Gamma{x:A} \gor \econs\Gamma{x=t} \\
       \Sigma &\gequal \enil \gor \econs\Sigma{c:A} \gor \econs\Sigma{a:K} \\
     \end{align*}
@@ -130,9 +131,9 @@
         \end{mathpar}
       }{
         \begin{align*}
-          FV(\laapp t l A) &= FV(t) \cup FV(l) \cup (FV(A) - FV(l)) \\
-          FV(\lncons x t l) &= FV(t) \cup (FV(l) - \{x\}) \\
-          FV(\lnil) &= \emptyset \\
+          \FV{\laapp t l A} &= \FV{t} \cup \FV{l} \cup (\FV{A} - \FV{l}) \\
+          \FV{\lncons x t l} &= \FV{t} \cup \FV{l} - \{x\}) \\
+          \FV{\lnil} &= \emptyset \\
         \end{align*}
       } }
   \end{overlayarea}
@@ -142,8 +143,8 @@
 \begin{frame}{XLF: Properties}
   \begin{itemize}
   \item LJ-style application
-  \item type annotation on application spine
-  \item named arguments
+  \item type annotation on application spines
+  \item named arguments (labels)
   \end{itemize}
   \begin{lemma}[Conservativity]
     \begin{itemize}
@@ -184,7 +185,7 @@
   \uncover<7->{
     \[
     \laapp t l {\prd x A B}\quad\too_\eta\quad \lam x A ({\laapp t
-      {x;l} B})
+      {x=x;l} B}) \qquad \notinfv{x}{t}
     \]
   }
   \pause\pause\pause\pause\pause\pause\pause\pause\pause\pause\pause
@@ -224,31 +225,35 @@
     \end{itemize}
   \end{block}
   \begin{example}
-    \begin{itemize}[<+->]
-    \item 
-      $\lam f {A\to B} \lam x A \app f x : (A\to B)\to A\to B\qquad\equiv$\\[0.5em]
-      $\jnlft
-      {\econs
-        {\eent{f:\jnlfA{\eent{a:A}}{B}}}
-        {x:A}}
-      {\app f {\esing{a=x}}}
-      {B}$\\[1em]
-    \item 
-      $\prd l \nat A\to \prd {tl} {\app {vec} l} \app {vec} (\app s l)
-      : \srt *
-      \qquad\equiv$\\[0.5em]
-      $\jnlfA 
-      {\econs{\econs{\esing{l:\nat}}{hd:A}}
-        {tl:\jnlfA{}{\app {vec} {\esing{len=\jnlft{}{l}{\nat}}}}}}
+    $\lam f {A\to B} \lam x A \app f x : (A\to B)\to A\to B\qquad\equiv$\\[0.5em]
+    $\jnlft
+    {\econs
+      {\eent{f:\jnlfA{\eent{a:A}}{B}}}
+      {x:A}}
+    {\app f {\esing{a=x}}}
+    {B}$
+  \end{example}
+\end{frame}
+
+\begin{frame}{More examples}
+  \small
+    \begin{align*}
+      cons :
+      \jnlfA {
+        \econs{
+          \econs{
+            \esing{l:\nat}}
+          {hd:A}} 
+        {tl:\jnlfA{}{
+            \app {vec} 
+            {\esing{len=\jnlft{}{l}{\nat}}}}}} 
       {\app{vec}
         {\esing{len =\jnlft{}{\app s {\esing{n =
-                  \jnlft{}{l}{\nat}}}}{\nat} }
-        }
-      }$
-    \item 
-      $$
-    \end{itemize}
-  \end{example}
+                  \jnlft{}{l}{\nat}}}}{\nat}}}} 
+      \qquad\equiv \prd l
+      \nat A\to \prd {tl} {\app {vec} l} \app {vec} (\app s l) : \srt
+      *
+    \end{align*}
 \end{frame}
 
 \begin{frame}{NLF: Properties}
