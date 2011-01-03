@@ -30,6 +30,12 @@
 
 \usefonttheme{serif}
 
+\AtBeginSection[]
+{\begin{frame}<beamer>{Menu}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
 % Grammars
 \newcommand\gor{\ |\ }
 \newcommand\gequal{\ ::=\ }
@@ -118,6 +124,9 @@
 \newcommand\FV[1]{\mathsf{FV}({#1})}
 \newcommand\notinfv[2]{{#1}\notin\FV{#2}}
 
+\newcommand\itplus{\textcolor{green!60!black}{\textbf{\textsf{+}}}}
+\newcommand\itminus{\textcolor{red}{\textbf{\textsf{--}}}}
+
 \newenvironment{smallright}{
   \begin{flushright}
     \footnotesize
@@ -125,21 +134,16 @@
   \end{flushright}
 }
 
-\lstset{ %
-  language=Caml,
+\lstset{
+  language=[Objective]Caml,
   basicstyle=\sf,
-  columns=flexible
+  columns=flexible,
+  literate={->}{{$\to$ }}1 {*}{$\times$ }1 {>=}{{$\geq$}}1 {<>}{{$\neq$}}1
 }
 
 \begin{document}
 
 \frame\titlepage
-
-\section{Motivations}
-
-\begin{frame}{Incremental?}
-  def
-\end{frame}
 
 \begin{frame}{Incrementality in PL}
   \begin{itemize}
@@ -164,7 +168,78 @@
 \end{frame}
 
 \begin{frame}{In an ideal world\ldots}
+  \begin{itemize}
+  \item edition anywhere
+  \item type checking
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Applications}
+  \begin{itemize}
+  \item Dependency management
+  \item Separate type-checking
+  \item Module system
+  \item Type-directed programming
+  \item Non-linear UI
+  \item Typed VCS
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Menu}
+  \tableofcontents
+\end{frame}
+
+\section{The big picture}
+
+\begin{frame}[fragile]{\gray{A logical framework for incremental}
+    type-checking}
+  Yes, we're speaking about (any) typed language.
+  \begin{block}{A type-checker}
+    \begin{lstlisting}
+      val check : env -> term -> types -> bool
+    \end{lstlisting}
+    \begin{itemize}
+    \item builds and checks the derivation (on the stack)
+    \item conscientiously discards it
+    \end{itemize}
+  \end{block}
+  \pause
+  \def\envbarb{A\to B, B\to C, A\vdash}
   
+  \begin{overlayarea}{\textwidth}{7em}
+    \alt<-2>{
+      \[ \tiny
+      \def\impi{{\tiny$\to_i$}}
+      \def\impe{{\tiny$\to_e$}}
+      \def\ax{{\tiny$Ax$}}
+      \infer*[left=\impi]{
+        \infer*[left=\impi]{
+          \infer*[left=\impi]{
+            \infer*[left=\impe]{
+              \infer*[right=\ax,leftskip=5em]{ }{\envbarb B\to C}\\
+              \infer*[right=\impe,rightskip=5em]{
+                \infer*[right=\ax]{ }{\envbarb A\to B}\\
+                \infer*[right=\ax]{ }{\envbarb A}
+              }{\envbarb B}
+            }{\envbarb C}
+          }{A\to B, B\to C\vdash A\to C}
+        }{A\to B\vdash (B\to C)\to A\to C}
+      }{\vdash (A\to B)\to(B\to C)\to A\to C}
+      \]
+    }{
+      \begin{center}
+        \vspace{3em}
+        \large \textsf{\textbf{true}}
+      \end{center}
+    }
+  \end{overlayarea}
+  \pause  
+\end{frame}
+
+\begin{frame}{\gray{A logical framework for} incremental \gray{type-checking}}
+\end{frame}
+
+\begin{frame}{\gray{A} logical framework \gray{for incremental type-checking}}
 \end{frame}
 
 \begin{frame}{The big picture}
@@ -200,35 +275,71 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{}
-  \begin{itemize}
-  \item Dependency management
-  \item Separate type-checking
-  \item Module system
-  \item Type-directed programming
-  \item Non-linear UI
-  \item Typed VCS
-  \end{itemize}
+\begin{frame}{The problem}
+  
 \end{frame}
-
-% le TC oublie la dérivation après l'avoir construite
 
 \section{Our approach}
 
-\subsection{Memoization}
+\subsection{Why not memoization?}
 
 \begin{frame}[fragile]{Memoization maybe?}
+  \begin{onlyenv}<1>
 \begin{lstlisting}
 let rec check env t a = 
-  match t with 
-  | ...  
-and infer env t = 
   match t with
-  | ...
+  | ... -> ... false
+  | ... -> ... true
+and infer env t =
+  match t with 
+  | ... -> ... None
+  | ... -> ... Some a
 \end{lstlisting}
+  \end{onlyenv}
+  \begin{onlyenv}<2>
+\begin{lstlisting}
+let table = ref ([] : environ * term * types) in
+let rec check env t a = 
+  if List.mem (env,t,a) !table then true else
+    match t with
+    | ... -> ... false
+    | ... -> ... table := (env,t,a)::!table; true
+and infer env t =
+  try List.assoc (env,t) !table with Not_found ->
+    match t with 
+    | ... -> ... None
+    | ... -> ... table := (env,t,a)::!table; Some a
+\end{lstlisting}
+  \end{onlyenv}
+  \pause\pause
+  \begin{enumerate}[<+->]
+  \item[\itplus] lightweight
+  \item[\itplus] efficient implementation
+  \item[\itminus] imperative (or untractable)
+  \item[] \footnotesize What if I want the weakening property to be taken into account?
+  \item [\itminus] syntactic comparison
+  \item[] \footnotesize What does it mean logically?
+    \begin{mathpar}
+      \infer
+      {J\in \mathcal T} 
+      {\Gamma\vdash J\To \Gamma} \and
+      \infer
+      {\Gamma_1\vdash J_1\To \Gamma_2\\\ldots\\ \Gamma_{n-1}[J_{n-1}]\vdash
+        J_n\To \Gamma_n}
+      {\Gamma_1\vdash J\To \Gamma_n[J_n][J]}
+    \end{mathpar}
+  \item[\itminus] external to the logic (meta-cut)
+  \item[\itminus] introduces a dissymmetry
+  \item[\itminus] still no trace of the derivation
+  \item[\itplus] gives good reasons to go on
+  \end{enumerate}
 \end{frame}
 
-\subsection{The git model}
+\subsection{A popular storage model for directories}
+
+\begin{frame}{A popular storage model for directories}
+  
+\end{frame}
 
 \subsection{Logical framework}
 
@@ -544,5 +655,21 @@ and infer env t =
 \end{frame}
 
 \section{Architecture}
+
+\begin{frame}{Translations composition}
+  
+\end{frame}
+
+\begin{frame}{Commit}
+  
+\end{frame}
+
+\begin{frame}{Checkout}
+  
+\end{frame}
+
+\begin{frame}{Sharing}
+  
+\end{frame}
 
 \end{document}
