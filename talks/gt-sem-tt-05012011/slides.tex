@@ -9,7 +9,7 @@
 \usepackage{setspace}
 \usepackage{graphicx}
 \usepackage{natbib}
-
+\usepackage{listings}
 
 \date{\\[1em]$\star$ January 2011 $\star$\\[1em]
 \scriptsize PPS -- Groupe de travail théorie des types et réalisabilité}
@@ -125,12 +125,114 @@
   \end{flushright}
 }
 
+\lstset{ %
+  language=Caml,
+  basicstyle=\sf,
+  columns=flexible
+}
 
 \begin{document}
 
 \frame\titlepage
 
-\section{Introduction}
+\section{Motivations}
+
+\begin{frame}{Incremental?}
+  def
+\end{frame}
+
+\begin{frame}{Incrementality in PL}
+  \begin{itemize}
+  \item file-based separate compilation, make (dependencies)
+  \item version control on the (text) scripts
+  \item TTY interaction (Coq)
+    \begin{itemize}
+    \item linear: increase the environment
+    \item subterms: edit terms with holes (tactics)
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Limitations}
+  \begin{itemize}
+  \item how to choose the size of compilation units? (mix bw modules
+    \& units)
+  \item VC on text representation
+  \item Linear edition = concept freeze
+  \item 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{In an ideal world\ldots}
+  
+\end{frame}
+
+\begin{frame}{The big picture}
+  \begin{center}
+    \only<1-2>{\fbox{\parbox{20em}{\only<2>\alert{version
+            management}\\[1em]%
+          \fbox{\parbox{18em}{script files\\[1em]%
+              \fbox{\parbox{17em}{parsing\\[1em]%
+                  \fbox{\parbox{14em}{type-checking\\} }}}}}}}}%
+    \only<3>{\fbox{\parbox{20em}{script files\\[1em]%
+          \fbox{\parbox{18em}{\alert{version management}\\[1em]%
+              \fbox{\parbox{17em}{parsing\\[1em]%
+                  \fbox{\parbox{14em}{type-checking\\} }}}}}}}}%
+    \only<4-6>{\fbox{\parbox{20em}{
+          \begin{overlayarea}{20em}{2em}
+            \alt<-5>{script files}{user interaction}
+          \end{overlayarea}%
+          \fbox{\parbox{18em}{parsing\\[1em]%
+              \fbox{\parbox{17em}{\alert{version management}\\[1em]%
+                  \uncover<4-6>{\fbox{\parbox{14.5em}{type-checking\\}}}}}}}}}}%
+    \only<7->{\fbox{\parbox{20em}{
+          \begin{overlayarea}{20em}{2em}
+            user interaction
+          \end{overlayarea}%
+          \fbox{\parbox{18em}{parsing\\[1em]%
+              \fbox{\parbox{17em}{\only<8->{incremental }type-checking\\[1em]%
+                  \fbox{\parbox{14.5em}{\alert{version management}\\}}}}}}}}}%
+  \end{center}
+  \begin{itemize}
+  \item<4-> AST representation
+  \item<5-> Explicit dependency DAG
+  \item<7-> Typing annotations
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{}
+  \begin{itemize}
+  \item Dependency management
+  \item Separate type-checking
+  \item Module system
+  \item Type-directed programming
+  \item Non-linear UI
+  \item Typed VCS
+  \end{itemize}
+\end{frame}
+
+% le TC oublie la dérivation après l'avoir construite
+
+\section{Our approach}
+
+\subsection{Memoization}
+
+\begin{frame}[fragile]{Memoization maybe?}
+\begin{lstlisting}
+let rec check env t a = 
+  match t with 
+  | ...  
+and infer env t = 
+  match t with
+  | ...
+\end{lstlisting}
+\end{frame}
+
+\subsection{The git model}
+
+\subsection{Logical framework}
+
+\subsection{Positionality}
 
 \section{The language}
 
@@ -411,7 +513,7 @@
       \elookupdef\Delta x {\jnlft{\Delta'}{h_t}{h_A}}\\
       \elookupdecl\Xi x {\jnlfA{\Xi'}{h_A'}} \\
       \jnlft{\emerge{\emerge\Gamma\Delta}\Delta'}{h_t}{h_A} \\
-      \jnlfargs{\emerge{\emerge{\emerge{\Gamma\Xi}\Delta}\Xi'}\Delta'}{h_A}{h_A'}
+      \jnlfconvA{\emerge{\emerge{\emerge{\Gamma\Xi}\Delta}\Xi'}\Delta'}{h_A'}{h_A}
     }
     {\jnlfargs\Gamma\Delta\Xi}
   \end{mathpar}
@@ -440,5 +542,7 @@
     \ldots
   \end{mathpar}
 \end{frame}
+
+\section{Architecture}
 
 \end{document}
