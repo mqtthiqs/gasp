@@ -335,10 +335,48 @@ and infer env t =
   \end{enumerate}
 \end{frame}
 
-\subsection{A popular storage model for directories}
+\subsection{A popular storage model for directories repository}
 
-\begin{frame}{A popular storage model for directories}
-  
+\begin{frame}{A popular storage model for repositories of directories}
+  \begin{onlyenv}<1-6>
+    \begin{center}
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/git1.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/git2.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/git3.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/git4.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/git5.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/git6.pdf}}%
+    \end{center}
+  \end{onlyenv}
+  \begin{onlyenv}<7->
+    The database is a map:
+    \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
+    \gor \mathsf{Blob}\ string)\]
+    with the invariant:
+    if $(x, \mathsf{Commit}\ (y,z)) \in\Delta$ then
+    \begin{itemize}
+    \item $(y, \mathsf{Tree}\ t)\in\Delta$
+    \item $(z, \mathsf{Commit}\ (t,v))\in\Delta$
+    \end{itemize}
+    \pause
+    \begin{center}
+      \vspace{4em} {\Large Let's do the same with \emph{proofs}}
+     \end{center}
+  \end{onlyenv}
+\end{frame}
+
+\begin{frame}{A \emph{typed} repository of proofs}
+  \begin{onlyenv}<1-5>
+    \begin{center}
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp1.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp2.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp3.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp4.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp5.pdf}}%
+    \end{center}
+  \end{onlyenv}
+  \begin{onlyenv}<6->
+  \end{onlyenv}
 \end{frame}
 
 \subsection{Logical framework}
