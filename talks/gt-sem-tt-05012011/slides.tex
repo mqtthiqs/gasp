@@ -267,7 +267,14 @@ Today, we use:
 
 \begin{frame}{\gray{A logical framework for} incremental
     \gray{type-checking}}
-  
+  \textbf{Goal}\ \ \ Type-check a large derivation taking advantage of
+  the knowledge from type-checking previous versions
+  \\[2em]
+  \textbf{Idea}\ \ \ Remember all derivations!
+  \\[3em]
+  \pause
+  \textbf{Q}\ \ Do we really need faster type-checkers?\\
+  \textbf{A}\ \ Yes, since we implemented these ad-hoc fixes.
 \end{frame}
 
 \begin{frame}{The big picture}
@@ -298,7 +305,6 @@ Today, we use:
   \end{center}
   \begin{itemize}
   \item<4-> AST representation
-  \item<5-> Explicit dependency DAG
   \item<7-> Typing annotations
   \end{itemize}
 \end{frame}
@@ -342,9 +348,7 @@ and infer env t =
   \begin{enumerate}[<+->]
   \item[\itplus] lightweight
   \item[\itplus] efficient implementation
-  \item[\itminus] imperative (or untractable)
-  \item[] \footnotesize What if I want \emph{e.g.} the weakening property to be taken into account?
-  \item [\itminus] syntactic comparison
+  \item[\itminus] imperative
   \item[] \footnotesize What does it mean logically?
     \begin{mathpar}
       \infer
@@ -357,6 +361,8 @@ and infer env t =
     \end{mathpar}
   \item[\itminus] external to the logic (meta-cut)
   \item[\itminus] introduces a dissymmetry
+  \item[] \footnotesize What if I want \emph{e.g.} the weakening property to be taken into account?
+  \item [\itminus] syntactic comparison
   \item[\itminus] still no trace of the derivation
   \item[\itplus] gives good reasons to go on
   \end{enumerate}
@@ -512,7 +518,7 @@ $R =$ \scriptsize
 \pause
 \begin{itemize}
 \item Expose the \emph{head} of the term
-\pause {\Large \[(\lambda x y. T) U V\]}
+\pause {\Large \[(\lambda x.\lambda y. T)\ U\ V\]}
 \item \pause Abstract from the \emph{positions} of the binders \\
   {\footnotesize (from inside and from outside)}
 \end{itemize}
@@ -527,6 +533,10 @@ $R =$ \scriptsize
   \item the repository storage model
   \end{itemize}
   \vspace{2em}
+  \begin{center}
+    \textbf{Motto: }{\large \it Take control of the environment}
+  \end{center}
+  \vspace{3em}
   \large
   \[
   \lambda_{\text{LF}}
@@ -785,7 +795,24 @@ $R =$ \scriptsize
 \end{frame}
 
 \begin{frame}{Reduction}
-  
+  \begin{definition}[A-contexts]
+    $\Delta^* = \{ \esing{x=x}\ |\ x\in\edefs\Delta\}$
+  \end{definition}
+  \begin{align*}
+    \jnlft\Gamma{\app{(\jnlft\Delta{h_t}{h_A})}{\Xi}}{\_}
+    \quad&\xrightarrow{\ ``\beta”\ }\quad
+    \jnlft{\emerge{\emerge\Gamma\Delta}\Xi}{h_t}{h_A} 
+    \\
+    \jnlft\Gamma{\app c \Delta}{h_A} 
+    \quad&\xrightarrow{\ \ \ \ \ \ }\quad
+    \jnlft{\emerge\Gamma\Delta}{\app c{\Delta^*}}{h_A}
+    \quad\text{if }\Delta\neq\Delta^*
+    \\
+    \jnlft\Gamma{\app c\Xi^*}{\app a \Delta} 
+    \quad&\xrightarrow{\ \ \ \ \ \ }\quad
+    \jnlft{\emerge\Gamma\Delta}{\app c\Xi^*}{\app a \Delta^*}
+    \quad\text{if }\Delta\neq\Delta^*
+  \end{align*}
 \end{frame}
 
 \begin{frame}{Typing}
