@@ -67,7 +67,7 @@
 \newcommand\eent[1]{\left[{#1}\right]}
 \newcommand\econs[2]{{#1}\eent{#2}}
 \newcommand\esing[1]{\econs{}{#1}}
-\newcommand\emerge[2]{{#1}{#2}}
+\newcommand\emerge[2]{{#1}\cdot{#2}}
 \newcommand\elookup[2]{{#1}({#2})}
 \newcommand\elookupdef[3]{{#1}({#2}) = {#3}}
 \newcommand\elookupdecl[3]{{#1}({#2}) : {#3}}
@@ -146,44 +146,73 @@
 
 \frame\titlepage
 
-\begin{frame}{Incrementality in PL}
+\begin{frame}{A paradoxical situation}  
+  \begin{block}{Observation}
+    We have powerful tools to mechanize the metatheory of (proof) languages
+  \end{block}
+  \pause
+  \begin{block}{\ldots\ And yet,}
+    Workflow of programming and formal mathematics is still largely inspired by legacy
+    software development (\textsf{emacs}, \textsf{make}, \textsf{svn},
+    \textsf{diff}s\ldots)
+  \end{block}
+  \vspace{0.6em}
+  \pause
+  \begin{center}
+    {\large \it Isn't it time to make these tools metatheory-aware?}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Incrementality in programming {\it \&} proof languages}
+  
+  {\Huge Q {\Large :}} \parbox{0.8\textwidth}{Do you spend more time
+    \emph{writing} code or \emph{editing} code?} \\[2em]
+
+Today, we use:
   \begin{itemize}
-  \item file-based separate compilation, make (dependencies)
-  \item version control on the (text) scripts
-  \item TTY interaction (Coq)
-    \begin{itemize}
-    \item linear: increase the environment
-    \item subterms: edit terms with holes (tactics)
-    \end{itemize}
+  \item separate compilation
+  \item dependency management
+  \item version control on the scripts
+  \item interactive toplevel with rollback (\textsf{Coq})
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Limitations}
-  \begin{itemize}
-  \item how to choose the size of compilation units? (mix bw modules
-    \& units)
-  \item VC on text representation
-  \item Linear edition = concept freeze
-  \item 
-  \end{itemize}
+\begin{frame}{Incrementality in programming {\it \&} proof languages}
+  \vspace{0.5em}
+  \begin{center}
+    \only<1>{\includegraphics[width=0.85\textwidth]{images/coqide00.png}}%
+    \only<2>{\includegraphics[width=0.85\textwidth]{images/coqide0.png}}%
+    \only<3>{\includegraphics[width=0.85\textwidth]{images/coqide.png}}%
+    \only<4>{\includegraphics[width=0.85\textwidth]{images/coqide2.png}}%
+    \only<5>{\includegraphics[width=0.85\textwidth]{images/coqide4.png}}%
+    \only<6>{\includegraphics[width=0.85\textwidth]{images/coqide5.png}}%
+    \only<7>{\includegraphics[width=0.85\textwidth]{images/coqide6.png}}%
+    \only<8>{\includegraphics[width=0.85\textwidth]{images/coqide7.png}}%
+  \end{center}
 \end{frame}
 
 \begin{frame}{In an ideal world\ldots}
   \begin{itemize}
-  \item edition anywhere
-  \item type checking
+  \item Edition should be possible anywhere
+  \item The impact of changes visible “in real time”
+  \item No need for separate compilation, dependency management
   \end{itemize}
-\end{frame}
+  \pause
+  \vspace{2em}
+  \begin{center}
+    {\Large \it Types are the witnesses of this impact}
+  \end{center}
+  \vspace{1em}
+  \pause
+  \begin{block}{Applications}
+    \begin{itemize}
+    \item non-linear user interaction
+    \item dependency management
+    \item type-directed programming
+    \item typed version control systems
+    \end{itemize}
+  \end{block}
 
-\begin{frame}{Applications}
-  \begin{itemize}
-  \item Dependency management
-  \item Separate type-checking
-  \item Module system
-  \item Type-directed programming
-  \item Non-linear UI
-  \item Typed VCS
-  \end{itemize}
 \end{frame}
 
 \begin{frame}{Menu}
@@ -237,7 +266,9 @@
   \pause  
 \end{frame}
 
-\begin{frame}{\gray{A logical framework for} incremental \gray{type-checking}}
+\begin{frame}{\gray{A logical framework for} incremental
+    \gray{type-checking}}
+  
 \end{frame}
 
 \begin{frame}{The big picture}
@@ -273,21 +304,19 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{The problem}
-  
-\end{frame}
-
 \section{Our approach}
 
 \subsection{Why not memoization?}
 
 \begin{frame}[fragile]{Memoization maybe?}
   \begin{onlyenv}<1>
+    \vspace{4em}
 \begin{lstlisting}
 let rec check env t a = 
   match t with
   | ... -> ... false
   | ... -> ... true
+
 and infer env t =
   match t with 
   | ... -> ... None
@@ -295,6 +324,7 @@ and infer env t =
 \end{lstlisting}
   \end{onlyenv}
   \begin{onlyenv}<2>
+    \vspace{3em}
 \begin{lstlisting}
 let table = ref ([] : environ * term * types) in
 let rec check env t a = 
@@ -319,12 +349,12 @@ and infer env t =
   \item[] \footnotesize What does it mean logically?
     \begin{mathpar}
       \infer
-      {J\in \mathcal T} 
-      {\Gamma\vdash J\To \Gamma} \and
+      {J\in \Gamma} 
+      {\Gamma\vdash \jwf J\To \Gamma} \and
       \infer
-      {\Gamma_1\vdash J_1\To \Gamma_2\\\ldots\\ \Gamma_{n-1}[J_{n-1}]\vdash
-        J_n\To \Gamma_n}
-      {\Gamma_1\vdash J\To \Gamma_n[J_n][J]}
+      {\Gamma_1\vdash \jwf{J_1} \To \Gamma_2\\\ldots\\ \Gamma_{n-1}[J_{n-1}]\vdash
+        \jwf{J_n}\To \Gamma_n}
+      {\Gamma_1\vdash \jwf J\To \Gamma_n[J_n][J]}
     \end{mathpar}
   \item[\itminus] external to the logic (meta-cut)
   \item[\itminus] introduces a dissymmetry
@@ -459,7 +489,7 @@ let x = ... : is (cons (conj A B) nil) C in
 \item definitions / explicit substitutions
 \item type annotations on application spines
 \item fully applied constants / $\eta$-long NF
-\item Naming of all application spines\\
+\item Naming of all application spines / A-normal form\\
   {\footnotesize(= construction of syntax/proofs)}
 \end{enumerate}
 
@@ -651,7 +681,7 @@ $R =$ \scriptsize
 \begin{frame}{NLF}
   \begin{block}{Notations}
     \begin{itemize}
-    \item ``$h_A$'' for ``$\vdash h_A$''
+    \item ``$h_A$'' for ``$\empty\vdash h_A$''
     \item ``$h_A$'' for ``$\jnlfA{\emptyset}{h_A}$''
     \item ``$a$'' for ``$\app a \emptyset$''
     \end{itemize}
@@ -755,21 +785,26 @@ $R =$ \scriptsize
   \end{overlayarea}
 \end{frame}
 
+\begin{frame}{Reduction}
+  
+\end{frame}
+
 \begin{frame}{Typing}
+  \small
   \begin{mathpar}
     \infer[Fam]
     {\elookupdecl\Sigma a {(\jnlfK{\Xi})} \\
       \jnlfargs\Gamma\Delta\Xi
     }
     {\jnlfA\Gamma{\app a \Delta}}
-    \and\pause
+    \and
     \infer[Objc]
     {\elookupdecl\Sigma c {(\jnlfA\Xi{h_A})} \\
       \jnlfargs\Gamma\Delta\Xi \\
       \jnlfconvA{\emerge{\emerge\Gamma\Xi}\Delta}{h_A'}{h_A}
     }
     {\jnlft\Gamma{\app c \Delta}{h_A'}}
-    \and\pause
+    \and
     % \infer[Objx$_1$]
     % {\elookupdecl\Gamma x {(\jnlfA\Xi{h_A})} \\
     %   \jnlfargs\Gamma\Delta\Xi \\
@@ -784,13 +819,13 @@ $R =$ \scriptsize
       \jnlft{\emerge{\emerge\Gamma\Xi}\Delta}{h_t}{h_A}
     }
     {\jnlft\Gamma{\app x\Delta}{h_A'}}
-    \and\pause
+    \and
     \infer[Args ${\small\ {\forall x\in \edecls\Xi}}$]
     {
-      \elookupdef\Delta x {\jnlft{\Delta'}{h_t}{h_A}}\\
-      \elookupdecl\Xi x {\jnlfA{\Xi'}{h_A'}} \\
+      \elookupdef\Delta x {(\jnlft{\Delta'}{h_t}{h_A})}\\
+      \elookupdecl\Xi x {(\jnlfA{\Xi'}{h_A'})} \\
       \jnlft{\emerge{\emerge\Gamma\Delta}\Delta'}{h_t}{h_A} \\
-      \jnlfconvA{\emerge{\emerge{\emerge{\Gamma\Xi}\Delta}\Xi'}\Delta'}{h_A'}{h_A}
+      \jnlfconvA{\emerge{\emerge{\emerge{\emerge\Gamma\Xi}\Delta}\Xi'}\Delta'}{h_A'}{h_A}
     }
     {\jnlfargs\Gamma\Delta\Xi}
   \end{mathpar}
@@ -822,14 +857,19 @@ $R =$ \scriptsize
 
 
 \begin{frame}{Properties}
-  \begin{block}{Conjecture (Conservativity)}
+  \begin{block}{Translation functions}
     \begin{itemize}
     \item $|\cdot|_\Gamma\ :\ K_{\mathrm{LF}} \to
       \Gamma_{\mathrm{NLF}} \to K_{\mathrm{NLF}}\ \mathsf{option}$
     \item $|\cdot|_\Gamma\ :\ A_{\mathrm{LF}} \to
       \Gamma_{\mathrm{NLF}} \to A_{\mathrm{NLF}}\ \mathsf{option}$
-    \item $|\cdot|_\Gamma\ :\ t_{\mathrm{LF}} \to \Gamma_{\mathrm{NLF}}
-      \to t_{\mathrm{NLF}}\ \mathsf{option}$
+    \item $|\cdot|_\Gamma\ :\ t_{\mathrm{LF}} \to
+      \Gamma_{\mathrm{NLF}} \to t_{\mathrm{NLF}}\ \mathsf{option}$
+    \item \ldots\ and their inverses $|\cdot|^{-1}$
+    \end{itemize}
+  \end{block}
+  \begin{block}{Conjecture (Conservativity)}
+    \begin{itemize}
     \item $\jlfK {} K \quad\text{iff}\quad \jwf{(|K|_\emptyset)}$
     \item $\jlfA {} A \quad\text{iff}\quad \jwf{(|A|_\emptyset)}$
     \item $\jlft {} t A \quad\text{iff}\quad \jwf{(|t|_\emptyset)} $
@@ -840,7 +880,7 @@ $R =$ \scriptsize
 \section{Architecture}
 
 \begin{frame}[fragile]{Status}
-\small\pause
+\small
 \begin{verbatim}
 $ ./gasp init hol.elf
 \end{verbatim}
@@ -856,34 +896,42 @@ Fatal error: exception Assert_failure("src/NLF.ml", 61, 13)
 \end{frame}
 
 \begin{frame}[fragile]{Checkout}
-We have two functions:
-\[
-\Phi : 
-\]
-
-\pause
+\small
 \begin{verbatim}
 $ ./gasp checkout v42
 \end{verbatim}
-
+\normalsize
 if
 \[t = \Gamma\vdash v_{52} : \mathsf{Version} \quad\text{and}\quad
 \Gamma(v_{42}) = \mathsf{Commit}(v_{41},h) \]
 then 
-\[ \Phi^{-1}(\Gamma(h)) \]
+\[ |\Gamma(h)|^{-1} \]
 is the LF term representing \texttt{v42}
 \end{frame}
 
-\begin{frame}{Commit}
-  
-\end{frame}
-
-\begin{frame}{Translations composition}
-  
+\begin{frame}[fragile]{Commit}
+  \small
+\begin{verbatim}
+$ ./gasp commit term.elf
+\end{verbatim}
+\normalsize
+if
+\[ t = \Gamma\vdash v_{52} : \mathsf{Version} \quad\text{and}\quad
+|\mathtt{term.elf}|_\Gamma = \Delta\vdash h_t:h_A \]
+then 
+\[ \econs\Delta{v_{53} = \app{\mathsf{Commit}} \econs{\esing{prev =
+      v_{52}}}{this = h_t}}\vdash v_{53} : \mathsf{Version}\] is the
+new repository
 \end{frame}
 
 \begin{frame}{Further work}
-  
+  \begin{itemize}
+  \item still some technical \& metatheoretical unknowns
+  \item from derivations to terms (proof search? views?)
+  \item \textsf{diff} on terms or derivations
+  \item type errors handling and recovery
+  \item mimick other operations from VCS (\textsf{Merge})
+  \end{itemize}
 \end{frame}
 
 \end{document}
