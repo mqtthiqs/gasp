@@ -138,7 +138,8 @@
   language=[Objective]Caml,
   basicstyle=\sf,
   columns=flexible,
-  literate={->}{{$\to$ }}1 {*}{$\times$ }1 {>=}{{$\geq$}}1 {<>}{{$\neq$}}1
+  literate={->}{{$\to$ }}1 {*}{$\times$ }1 {>=}{{$\geq$}}1
+  {<>}{{$\neq$}}1 {'a}{{$\alpha$}}1 {'b}{{$\beta$}}1 {'c}{{$\gamma$}}1
 }
 
 \begin{document}
@@ -316,7 +317,7 @@ and infer env t =
   \item[\itplus] lightweight
   \item[\itplus] efficient implementation
   \item[\itminus] imperative (or untractable)
-  \item[] \footnotesize What if I want the weakening property to be taken into account?
+  \item[] \footnotesize What if I want \emph{e.g.} the weakening property to be taken into account?
   \item [\itminus] syntactic comparison
   \item[] \footnotesize What does it mean logically?
     \begin{mathpar}
@@ -338,7 +339,7 @@ and infer env t =
 \subsection{A popular storage model for directories repository}
 
 \begin{frame}{A popular storage model for repositories of directories}
-  \begin{onlyenv}<1-6>
+  \begin{onlyenv}<1-7>
     \begin{center}
       \only<+>{\includegraphics[width=0.85\textwidth]{images/git1.pdf}}%
       \only<+>{\includegraphics[width=0.85\textwidth]{images/git2.pdf}}%
@@ -346,10 +347,11 @@ and infer env t =
       \only<+>{\includegraphics[width=0.85\textwidth]{images/git4.pdf}}%
       \only<+>{\includegraphics[width=0.85\textwidth]{images/git5.pdf}}%
       \only<+>{\includegraphics[width=0.85\textwidth]{images/git6.pdf}}%
+      \only<+>{\includegraphics[width=0.85\textwidth]{images/git7.pdf}}%
     \end{center}
   \end{onlyenv}
-  \begin{onlyenv}<7->
-    The database is a map:
+  \begin{onlyenv}<8->
+    The database is a pair $(\Delta, x)$:
     \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
     \gor \mathsf{Blob}\ string)\]
     with the invariant:
@@ -365,7 +367,7 @@ and infer env t =
   \end{onlyenv}
 \end{frame}
 
-\begin{frame}{A \emph{typed} repository of proofs}
+\begin{frame}[fragile]{A \emph{typed} repository of proofs}
   \begin{onlyenv}<1-5>
     \begin{center}
       \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp1.pdf}}%
@@ -375,11 +377,59 @@ and infer env t =
       \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp5.pdf}}%
     \end{center}
   \end{onlyenv}
-  \begin{onlyenv}<6->
+  \begin{onlyenv}<6-9>
+    \small
+    \begin{overlayarea}{0pt}{\textheight}
+      \begin{align*}
+        x &: A\wedge B\vdash C \\
+        y &:\ \vdash A \\
+        z &:\ \vdash B \\
+        t &= \lam a {A\wedge B} x :\ \vdash A\wedge B\to C \\
+        u &= (y, z) :\ \vdash A\wedge B \\
+        v &= \app t u :\ \vdash C \\
+        w &= \mathsf{Commit}(v,w1) : \mathsf{Version} \only<7>{
+          \alert{\qquad,\quad w} }
+        \only<8-9>{ \\
+          p &:\ \vdash B \\
+          q &= (y, p) :\ \vdash A \wedge B \\
+          r &= \app t q :\ \vdash C \\
+          s &= \mathsf{Commit}(r,w) : \mathsf{Version} \only<9>{
+            \alert{\qquad,\quad s} } }
+      \end{align*}
+    \end{overlayarea}
+  \end{onlyenv}
+  \begin{onlyenv}<10->
+\small
+\begin{uncoverenv}<11>
+\begin{lstlisting}
+...
+val is : env -> prop -> type
+val conj : prop -> prop -> prop
+val pair : is 'a 'b -> is 'a 'c -> is 'a (conj 'b 'c)
+val version : type
+val commit : is nil C -> version -> version
+...
+\end{lstlisting}
+\end{uncoverenv}
+\begin{lstlisting}
+fun x : is (cons (conj A B) nil) C ->
+  fun y : is nil A ->
+    fun z : is nil B ->
+      let t : is nil (arr (conj A B) C) 
+        = lam (conj A B) x in
+        let u : is nil (conj A B) = pair y z in
+          let v : is nil C = app t u
+            let w : version = commit v w1 in
+              w
+\end{lstlisting}
   \end{onlyenv}
 \end{frame}
 
 \subsection{Logical framework}
+
+\begin{frame}{Whence a logical framework}
+  
+\end{frame}
 
 \subsection{Positionality}
 
