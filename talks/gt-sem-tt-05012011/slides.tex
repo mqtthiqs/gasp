@@ -240,9 +240,6 @@
 \begin{frame}{\gray{A logical framework for} incremental \gray{type-checking}}
 \end{frame}
 
-\begin{frame}{\gray{A} logical framework \gray{for incremental type-checking}}
-\end{frame}
-
 \begin{frame}{The big picture}
   \begin{center}
     \only<1-2>{\fbox{\parbox{20em}{\only<2>\alert{version
@@ -336,9 +333,9 @@ and infer env t =
   \end{enumerate}
 \end{frame}
 
-\subsection{A popular storage model for directories repository}
+\subsection{A popular storage model for repositories}
 
-\begin{frame}{A popular storage model for repositories of directories}
+\begin{frame}{A popular storage model for repositories}
   \begin{onlyenv}<1-7>
     \begin{center}
       \only<+>{\includegraphics[width=0.85\textwidth]{images/git1.pdf}}%
@@ -351,7 +348,7 @@ and infer env t =
     \end{center}
   \end{onlyenv}
   \begin{onlyenv}<8->
-    The database is a pair $(\Delta, x)$:
+    The repository $R$ is a pair $(\Delta, x)$:
     \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
     \gor \mathsf{Blob}\ string)\]
     with the invariant:
@@ -381,16 +378,16 @@ and infer env t =
     \small
     \begin{overlayarea}{0pt}{\textheight}
       \begin{align*}
-        x &: A\wedge B\vdash C \\
-        y &:\ \vdash A \\
-        z &:\ \vdash B \\
+        x &= \ldots\ : A\wedge B\vdash C \\
+        y &= \ldots\ :\ \vdash A \\
+        z &= \ldots\ :\ \vdash B \\
         t &= \lam a {A\wedge B} x :\ \vdash A\wedge B\to C \\
         u &= (y, z) :\ \vdash A\wedge B \\
         v &= \app t u :\ \vdash C \\
         w &= \mathsf{Commit}(v,w1) : \mathsf{Version} \only<7>{
           \alert{\qquad,\quad w} }
         \only<8-9>{ \\
-          p &:\ \vdash B \\
+          p &=\ldots\ :\ \vdash B \\
           q &= (y, p) :\ \vdash A \wedge B \\
           r &= \app t q :\ \vdash C \\
           s &= \mathsf{Commit}(r,w) : \mathsf{Version} \only<9>{
@@ -399,8 +396,8 @@ and infer env t =
     \end{overlayarea}
   \end{onlyenv}
   \begin{onlyenv}<10->
-\small
-\begin{uncoverenv}<11>
+\footnotesize
+\begin{uncoverenv}<12>
 \begin{lstlisting}
 ...
 val is : env -> prop -> type
@@ -411,29 +408,119 @@ val commit : is nil C -> version -> version
 ...
 \end{lstlisting}
 \end{uncoverenv}
+\begin{overlayarea}{\textwidth}{\textheight}
+\begin{onlyenv}<10>
 \begin{lstlisting}
-fun x : is (cons (conj A B) nil) C ->
-  fun y : is nil A ->
-    fun z : is nil B ->
-      let t : is nil (arr (conj A B) C) 
-        = lam (conj A B) x in
-        let u : is nil (conj A B) = pair y z in
-          let v : is nil C = app t u
-            let w : version = commit v w1 in
+let x = ... : is (cons (conj A B) nil) C in
+  let y = ... : is nil A in
+    let z = ... : is nil B in
+      let t = lam (conj A B) x : is nil (arr (conj A B) C) in
+        let u = pair y z : is nil (conj A B) in
+          let v = app t u : is nil C in
+            let w = commit v w1 : version in
               w
 \end{lstlisting}
+\end{onlyenv}
+\begin{onlyenv}<11->
+\begin{lstlisting}
+let x = ... : is (cons (conj A B) nil) C in
+  let y = ... : is nil A in
+    let z = ... : is nil B in
+      let t = lam (conj A B) x : is nil (arr (conj A B) C) in
+        let u = pair y z : is nil (conj A B) in
+          let v = app t u : is nil C in
+            let w = commit v w1 : version in
+              let p = ... : is nil B
+                let q = pair y p : is nil (conj A B) in
+                  let r = t q : is nil C
+                    let s = commit r w : version in
+                      s
+\end{lstlisting}
+\end{onlyenv}
+\end{overlayarea}
   \end{onlyenv}
 \end{frame}
 
 \subsection{Logical framework}
 
-\begin{frame}{Whence a logical framework}
-  
+\begin{frame}[fragile]{\gray{A} logical framework \gray{for incremental type-checking}}
+  LF \cit{Harper et al. 1992} provides a way to represent and validate
+  syntax, rules and proofs by means of a typed $\lambda$-calculus. But
+  we need a little bit more: \\[1em]
+
+  {\small\textsf{
+      \noindent\ldots\\
+      \alert<2>{\textbf{let}} \alert<5>u = \alert<4>{pair y z} : \alert<3>{is nil (conj A B)} \textbf{in}\\
+      \hspace{2ex}\textbf{let} \alert<5>v = app t u : is nil C \textbf{in}\\
+      \ldots
+  }}
+\pause
+\begin{enumerate}[<+->]
+\item definitions / explicit substitutions
+\item type annotations on application spines
+\item fully applied constants / $\eta$-long NF
+\item Naming of all application spines\\
+  {\footnotesize(= construction of syntax/proofs)}
+\end{enumerate}
+
 \end{frame}
 
 \subsection{Positionality}
 
+\begin{frame}[fragile]{Positionality}
+$R =$ \scriptsize
+\begin{lstlisting}
+    let x = ... : is (cons (conj A B) nil) C in
+      let y = ... : is nil A in
+        let z = ... : is nil B in
+          let t = lam (conj A B) x : is nil (arr (conj A B) C) in
+            let u = pair y z : is nil (conj A B) in
+              let v = app t u : is nil C in
+                let w = commit v w1 : version in
+                  w
+\end{lstlisting}
+\normalsize
+\pause
+\begin{itemize}
+\item Expose the \emph{head} of the term
+\pause {\Large \[(\lambda x y. T) U V\]}
+\item \pause Abstract from the \emph{positions} of the binders \\
+  {\footnotesize (from inside and from outside)}
+\end{itemize}
+\end{frame}
+
 \section{The language}
+
+\begin{frame}{Presentation}
+  \begin{itemize}
+  \item alternative syntax for LF
+  \item a datastructure of LF derivations
+  \item the repository storage model
+  \end{itemize}
+  \vspace{2em}
+  \large
+  \[
+  \lambda_{\text{LF}}
+  \quad\xrightarrow{\text{
+      \begin{minipage}{20ex}
+        \begin{center}
+          LJ-style\\
+          annotation
+        \end{center}
+      \end{minipage}
+    }}\quad
+  \text{XLF}
+  \quad\xrightarrow{\text{
+      \begin{minipage}{20ex}
+        \begin{center}
+          heads exposed\\
+          forget positions
+        \end{center}
+      \end{minipage}
+    }}\quad
+  \text{NLF}
+  \]
+\end{frame}
 
 \subsection{From LF to NLF}
 
@@ -623,15 +710,6 @@ fun x : is (cons (conj A B) nil) C ->
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Properties}
-  \begin{itemize}
-  \item terms in $\eta$-long form
-  \item terms are pairs binders $\times$ head
-  \item first-class judgements
-  \item first-class, abstract environments (telescopes)
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{Environments}
   \ldots\ double as labeled \emph{directed acyclic graphs} of
   dependencies:
@@ -718,45 +796,93 @@ fun x : is (cons (conj A B) nil) C ->
   \end{mathpar}
 \end{frame}
 
-\begin{frame}{Conversion}
-  \begin{mathpar}
-    \infer[ConvFam]
-    {\jnlfconve\Gamma\Delta\Xi}
-    {\jnlfconvA\Gamma{\app a \Delta}{\app a \Xi}}
-    \and\pause
-    \infer[ConvObjc]
-    {\jnlfconve\Gamma\Delta\Xi}
-    {\jnlfconvt\Gamma{\app c\Delta}{\app c\Xi}{h_A}}
-    \and\pause
-    \infer[ConvArgs ${\small\ \forall x\in \edefs\Xi\cap\edefs\Delta}$]
-    {
-      \elookupdef\Delta x {\jnlft{\Delta'}{h_t}{h_A}}\\
-      \elookupdef\Xi x {\jnlft{\Xi'}{h_t'}{h_A'}} \\
-      \jnlfconvA{\emerge{\emerge{\emerge{\Gamma\Delta}\Xi}\Delta'}\Xi'}{h_A}{h_A'}
-      \\
-      \jnlfconvt{\emerge{\emerge{\emerge{\Gamma\Delta}\Xi}\Delta'}\Xi'}{h_t}{h_t'}{h_A}
-    }
-    {\jnlfconve\Gamma\Delta\Xi}
-    \\\pause
-    \ldots
-  \end{mathpar}
+% \begin{frame}{Conversion}
+%   \begin{mathpar}
+%     \infer[ConvFam]
+%     {\jnlfconve\Gamma\Delta\Xi}
+%     {\jnlfconvA\Gamma{\app a \Delta}{\app a \Xi}}
+%     \and\pause
+%     \infer[ConvObjc]
+%     {\jnlfconve\Gamma\Delta\Xi}
+%     {\jnlfconvt\Gamma{\app c\Delta}{\app c\Xi}{h_A}}
+%     \and\pause
+%     \infer[ConvArgs ${\small\ \forall x\in \edefs\Xi\cap\edefs\Delta}$]
+%     {
+%       \elookupdef\Delta x {\jnlft{\Delta'}{h_t}{h_A}}\\
+%       \elookupdef\Xi x {\jnlft{\Xi'}{h_t'}{h_A'}} \\
+%       \jnlfconvA{\emerge{\emerge{\emerge{\Gamma\Delta}\Xi}\Delta'}\Xi'}{h_A}{h_A'}
+%       \\
+%       \jnlfconvt{\emerge{\emerge{\emerge{\Gamma\Delta}\Xi}\Delta'}\Xi'}{h_t}{h_t'}{h_A}
+%     }
+%     {\jnlfconve\Gamma\Delta\Xi}
+%     \\\pause
+%     \ldots
+%   \end{mathpar}
+% \end{frame}
+
+
+\begin{frame}{Properties}
+  \begin{block}{Conjecture (Conservativity)}
+    \begin{itemize}
+    \item $|\cdot|_\Gamma\ :\ K_{\mathrm{LF}} \to
+      \Gamma_{\mathrm{NLF}} \to K_{\mathrm{NLF}}\ \mathsf{option}$
+    \item $|\cdot|_\Gamma\ :\ A_{\mathrm{LF}} \to
+      \Gamma_{\mathrm{NLF}} \to A_{\mathrm{NLF}}\ \mathsf{option}$
+    \item $|\cdot|_\Gamma\ :\ t_{\mathrm{LF}} \to \Gamma_{\mathrm{NLF}}
+      \to t_{\mathrm{NLF}}\ \mathsf{option}$
+    \item $\jlfK {} K \quad\text{iff}\quad \jwf{(|K|_\emptyset)}$
+    \item $\jlfA {} A \quad\text{iff}\quad \jwf{(|A|_\emptyset)}$
+    \item $\jlft {} t A \quad\text{iff}\quad \jwf{(|t|_\emptyset)} $
+    \end{itemize}    
+  \end{block}
 \end{frame}
 
 \section{Architecture}
 
-\begin{frame}{Translations composition}
-  
+\begin{frame}[fragile]{Status}
+\small\pause
+\begin{verbatim}
+$ ./gasp init hol.elf
+\end{verbatim}
+\pause
+\begin{verbatim}
+[holtype : kind]
+[i : holtype]
+[o : holtype]
+[arr : [x2 : holtype][x1 : holtype] ⊢ holtype type]
+
+Fatal error: exception Assert_failure("src/NLF.ml", 61, 13)
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Checkout}
+We have two functions:
+\[
+\Phi : 
+\]
+
+\pause
+\begin{verbatim}
+$ ./gasp checkout v42
+\end{verbatim}
+
+if
+\[t = \Gamma\vdash v_{52} : \mathsf{Version} \quad\text{and}\quad
+\Gamma(v_{42}) = \mathsf{Commit}(v_{41},h) \]
+then 
+\[ \Phi^{-1}(\Gamma(h)) \]
+is the LF term representing \texttt{v42}
 \end{frame}
 
 \begin{frame}{Commit}
   
 \end{frame}
 
-\begin{frame}{Checkout}
+\begin{frame}{Translations composition}
   
 \end{frame}
 
-\begin{frame}{Sharing}
+\begin{frame}{Further work}
   
 \end{frame}
 
