@@ -200,7 +200,7 @@ Today, we use:
   \pause
   \vspace{2em}
   \begin{center}
-    {\Large \it Types are the witnesses of this impact}
+    {\large \it Types are the witnesses of this impact}
   \end{center}
   \vspace{1em}
   \pause
@@ -386,11 +386,16 @@ and infer env t =
     The repository $R$ is a pair $(\Delta, x)$:
     \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
     \gor \mathsf{Blob}\ string)\]
-    with the invariant:
-    if $(x, \mathsf{Commit}\ (y,z)) \in\Delta$ then
+    with the invariants:
     \begin{itemize}
-    \item $(y, \mathsf{Tree}\ t)\in\Delta$
-    \item $(z, \mathsf{Commit}\ (t,v))\in\Delta$
+    \item if $(x, \mathsf{Commit}\ (y,z)) \in\Delta$ then
+      \begin{itemize}
+      \item $(y, \mathsf{Tree}\ t)\in\Delta$
+      \item $(z, \mathsf{Commit}\ (t,v))\in\Delta$
+      \end{itemize}
+    \item if $(x, \mathsf{Tree}(\vec y))\in\Delta$ then \\
+      for all $y_i$, either $(y_i, \mathsf{Tree}(\vec z))$ or $(y_i,
+      \mathsf{Blob}(s))\in\Delta$
     \end{itemize}
     \pause
     \begin{center}
@@ -526,7 +531,7 @@ $R =$ \scriptsize
 
 \section{The language}
 
-\begin{frame}{Presentation}
+\begin{frame}{Presentation (of the ongoing formalization)}
   \begin{itemize}
   \item alternative syntax for LF
   \item a datastructure of LF derivations
