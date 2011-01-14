@@ -1,0 +1,117 @@
+\documentclass[preprint]{sigplanconf}
+
+\usepackage{amsmath}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{color}
+\usepackage[pdftex,backref=page,colorlinks=true]{hyperref}
+
+\definecolor{bwgreen}{rgb}{0.183,1,0.5}
+\definecolor{bwmagenta}{rgb}{1,0.169,0.909}
+\definecolor{bwblue}{rgb}{0.317,0.161,1}
+\hypersetup{
+  linkcolor=blue,
+  citecolor=blue
+}
+
+\newcommand{\remplan}[1]{\noindent\textcolor{bwblue}{$\triangleright$ \textbf{#1}}}
+\newcommand{\remtext}[1]{\textcolor{bwgreen}{$\triangleright$ \textsl{#1}}}
+
+\begin{document}
+
+\conferenceinfo{ICFP '11}{June 4--8, Tokyo, Japan} 
+\copyrightyear{2010}
+\copyrightdata{[to be supplied]} 
+
+%\titlebanner{banner above paper title}        % These are ignored unless
+%\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{TBD}
+%\subtitle{Subtitle Text, if any}
+
+\authorinfo{Matthias Puech}
+           {University of Bologna, University Paris Diderot}
+           {puech@cs.unibo.it}
+\authorinfo{Yann Régis-Gianas}
+           {University Paris Diderot, CNRS, and INRIA}
+           {yrg@pps.jussieu.fr}
+
+\maketitle
+
+\begin{abstract}
+This is the text of the abstract.
+\end{abstract}
+
+\category{CR-number}{subcategory}{third-level}
+
+\terms
+term1, term2
+
+\keywords
+keyword1, keyword2
+
+\section{Introduction}
+
+\remtext{Une intro que j'avais écrit il y a longtemps et que je sais
+  pas où mettre. Sûrement à jeter\ldots}
+
+Programs are nowadays faster to write and safer to execute, thanks to
+high-level programming concepts and expressive type systems. Still,
+one aspect of programming didn't change very much---if not at
+all---since the early days of high-level programming: we still write
+programs in text files and when we are done, we let the compiler check
+and compile them.  Though, every programmer knows that writing a
+program longer than a few dozen of lines is a highly non-linear task
+involving constant experiments, fixes, rollback on previous
+modifications etc., all of those eventually validated by some a
+posteriori criterion: execution and ``empirical'' test, and
+increasingly type-checking. In a nutshell, programmers spend more time
+\emph{editing} than \emph{writing}. Yet, this aspect of their
+day-to-day workflow is not, or poorly taken into account in a
+developer's toolchain:
+\begin{itemize}
+\item To avoid recompiling a whole program upon a change, we split
+  them into files, and (re-)compile them separatly. Very often yet,
+  this separation serve different purpose: abstraction, splitting into
+  logical units, namespace management\ldots\ Why should these purposes
+  coincide?
+\item To keep track of past versions of a program, we use text-based
+  version control systems that have no awareness of the actual content
+  of the file. In a sense, the non-linearity of the task is managed
+  outside the scope of the language, by manual, textual
+  transformations. Isn't there a lot to gain in making these tools
+  syntax-aware, even semantics-aware?
+\item As a result, all the semantic information that could be
+  available to the programmer and act as a \emph{guidance tool} to
+  write programs (e.g. type informations) are only used by the
+  type-checker as a \emph{repressive} measure against programming
+  errors (type errors).
+\end{itemize}
+
+These observations apply to the usual, wide-spread programming
+languages, but even if the current toolchain in use up to now was a
+reasonable approximation to the incremental interaction with the
+compiler intended by the user, they become \emph{a fortiori} necessary
+when it come to the new, demanding languages embedding formal
+verification aspects, like proof assistants or rich specification
+languages. In these emerging languages, interaction with a type- or
+proof-checker is unavoidable due to the difficulty of writing correct
+proofs without guidance from the system, and the constant modification
+of the source makes necessary to observe incrementally the effect of a
+small change on the whole edifice. Moreover, as the complexity of the
+object to check increases, we cannot afford anymore to rely on the
+usual unit of compilation, the file, a need a finer-grained tool.
+
+We propose to devise here a data structure for repositories of
+programs and proofs allowing to take advantage of the incremental
+nature of a programmer's workflow.
+
+% The problem (1 page)
+% My idea (2 pages)
+% The details (5 pages)
+% related works (1-2 pages)
+%conclusion and further work (0.5 page)
+
+\bibliographystyle{abbrvnat}
+
+\end{document}
