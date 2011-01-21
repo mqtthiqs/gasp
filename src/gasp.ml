@@ -27,8 +27,8 @@ let parse_buffer b filename =
     ~parser_fun: SLF_parser.signature
     ~input: filename  
 
-let down = SLF_LF.sign [] $ LF_XLF.sign [] $ XLF_XLFe.sign $ XLFe_NLF.sign NLF.NLFSign.empty
-let up = XLFe_NLF.from_sign $ XLF_XLFe.from_sign $ LF_XLF.from_sign $ SLF_LF.from_sign
+let down = SLF_LF.sign [] $ LF_XLF.sign $ XLFa_XLFe.sign $ XLFe_NLF.sign NLF.NLFSign.empty
+let up = XLFe_NLF.from_sign $ XLFa_XLFe.from_sign $ LF_XLF.from_sign $ SLF_LF.from_sign
 
 (* let _ = *)
 (*   (\* Parsing of the input file *\) *)

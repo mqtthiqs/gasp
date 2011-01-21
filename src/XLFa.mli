@@ -6,15 +6,15 @@ type kind =
 
 and fam =
   | FProd of variable * fam * fam
-  | FConst of constant * args
+  | FConst of constant * args * kind
 
 and obj =
   | OLam of variable * fam * obj
-  | OVar of variable * args
-  | OConst of constant * args
-  | OApp of obj * args
+  | OVar of variable * args * fam
+  | OConst of constant * args * fam
+  | OApp of obj * args * fam
 
-and args = obj list
+and args = (variable * obj) list
 
 type entry =
   | FDecl of kind
