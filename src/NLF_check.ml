@@ -1,8 +1,7 @@
-open NLF
-open NLF
+include types of mli
 
-exception Not_convertible_fam of fam * fam
-exception Not_convertible_obj of obj * obj
+open NLF
+open NLF
 
 let rec conv_args' ea eb =
   NLFEnv.fold 

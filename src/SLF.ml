@@ -1,23 +1,7 @@
-type ident = string
-
-type term' = 
-  | Type
-  | Prod of ident * term * term
-  | Arr of term * term
-  | Lam of ident * term * term
-  | App of term * term
-  | Var of ident
-
-and term = term' Position.located
-
-type entry =
-  | Decl of term
-
-type sign = (ident * entry) list
+include types of mli with 
+  module Idmap = Map.Make(struct type t = ident let compare=Pervasives.compare end)
 
 module P = Position
-module Idmap = Map.Make(struct type t = ident let compare=Pervasives.compare end)
-type subst = ident Idmap.t
 
 let rec equals_term subst t u = 
   match Position.value t, Position.value u with

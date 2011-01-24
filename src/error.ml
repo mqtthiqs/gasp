@@ -1,10 +1,10 @@
+include types of mli
+
 let exit_flag = ref true
 
 let exit_if_error () = exit_flag := true
 
 let resume_if_error () = exit_flag := false
-
-exception Error of Position.t list * string
 
 let print_error positions msg =
   Printf.sprintf "%s%s"
