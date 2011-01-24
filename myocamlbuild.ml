@@ -30,7 +30,7 @@ let _ = dispatch begin function
        Options.ocamlmktop := ocamlfind & A"ocamlmktop"
 
    | After_rules ->
-       flag ["ocaml"; "link"] & A"-linkpkg";
+       flag ["ocaml"; "link"; "program"] & A"-linkpkg";
        List.iter begin fun pkg ->
          flag ["ocaml"; "compile";  "pkg_"^pkg] & S[A"-package"; A pkg];
          flag ["ocaml"; "ocamldep"; "pkg_"^pkg] & S[A"-package"; A pkg];
@@ -44,5 +44,10 @@ let _ = dispatch begin function
        end (find_syntaxes ());
        flag ["ocaml"; "pkg_threads"; "compile"] (S[A "-thread"]);
        flag ["ocaml"; "pkg_threads"; "link"] (S[A "-thread"]);
+       flag ["ocaml"; "need_td"; "compile"] & S[A"-pp"; Quote(S[A"camlp5o"; P"tools/typdef.cmo"])];
+       flag ["ocaml"; "need_td"; "ocamldep"] & S[A"-pp"; Quote(S[A"camlp5o"; P"tools/typdef.cmo"])];
+       dep ["ocaml"; "need_td"; "compile"] & ["tools/typdef.cmo"];
+       dep ["ocaml"; "need_td"; "ocamldep"] & ["tools/typdef.cmo"];
+       flag ["ocaml"; "use_camlp5"] & S[A"-I"; A"+camlp5"]
    | _ -> ()
 end

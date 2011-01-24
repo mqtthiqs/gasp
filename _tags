@@ -1,2 +1,3 @@
-<src/*> : use_unix, use_camlp5, pkg_menhirLib, use_str
+<tools/typdef.ml> : use_camlp5, pp(camlp5o)
+<src/*> : use_unix, pkg_menhirLib, use_str, need_td
 <*>: use_unix, use_menhir
