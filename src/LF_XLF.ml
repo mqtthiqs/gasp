@@ -8,6 +8,7 @@ let rec obj l t : XLF.obj =
   match P.value t with
     | LF.OConst c -> XLF.OConst(c,l)
     | LF.OVar x -> XLF.OVar(x,l)
+    | LF.OMeta x -> XLF.OMeta(x,l)
     | LF.OApp(t,u) -> obj (obj [] u :: l) t
     | LF.OLam(x,a,t) -> 
 	if l = [] then
@@ -49,7 +50,7 @@ and depends_obj x = function
   | XLF.OLam (y,a,t) when x=y -> depends_fam x a
   | XLF.OLam (y,a,t) -> depends_fam x a || depends_obj x t
   | XLF.OVar (y,l) when x=y -> true
-  | XLF.OVar (y,l) -> depends_args x l
+  | XLF.OVar (y,l) | XLF.OMeta(y,l) -> depends_args x l
   | XLF.OConst (c,l) -> depends_args x l
   | XLF.OApp (t,l) -> depends_obj x t || depends_args x l
 
@@ -82,6 +83,7 @@ and from_fam a : LF.fam = P.with_pos P.dummy (from_fam' a)
 and from_obj' = function
   | XLF.OLam (x,a,t) -> LF.OLam (name_for_obj x t, from_fam a, from_obj t)
   | XLF.OVar (x,l) -> from_oapp' (LF.OVar x) l
+  | XLF.OMeta (x,l) -> from_oapp' (LF.OMeta x) l
   | XLF.OConst (c,l) -> from_oapp' (LF.OConst c) l
   | XLF.OApp (t,l) -> from_oapp' (from_obj' t) l
 

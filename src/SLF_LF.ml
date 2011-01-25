@@ -43,6 +43,7 @@ let term sign env t =
 	      | _, LF.Obj _ -> Errors.not_a_fam_or_obj t
 	      | _ -> Errors.not_an_obj u
 	    end
+	| SLF.Meta x -> LF.Obj(p (LF.OMeta x))
 	| SLF.Var x ->
 	    if List.mem_assoc x env then LF.Obj(p (LF.OVar x))
 	    else 
@@ -72,6 +73,7 @@ let rec from_obj' : LF.obj' -> SLF.term' = function
       SLF.Lam ("_", from_fam a, from_obj t)
   | LF.OLam (Named x, a, t) -> SLF.Lam (x, from_fam a, from_obj t)
   | LF.OApp (t,u) -> SLF.App (from_obj t, from_obj u)
+  | LF.OMeta x -> SLF.Meta x
 
 and from_obj t = P.map from_obj' t
 

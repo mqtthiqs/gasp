@@ -2,60 +2,68 @@
 
 let rec type_of : XLFa.obj -> XLFa.fam = function
   | XLFa.OLam(x,a,t) -> XLFa.FProd(x, a, type_of t)
-  | XLFa.OVar(_,_,a) | XLFa.OConst(_,_,a) | XLFa.OApp(_,_,a) -> a
+  | XLFa.OVar(_,_,a) | XLFa.OConst(_,_,a) | XLFa.OApp(_,_,a) | XLFa.OMeta(_,_,a) -> a
+ 
 
-let rec obj sign env : XLF.obj -> XLFa.obj = function
+let rec obj repo sign env : XLF.obj -> XLFa.obj = function
   | XLF.OLam (x,a,t) -> 
-      let a = fam sign env a in
-      XLFa.OLam (x, a, obj sign ((x,a)::env) t)
+      let a = fam repo sign env a in
+      XLFa.OLam (x, a, obj repo sign ((x,a)::env) t)
   | XLF.OVar (x,l) -> 
-      let (l,a) = args sign env l [] (List.assoc x env) in
+      let (l,a) = args repo sign env l [] (List.assoc x env) in
       XLFa.OVar(x,l,a)
+  | XLF.OMeta (x,l) -> 
+      let a = match NLF.NLFEnv.find repo x with
+	| NLF.NLFEnv.ODecl a -> a
+	| NLF.NLFEnv.ODef t -> NLF.lift t in
+      let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
+      let (l,a) = args repo sign env l [] a in
+      XLFa.OMeta(x,l,a)
   | XLF.OConst (c,l) ->
-      let (l,a) = args sign env l [] (match List.assoc c sign with
+      let (l,a) = args repo sign env l [] (match List.assoc c sign with
 					  XLFa.ODecl a -> a
 					| XLFa.FDecl _ -> assert false) in
       XLFa.OConst(c,l,a)
   | XLF.OApp (t,l) ->
-      let t = obj sign env t in
-      let (l,a) = args sign env l [] (type_of t) in
+      let t = obj repo sign env t in
+      let (l,a) = args repo sign env l [] (type_of t) in
       XLFa.OApp(t, l, a)
 
-and args sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
+and args repo sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
     | [], _ -> l', a
     | t::l, XLFa.FProd(x,a,b) -> 
-	args sign env l ((x, obj sign env t) :: l') b
+	args repo sign env l ((x, obj repo sign env t) :: l') b
     | t::l, XLFa.FConst _ -> assert false  (* over app, checked in LF_XLF *)
 
-and fam sign env = function 
+and fam repo sign env = function 
   | XLF.FConst(c,l) ->
-      let (l,a) = args_fam sign env l [] (match List.assoc c sign with
+      let (l,a) = args_fam repo sign env l [] (match List.assoc c sign with
 					      XLFa.ODecl _ -> assert false
 					    | XLFa.FDecl k -> k) in
       XLFa.FConst(c,l,a)
   | XLF.FProd(x,a,b) -> 
-      let a = fam sign env a in
-      XLFa.FProd(x,a, fam sign ((x,a)::env) b)
+      let a = fam repo sign env a in
+      XLFa.FProd(x,a, fam repo sign ((x,a)::env) b)
 
-and args_fam sign env l l' (k:XLFa.kind) =
+and args_fam repo sign env l l' (k:XLFa.kind) =
   match l,k with
     | [], _ -> l', k
     | t::l, XLFa.KProd(x,a,k) ->
-	args_fam sign env l ((x, obj sign env t) :: l') k
+	args_fam repo sign env l ((x, obj repo sign env t) :: l') k
     | t::l, XLFa.KType -> assert false  (* over app, checked in LF_XLF *)
 
-let rec kind sign env = function
+let rec kind repo sign env = function
   | XLF.KType -> XLFa.KType
   | XLF.KProd(x,a,k) -> 
-      let a = fam sign env a in
-      XLFa.KProd(x, a, kind sign ((x,a)::env) k)
+      let a = fam repo sign env a in
+      XLFa.KProd(x, a, kind repo sign ((x,a)::env) k)
 
-let sign (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign = 
+let sign repo (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign = 
   Util.list_map_prefix 
     (fun s -> function
-       | c, XLF.ODecl a -> c, XLFa.ODecl (fam s [] a)
-       | c, XLF.FDecl k -> c, XLFa.FDecl (kind s [] k)
+       | c, XLF.ODecl a -> c, XLFa.ODecl (fam repo s [] a)
+       | c, XLF.FDecl k -> c, XLFa.FDecl (kind repo s [] k)
     ) s' s
 
 
@@ -66,6 +74,8 @@ let rec from_obj = function
   | XLFa.OVar(x,l,a) -> XLF.OVar(x, from_args l)
   | XLFa.OConst(c,l,a) -> XLF.OConst(c, from_args l)
   | XLFa.OApp(t,l,a) -> XLF.OApp(from_obj t, from_args l)
+  | XLFa.OMeta(x,l,a) -> XLF.OMeta (x, from_args l)
+
 and from_args l = List.map (fun (_,t) -> from_obj t) l
 and from_fam = function
   | XLFa.FConst(c,l,_) -> XLF.FConst(c,from_args l)

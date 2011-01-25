@@ -48,6 +48,7 @@ let _ = dispatch begin function
        flag ["ocaml"; "need_td"; "ocamldep"] & S[A"-pp"; Quote(S[A"camlp5o"; P"tools/typdef.cmo"])];
        dep ["ocaml"; "need_td"; "compile"] & ["tools/typdef.cmo"];
        dep ["ocaml"; "need_td"; "ocamldep"] & ["tools/typdef.cmo"];
-       flag ["ocaml"; "use_camlp5"] & S[A"-I"; A"+camlp5"]
+       flag ["ocaml"; "use_camlp5"] & S[A"-I"; A"+camlp5"];
+       non_dependency "src/NLF.ml" "NLF"
    | _ -> ()
 end

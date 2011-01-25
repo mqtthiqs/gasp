@@ -13,6 +13,7 @@ and obj =
   | OVar of variable * args * fam
   | OConst of constant * args * fam
   | OApp of obj * args * fam
+  | OMeta of NLF.variable * args * fam
 
 and args = (variable * obj) list
 

@@ -20,7 +20,8 @@ and args env l =
     ) (NLFEnv.clear env) l
 
 and ohead env = function
-  | XLFe.OVar(x,l,a) -> 
+  | XLFe.OVar(x,l,a) | XLFe.OMeta(x,l,a) -> (* A meta in XLFe was
+					       actually an NLF variable *)
       let args = args env l in
       NLF.OVar(x, args), fhead (NLFEnv.clear args) a
   | XLFe.OConst(c,l,a) -> 

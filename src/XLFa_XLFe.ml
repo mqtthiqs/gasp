@@ -6,6 +6,13 @@ let rec obj = function
       XLFe.OLam(y, fam a, obj (XLFa.OVar(x, l@[y, XLFa.OVar(y, [], a)], b)))
   | XLFa.OVar(x,l,XLFa.FConst(c,l',k)) -> 
       XLFe.OHead(XLFe.OVar(x, args l, XLFe.FConst(c, args l', khead k)))
+
+  | XLFa.OMeta(x,l,XLFa.FProd(y,a,b)) -> 
+      XLFe.OLam(y, fam a, obj (XLFa.OMeta(x, l@[y, XLFa.OMeta(y, [], a)], b))) (* TODO erreur *)
+  | XLFa.OMeta(x,l,XLFa.FConst(c,l',k)) -> 
+      XLFe.OHead(XLFe.OMeta(x, args l, XLFe.FConst(c, args l', khead k)))
+
+
   | XLFa.OConst(c,l,XLFa.FProd(y,a,b)) -> 
       XLFe.OLam(y, fam a, obj (XLFa.OConst(c, l@[y, XLFa.OVar(y, [], a)], b)))
   | XLFa.OConst(c,l,XLFa.FConst(d,l',k)) -> 
@@ -49,6 +56,7 @@ and from_ohead : XLFe.ohead -> XLFa.obj = function
   | XLFe.OVar(x,l,a) -> XLFa.OVar(x, from_args l, from_fhead a)
   | XLFe.OConst(c,l,a) -> XLFa.OConst(c, from_args l, from_fhead a)
   | XLFe.OApp(t,l,a) -> XLFa.OApp(from_obj t, from_args l, from_fhead a)
+  | XLFe.OMeta _ -> assert false
 
 and from_fhead : XLFe.fhead -> XLFa.fam = function
   | XLFe.FConst (c,l,XLFe.KType) -> XLFa.FConst(c,from_args l, XLFa.KType)

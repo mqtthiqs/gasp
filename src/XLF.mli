@@ -10,7 +10,8 @@ and fam =
 
 and obj =
   | OLam of variable * fam * obj
-  | OVar of variable * args
+  | OVar of NLF.variable * args
+  | OMeta of variable * args
   | OConst of constant * args
   | OApp of obj * args
 

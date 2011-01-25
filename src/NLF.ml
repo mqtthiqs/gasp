@@ -48,3 +48,5 @@ and module NLFSign = struct
   let fold f env acc = List.fold_left (fun acc (x,a) -> f x a acc) acc env
   let empty = []
 end
+
+let lift = function NLF.Obj(env, _, ha) -> NLF.Fam(env, ha)

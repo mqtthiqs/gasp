@@ -8,6 +8,7 @@ type term' =
   | Lam of ident * term * term
   | App of term * term
   | Var of ident
+  | Meta of NLF.variable
 
 and term = term' Position.located
 

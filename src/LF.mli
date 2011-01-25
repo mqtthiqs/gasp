@@ -12,6 +12,7 @@ and obj' =
   | OVar of variable
   | OLam of name * fam * obj
   | OApp of obj * obj
+  | OMeta of NLF.variable
 
 and obj = obj' Position.located
 

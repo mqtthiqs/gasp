@@ -16,6 +16,7 @@ and fam =
 
 and ohead =
   | OVar of variable * args * fhead
+  | OMeta of NLF.variable * args * fhead
   | OConst of constant * args * fhead
   | OApp of obj * args * fhead
 

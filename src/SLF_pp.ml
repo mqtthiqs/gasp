@@ -5,8 +5,7 @@ open SLF
 module P = Position
 
 let term_prec a =  match P.value a with
-  | Var _ -> 0
-  | Type -> 0
+  | Type | Var _ | Meta _ -> 0
   | App _ -> 10
   | Lam _ -> 20
   | Prod _ -> 30
@@ -19,7 +18,7 @@ let list_prec = function
 let ident fmt x = fprintf fmt "@[%s@]" x
 
 let pp_term pp fmt t = match P.value t with
-  | Var x -> 
+  | Var x | Meta x -> 
       ident fmt x
   | Arr (a,b) -> fprintf fmt "@[%a@ ->@ %a@]" 
       (pp (<)) a (pp (<=)) b

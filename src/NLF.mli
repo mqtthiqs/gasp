@@ -1,5 +1,7 @@
 open Name
 
+type variable = Name.variable
+
 module rec NLF : sig
   type env = NLFEnv.t
   type sign = NLFSign.t
@@ -46,3 +48,5 @@ and NLFSign : sig
   val fold : (constant -> entry -> 'a -> 'a) -> t -> 'a -> 'a
   val empty : t
 end
+
+val lift : NLF.obj -> NLF.fam
