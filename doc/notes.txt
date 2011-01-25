@@ -1,6 +1,104 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Tue Jan 25 18:51:48 CET 2011
+
+
+== Composition de langages
+
+
+Aujourd'hui, la traduction de SLF vers NLF se fait par raffinements
+successifs:
+
+  SLF (LF non stratifié)
+
+  LF (stratifié)
+
+  XLF (applications n-aires)
+
+  XLFa (annotation des spines, nommage des arguments)
+
+  XLFe (forme η-longues)
+
+  NLF (Π et λ n-aires)
+
+La traduction totale est la composition de ces traductions
+intermédiaire. Certaines ont prennent en argument des informations
+supplémentaires sur le langage cible, dans leur mouture récursive:
+
+- SLF -> LF prend un environnement LF (pour déterminer l'entité d'un
+terme SLF)
+
+- LF -> XLF prend une liste d'arguments
+
+- XLF -> XLFa prend un environmment XLFa (pour déterminer le nom et
+nombre d'arguments d'une fonction)
+
+
+On veut comme traduction totale une fonction
+
+down : SLF.term -> NLF.env -> (NLF.obj | NLF.fam | NLF.kind)
+
+Comment l'obtenir à partir des traductions successives?
+
+
+La réponse apportée (temporaire) est:
+
+- d'ajouter un constructeur Meta(x) dans chaque langage (excepté NLF),
+qui est un nom de constante NLF.
+
+- Arrivé à XLF->XLFa, on prend en plus comme argument de la traduction
+un environnement NLF qui sert à trouver le type de ces Metas. Ce type
+est "détraduit" (?) de NLF vers XLFa pour pouvoir générer l'annotation
+de type.
+
+
+Cela a l'inconvénient qu'un gros type (le type d'une dérivation Γ ⊢ t
+: A contenant un gros terme t) sera extrait de NLF (c'est linéaire en
+la taille du terme).
+
+
+Une autre solution proposée par Yann pour que cette opération soit en
+temps linéaire est la suivante:
+
+- changer la suite des traductions: tout non annoté (applications
+n-aires, Π et λ aussi), c'est à dire tout ce qui peut se faire par
+induction sur le terme et pas sur le type, puis on arrive dans une
+syntaxe "à la NLF" (problème: et les noms des arguments? ils sont
+déterminés par induction sur le type non?).
+
+- la syntaxe à la NLF contient la place pour les annotations mais
+elles sont en option. La deuxième phase consiste à annoter, et faire
+les expansions. De cette façon, la deuxième phase peut réinjecter des
+termes annotés sans avoir à les "détraduire": on les pousse juste tels
+quels, en supposant qu'ils sont annotés.
+
+
+== TC comme traduction vers les dérivations
+
+
+On a aussi remarqué qu'un certain nombres de conditions sont vérifiées
+sur le bon typage d'un terme SLF par la traduction successive. Par
+exemple, SLF->LF vérifie le bon "sortage" (bonne application de la
+règle produit), XLF->XLFa vérifie que les fonctions ne sont pas
+sur-appliquées. Que vérifie le test de cyclicité des environnements de
+NLF? Est-ce une autre façon d'écrire un typechecker? Quid de la
+convertibilité?
+
+
+== What's next
+
+- mettre en place l'infrastructure de commit/checkout
+
+- implémenter un TC pour LF (pour tests et comparaison)
+
+- continuer l'implem du TC de NLF avec tests comparatifs
+
+- en particulier comprendre la compatibilité des environnements
+(qu'est-ce que ça implique, comment le faire efficacement…)
+
+
+
 Thu Sep 16 19:04:58 CEST 2010
 
 
