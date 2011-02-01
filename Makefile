@@ -10,7 +10,7 @@ include Makefile.generic
 
 %.elf.out: %.elf $(TARGET)
 	@echo " * Test" $<.; \
-	LOG=`./$(TARGET) $<` && \
+	LOG=`./$(TARGET) init $<` && \
 	echo $$LOG > $@
 
 check: $(addsuffix .out,$(wildcard tests/*.elf))

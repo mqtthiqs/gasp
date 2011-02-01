@@ -1,56 +1,29 @@
 open Pp
-open Util
 
 let options = Arg.align
   [
-    "--debug", Arg.Set Settings.debug, 
-    " Set debug mode.";
+    "--debug", Arg.Set Settings.debug, "Set debug mode.";
+    "--repo", Arg.String (fun x -> Settings.repo := x), "The path of the repository file"
   ]
 
 let usage_msg =
-  Printf.sprintf "%s:" (Filename.basename Sys.executable_name)
+  Printf.sprintf ("%s [command] ...\n")
+    (Filename.basename Sys.executable_name)
 
-let filenames =
-  let filenames = ref [] in
-    Arg.parse options (fun f -> filenames := f :: !filenames) usage_msg;
-    !filenames
-  
-let parse_buffer b filename =
-  let init filename =
-    let lexbuf = Lexing.from_function (Util.read_in_buffer b) in 
-    lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = filename };
-    lexbuf
-  in
-  SyntacticAnalysis.process
-    ~lexer_init: init
-    ~lexer_fun: SLF_lexer.main
-    ~parser_fun: SLF_parser.signature
-    ~input: filename  
+let parse_args = function
+  | ["init"; sign_file]  -> 
+      let sign = Parsers.parse_sign sign_file in
+      let repo = Repo.init sign in
+      Repo.save repo
 
-let down repo = SLF_LF.sign [] $ LF_XLF.sign $ XLF_XLFa.sign repo [] $
-  XLFa_XLFe.sign $ XLFe_NLF.sign NLF.NLFSign.empty
-let up = XLFe_NLF.from_sign $ XLFa_XLFe.from_sign $
-  XLF_XLFa.from_sign $ LF_XLF.from_sign $ SLF_LF.from_sign
+  | ["commit"; term_file] ->
+      let term = Parsers.parse_term term_file in
+      let repo = Repo.compile (Repo.load ()) term in
+      Repo.save repo
 
+  | _ -> print_string usage_msg; exit(1)
+      
 let _ =
-  (* Parsing of the input file *)
-  let b = Util.buffer_of_file (List.hd filenames) in
-  let s = parse_buffer b (List.hd filenames) in
-  (* Print parsed file *)
-  SLF_pp.sign Format.std_formatter s;
-  print_string "=================================\n";
-  (* First down & up *)
-  let s' = ((down NLF.NLFEnv.empty) $ up) s in
-  (* Printing/re-parsing of s' to/from a buffer *)
-  Buffer.reset b;
-  SLF_pp.sign (Format.formatter_of_buffer b) s';
-  let s' = parse_buffer b "generated" in
-  (* Second down & up *)
-  let s' = ((down NLF.NLFEnv.empty) $ up) s' in
-  (* Printing of s' *)
-  SLF_pp.sign Format.std_formatter s';
-  (* Type-checking of NLF *)
-  let _s'' = down NLF.NLFEnv.empty s' in
-  (* NLF_check.sign _s''; *)
-  (* Comparison of the initial and final signatures *)
-  if SLF.equals_sign SLF.Idmap.empty s s' then exit 0 else exit 1
+  let args = ref [] in
+  Arg.parse options (fun f -> args := f :: !args) usage_msg;
+  parse_args (List.rev !args)
