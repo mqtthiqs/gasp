@@ -10,3 +10,4 @@ userInput.ml
 myocamlbuild_config.ml
 experiments/alagit/tests/*.ga.out
 tests/*.out
+_gasp
