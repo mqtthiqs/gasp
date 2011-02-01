@@ -6,13 +6,19 @@ type t = {
   term : NLF.obj option
 }
 
-let compile_sign = SLF_LF.sign [] // LF_XLF.sign // XLF_XLFa.sign [] //
+let compile_sign sign = 
+  SLF_LF.sign NLFSign.empty ()
+
+SLF_LF.sign [] // LF_XLF.sign // XLF_XLFa.sign [] //
   XLFa_XLFe.sign // XLFe_NLF.sign NLFSign.empty
 
 let reify_sign = XLFe_NLF.from_sign // XLFa_XLFe.from_sign //
   XLF_XLFa.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
 
 let compile_term (sign : NLFSign.t) (env : NLFEnv.t) t = 
+  SLF_LF.term sign // LF_XLF.obj [] // XLF_XLFa.obj env sign (XLFa_XLFe.obj // XLFe_NLF.obj env)
+
+
   (* (fun x -> match SLF_LF.term sign env x with *)
   (*    | LF.Obj t -> t *)
   (*    | _ -> assert false) // *)

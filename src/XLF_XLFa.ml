@@ -1,70 +1,85 @@
+open NLF
+
 (* XLF to XLFa : type annotation on @-spines, argument naming *)
 
 let rec type_of : XLFa.obj -> XLFa.fam = function
   | XLFa.OLam(x,a,t) -> XLFa.FProd(x, a, type_of t)
   | XLFa.OVar(_,_,a) | XLFa.OConst(_,_,a) | XLFa.OApp(_,_,a) | XLFa.OMeta(_,_,a) -> a
- 
 
-let rec obj repo sign env : XLF.obj -> XLFa.obj = function
+
+let rec obj genv sign env : XLF.obj -> XLFa.obj = function
   | XLF.OLam (x,a,t) -> 
-      let a = fam repo sign env a in
-      XLFa.OLam (x, a, obj repo sign ((x,a)::env) t)
+      let a = fam genv sign env a in
+      XLFa.OLam (x, a, obj genv sign ((x,a)::env) t)
   | XLF.OVar (x,l) -> 
-      let (l,a) = args repo sign env l [] (List.assoc x env) in
+      let (l,a) = args genv sign env l [] (List.assoc x env) in
       XLFa.OVar(x,l,a)
-  | XLF.OMeta (x,l) -> 			(* Detranslation of the type found in the repo *)
-      let a = match NLF.NLFEnv.find repo x with
-	| NLF.NLFEnv.ODecl a -> a
-	| NLF.NLFEnv.ODef t -> NLF.lift t in
+  | XLF.OMeta (x,l) -> 			(* Detranslation of the type found in the genv *)
+      let a = match NLFEnv.find genv x with
+	| NLFEnv.ODecl a -> a
+	| NLFEnv.ODef t -> lift t in
       let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
-      let (l,a) = args repo sign env l [] a in
+      let (l,a) = args genv sign env l [] a in
       XLFa.OMeta(x,l,a)
   | XLF.OConst (c,l) ->
-      let (l,a) = args repo sign env l [] (match List.assoc c sign with
-					  XLFa.ODecl a -> a
-					| XLFa.FDecl _ -> assert false) in
+      let a = match NLFSign.find sign c with
+	| NLFSign.ODecl a -> a
+	| NLFSign.FDecl _ -> assert false in (* OK *)
+      let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
+      let (l,a) = args genv sign env l [] a in
       XLFa.OConst(c,l,a)
   | XLF.OApp (t,l) ->
-      let t = obj repo sign env t in
-      let (l,a) = args repo sign env l [] (type_of t) in
+      let t = obj genv sign env t in
+      let (l,a) = args genv sign env l [] (type_of t) in
       XLFa.OApp(t, l, a)
 
-and args repo sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
+and args genv sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
     | [], _ -> l', a
     | t::l, XLFa.FProd(x,a,b) -> 
-	args repo sign env l ((x, obj repo sign env t) :: l') b
+	args genv sign env l ((x, obj genv sign env t) :: l') b
+
+    (* La réification pourrait renvoyer des metas à aller chercher à
+       la main. Dans ce cas on rajoute un cas: *)
+    (* | t::l, Meta x -> va chercher () *)
     | t::l, XLFa.FConst _ -> assert false  (* over app, checked in LF_XLF *)
 
-and fam repo sign env = function 
+and fam genv sign env = function 
   | XLF.FConst(c,l) ->
-      let (l,a) = args_fam repo sign env l [] (match List.assoc c sign with
-					      XLFa.ODecl _ -> assert false
-					    | XLFa.FDecl k -> k) in
-      XLFa.FConst(c,l,a)
+      let k = match NLFSign.find sign c with
+	| NLFSign.ODecl _ -> assert false    (* OK *)
+	| NLFSign.FDecl k -> k in
+      let k = XLFa_XLFe.from_kind (XLFe_NLF.from_kind k) in
+      let (l,k) = args_fam genv sign env l [] k in
+      XLFa.FConst(c,l,k)
   | XLF.FProd(x,a,b) -> 
-      let a = fam repo sign env a in
-      XLFa.FProd(x,a, fam repo sign ((x,a)::env) b)
+      let a = fam genv sign env a in
+      XLFa.FProd(x,a, fam genv sign ((x,a)::env) b)
 
-and args_fam repo sign env l l' (k:XLFa.kind) =
+and args_fam genv sign env l l' (k:XLFa.kind) =
   match l,k with
     | [], _ -> l', k
     | t::l, XLFa.KProd(x,a,k) ->
-	args_fam repo sign env l ((x, obj repo sign env t) :: l') k
+	args_fam genv sign env l ((x, obj genv sign env t) :: l') k
     | t::l, XLFa.KType -> assert false  (* over app, checked in LF_XLF *)
 
-let rec kind repo sign env = function
+let rec kind genv sign env = function
   | XLF.KType -> XLFa.KType
   | XLF.KProd(x,a,k) -> 
-      let a = fam repo sign env a in
-      XLFa.KProd(x, a, kind repo sign ((x,a)::env) k)
+      let a = fam genv sign env a in
+      XLFa.KProd(x, a, kind genv sign ((x,a)::env) k)
 
 let sign (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign = 
   Util.list_map_prefix 
     (fun s -> function
-       | c, XLF.ODecl a -> c, XLFa.ODecl (fam NLF.NLFEnv.empty s [] a)
-       | c, XLF.FDecl k -> c, XLFa.FDecl (kind NLF.NLFEnv.empty s [] k)
+       | c, XLF.ODecl a -> c, XLFa.ODecl (fam NLFEnv.empty s [] a)
+       | c, XLF.FDecl k -> c, XLFa.FDecl (kind NLFEnv.empty s [] k)
     ) s' s
+
+
+let obj genv sign = obj genv sign []
+let fam genv sign = fam genv sign []
+let kind genv sign = kind genv sign []
 
 
 (* ... and back *)

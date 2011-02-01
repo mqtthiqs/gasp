@@ -33,4 +33,3 @@ type entity =
   | Kind of kind
   | Fam of fam
   | Obj of obj
-  | Sign of sign

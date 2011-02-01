@@ -1,10 +1,12 @@
 open Name
+open NLF
 
 module P = Position
 
 (* Typing: from SLF to LF *)
 
-let term sign env t =
+let term : NLF.sign -> SLF.term -> LF.entity =
+fun sign t ->
   let rec term env = 
     fun {P.value=t; P.position=pos} ->
       let p v = P.with_pos pos v in
@@ -47,22 +49,30 @@ let term sign env t =
 	| SLF.Var x ->
 	    if List.mem_assoc x env then LF.Obj(p (LF.OVar x))
 	    else 
-	      try match List.assoc x sign with
-		| LF.FDecl _ -> LF.Fam (p (LF.FConst x))
-		| LF.ODecl _ -> LF.Obj (p (LF.OConst x))
+	      try match NLFSign.find sign x with
+		| NLFSign.FDecl _ -> LF.Fam (p (LF.FConst x))
+		| NLFSign.ODecl _ -> LF.Obj (p (LF.OConst x))
 	      with Not_found -> Errors.not_bound pos x
   in
-  term env t
+  term [] t
 
-let rec sign s' s =
-  Util.list_map_prefix
-    (fun s -> function
-       | (id, SLF.Decl t) -> 
-	   match term s [] t with
-	     | LF.Fam a -> (id, LF.ODecl a)
-	     | LF.Kind k -> (id, LF.FDecl k)
-	     | _ -> Errors.not_a_kind_or_fam t
-    ) s' s
+let entry : NLFSign.t -> 
+  (NLF.sign -> LF.entry -> NLFSign.entry) -> 
+  SLF.entry -> NLFSign.entry 
+  = fun nlfs entry_to_nlf -> function SLF.Decl t -> 
+    match term nlfs t with
+      | LF.Kind k -> entry_to_nlf nlfs (LF.FDecl k)
+      | LF.Fam a -> entry_to_nlf nlfs (LF.ODecl a)
+      | LF.Obj _ -> assert false	(* OK *)
+
+let rec sign : NLF.sign -> 
+  (NLF.sign -> LF.entry -> NLFSign.entry) -> 
+  SLF.sign -> NLFSign.t
+  = fun nlfs entry_to_nlf s ->
+    List.fold_left
+      (fun nlfs (c,t) -> 
+	 NLFSign.add nlfs c (entry nlfs entry_to_nlf t)
+      ) nlfs s
 
 (* Detyping: from LF to SLF *)
 
