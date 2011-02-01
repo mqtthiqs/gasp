@@ -8,11 +8,11 @@ type fam' =
 and fam = fam' Position.located
 
 and obj' = 
+  | OMeta of NLF.variable
   | OConst of constant
   | OVar of variable
   | OLam of name * fam * obj
   | OApp of obj * obj
-  | OMeta of NLF.variable
 
 and obj = obj' Position.located
 

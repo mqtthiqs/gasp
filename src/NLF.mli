@@ -1,6 +1,7 @@
 open Name
 
 type variable = Name.variable
+type constant = Name.constant
 
 module rec NLF : sig
   type env = NLFEnv.t

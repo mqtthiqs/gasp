@@ -12,7 +12,7 @@ let rec obj repo sign env : XLF.obj -> XLFa.obj = function
   | XLF.OVar (x,l) -> 
       let (l,a) = args repo sign env l [] (List.assoc x env) in
       XLFa.OVar(x,l,a)
-  | XLF.OMeta (x,l) -> 
+  | XLF.OMeta (x,l) -> 			(* Detranslation of the type found in the repo *)
       let a = match NLF.NLFEnv.find repo x with
 	| NLF.NLFEnv.ODecl a -> a
 	| NLF.NLFEnv.ODef t -> NLF.lift t in
@@ -59,11 +59,11 @@ let rec kind repo sign env = function
       let a = fam repo sign env a in
       XLFa.KProd(x, a, kind repo sign ((x,a)::env) k)
 
-let sign repo (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign = 
+let sign (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign = 
   Util.list_map_prefix 
     (fun s -> function
-       | c, XLF.ODecl a -> c, XLFa.ODecl (fam repo s [] a)
-       | c, XLF.FDecl k -> c, XLFa.FDecl (kind repo s [] k)
+       | c, XLF.ODecl a -> c, XLFa.ODecl (fam NLF.NLFEnv.empty s [] a)
+       | c, XLF.FDecl k -> c, XLFa.FDecl (kind NLF.NLFEnv.empty s [] k)
     ) s' s
 
 
