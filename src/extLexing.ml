@@ -41,3 +41,10 @@ let unescape_char s =
    let pos = Position.lex_join lexbuf.lex_curr_p lexbuf.lex_curr_p in
      error "during lexical analysis" pos
        ("Unexpected token: `" ^ lexeme lexbuf ^ "'" ^ msg)
+
+let lexer_init filename =
+  let lexbuf = Lexing.from_channel (open_in filename) in 
+  lexbuf.Lexing.lex_curr_p <- 
+    { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = filename };
+  lexbuf
+

@@ -10,6 +10,7 @@
 %token<string> ID
 
 %start<SLF.sign> signature
+%start<SLF.term> terml
 
 %%
 
@@ -45,6 +46,8 @@ term3:
 | TYPE { Type }
 
 term: x=term1 { x }
+
+terml : x=loc(term) {x}
 
 %inline loc(X): t=X 
 {
