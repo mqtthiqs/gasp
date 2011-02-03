@@ -21,6 +21,9 @@ let parse_args = function
       let repo = Repo.compile (Repo.load ()) term in
       Repo.save repo
 
+  | ["show"] ->
+      Repo.show (Repo.load ())
+
   | _ -> print_string usage_msg; exit(1)
       
 let _ =
