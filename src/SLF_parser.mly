@@ -5,7 +5,7 @@
 %}
 
 %token EOF
-%token COLON TYPE DOT LARROW RARROW 
+%token COLON TYPE DOT LARROW RARROW DOLLAR
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
 
@@ -43,11 +43,12 @@ term2:
 term3: 
   LPAREN t=term1 RPAREN {t}
 | x=ID { Var x }
+| DOLLAR x=ID { Meta x }
 | TYPE { Type }
 
 term: x=term1 { x }
 
-terml : x=loc(term) {x}
+terml : x=loc(term) EOF {x}
 
 %inline loc(X): t=X 
 {
