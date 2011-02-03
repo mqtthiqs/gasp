@@ -56,22 +56,17 @@ fun sign t ->
   in
   term [] t
 
-let entry : NLFSign.t -> 
-  (NLF.sign -> LF.entry -> NLFSign.entry) -> 
-  SLF.entry -> NLFSign.entry 
-  = fun nlfs entry_to_nlf -> function SLF.Decl t -> 
+let entry kont nlfs =
+  function SLF.Decl t -> 
     match term nlfs t with
-      | LF.Kind k -> entry_to_nlf nlfs (LF.FDecl k)
-      | LF.Fam a -> entry_to_nlf nlfs (LF.ODecl a)
+      | LF.Kind k -> kont nlfs (LF.FDecl k)
+      | LF.Fam a -> kont nlfs (LF.ODecl a)
       | LF.Obj _ -> assert false	(* OK *)
 
-let rec sign : NLF.sign -> 
-  (NLF.sign -> LF.entry -> NLFSign.entry) -> 
-  SLF.sign -> NLFSign.t
-  = fun nlfs entry_to_nlf s ->
+let rec sign kont nlfs s =
     List.fold_left
       (fun nlfs (c,t) -> 
-	 NLFSign.add nlfs c (entry nlfs entry_to_nlf t)
+	 NLFSign.add nlfs c (entry kont nlfs t)
       ) nlfs s
 
 (* Detyping: from LF to SLF *)

@@ -4,7 +4,8 @@ open NLF
 val obj : NLF.env -> XLFe.obj -> NLF.obj
 val fam : NLF.env -> XLFe.fam -> NLF.fam
 val kind : NLF.env -> XLFe.kind -> NLF.kind
-val sign : NLF.sign -> XLFe.sign -> NLF.sign
+val entry : (NLF.sign -> NLFSign.entry -> NLFSign.entry) -> 
+  NLFSign.t -> XLFe.entry -> NLFSign.entry 
 
 val from_env_args : NLF.env -> XLFe.args
 val from_env_kind : NLF.env -> XLFe.kind -> XLFe.kind

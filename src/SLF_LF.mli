@@ -1,9 +1,8 @@
 open NLF
 
 val term : NLF.sign -> SLF.term -> LF.entity
-val sign : NLF.sign -> 
-  (NLF.sign -> LF.entry -> NLFSign.entry) -> 
-  SLF.sign -> NLFSign.t
+val sign : (NLFSign.t -> LF.entry -> NLFSign.entry) -> 
+  NLFSign.t -> SLF.sign -> NLFSign.t
 
 val from_obj : LF.obj -> SLF.term
 val from_fam : LF.fam -> SLF.term

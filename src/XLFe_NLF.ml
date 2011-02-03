@@ -49,14 +49,9 @@ let rec kind env = function
   | XLFe.KHead(XLFe.KType) ->
       NLF.Kind env
 
-let rec sign s = function
-  | [] -> s
-  | (c, XLFe.FDecl k) :: tl ->
-      let k = kind NLFEnv.empty k in
-      sign (NLFSign.add s c (NLFSign.FDecl k)) tl
-  | (c, XLFe.ODecl a) :: tl ->
-      let a = fam NLFEnv.empty a in
-      sign (NLFSign.add s c (NLFSign.ODecl a)) tl
+let entry kont nlfs = function 
+    | XLFe.ODecl a -> kont nlfs (NLFSign.ODecl (fam NLFEnv.empty a))
+    | XLFe.FDecl k -> kont nlfs (NLFSign.FDecl (kind NLFEnv.empty k))
 
 (* ...and back *)
 

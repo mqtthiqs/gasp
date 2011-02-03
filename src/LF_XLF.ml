@@ -31,9 +31,9 @@ let rec kind k : XLF.kind =
     | LF.KType -> XLF.KType
     | LF.KProd(x,a,k) -> XLF.KProd(variable_for x, fam [] a, kind k)
 
-let sign s = List.map (function
-			 | c, LF.FDecl k -> c, XLF.FDecl (kind k) 
-			 | c, LF.ODecl a -> c, XLF.ODecl (fam [] a)) s
+let entry kont nlfs = function
+  | LF.FDecl k -> kont nlfs (XLF.FDecl (kind k))
+  | LF.ODecl k -> kont nlfs (XLF.ODecl (fam [] k))
 
 (* ... and back *)
 

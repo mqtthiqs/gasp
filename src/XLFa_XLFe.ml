@@ -1,3 +1,5 @@
+open NLF
+
 (* From XLF to XLFe (eta-expansion) *)
 
 let rec obj = function
@@ -37,12 +39,9 @@ and kind = function
   | XLFa.KType -> XLFe.KHead(XLFe.KType)
   | XLFa.KProd(x,a,k) -> XLFe.KProd(x, fam a, kind k)
 
-let rec sign s =
-  List.map
-    (function
-       | c, XLFa.FDecl k -> c, XLFe.FDecl (kind k)
-       | c, XLFa.ODecl a -> c, XLFe.ODecl (fam a)
-    ) s
+let entry kont nlfs = function 
+    | XLFa.ODecl a -> kont nlfs (XLFe.ODecl (fam a))
+    | XLFa.FDecl k -> kont nlfs (XLFe.FDecl (kind k))
 
 (* ... and back *)
 

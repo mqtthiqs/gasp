@@ -69,12 +69,23 @@ let rec kind genv sign env = function
       let a = fam genv sign env a in
       XLFa.KProd(x, a, kind genv sign ((x,a)::env) k)
 
-let sign (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign = 
-  Util.list_map_prefix 
-    (fun s -> function
-       | c, XLF.ODecl a -> c, XLFa.ODecl (fam NLFEnv.empty s [] a)
-       | c, XLF.FDecl k -> c, XLFa.FDecl (kind NLFEnv.empty s [] k)
-    ) s' s
+let entry kont nlfs = function 
+    | XLF.ODecl a -> kont nlfs (XLFa.ODecl (fam NLFEnv.empty nlfs [] a))
+    | XLF.FDecl k -> kont nlfs (XLFa.FDecl (kind NLFEnv.empty nlfs [] k))
+
+let sign kont nlfs xlfs =
+    List.fold_left
+      (fun nlfs (c,t) -> 
+	 NLFSign.add nlfs c (entry kont nlfs t)
+      ) nlfs xlfs
+
+
+(* sign (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign =  *)
+(*   Util.list_map_prefix  *)
+(*     (fun s -> function *)
+(*        | c, XLF.ODecl a -> c, XLFa.ODecl (fam NLFEnv.empty s [] a) *)
+(*        | c, XLF.FDecl k -> c, XLFa.FDecl (kind NLFEnv.empty s [] k) *)
+(*     ) s' s *)
 
 
 let obj genv sign = obj genv sign []
