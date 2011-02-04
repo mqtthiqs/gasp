@@ -8,10 +8,10 @@ let rec equals_term subst t u =
     | Type, Type -> true
     | Prod(x,a,b), Prod(x',a',b') ->
 	equals_term subst a a' && equals_term (Idmap.add x x' subst)b b'
-    | Prod(x,a,b), Arr(a',b') 
-    | Arr(a,b), Prod (x,a',b') -> 
+    | Arr(a,b), Arr(a',b')
+    | Prod(_,a,b), Arr(a',b') 
+    | Arr(a,b), Prod (_,a',b') -> 
 	equals_term subst a a' && equals_term subst b b'
-    | Arr(t,u), Arr(t',u') -> equals_term subst t t' && equals_term subst u u'
     | Lam(x,a,b), Lam(x',a',b') ->
 	x=x' && equals_term subst a a' && equals_term (Idmap.add x x' subst) b b'
     | App(t,u), App(t',u') -> equals_term subst t t' && equals_term subst u u'
