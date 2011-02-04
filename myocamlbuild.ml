@@ -49,6 +49,7 @@ let _ = dispatch begin function
        dep ["ocaml"; "need_td"; "compile"] & ["tools/typdef.cmo"];
        dep ["ocaml"; "need_td"; "ocamldep"] & ["tools/typdef.cmo"];
        flag ["ocaml"; "use_camlp5"] & S[A"-I"; A"+camlp5"];
+       flag ["file:src/gasp.byte"] & S[A"-I"; A"+camlp5"; A"camlp5.cma"];
        non_dependency "src/NLF.ml" "NLF"
    | _ -> ()
 end
