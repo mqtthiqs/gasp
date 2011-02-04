@@ -18,13 +18,14 @@ let parse_args = function
 
   | ["commit"; term_file] ->
       let term = Parsers.parse_term term_file in
-      let repo = Repo.compile (Repo.load ()) term in
+      let repo = Repo.commit (Repo.load ()) term in
       Repo.save repo
 
-  | ["show"] ->
-      Repo.show (Repo.load ())
+  | ["checkout"] -> Repo.checkout (Repo.load())
+  | ["show"] -> Repo.show (Repo.load ())
+  | ["check"] -> Repo.check (Repo.load ())
 
-  | _ -> print_string usage_msg; exit(1)
+  | _ -> Arg.usage options usage_msg; exit(1)
       
 let _ =
   let args = ref [] in
