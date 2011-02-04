@@ -27,6 +27,10 @@ let not_a s t =
   type_error (Position.position t)
     (fun fmt -> fprintf fmt "@[The term %a is not a %s.@]" SLF_pp.term t s)
 
+let not_convertible_fam a b =
+  type_error (Position.position a)
+    (fun fmt -> fprintf fmt "@[%a and %a are not convertible.@]" SLF_pp.term a SLF_pp.term b)
+
 let not_a_kind = not_a "kind"
 let not_a_fam = not_a "family"
 let not_an_obj = not_a "object"

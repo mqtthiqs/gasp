@@ -6,6 +6,21 @@ type t = {
   term : NLF.obj option
 }
 
+module LF_XLF = struct
+let entry kont nlfs = function
+  | LF.FDecl k -> 
+      ignore (LF_check.kind nlfs [] LF_check.Subst.empty k);
+      kont nlfs (XLF.FDecl (LF_XLF.kind k))
+  | LF.ODecl a -> 
+      ignore (LF_check.fam nlfs [] LF_check.Subst.empty a);
+      kont nlfs (XLF.ODecl (LF_XLF.fam a))
+
+  let obj t = LF_XLF.obj t
+  let from_sign = LF_XLF.from_sign
+  let from_obj = LF_XLF.from_obj
+end
+
+
 let compile_sign = 
   SLF_LF.sign 
     (LF_XLF.entry 
@@ -20,9 +35,9 @@ let reify_sign = XLFe_NLF.from_sign // XLFa_XLFe.from_sign //
 let compile_term sign env =
     (* SLF_LF.term sign // LF_XLF.obj [] // XLF_XLFa.obj env sign (XLFa_XLFe.obj // XLFe_NLF.obj env) *)
     (fun x -> match SLF_LF.term sign x with
-       | LF.Obj t -> t
+       | LF.Obj t -> t	(* TEMP: LF_check *)
        | _ -> assert false) //
-      LF_XLF.obj [] //
+      LF_XLF.obj //
       XLF_XLFa.obj env sign //
       XLFa_XLFe.obj //
       XLFe_NLF.obj env
