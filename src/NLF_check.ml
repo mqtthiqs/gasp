@@ -25,9 +25,9 @@ let rec conv_args' ea eb =
     ) ea ();
 
 and conv_args ea eb = 
-  Format.printf "@[<v 2>* conv_args @[%a@] == @[%a@] {@," NLF_pp.env ea NLF_pp.env eb;
+    Util.if_debug (fun () -> Format.printf "@[<v 2>* conv_args @[%a@] == @[%a@] {@," NLF_pp.env ea NLF_pp.env eb);
   conv_args' ea eb;
-  Format.printf"@]}@,"
+  Util.if_debug (fun () -> Format.printf"@]}@,")
 
 and conv_obj' (Obj(envt, ht, _) as t) (Obj(envu, hu, _) as u) =
   match ht, hu with
@@ -56,9 +56,9 @@ and conv_obj' (Obj(envt, ht, _) as t) (Obj(envu, hu, _) as u) =
     | _ -> assert false
 
 and conv_obj t u =
-  Format.printf "@[<v 2>* conv_obj @[%a@] == @[%a@]{@," NLF_pp.obj t NLF_pp.obj u;
+  Util.if_debug (fun () -> Format.printf "@[<v 2>* conv_obj @[%a@] == @[%a@]{@," NLF_pp.obj t NLF_pp.obj u);
   conv_obj' t u;
-  Format.printf"@]}@,"
+  Util.if_debug (fun () -> Format.printf"@]}@,")
 	
 and conv_fam' a b =
   match a, b with
@@ -69,9 +69,9 @@ and conv_fam' a b =
     | _ -> raise (Not_convertible_fam(a,b))
 
 and conv_fam t u =
-  Format.printf "@[<v 2>* conv_fam @[%a@] == @[%a@]{@," NLF_pp.fam t NLF_pp.fam u;
+  Util.if_debug (fun () -> Format.printf "@[<v 2>* conv_fam @[%a@] == @[%a@]{@," NLF_pp.fam t NLF_pp.fam u);
   conv_fam' t u;
-  Format.printf"@]}@,"
+  Util.if_debug (fun () -> Format.printf"@]}@,")
 
 let rec args' sign e1 e2 =
   NLFEnv.fold
@@ -87,11 +87,11 @@ let rec args' sign e1 e2 =
     ) e2 ()
 
 and args sign env e1 e2 =
-  Format.printf "@[<v 2>* args @[%a@] :: @[%a@]{@," NLF_pp.env e1 NLF_pp.env e2;
+  Util.if_debug (fun () -> Format.printf "@[<v 2>* args @[%a@] :: @[%a@]{@," NLF_pp.env e1 NLF_pp.env e2);
   args' sign
     (NLFEnv.merge (NLFEnv.clear env) e1)
     (NLFEnv.merge (NLFEnv.clear env) e2);
-  Format.printf "@]}@,"
+  Util.if_debug (fun () -> Format.printf "@]}@,")
 
 and obj' sign : obj -> unit = function
   | Obj(env, ht, ha) -> match ht with
@@ -120,9 +120,9 @@ and obj' sign : obj -> unit = function
 	  conv_fam (Fam(targs, ha')) (Fam(tenv, ha))
 	    
 and obj sign t = 
-  Format.printf "@[<v 2>* obj @[%a@]{@," NLF_pp.obj t;
+  Util.if_debug (fun () -> Format.printf "@[<v 2>* obj @[%a@]{@," NLF_pp.obj t);
   obj' sign t;
-  Format.printf "@]}@,"
+  Util.if_debug (fun () -> Format.printf "@]}@,")
 
 let fam' sign : fam -> unit = function
   | Fam (env, FConst(c, cargs)) ->
@@ -133,9 +133,9 @@ let fam' sign : fam -> unit = function
       end
 
 let fam sign a = 
-  Format.printf "@[<v 2>* fam @[%a@]{@," NLF_pp.fam a;
+  Util.if_debug (fun () -> Format.printf "@[<v 2>* fam @[%a@]{@," NLF_pp.fam a);
   fam' sign a;
-  Format.printf "@]}@,"
+  Util.if_debug (fun () -> Format.printf "@]}@,")
 
 let kind' sign : kind -> unit = function
   | Kind env ->
@@ -147,9 +147,9 @@ let kind' sign : kind -> unit = function
 	) env ()
 
 let kind sign k =
-  Format.printf "@[<v 2>* kind @[%a@]{@," NLF_pp.kind k;
+  Util.if_debug (fun () -> Format.printf "@[<v 2>* kind @[%a@]{@," NLF_pp.kind k);
   kind' sign k;
-  Format.printf "@]}@,"
+  Util.if_debug (fun () -> Format.printf "@]}@,")
 
 let sign s = 
   ignore(NLFSign.fold 

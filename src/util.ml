@@ -20,3 +20,5 @@ let read_in_buffer b =
     let rest = min (Buffer.length b - !off) n in
     if rest <= 0 then 0 else
       (Buffer.blit b !off s 0 rest; off := !off + rest; rest)
+
+let if_debug f = if !Settings.debug then f ()
