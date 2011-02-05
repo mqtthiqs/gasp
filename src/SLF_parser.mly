@@ -29,7 +29,7 @@ term1:
 	(List.fold_left 
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Prod(x, t, acc))) u (List.rev xs)) }
-| LBRACKET xs=ID+ COLON t=loc(term2) RBRACKET u=loc(term1)
+| LBRACKET xs=ID+ COLON t=loc(term1) RBRACKET u=loc(term1)
     { Position.value 
 	(List.fold_left 
 	   (fun acc x -> 
