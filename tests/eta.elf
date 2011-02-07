@@ -1,4 +1,5 @@
-nat : type.
-s : nat -> nat.
-X : (nat -> nat) -> type.
+A : type.
+B : type.
+s : A -> B -> A.
+X : (A -> B -> A) -> type.
 P : X s.

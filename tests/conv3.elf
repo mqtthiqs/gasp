@@ -1,0 +1,13 @@
+% Conversion test for eta-expansion (well, not really)
+A : type.
+a : A -> A.
+
+P : (A -> A) -> type.
+Q : P a -> type.
+
+p : {x : A -> A} P x.
+
+c : Q (p a).
+d : Q (p ([x:A] a x)).			% why does it pass LF_check?
+					% because Q is eta-expanded
+					% on-the-fly.
