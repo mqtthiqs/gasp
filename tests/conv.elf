@@ -1,0 +1,12 @@
+% conversion test
+
+A : type.
+a : A.
+
+P : A -> type.
+Q : P a -> type.
+
+p : {x : A} P x.
+
+c : Q (p a).
+d : Q (p (([x:A] x) a)).
