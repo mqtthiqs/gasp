@@ -52,6 +52,8 @@ let rec conv_obj substl substr ren t u =
 	with Not_found ->
 	  match t with OVar x when x = y -> () | _ ->  assert false
 	end
+    | OApp(OLam(x,_,t), u), v -> conv_obj (Subst.add_name x u substl) substr ren t v
+    | t, OApp(OLam(x,_,u), v) -> conv_obj substl (Subst.add_name x v substr) ren t u
     | OApp(t,u), OApp(t',u') ->
 	conv_obj substl substr ren t t';
 	conv_obj substl substr ren u u'
