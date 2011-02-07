@@ -1,0 +1,7 @@
+o : type.
+P : (o -> o) -> type.
+p : {f : o -> o} P f.
+
+Q : P ([x:o] x) -> type.
+
+c : Q (p ([x:o] x)).

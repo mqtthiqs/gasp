@@ -36,55 +36,86 @@ module Ren = struct
   let pp fmt subst = M.iter (Format.fprintf fmt "(%s/%s)") subst
   let empty = M.empty
 end
-  
-let rec conv_obj substl substr ren t u = 
-  match t, u with
-    | OMeta _, OMeta _ -> assert false
-    | OConst x, OConst y when x=y -> ()
-    | OVar x, _ -> 
-	let x = Ren.find x ren in
-	begin try conv_obj (Subst.remove x substl) substr ren (Subst.find x substl) u
-	with Not_found -> 
-	  match u with OVar y when x = y -> () | _ -> assert false
-	end
-    | _, OVar y ->
-	begin try conv_obj substl (Subst.remove y substr) ren t (Subst.find y substr)
-	with Not_found ->
-	  match t with OVar x when x = y -> () | _ ->  assert false
-	end
-    | OApp(OLam(x,_,t), u), v -> conv_obj (Subst.add_name x u substl) substr ren t v
-    | t, OApp(OLam(x,_,u), v) -> conv_obj substl (Subst.add_name x v substr) ren t u
-    | OApp(t,u), OApp(t',u') ->
-	conv_obj substl substr ren t t';
-	conv_obj substl substr ren u u'
-    | _ -> assert false
 
-let rec conv_fam substl substr ren a b =
+(* Conversion *)
+
+type stack = obj list
+type state = subst * stack * obj
+
+let rec unwind (e,s,t) = match s with
+  | [] -> t
+  | a :: s -> OApp (unwind (e,s,t), a)
+
+let rec whd ren : state -> state = function
+  | env, stack, OApp (t,u) -> whd ren (env,(u :: stack),t)
+  | env, a :: stack, OLam (x,_,t) -> whd ren ((Subst.add_name x a env),stack,t)
+  | env, stack, OVar x -> 
+      (try whd ren (Subst.remove x env, stack, Subst.find x env)
+       with Not_found -> env, stack, OVar x)
+  | env, stack, t -> env, stack, t
+
+exception Stack_not_convertible
+  
+let rec conv_stack ren (e1,s1) (e2,s2) =
+  match s1,s2 with
+    | t1 :: s1, t2 :: s2 -> 
+	conv_obj ren (e1,s1,t1) (e2,s2,t2);
+	conv_stack ren (e1,s1) (e2,s2)
+    | [], [] -> ()
+    | _ -> raise Stack_not_convertible
+
+and conv_obj ren (st1 : state) (st2 : state) = 
+  let st1, st2 = whd ren st1, whd ren st2 in
+  match st1, st2 with
+
+    | (e1, [], OLam(x1,_,t1)), (e2, [], OLam(x2,_,t2)) -> 
+	conv_obj (Ren.add x1 x2 ren) (e1,[],t1) (e2,[],t2)
+
+    | (e1, s1, OVar x1), (e2, s2, OVar x2) when Ren.find x1 ren = x2 ->
+	(try conv_stack ren (e1,s1) (e2,s2)
+	 with Stack_not_convertible ->
+	   Errors.not_convertible (SLF_LF.from_obj (unwind st1)) (SLF_LF.from_obj (unwind st2)))
+
+    | (e1, s1, OConst x1), (e2, s2, OConst x2) when x1 = x2 ->
+	(try conv_stack ren (e1,s1) (e2,s2)
+	 with Stack_not_convertible ->
+	   Errors.not_convertible (SLF_LF.from_obj (unwind st1)) (SLF_LF.from_obj (unwind st2)))
+
+    | (_, _::_, OLam _), _ | _, (_, _::_, OLam _) -> 
+	assert false (* whd would have eaten it *)
+
+    | (_, _, OMeta _), (_, _, OMeta _) -> assert false (* not implemented *)
+
+    | _ -> Errors.not_convertible (SLF_LF.from_obj (unwind st1)) (SLF_LF.from_obj (unwind st2))
+
+let rec conv_fam e1 e2 ren a b =
   match a, b with
     | FConst c, FConst d when c = d -> ()
     | FProd(x,a,b), FProd(y,c,d) ->
-	conv_fam substl substr ren a c;
-	conv_fam substl substr (Ren.add x y ren) b d
-    | FApp (a,t), FApp(b,u) -> conv_fam substl substr ren a b; conv_obj substl substr ren t u
-    | _ -> Errors.not_convertible_fam (SLF_LF.from_fam a) (SLF_LF.from_fam b)
+	conv_fam e1 e2 ren a c;
+	conv_fam e1 e2 (Ren.add x y ren) b d
+    | FApp (a,t), FApp(b,u) -> conv_fam e1 e2 ren a b; conv_obj ren (e1,[],t) (e2,[],u)
+    | _ -> Errors.not_convertible (SLF_LF.from_fam a) (SLF_LF.from_fam b)
 
-let rec conv_kind substl substr ren k l = 
+let rec conv_kind e1 e2 ren k l = 
   match k,l with
     | KType, KType -> ()
     | KProd(x,a,k), KProd(y,b,l) -> 
-	conv_fam substl substr ren a b;
-	conv_kind substl substr (Ren.add x y ren) k l
+	conv_fam e1 e2 ren a b;
+	conv_kind e1 e2 (Ren.add x y ren) k l
     | _ -> assert false
 
-let conv_obj substl substr t u = 
-  Util.if_debug (fun () -> Format.printf "= CO %a %a == %a %a@." SLF_pp.term (SLF_LF.from_obj t) Subst.pp substl SLF_pp.term (SLF_LF.from_obj u) Subst.pp substr);
-  conv_obj substl substr Ren.empty t u
-let conv_fam substl substr a b = 
-  Util.if_debug (fun () -> Format.printf "= CF %a %a == %a %a@." SLF_pp.term (SLF_LF.from_fam a) Subst.pp substl SLF_pp.term (SLF_LF.from_fam b) Subst.pp substr);
-  conv_fam substl substr Ren.empty a b
-let conv_kind substl substr k l = 
-  Util.if_debug (fun () -> Format.printf "= CK %a %a == %a %a@." SLF_pp.term (SLF_LF.from_kind k) Subst.pp substl SLF_pp.term (SLF_LF.from_kind l)Subst.pp substr);
-  conv_kind substl substr Ren.empty k l
+let conv_obj e1 e2 t u = 
+  Util.if_debug (fun () -> Format.printf "= CO %a %a == %a %a@." SLF_pp.term (SLF_LF.from_obj t) Subst.pp e1 SLF_pp.term (SLF_LF.from_obj u) Subst.pp e2);
+  conv_obj Ren.empty (e1,[],t) (e2,[],t)
+let conv_fam e1 e2 a b = 
+  Util.if_debug (fun () -> Format.printf "= CF %a %a == %a %a@." SLF_pp.term (SLF_LF.from_fam a) Subst.pp e1 SLF_pp.term (SLF_LF.from_fam b) Subst.pp e2);
+  conv_fam e1 e2 Ren.empty a b
+let conv_kind e1 e2 k l = 
+  Util.if_debug (fun () -> Format.printf "= CK %a %a == %a %a@." SLF_pp.term (SLF_LF.from_kind k) Subst.pp e1 SLF_pp.term (SLF_LF.from_kind l)Subst.pp e2);
+  conv_kind e1 e2 Ren.empty k l
+
+(* Typing *)
 
 let rec obj' sign env subst t : fam * subst = 
   match t with
@@ -100,10 +131,10 @@ let rec obj' sign env subst t : fam * subst =
       FProd(x,a,b), subst
   | OApp (t,u) ->
       begin match obj sign env subst t with
-	| FProd(x,a,b), substl ->
-	    (let a', substr = obj sign env subst u in
-	    conv_fam substl substr a a');
-	    b, Subst.add_name x u substl
+	| FProd(x,a,b), e1 ->
+	    (let a', e2 = obj sign env subst u in
+	    conv_fam e1 e2 a a');
+	    b, Subst.add_name x u e1
 	| _ -> Errors.bad_application (SLF_LF.from_obj t)
       end
   | OMeta _ -> assert false
@@ -119,10 +150,10 @@ and fam' sign env subst = function
     end
   | FApp (a,t) -> 
       match fam sign env subst a with
-	| KProd(x,a,k), substl -> 
-	    (let a', substr = obj sign env subst t in
-	     conv_fam substl substr a a');
-	    k, Subst.add_name x t substl
+	| KProd(x,a,k), e1 -> 
+	    (let a', e2 = obj sign env subst t in
+	     conv_fam e1 e2 a a');
+	    k, Subst.add_name x t e1
 	| KType, _ -> assert false
 	    
 and kind' sign env subst k =
@@ -136,12 +167,12 @@ and kind' sign env subst k =
 and obj sign env subst t =
   Util.if_debug (fun () -> Format.printf "[ O %a ⊢ %a@." Subst.pp subst SLF_pp.term (SLF_LF.from_obj t));
   let a, subst' = obj' sign env subst t in
-    Util.if_debug (fun () -> Format.printf "] O %a : %a => %a@." SLF_pp.term (SLF_LF.from_obj t) SLF_pp.term (SLF_LF.from_fam a) Subst.pp subst);
+    Util.if_debug (fun () -> Format.printf "] O %a : %a => %a@." SLF_pp.term (SLF_LF.from_obj t) SLF_pp.term (SLF_LF.from_fam a) Subst.pp subst');
   a, subst'
 and fam sign env subst a =
   Util.if_debug (fun () -> Format.printf "[ F %a ⊢ %a@." Subst.pp subst SLF_pp.term (SLF_LF.from_fam a));
   let k, subst' = fam' sign env subst a in
-  Util.if_debug (fun () -> Format.printf "] F %a : %a => %a@." SLF_pp.term (SLF_LF.from_fam a) SLF_pp.term (SLF_LF.from_kind k) Subst.pp subst);
+  Util.if_debug (fun () -> Format.printf "] F %a : %a => %a@." SLF_pp.term (SLF_LF.from_fam a) SLF_pp.term (SLF_LF.from_kind k) Subst.pp subst');
   k, subst'
 and kind sign env subst k =
     Util.if_debug (fun () -> Format.printf "[ K %a ⊢ %a@." Subst.pp subst SLF_pp.term (SLF_LF.from_kind k));
