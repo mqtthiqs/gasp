@@ -5,22 +5,21 @@ open NLF
 let rec obj = function
   | XLFa.OLam(x,a,t) -> XLFe.OLam(x, fam a, obj t)
   | XLFa.OVar(x,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OVar(x, l@[y, XLFa.OVar(y, [], a)], b)))
+      XLFe.OLam(y, fam a, obj (XLFa.OVar(x, (y, XLFa.OVar(y, [], a)) :: l, b)))
   | XLFa.OVar(x,l,XLFa.FConst(c,l',k)) -> 
       XLFe.OHead(XLFe.OVar(x, args l, XLFe.FConst(c, args l', khead k)))
 
   | XLFa.OMeta(x,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OMeta(x, l@[y, XLFa.OMeta(y, [], a)], b))) (* TODO erreur *)
+      XLFe.OLam(y, fam a, obj (XLFa.OMeta(x, (y, XLFa.OMeta(y, [], a)) :: l, b))) (* TODO erreur *)
   | XLFa.OMeta(x,l,XLFa.FConst(c,l',k)) -> 
       XLFe.OHead(XLFe.OMeta(x, args l, XLFe.FConst(c, args l', khead k)))
 
-
   | XLFa.OConst(c,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OConst(c, l@[y, XLFa.OVar(y, [], a)], b)))
+      XLFe.OLam(y, fam a, obj (XLFa.OConst(c, (y, XLFa.OVar(y, [], a)) :: l, b)))
   | XLFa.OConst(c,l,XLFa.FConst(d,l',k)) -> 
       XLFe.OHead(XLFe.OConst(c, args l, XLFe.FConst(d, args l', khead k)))
   | XLFa.OApp(t,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OApp(t, l@[y, XLFa.OVar(y, [], a)], b)))
+      XLFe.OLam(y, fam a, obj (XLFa.OApp(t, (y, XLFa.OVar(y, [], a)) :: l, b)))
   | XLFa.OApp(t,l,XLFa.FConst(c,l',k)) -> 
       XLFe.OHead(XLFe.OApp(obj t, args l, XLFe.FConst(c, args l', khead k)))
 

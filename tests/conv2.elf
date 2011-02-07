@@ -1,7 +1,7 @@
 o : type.
-P : (o -> o) -> type.
-p : {f : o -> o} P f.
+P : {m : o -> o -> o} type.
+p : {f : o -> o -> o} P f.
 
-Q : P ([x:o] x) -> type.
+Q : {n : P ([x y:o] x)} type.
 
-c : Q (p ([x:o] x)).
+c : Q (p ([x y:o] x)).
