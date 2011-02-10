@@ -7,7 +7,7 @@ module P = Position
 let term_prec a =  match P.value a with
   | Type | Var _ | Meta _ -> 0
   | App _ -> 10
-  | Lam _ -> 20
+  | Lam _ -> 30
   | Prod _ -> 30
   | Arr _ -> 30
 
