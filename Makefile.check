@@ -1,0 +1,7 @@
+# -*- Makefile -*-
+
+%.elf.gasp : %.elf ${TARGET}
+	./${TARGET} init $< --repo $@
+#	./${TARGET} check --repo $@
+
+check: $(addsuffix .gasp, $(wildcard tests/*.elf))

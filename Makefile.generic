@@ -80,7 +80,7 @@ clean:
 	@ $(OCAMLBUILD) -clean
 	find -name '*~' -exec rm '{}' \;
 	rm -fr *~ $(TARGET) $(PACKAGE) $(PACKAGE).tar.gz; \
-	rm -f tests/*.out
+	rm -f tests/*.gasp
 
 doc: byte
 	$(OCAMLBUILD) $(TARGET).docdir/index.html
@@ -99,6 +99,3 @@ dist:
           fi;					                \
         done
 	tar cvfz $(PACKAGE).tar.gz $(PACKAGE)
-
-check:
-	cd tests && ./test.sh

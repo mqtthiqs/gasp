@@ -7,3 +7,4 @@ TARGET   = gasp
 PACKAGE  = gasp-$(VERSION)
 
 include Makefile.generic
+include Makefile.check
