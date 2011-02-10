@@ -79,6 +79,14 @@ let checkout repo =
     | None -> ()
     | Some t -> SLF_pp.term Format.std_formatter (reify_term t)
 
-let load repo = Marshal.from_channel (open_in_bin !Settings.repo)
-let save repo = Marshal.to_channel (open_out_bin !Settings.repo) repo []
+let load () = 
+  let ch = open_in_bin !Settings.repo in
+  let repo = Marshal.from_channel (open_in_bin !Settings.repo) in
+  close_in ch;
+  repo
+
+let save repo = 
+  let ch = open_out_bin !Settings.repo in
+  Marshal.to_channel ch repo [];
+  close_out ch
 
