@@ -1,7 +1,12 @@
 # -*- Makefile -*-
 
-%.elf.gasp : %.elf ${TARGET}
-	./${TARGET} init $< --repo $@
-#	./${TARGET} check --repo $@
+%+.gasp: %+.tm %.gasp ${TARGET}
+	cp  $*.gasp $@
+	./${TARGET} commit $< --repo $@
 
-check: $(addsuffix .gasp, $(wildcard tests/*.elf))
+%.gasp : %.elf ${TARGET}
+	./${TARGET} init $< --repo $@
+	./${TARGET} check --repo $@
+
+check: $(patsubst %.elf, %.gasp, $(wildcard tests/*.elf)) \
+       $(patsubst %.tm, %.gasp, $(wildcard tests/*.tm))
