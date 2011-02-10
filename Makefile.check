@@ -1,12 +1,14 @@
 # -*- Makefile -*-
 
 %+.gasp: %+.tm %.gasp ${TARGET}
-	cp  $*.gasp $@
-	./${TARGET} commit $< --repo $@
+	@echo COMMIT $<
+	@cp  $*.gasp $@
+	@./${TARGET} commit $< --repo $@ || (rm $@; false)
 
 %.gasp : %.elf ${TARGET}
-	./${TARGET} init $< --repo $@
-	./${TARGET} check --repo $@
+	@echo INIT $<
+	@./${TARGET} init $< --repo $@
+	@./${TARGET} check --repo $@ || (rm $@; false)
 
 check: $(patsubst %.elf, %.gasp, $(wildcard tests/*.elf)) \
        $(patsubst %.tm, %.gasp, $(wildcard tests/*.tm))
