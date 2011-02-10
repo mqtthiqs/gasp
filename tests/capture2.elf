@@ -5,6 +5,4 @@ P : ((o -> o) -> o -> o) -> type.
 p : {x:(o -> o) -> o -> o} P x.
 
 Q : P ([x:o -> o] [z:o] x z) -> type.
-
-%b : Q (p ([x : o -> o] ([y : o -> o][z : o] y z) x)).
-c : Q (p ([x : o -> o] ([y : o -> o][x : o] y x) x)).
+c : Q (p ([y : o -> o] [x : o] y x)).
