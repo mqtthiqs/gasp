@@ -29,11 +29,6 @@ term1:
 	(List.fold_left 
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Prod(x, t, acc))) u (List.rev xs)) }
-| LBRACKET xs=ID+ COLON t=loc(term1) RBRACKET u=loc(term1)
-    { Position.value 
-	(List.fold_left 
-	   (fun acc x -> 
-	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
 | x=term2 { x }
 
 term2:
@@ -42,6 +37,11 @@ term2:
 
 term3: 
   LPAREN t=term1 RPAREN {t}
+| LBRACKET xs=ID+ COLON t=loc(term1) RBRACKET u=loc(term1)
+    { Position.value 
+	(List.fold_left 
+	   (fun acc x -> 
+	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
 | x=ID { Var x }
 | DOLLAR x=ID { Meta x }
 | TYPE { Type }
