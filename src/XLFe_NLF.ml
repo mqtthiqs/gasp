@@ -9,8 +9,8 @@ let rec obj env = function
       let a = fam (NLFEnv.clear env) a in
       obj (NLFEnv.add env x (NLFEnv.ODecl a)) t
   | XLFe.OHead h -> 
-      let (ht, ha) = ohead env h in
-      NLF.Obj(env, ht, ha)
+      let h, args, a, fargs = ohead env h in
+      NLF.Obj(env, h, args, a, fargs)
 
 and args env l = 
   List.fold_left
@@ -20,34 +20,35 @@ and args env l =
     ) (NLFEnv.clear env) l
 
 and ohead env = function
-  | XLFe.OVar(x,l,a) | XLFe.OMeta(x,l,a) -> (* A meta in XLFe was
-					       actually an NLF variable *)
-      let args = args env l in
-      NLF.OVar(x, args), fhead (NLFEnv.clear args) a
-  | XLFe.OConst(c,l,a) -> 
-      let args = args env l in
-      NLF.OConst(c, args), fhead (NLFEnv.clear args) a
-  | XLFe.OApp(t,l,a) -> 
+  | XLFe.OVar(x,l,XLFe.FConst(a,l',XLFe.KType)) 
+  | XLFe.OMeta(x,l,XLFe.FConst(a,l',XLFe.KType)) -> (* A meta in XLFe was actually an NLF variable *)
+      let args' = args env l in
+      let fargs' = args (NLFEnv.clear args') l' in
+      NLF.HVar x, args', a, fargs'
+  | XLFe.OConst(c,l,XLFe.FConst(a,l',XLFe.KType)) -> 
+      let args' = args env l in
+      let fargs' = args (NLFEnv.clear args') l' in
+      NLF.HConst c, args', a, fargs'
+  | XLFe.OApp(t,l,XLFe.FConst(a,l',XLFe.KType)) -> 
       let t = obj (NLFEnv.clear env) t in
-      let args = args env l in
-      NLF.OApp(t, args), fhead (NLFEnv.clear args) a
+      let args' = args env l in
+      let fargs' = args (NLFEnv.clear args') l' in
+      NLF.HObj t, args', a, fargs'
 
 and fam env = function
   | XLFe.FProd (x,a,b) -> 
       let a = fam (NLFEnv.clear env) a in
       fam (NLFEnv.add env x (NLFEnv.ODecl a)) b
-  | XLFe.FHead h -> 
-      NLF.Fam(env, fhead env h)
-
-and fhead env = function
-  | XLFe.FConst(c,l,XLFe.KType) -> NLF.FConst(c, args env l)
+  | XLFe.FHead (XLFe.FConst(a,l,XLFe.KType)) -> 
+      let fargs = args env l in
+      NLF.Fam(env, a, fargs)
 
 let rec kind env = function
   | XLFe.KProd(x,a,k) -> 
       let a = fam (NLFEnv.clear env) a in
       kind (NLFEnv.add env x (NLFEnv.ODecl a)) k
   | XLFe.KHead(XLFe.KType) ->
-      NLF.Kind env
+      NLF.KType env
 
 let entry kont nlfs = function 
     | XLFe.ODecl a -> kont nlfs (NLFSign.ODecl (fam NLFEnv.empty a))
@@ -84,23 +85,22 @@ and from_env_args args =
     ) args []
 
 and from_fam = function 
-  | NLF.Fam (env, ha) ->
-      from_env_fam env (XLFe.FHead(from_fhead ha))
+  | NLF.Fam (env, a, args) ->
+      from_env_fam env (XLFe.FHead(XLFe.FConst(a,from_env_args args,XLFe.KType)))
 
-and from_fhead = function
-  | NLF.FConst(c,args) -> XLFe.FConst(c, from_env_args args, XLFe.KType)
-
-and from_ohead ha = function
-  | NLF.OVar (x, args) -> XLFe.OVar(x, from_env_args args, from_fhead ha)
-  | NLF.OConst (c, args) -> XLFe.OConst(c, from_env_args args, from_fhead ha)
-  | NLF.OApp (t, args) -> XLFe.OApp(from_obj t, from_env_args args, from_fhead ha)
+and from_head args ha = function
+  | NLF.HVar x -> XLFe.OVar(x, args, ha)
+  | NLF.HConst c -> XLFe.OConst(c, args, ha)
+  | NLF.HObj t -> XLFe.OApp(from_obj t, args, ha)
 
 and from_obj = function 
-  | NLF.Obj (env, ht, ha) ->
-      from_env_obj env (XLFe.OHead(from_ohead ha ht))
+  | NLF.Obj (env, h, args, a, fargs) ->
+      let ha = XLFe.FConst(a, from_env_args fargs, XLFe.KType) in
+      let args = from_env_args args in
+      from_env_obj env (XLFe.OHead(from_head args ha h))
 
 let rec from_kind = function
-  | NLF.Kind env -> from_env_kind env (XLFe.KHead(XLFe.KType))
+  | NLF.KType env -> from_env_kind env (XLFe.KHead(XLFe.KType))
 
 let rec from_sign (s:NLF.sign) : XLFe.sign = 
   List.rev 

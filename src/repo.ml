@@ -63,7 +63,7 @@ let commit repo term =
     | None -> 
 	let t = compile_term repo.sign NLFEnv.empty term in
 	{repo with term = Some t}
-    | Some (NLF.Obj(env,ht,ha)) -> 
+    | Some (NLF.Obj(env,h,args,a,fargs)) -> 
 	let t = compile_term repo.sign env term in
 	{repo with term = Some t}
 

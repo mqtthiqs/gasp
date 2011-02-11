@@ -7,8 +7,7 @@ type entity =
   | K of kind
   | F of fam
   | O of obj
-  | FH of fhead
-  | OH of ohead
+  | H of head
   | E of env
   | S of sign
 
@@ -18,31 +17,21 @@ let ent_prec = function
 let ident fmt x = fprintf fmt "@[%s@]" x
 
 let pp pp fmt = function
-  | K(Kind e) when NLFEnv.is_empty e -> fprintf fmt "kind"
-  | K(Kind e) -> fprintf fmt "%a@ kind" (pp (<=)) (E e)
-  | F(Fam(e1,FConst(a,e2))) when 
-      NLFEnv.is_empty e1 && NLFEnv.is_empty e2 -> 
-      fprintf fmt "%a" ident a
-  | F(Fam(e,ht)) when NLFEnv.is_empty e -> fprintf fmt "@[%a@ type@]"
-      (pp (<=)) (FH ht)
-  | F(Fam(e,ht)) -> fprintf fmt "@[%a@ ⊢@ %a@ type@]"
-      (pp (<=)) (E e) (pp (<=)) (FH ht)
-  | O(Obj(e, ht, ha)) when NLFEnv.is_empty e -> fprintf fmt "@[%a@ :@ %a@]"
-      (pp (<=)) (OH ht) (pp (<=)) (FH ha)
-  | O(Obj(e, ht, ha)) -> fprintf fmt "@[%a@ ⊢@ %a@ :@ %a@]"
-      (pp (<=)) (E e) (pp (<=)) (OH ht) (pp (<=)) (FH ha)
-  | FH(FConst(c,a)) when NLFEnv.is_empty a -> fprintf fmt "%a" ident c
-  | FH(FConst(c,a)) -> fprintf fmt "%a@ %a"
-      ident c (pp (<=)) (E a)
-  | OH(OVar(x,a)) when NLFEnv.is_empty a -> fprintf fmt "%a" ident x
-  | OH(OVar(x,a)) -> fprintf fmt "%a@ %a"
-      ident x (pp (<=)) (E a)
-  | OH(OConst(c,a)) when NLFEnv.is_empty a -> fprintf fmt "%a" ident c
-  | OH(OConst(c,a)) -> fprintf fmt "%a@ %a"
-      ident c (pp (<=)) (E a)
-  | OH(OApp(t,a)) when NLFEnv.is_empty a -> fprintf fmt "%a" (pp (<)) (O t)
-  | OH(OApp(t,a)) -> fprintf fmt "%a@ %a"
-      (pp (<)) (O t) (pp (<=)) (E a)
+  | K(KType e) when NLFEnv.is_empty e -> fprintf fmt "@[type@]"
+  | K(KType e) -> fprintf fmt "@[%a@ type@]" (pp (<=)) (E e)
+  | F(Fam(e1,a,e2)) -> 
+      if NLFEnv.is_empty e1 then
+	if NLFEnv.is_empty e2 then ident fmt a
+	else fprintf fmt "@[%a@ %a@]" ident a (pp (<=)) (E e2)
+      else fprintf fmt "@[%a@ ⊢@ %a@ %a@]"
+	(pp (<=)) (E e1) ident a (pp (<=)) (E e2)
+  | O(Obj(e, h, args, a, fargs)) -> 
+	if NLFEnv.is_empty e then
+	  fprintf fmt "@[%a@ %a@ :@ %a@ %a@]" 
+	    (pp (<=)) (H h) (pp (<=)) (E args) ident a (pp (<=)) (E fargs)
+  | H(HVar x) -> ident fmt x
+  | H(HConst c) -> ident fmt c
+  | H(HObj t) -> pp (<) fmt (O t)
   | E e ->
       NLFEnv.fold			(* TODO les dépendances! *)
 	(fun x e () -> 

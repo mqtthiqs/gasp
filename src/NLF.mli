@@ -8,21 +8,18 @@ module rec NLF : sig
   type sign = NLFSign.t
 
   type kind = 
-    | Kind of env
+    | KType of env			(* Γ type *)
 
   and fam = 
-    | Fam of env * fhead
+    | Fam of env * constant * env	     (* Γ ⊢ a Δ *)
 
   and obj =
-    | Obj of env * ohead * fhead
+    | Obj of env * head * env * constant * env     (* Γ ⊢ h Σ : a Δ *)
 
-  and fhead =
-    | FConst of constant * env
-
-  and ohead =
-    | OVar of variable * env
-    | OConst of constant * env
-    | OApp of obj * env
+  and head =
+    | HVar of variable
+    | HConst of constant
+    | HObj of obj
 end
 
 and NLFEnv : sig

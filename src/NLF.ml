@@ -49,4 +49,4 @@ and module NLFSign = struct
   let empty = []
 end
 
-let lift = function NLF.Obj(env, _, ha) -> NLF.Fam(env, ha)
+let lift = function NLF.Obj(env, h, args , a, fargs) -> NLF.Fam(env, a, fargs)
