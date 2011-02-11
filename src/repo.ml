@@ -51,11 +51,12 @@ let init sign =
   {sign = sign;
    term = None}
 
-let check repo =
-  NLF_check.sign repo.sign;
-  match repo.term with
-    | None -> ()
-    | Some term -> NLF_check.obj repo.sign term
+let check repo =			(* TODO temp *)
+  ()
+  (* NLF_check.sign repo.sign; *)
+  (* match repo.term with *)
+  (*   | None -> () *)
+  (*   | Some term -> NLF_check.obj repo.sign term *)
 
 let commit repo term =
   match repo.term with
