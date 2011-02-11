@@ -4,11 +4,17 @@
 	@echo COMMIT $<
 	@cp  $*.gasp $@
 	@./${TARGET} commit $< --repo $@ || (rm $@; false)
+	@echo CHECK $<
+	@./${TARGET} check --repo $@ || (rm $@; false)
 
 %.gasp : %.elf ${TARGET}
 	@echo INIT $<
 	@./${TARGET} init $< --repo $@
+	@echo CHECK $<
 	@./${TARGET} check --repo $@ || (rm $@; false)
+
+check-clean:
+	-rm tests/*.gasp
 
 check: $(patsubst %.elf, %.gasp, $(wildcard tests/*.elf)) \
        $(patsubst %.tm, %.gasp, $(wildcard tests/*.tm))
