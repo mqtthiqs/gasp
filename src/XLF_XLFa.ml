@@ -22,7 +22,7 @@ let rec obj genv sign env : XLF.obj -> XLFa.obj = function
       let (l,a) = args genv sign env l [] a in
       XLFa.OMeta(x,l,a)
   | XLF.OConst (c,l) ->
-      let a = match NLFSign.find sign c with
+      let a = match NLFSign.find c sign with
 	| NLFSign.ODecl a -> a
 	| NLFSign.FDecl _ -> assert false in (* OK *)
       let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
@@ -46,7 +46,7 @@ and args genv sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam =
 
 and fam genv sign env = function 
   | XLF.FConst(c,l) ->
-      let k = match NLFSign.find sign c with
+      let k = match NLFSign.find c sign with
 	| NLFSign.ODecl _ -> assert false    (* OK *)
 	| NLFSign.FDecl k -> k in
       let k = XLFa_XLFe.from_kind (XLFe_NLF.from_kind k) in
@@ -76,7 +76,7 @@ let entry kont nlfs = function
 let sign kont nlfs xlfs =
     List.fold_left
       (fun nlfs (c,t) -> 
-	 NLFSign.add nlfs c (entry kont nlfs t)
+	 NLFSign.add c (entry kont nlfs t) nlfs
       ) nlfs xlfs
 
 

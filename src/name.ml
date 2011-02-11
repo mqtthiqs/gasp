@@ -13,3 +13,6 @@ let gen_name =
 let variable_for = function
   | Named x -> x
   | Anonymous -> gen_name()
+
+module Varmap = Map.Make(struct type t = variable let compare = Pervasives.compare end)
+module Constmap = Map.Make(struct type t = constant let compare = Pervasives.compare end)

@@ -7,3 +7,6 @@ type name =
 
 val gen_name : unit -> variable
 val variable_for : name -> variable
+
+module Varmap : Map.S with type key = variable
+module Constmap : Map.S with type key = constant

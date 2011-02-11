@@ -47,7 +47,7 @@ fun sign t ->
 	| SLF.Var x ->
 	    if List.mem_assoc x env then LF.Obj(LF.OVar x)
 	    else 
-	      try match NLFSign.find sign x with
+	      try match NLFSign.find x sign with
 		| NLFSign.FDecl _ -> LF.Fam (LF.FConst x)
 		| NLFSign.ODecl _ -> LF.Obj (LF.OConst x)
 	      with Not_found -> Errors.not_bound pos x
@@ -64,7 +64,7 @@ let entry kont nlfs =
 let rec sign kont nlfs s =
     List.fold_left
       (fun nlfs (c,t) -> 
-	 NLFSign.add nlfs c (entry kont nlfs t)
+	 NLFSign.add c (entry kont nlfs t) nlfs
       ) nlfs s
 
 (* Detyping: from LF to SLF *)

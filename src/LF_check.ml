@@ -163,7 +163,7 @@ let conv_kind e1 e2 k l =
 
 let rec obj' sign env subst t : fam * subst = 
   match t with
-  | OConst c -> begin match NLFSign.find sign c with
+  | OConst c -> begin match NLFSign.find c sign with
       | NLFSign.FDecl k -> Errors.not_an_obj (SLF_LF.from_obj t)
       | NLFSign.ODecl a -> reify_fam a, subst
     end
@@ -188,7 +188,7 @@ and fam' sign env subst = function
       let k, _ = fam sign env subst a in 
       conv_kind subst Subst.empty k KType; 
       fam sign ((Name.variable_for x,a)::env) subst b
-  | FConst c -> begin match NLFSign.find sign c with
+  | FConst c -> begin match NLFSign.find c sign with
       | NLFSign.FDecl k -> reify_kind k, subst
       | NLFSign.ODecl _ -> assert false
     end

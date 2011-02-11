@@ -8,8 +8,6 @@ module NLFEnv = struct
     | ODecl of NLF.fam
     | ODef of NLF.obj
 
-  module Varmap = Map.Make(struct type t = variable let compare = Pervasives.compare end)
-
   type t = entry Varmap.t * variable list
 
   let add (m,a:t) x e = Varmap.add x e m, x::a
@@ -41,12 +39,12 @@ and module NLFSign = struct
     | FDecl of NLF.kind
     | ODecl of NLF.fam
 	
-  type t = (constant * entry) list
+  type t = entry Constmap.t
       
-  let add env x e = env@[x,e]
-  let find env x = List.assoc x env
-  let fold f env acc = List.fold_left (fun acc (x,a) -> f x a acc) acc env
-  let empty = []
+  let add x e env = Constmap.add x e env
+  let find x env = Constmap.find x env
+  let fold f env acc = Constmap.fold f env acc
+  let empty = Constmap.empty
 end
 
 let lift = function NLF.Obj(env, h, args , a, fargs) -> NLF.Fam(env, a, fargs)

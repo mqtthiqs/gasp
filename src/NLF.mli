@@ -41,8 +41,8 @@ and NLFSign : sig
     | FDecl of NLF.kind
     | ODecl of NLF.fam
   type t
-  val add : t -> constant -> entry -> t
-  val find : t -> constant -> entry
+  val add : constant -> entry -> t -> t
+  val find : constant -> t -> entry
   val fold : (constant -> entry -> 'a -> 'a) -> t -> 'a -> 'a
   val empty : t
 end
