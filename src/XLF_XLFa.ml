@@ -24,7 +24,7 @@ let rec obj genv sign env : XLF.obj -> XLFa.obj = function
   | XLF.OConst (c,l) ->
       let a = match NLFSign.find c sign with
 	| NLFSign.ODecl a -> a
-	| NLFSign.FDecl _ -> assert false in (* OK *)
+	| NLFSign.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
       let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
       let (l,a) = args genv sign env l [] a in
       XLFa.OConst(c,l,a)
@@ -42,12 +42,12 @@ and args genv sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam =
     (* La réification pourrait renvoyer des metas à aller chercher à
        la main. Dans ce cas on rajoute un cas: *)
     (* | t::l, Meta x -> va chercher () *)
-    | t::l, XLFa.FConst _ -> assert false  (* over app, checked in LF_XLF *)
+    | t::l, XLFa.FConst _ -> Errors.over_application (SLF_LF.from_obj (LF_XLF.from_obj t))
 
 and fam genv sign env = function 
   | XLF.FConst(c,l) ->
       let k = match NLFSign.find c sign with
-	| NLFSign.ODecl _ -> assert false    (* OK *)
+	| NLFSign.ODecl _ -> assert false    (* bad kinding, checked in LF_XLF *)
 	| NLFSign.FDecl k -> k in
       let k = XLFa_XLFe.from_kind (XLFe_NLF.from_kind k) in
       let (l,k) = args_fam genv sign env l [] k in
@@ -61,7 +61,7 @@ and args_fam genv sign env l l' (k:XLFa.kind) =
     | [], _ -> l', k
     | t::l, XLFa.KProd(x,a,k) ->
 	args_fam genv sign env l ((x, obj genv sign env t) :: l') k
-    | t::l, XLFa.KType -> assert false  (* over app, checked in LF_XLF *)
+    | t::l, XLFa.KType -> Errors.over_application (SLF_LF.from_obj (LF_XLF.from_obj t))
 
 let rec kind genv sign env = function
   | XLF.KType -> XLFa.KType
