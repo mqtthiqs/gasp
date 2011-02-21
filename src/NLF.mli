@@ -48,3 +48,4 @@ and NLFSign : sig
 end
 
 val lift : NLF.obj -> NLF.fam
+val normalize : NLF.obj -> NLF.obj

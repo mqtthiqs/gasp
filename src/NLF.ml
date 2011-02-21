@@ -48,3 +48,10 @@ and module NLFSign = struct
 end
 
 let lift = function NLF.Obj(env, h, args , a, fargs) -> NLF.Fam(env, a, fargs)
+
+let rec normalize (NLF.Obj (e,h,args,a,fargs) as t) = match h with
+  | NLF.HVar _  | NLF.HConst _ -> t
+  | NLF.HObj (NLF.Obj(e',h',args', a', fargs')) -> 
+      assert (a=a');
+      let env = NLFEnv.merge (NLFEnv.merge e e') args in
+      normalize (NLF.Obj (env, h', args', a', fargs'))
