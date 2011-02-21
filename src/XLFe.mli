@@ -1,14 +1,11 @@
 open Name
 
-type khead =
-  | KType
-
 type kind =
-  | KHead of khead
+  | KType
   | KProd of variable * fam * kind
 
 and fhead =
-  | FConst of constant * args * khead
+  | FConst of constant * args
 
 and fam =
   | FProd of variable * fam * fam

@@ -7,35 +7,31 @@ let rec obj = function
   | XLFa.OVar(x,l,XLFa.FProd(y,a,b)) -> 
       XLFe.OLam(y, fam a, obj (XLFa.OVar(x, (y, XLFa.OVar(y, [], a)) :: l, b)))
   | XLFa.OVar(x,l,XLFa.FConst(c,l',k)) -> 
-      XLFe.OHead(XLFe.OVar(x, args l, XLFe.FConst(c, args l', khead k)))
+      XLFe.OHead(XLFe.OVar(x, args l, XLFe.FConst(c, args l')))
 
   | XLFa.OMeta(x,l,XLFa.FProd(y,a,b)) -> 
       XLFe.OLam(y, fam a, obj (XLFa.OMeta(x, (y, XLFa.OMeta(y, [], a)) :: l, b))) (* TODO erreur *)
   | XLFa.OMeta(x,l,XLFa.FConst(c,l',k)) -> 
-      XLFe.OHead(XLFe.OMeta(x, args l, XLFe.FConst(c, args l', khead k)))
+      XLFe.OHead(XLFe.OMeta(x, args l, XLFe.FConst(c, args l')))
 
   | XLFa.OConst(c,l,XLFa.FProd(y,a,b)) -> 
       XLFe.OLam(y, fam a, obj (XLFa.OConst(c, (y, XLFa.OVar(y, [], a)) :: l, b)))
   | XLFa.OConst(c,l,XLFa.FConst(d,l',k)) -> 
-      XLFe.OHead(XLFe.OConst(c, args l, XLFe.FConst(d, args l', khead k)))
+      XLFe.OHead(XLFe.OConst(c, args l, XLFe.FConst(d, args l')))
   | XLFa.OApp(t,l,XLFa.FProd(y,a,b)) -> 
       XLFe.OLam(y, fam a, obj (XLFa.OApp(t, (y, XLFa.OVar(y, [], a)) :: l, b)))
   | XLFa.OApp(t,l,XLFa.FConst(c,l',k)) -> 
-      XLFe.OHead(XLFe.OApp(obj t, args l, XLFe.FConst(c, args l', khead k)))
+      XLFe.OHead(XLFe.OApp(obj t, args l, XLFe.FConst(c, args l')))
 
 and args l = List.map (fun (x,t) -> x, obj t) l
 
 and fam = function
   | XLFa.FProd(x,a,b) -> XLFe.FProd(x, fam a, fam b)
-  | XLFa.FConst(c,l,XLFa.KType) -> XLFe.FHead(XLFe.FConst(c, args l, XLFe.KType))
+  | XLFa.FConst(c,l,XLFa.KType) -> XLFe.FHead(XLFe.FConst(c, args l))
   | XLFa.FConst(c,l,_) -> assert false 	(* on peut pas faire d'eta sur fam *)
 
-and khead = function
-  | XLFa.KType -> XLFe.KType
-  | _ -> assert false			(* ??? *)
-
 and kind = function
-  | XLFa.KType -> XLFe.KHead(XLFe.KType)
+  | XLFa.KType -> XLFe.KType
   | XLFa.KProd(x,a,k) -> XLFe.KProd(x, fam a, kind k)
 
 let entry kont nlfs = function 
@@ -57,7 +53,7 @@ and from_ohead : XLFe.ohead -> XLFa.obj = function
   | XLFe.OMeta _ -> assert false
 
 and from_fhead : XLFe.fhead -> XLFa.fam = function
-  | XLFe.FConst (c,l,XLFe.KType) -> XLFa.FConst(c,from_args l, XLFa.KType)
+  | XLFe.FConst (c,l) -> XLFa.FConst(c,from_args l, XLFa.KType)
 
 and from_fam : XLFe.fam -> XLFa.fam = function
   | XLFe.FProd(x,a,b) -> XLFa.FProd(x, from_fam a, from_fam b)
@@ -65,7 +61,7 @@ and from_fam : XLFe.fam -> XLFa.fam = function
 
 let rec from_kind = function
   | XLFe.KProd(x,a,k) -> XLFa.KProd(x,from_fam a,from_kind k)
-  | XLFe.KHead(XLFe.KType) -> XLFa.KType
+  | XLFe.KType -> XLFa.KType
  
 let rec from_sign s = 
   List.map
