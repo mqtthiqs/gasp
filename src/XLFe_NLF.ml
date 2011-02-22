@@ -8,9 +8,11 @@ let rec obj env = function
   | XLFe.OLam (x,a,t) -> 
       let a = fam (NLFEnv.clear env) a in
       obj (NLFEnv.add env x (NLFEnv.ODecl a)) t
-  | XLFe.OHead h -> 
-      let h, args, a, fargs = ohead env h in
-      NLF.Obj(env, h, args, a, fargs)
+  | XLFe.OHead (h,l,XLFe.FConst(a,l')) -> 
+      let args' = args env l in
+      let fargs' = args (NLFEnv.clear args') l' in
+      let h = ohead env h in
+      NLF.Obj(env, h, args', a, fargs')
 
 and args env l = 
   List.fold_left
@@ -20,20 +22,11 @@ and args env l =
     ) (NLFEnv.clear env) l
 
 and ohead env = function
-  | XLFe.OVar(x,l,XLFe.FConst(a,l')) 
-  | XLFe.OMeta(x,l,XLFe.FConst(a,l')) -> (* A meta in XLFe was actually an NLF variable *)
-      let args' = args env l in
-      let fargs' = args (NLFEnv.clear args') l' in
-      NLF.HVar x, args', a, fargs'
-  | XLFe.OConst(c,l,XLFe.FConst(a,l')) -> 
-      let args' = args env l in
-      let fargs' = args (NLFEnv.clear args') l' in
-      NLF.HConst c, args', a, fargs'
-  | XLFe.OApp(t,l,XLFe.FConst(a,l')) -> 
-      let t = obj (NLFEnv.clear env) t in
-      let args' = args env l in
-      let fargs' = args (NLFEnv.clear args') l' in
-      NLF.HObj t, args', a, fargs'
+  | XLFe.HVar x
+  | XLFe.HMeta x -> (* A meta in XLFe was actually an NLF variable *)
+      NLF.HVar x
+  | XLFe.HConst c -> NLF.HConst c
+  | XLFe.HApp t -> NLF.HObj (obj (NLFEnv.clear env) t)
 
 and fam env = function
   | XLFe.FProd (x,a,b) -> 
@@ -87,16 +80,16 @@ and from_fam = function
   | NLF.Fam (env, a, args) ->
       from_env_fam env (XLFe.FHead(XLFe.FConst(a,from_env_args args)))
 
-and from_head args ha = function
-  | NLF.HVar x -> XLFe.OVar(x, args, ha)
-  | NLF.HConst c -> XLFe.OConst(c, args, ha)
-  | NLF.HObj t -> XLFe.OApp(from_obj t, args, ha)
+and from_head = function
+  | NLF.HVar x -> XLFe.HVar x
+  | NLF.HConst c -> XLFe.HConst c
+  | NLF.HObj t -> XLFe.HApp(from_obj t)
 
 and from_obj = function 
   | NLF.Obj (env, h, args, a, fargs) ->
       let ha = XLFe.FConst(a, from_env_args fargs) in
       let args = from_env_args args in
-      from_env_obj env (XLFe.OHead(from_head args ha h))
+      from_env_obj env (XLFe.OHead(from_head h, args, ha))
 
 let rec from_kind = function
   | NLF.KType env -> from_env_kind env XLFe.KType

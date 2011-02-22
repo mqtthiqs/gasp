@@ -10,10 +10,13 @@ and fam =
 
 and obj =
   | OLam of variable * fam * obj
-  | OVar of NLF.variable * args
-  | OMeta of variable * args
-  | OConst of constant * args
-  | OApp of obj * args
+  | OHead of ohead * args
+
+and ohead = 
+  | HMeta of NLF.variable
+  | HVar of variable
+  | HConst of constant
+  | HApp of obj
 
 and args = obj list
 

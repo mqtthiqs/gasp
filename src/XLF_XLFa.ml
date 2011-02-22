@@ -4,34 +4,35 @@ open NLF
 
 let rec type_of : XLFa.obj -> XLFa.fam = function
   | XLFa.OLam(x,a,t) -> XLFa.FProd(x, a, type_of t)
-  | XLFa.OVar(_,_,a) | XLFa.OConst(_,_,a) | XLFa.OApp(_,_,a) | XLFa.OMeta(_,_,a) -> a
+  | XLFa.OHead(_,_,a) -> a
 
 
 let rec obj genv sign env : XLF.obj -> XLFa.obj = function
   | XLF.OLam (x,a,t) -> 
       let a = fam genv sign env a in
       XLFa.OLam (x, a, obj genv sign ((x,a)::env) t)
-  | XLF.OVar (x,l) -> 
-      let (l,a) = args genv sign env l [] (List.assoc x env) in
-      XLFa.OVar(x,l,a)
-  | XLF.OMeta (x,l) -> 			(* Detranslation of the type found in the genv *)
+  | XLF.OHead (h,l) -> 
+      let (h,a) = head genv sign env h in
+      let (l,a) = args genv sign env l [] a in
+      XLFa.OHead(h,l,a)
+
+and head genv sign env = function
+  | XLF.HVar x -> XLFa.HVar x, List.assoc x env
+  | XLF.HMeta x ->
       let a = match NLFEnv.find genv x with
 	| NLFEnv.ODecl a -> a
 	| NLFEnv.ODef t -> lift t in
       let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
-      let (l,a) = args genv sign env l [] a in
-      XLFa.OMeta(x,l,a)
-  | XLF.OConst (c,l) ->
+      XLFa.HMeta x, a
+  | XLF.HConst c -> 
       let a = match NLFSign.find c sign with
 	| NLFSign.ODecl a -> a
 	| NLFSign.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
       let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
-      let (l,a) = args genv sign env l [] a in
-      XLFa.OConst(c,l,a)
-  | XLF.OApp (t,l) ->
+      XLFa.HConst c, a
+  | XLF.HApp t -> 
       let t = obj genv sign env t in
-      let (l,a) = args genv sign env l [] (type_of t) in
-      XLFa.OApp(t, l, a)
+      XLFa.HApp t, type_of t
 
 and args genv sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
@@ -97,10 +98,13 @@ let kind genv sign = kind genv sign []
 
 let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
-  | XLFa.OVar(x,l,a) -> XLF.OVar(x, from_args l)
-  | XLFa.OConst(c,l,a) -> XLF.OConst(c, from_args l)
-  | XLFa.OApp(t,l,a) -> XLF.OApp(from_obj t, from_args l)
-  | XLFa.OMeta(x,l,a) -> XLF.OMeta (x, from_args l)
+  | XLFa.OHead(h,l,_) -> XLF.OHead(from_head h, from_args l)
+
+and from_head = function
+  | XLFa.HMeta x -> XLF.HMeta x
+  | XLFa.HVar x -> XLF.HVar x
+  | XLFa.HConst c -> XLF.HConst c
+  | XLFa.HApp t -> XLF.HApp (from_obj t)
 
 and from_args l = List.map (fun (_,t) -> from_obj t) l
 and from_fam = function

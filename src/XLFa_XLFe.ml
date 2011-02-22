@@ -4,24 +4,16 @@ open NLF
 
 let rec obj = function
   | XLFa.OLam(x,a,t) -> XLFe.OLam(x, fam a, obj t)
-  | XLFa.OVar(x,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OVar(x, (y, XLFa.OVar(y, [], a)) :: l, b)))
-  | XLFa.OVar(x,l,XLFa.FConst(c,l',k)) -> 
-      XLFe.OHead(XLFe.OVar(x, args l, XLFe.FConst(c, args l')))
+  | XLFa.OHead(h,l,XLFa.FProd(y,a,b)) ->
+      XLFe.OLam(y, fam a, obj (XLFa.OHead(h, (y, XLFa.OHead(XLFa.HVar y, [], a)) :: l, b)))
+  | XLFa.OHead(h,l,XLFa.FConst(c,l',k)) ->
+      XLFe.OHead(ohead h, args l, XLFe.FConst(c, args l'))
 
-  | XLFa.OMeta(x,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OMeta(x, (y, XLFa.OMeta(y, [], a)) :: l, b))) (* TODO erreur *)
-  | XLFa.OMeta(x,l,XLFa.FConst(c,l',k)) -> 
-      XLFe.OHead(XLFe.OMeta(x, args l, XLFe.FConst(c, args l')))
-
-  | XLFa.OConst(c,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OConst(c, (y, XLFa.OVar(y, [], a)) :: l, b)))
-  | XLFa.OConst(c,l,XLFa.FConst(d,l',k)) -> 
-      XLFe.OHead(XLFe.OConst(c, args l, XLFe.FConst(d, args l')))
-  | XLFa.OApp(t,l,XLFa.FProd(y,a,b)) -> 
-      XLFe.OLam(y, fam a, obj (XLFa.OApp(t, (y, XLFa.OVar(y, [], a)) :: l, b)))
-  | XLFa.OApp(t,l,XLFa.FConst(c,l',k)) -> 
-      XLFe.OHead(XLFe.OApp(obj t, args l, XLFe.FConst(c, args l')))
+and ohead = function
+  | XLFa.HVar x -> XLFe.HVar x
+  | XLFa.HConst c -> XLFe.HConst c
+  | XLFa.HApp t -> XLFe.HApp (obj t)
+  | XLFa.HMeta x -> XLFe.HMeta x
 
 and args l = List.map (fun (x,t) -> x, obj t) l
 
@@ -40,22 +32,22 @@ let entry kont nlfs = function
 
 (* ... and back *)
 
-let rec from_obj : XLFe.obj -> XLFa.obj = function
+let rec from_obj = function
   | XLFe.OLam(x,a,t) -> XLFa.OLam(x, from_fam a, from_obj t)
-  | XLFe.OHead h -> from_ohead h
+  | XLFe.OHead (h,l,a) -> XLFa.OHead(from_ohead h, from_args l, from_fhead a)
 
 and from_args l = List.map (fun (x,t) -> x, from_obj t) l
 
-and from_ohead : XLFe.ohead -> XLFa.obj = function
-  | XLFe.OVar(x,l,a) -> XLFa.OVar(x, from_args l, from_fhead a)
-  | XLFe.OConst(c,l,a) -> XLFa.OConst(c, from_args l, from_fhead a)
-  | XLFe.OApp(t,l,a) -> XLFa.OApp(from_obj t, from_args l, from_fhead a)
-  | XLFe.OMeta _ -> assert false
+and from_ohead = function
+  | XLFe.HVar x -> XLFa.HVar x
+  | XLFe.HConst c -> XLFa.HConst c
+  | XLFe.HApp t -> XLFa.HApp (from_obj t)
+  | XLFe.HMeta _ -> assert false
 
-and from_fhead : XLFe.fhead -> XLFa.fam = function
+and from_fhead = function
   | XLFe.FConst (c,l) -> XLFa.FConst(c,from_args l, XLFa.KType)
 
-and from_fam : XLFe.fam -> XLFa.fam = function
+and from_fam = function
   | XLFe.FProd(x,a,b) -> XLFa.FProd(x, from_fam a, from_fam b)
   | XLFe.FHead h -> from_fhead h
 

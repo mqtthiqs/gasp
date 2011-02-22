@@ -5,15 +5,15 @@ module P = Position
 (* From LF to XLF: sequent-style annotated applications *)
 
 let rec obj l = function
-  | LF.OConst c -> XLF.OConst(c,l)
-  | LF.OVar x -> XLF.OVar(x,l)
-  | LF.OMeta x -> XLF.OMeta(x,l)
+  | LF.OConst c -> XLF.OHead(XLF.HConst c,l)
+  | LF.OVar x -> XLF.OHead (XLF.HVar x,l)
+  | LF.OMeta x -> XLF.OHead(XLF.HMeta x,l)
   | LF.OApp(t,u) -> obj (obj [] u :: l) t
   | LF.OLam(x,a,t) -> 
       if l = [] then
 	XLF.OLam(variable_for x, fam [] a, obj [] t)
       else 
-	XLF.OApp(XLF.OLam(variable_for x, fam [] a,obj [] t), l)
+	XLF.OHead(XLF.HApp(XLF.OLam(variable_for x, fam [] a,obj [] t)), l)
 
 and fam l = function
   | LF.FConst c -> XLF.FConst(c,l)
@@ -50,10 +50,10 @@ and depends_args x l = List.exists (depends_obj x) l
 and depends_obj x = function
   | XLF.OLam (y,a,t) when x=y -> depends_fam x a
   | XLF.OLam (y,a,t) -> depends_fam x a || depends_obj x t
-  | XLF.OVar (y,l) when x=y -> true
-  | XLF.OVar (y,l) | XLF.OMeta(y,l) -> depends_args x l
-  | XLF.OConst (c,l) -> depends_args x l
-  | XLF.OApp (t,l) -> depends_obj x t || depends_args x l
+  | XLF.OHead (XLF.HVar y,l) when x=y -> true
+  | XLF.OHead (XLF.HVar y,l) | XLF.OHead(XLF.HMeta y,l) -> depends_args x l
+  | XLF.OHead (XLF.HConst c,l) -> depends_args x l
+  | XLF.OHead (XLF.HApp t,l) -> depends_obj x t || depends_args x l
 
 let name_for_obj x t = if depends_obj x t then Named x else Anonymous
 let name_for_fam x t = if depends_fam x t then Named x else Anonymous
@@ -77,10 +77,13 @@ and from_fam = function
 
 and from_obj = function
   | XLF.OLam (x,a,t) -> LF.OLam (name_for_obj x t, from_fam a, from_obj t)
-  | XLF.OVar (x,l) -> from_oapp (LF.OVar x) l
-  | XLF.OMeta (x,l) -> from_oapp (LF.OMeta x) l
-  | XLF.OConst (c,l) -> from_oapp (LF.OConst c) l
-  | XLF.OApp (t,l) -> from_oapp (from_obj t) l
+  | XLF.OHead (h,l) -> from_oapp (from_head h) l
+
+and from_head = function
+  | XLF.HVar x -> LF.OVar x
+  | XLF.HMeta x -> LF.OMeta x
+  | XLF.HConst c ->LF.OConst c
+  | XLF.HApp t -> from_obj t
 
 let rec from_kind = function
   | XLF.KType -> LF.KType

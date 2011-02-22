@@ -11,15 +11,15 @@ and fam =
   | FProd of variable * fam * fam
   | FHead of fhead
 
-and ohead =
-  | OVar of variable * args * fhead
-  | OMeta of NLF.variable * args * fhead
-  | OConst of constant * args * fhead
-  | OApp of obj * args * fhead
-
 and obj =
   | OLam of variable * fam * obj
-  | OHead of ohead
+  | OHead of ohead * args * fhead
+
+and ohead =
+  | HVar of variable
+  | HMeta of NLF.variable
+  | HConst of constant
+  | HApp of obj
 
 and args = (variable * obj) list
 
