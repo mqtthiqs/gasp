@@ -6,6 +6,7 @@ type t = {
   term : NLF.obj option
 }
 
+(* TEMP: Override to use LF_check *)
 module LF_XLF = struct
 let entry kont nlfs = function
   | LF.FDecl k -> 
@@ -33,7 +34,6 @@ let reify_sign = XLFe_NLF.from_sign // XLFa_XLFe.from_sign //
   XLF_XLFa.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
 
 let compile_term sign env =
-    (* SLF_LF.term sign // LF_XLF.obj [] // XLF_XLFa.obj env sign (XLFa_XLFe.obj // XLFe_NLF.obj env) *)
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t	(* TEMP: LF_check *)
        | _ -> assert false) //
@@ -41,6 +41,9 @@ let compile_term sign env =
       XLF_XLFa.obj env sign //
       XLFa_XLFe.obj //
       XLFe_NLF.obj env
+
+(* TEMP: XLFe_XLFn *)
+open XLFe_XLFn
 
 let reify_term t =
   (XLFe_NLF.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
