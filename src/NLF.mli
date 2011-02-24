@@ -47,5 +47,7 @@ and NLFSign : sig
   val empty : t
 end
 
+module Pp : sig
+end
+
 val lift : NLF.obj -> NLF.fam
-val normalize : NLF.obj -> NLF.obj
