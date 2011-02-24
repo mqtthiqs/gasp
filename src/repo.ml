@@ -81,7 +81,7 @@ let show repo =
 let checkout repo =
   match repo.term with
     | None -> ()
-    | Some t -> SLF_pp.term Format.std_formatter (reify_term t)
+    | Some t -> SLF.Pp.term Format.std_formatter (reify_term t)
 
 let load () = 
   let ch = open_in_bin !Settings.repo in

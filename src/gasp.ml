@@ -1,5 +1,3 @@
-open Pp
-
 let options = Arg.align
   [
     "--debug", Arg.Set Settings.debug, "Set debug mode.";

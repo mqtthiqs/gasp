@@ -17,19 +17,19 @@ let not_bound pos x =
 
 let over_application t =
   type_error (Position.position t)
-    (fun fmt -> fprintf fmt "@[The function %a is over-applied.@]" SLF_pp.term t)
+    (fun fmt -> fprintf fmt "@[The function %a is over-applied.@]" SLF.Pp.term t)
 
 let bad_application t =
   type_error (Position.position t)
-    (fun fmt -> fprintf fmt "@[The application %a is invalid.@]" SLF_pp.term t)
+    (fun fmt -> fprintf fmt "@[The application %a is invalid.@]" SLF.Pp.term t)
 
 let not_a s t =
   type_error (Position.position t)
-    (fun fmt -> fprintf fmt "@[The term %a is not a %s.@]" SLF_pp.term t s)
+    (fun fmt -> fprintf fmt "@[The term %a is not a %s.@]" SLF.Pp.term t s)
 
 let not_convertible t u =
   type_error (Position.position t)
-    (fun fmt -> fprintf fmt "@[%a and %a are not convertible.@]" SLF_pp.term t SLF_pp.term u)
+    (fun fmt -> fprintf fmt "@[%a and %a are not convertible.@]" SLF.Pp.term t SLF.Pp.term u)
 
 let not_a_kind = not_a "kind"
 let not_a_fam = not_a "family"

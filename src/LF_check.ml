@@ -20,7 +20,7 @@ module Subst = struct
   let add_name x t s = match x with Name.Anonymous -> s | Name.Named x -> add x t s
   let empty = M.empty
   let pp fmt subst = M.iter 
-    (fun x t -> Format.fprintf fmt "[%s = %a]" x SLF_pp.term (SLF_LF.from_obj t)
+    (fun x t -> Format.fprintf fmt "[%s = %a]" x SLF.Pp.term (SLF_LF.from_obj t)
     ) subst
   let remove x t = M.remove x t
 end
@@ -69,8 +69,8 @@ module State = struct
   let rec unwind (e,s,t) = match s with
     | [] -> t
     | a :: s -> OApp (unwind (e,s,t), a)
-  let stack_pp fmt s = List.iter (fun t -> Format.fprintf fmt "%a " SLF_pp.term (SLF_LF.from_obj t)) s
-  let pp fmt (e,s,t:t) = Format.fprintf fmt "%a {%a} %a" SLF_pp.term (SLF_LF.from_obj t)  stack_pp s Subst.pp e
+  let stack_pp fmt s = List.iter (fun t -> Format.fprintf fmt "%a " SLF.Pp.term (SLF_LF.from_obj t)) s
+  let pp fmt (e,s,t:t) = Format.fprintf fmt "%a {%a} %a" SLF.Pp.term (SLF_LF.from_obj t)  stack_pp s Subst.pp e
 end
 
 let rec whd = function
@@ -150,13 +150,13 @@ let rec conv_kind e1 e2 k l =
     | _ -> assert false
 
 let conv_obj e1 e2 t u = 
-  Util.if_debug (fun () -> Format.printf "* CO %a %a == %a %a@," SLF_pp.term (SLF_LF.from_obj t) Subst.pp e1 SLF_pp.term (SLF_LF.from_obj u) Subst.pp e2);
+  Util.if_debug (fun () -> Format.printf "* CO %a %a == %a %a@," SLF.Pp.term (SLF_LF.from_obj t) Subst.pp e1 SLF.Pp.term (SLF_LF.from_obj u) Subst.pp e2);
   conv_obj (e1,[],t) (e2,[],t)
 let conv_fam e1 e2 a b = 
-  Util.if_debug (fun () -> Format.printf "* CF %a %a == %a %a@," SLF_pp.term (SLF_LF.from_fam a) Subst.pp e1 SLF_pp.term (SLF_LF.from_fam b) Subst.pp e2);
+  Util.if_debug (fun () -> Format.printf "* CF %a %a == %a %a@," SLF.Pp.term (SLF_LF.from_fam a) Subst.pp e1 SLF.Pp.term (SLF_LF.from_fam b) Subst.pp e2);
   conv_fam e1 e2 a b
 let conv_kind e1 e2 k l = 
-  Util.if_debug (fun () -> Format.printf "* CK %a %a == %a %a@," SLF_pp.term (SLF_LF.from_kind k) Subst.pp e1 SLF_pp.term (SLF_LF.from_kind l)Subst.pp e2);
+  Util.if_debug (fun () -> Format.printf "* CK %a %a == %a %a@," SLF.Pp.term (SLF_LF.from_kind k) Subst.pp e1 SLF.Pp.term (SLF_LF.from_kind l)Subst.pp e2);
   conv_kind e1 e2 k l
 
 (* Typing *)
@@ -209,17 +209,17 @@ and kind' sign env subst k =
 	kind sign ((Name.variable_for x,a)::env) subst k
 
 and obj sign env subst t =
-  Util.if_debug (fun () -> Format.printf "@[<v 2>{ O %a ⊢ %a@," Subst.pp subst SLF_pp.term (SLF_LF.from_obj t));
+  Util.if_debug (fun () -> Format.printf "@[<v 2>{ O %a ⊢ %a@," Subst.pp subst SLF.Pp.term (SLF_LF.from_obj t));
   let a, subst' = obj' sign env subst t in
-    Util.if_debug (fun () -> Format.printf "@]} O %a : %a => %a@," SLF_pp.term (SLF_LF.from_obj t) SLF_pp.term (SLF_LF.from_fam a) Subst.pp subst');
+    Util.if_debug (fun () -> Format.printf "@]} O %a : %a => %a@," SLF.Pp.term (SLF_LF.from_obj t) SLF.Pp.term (SLF_LF.from_fam a) Subst.pp subst');
   a, subst'
 and fam sign env subst a =
-  Util.if_debug (fun () -> Format.printf "@[<v 2>{ F %a ⊢ %a@," Subst.pp subst SLF_pp.term (SLF_LF.from_fam a));
+  Util.if_debug (fun () -> Format.printf "@[<v 2>{ F %a ⊢ %a@," Subst.pp subst SLF.Pp.term (SLF_LF.from_fam a));
   let k, subst' = fam' sign env subst a in
-  Util.if_debug (fun () -> Format.printf "@]} F %a : %a => %a@," SLF_pp.term (SLF_LF.from_fam a) SLF_pp.term (SLF_LF.from_kind k) Subst.pp subst');
+  Util.if_debug (fun () -> Format.printf "@]} F %a : %a => %a@," SLF.Pp.term (SLF_LF.from_fam a) SLF.Pp.term (SLF_LF.from_kind k) Subst.pp subst');
   k, subst'
 and kind sign env subst k =
-  Util.if_debug (fun () -> Format.printf "@[<v 2>{ K %a ⊢ %a@," Subst.pp subst SLF_pp.term (SLF_LF.from_kind k));
+  Util.if_debug (fun () -> Format.printf "@[<v 2>{ K %a ⊢ %a@," Subst.pp subst SLF.Pp.term (SLF_LF.from_kind k));
   let () = kind' sign env subst k in
-  Util.if_debug (fun () -> Format.printf "@]} K %a : ok.@," SLF_pp.term (SLF_LF.from_kind k))
+  Util.if_debug (fun () -> Format.printf "@]} K %a : ok.@," SLF.Pp.term (SLF_LF.from_kind k))
 
