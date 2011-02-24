@@ -44,6 +44,7 @@ let compile_term sign env =
 
 (* TEMP: XLFe_XLFn *)
 open XLFe_XLFn
+open XLFn_XLFm
 
 let reify_term t =
   (XLFe_NLF.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
@@ -72,11 +73,11 @@ let commit repo term =
 
 let show repo = 
   Format.printf " signature:@.";
-  NLF_pp.sign Format.std_formatter repo.sign;
+  Pp.sign Format.std_formatter repo.sign;
   Format.printf " term:@.";
   match repo.term with
     | None -> Format.printf "empty.\n"
-    | Some term -> NLF_pp.obj Format.std_formatter term; Format.printf "\n"
+    | Some term -> Pp.obj Format.std_formatter term; Format.printf "\n"
 
 let checkout repo =
   match repo.term with

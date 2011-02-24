@@ -48,6 +48,9 @@ and NLFSign : sig
 end
 
 module Pp : sig
+  open NLF
+  val sign : Format.formatter -> sign -> unit
+  val obj : Format.formatter -> obj -> unit
 end
 
 val lift : NLF.obj -> NLF.fam
