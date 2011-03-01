@@ -6,7 +6,6 @@ let rec type_of : XLFa.obj -> XLFa.fam = function
   | XLFa.OLam(x,a,t) -> XLFa.FProd(x, a, type_of t)
   | XLFa.OHead(_,_,a) -> a
 
-
 let rec obj genv sign env : XLF.obj -> XLFa.obj = function
   | XLF.OLam (x,a,t) -> 
       let a = fam genv sign env a in
@@ -19,16 +18,14 @@ let rec obj genv sign env : XLF.obj -> XLFa.obj = function
 and head genv sign env = function
   | XLF.HVar x -> XLFa.HVar x, List.assoc x env
   | XLF.HMeta x ->
-      let a = match NLFEnv.find genv x with
-	| NLFEnv.ODecl a -> a
-	| NLFEnv.ODef t -> lift t in
-      let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
+      let a = lift (NLFSubst.find x genv) in
+      let a = XLFa_XLFe.from_fam (XLFn_NLF.from_fam a) in
       XLFa.HMeta x, a
   | XLF.HConst c -> 
       let a = match NLFSign.find c sign with
 	| NLFSign.ODecl a -> a
 	| NLFSign.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
-      let a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a) in
+      let a = XLFa_XLFe.from_fam (XLFn_NLF.from_fam a) in
       XLFa.HConst c, a
   | XLF.HApp t -> 
       let t = obj genv sign env t in
@@ -50,7 +47,7 @@ and fam genv sign env = function
       let k = match NLFSign.find c sign with
 	| NLFSign.ODecl _ -> assert false    (* bad kinding, checked in LF_XLF *)
 	| NLFSign.FDecl k -> k in
-      let k = XLFa_XLFe.from_kind (XLFe_NLF.from_kind k) in
+      let k = XLFa_XLFe.from_kind (XLFn_NLF.from_kind k) in
       let (l,k) = args_fam genv sign env l [] k in
       XLFa.FConst(c,l,k)
   | XLF.FProd(x,a,b) -> 
@@ -71,23 +68,14 @@ let rec kind genv sign env = function
       XLFa.KProd(x, a, kind genv sign ((x,a)::env) k)
 
 let entry kont nlfs = function 
-    | XLF.ODecl a -> kont nlfs (XLFa.ODecl (fam NLFEnv.empty nlfs [] a))
-    | XLF.FDecl k -> kont nlfs (XLFa.FDecl (kind NLFEnv.empty nlfs [] k))
+    | XLF.ODecl a -> kont nlfs (XLFa.ODecl (fam NLFSubst.empty nlfs [] a))
+    | XLF.FDecl k -> kont nlfs (XLFa.FDecl (kind NLFSubst.empty nlfs [] k))
 
 let sign kont nlfs xlfs =
     List.fold_left
       (fun nlfs (c,t) -> 
 	 NLFSign.add c (entry kont nlfs t) nlfs
       ) nlfs xlfs
-
-
-(* sign (s' : XLFa.sign) (s :XLF.sign) : XLFa.sign =  *)
-(*   Util.list_map_prefix  *)
-(*     (fun s -> function *)
-(*        | c, XLF.ODecl a -> c, XLFa.ODecl (fam NLFEnv.empty s [] a) *)
-(*        | c, XLF.FDecl k -> c, XLFa.FDecl (kind NLFEnv.empty s [] k) *)
-(*     ) s' s *)
-
 
 let obj genv sign = obj genv sign []
 let fam genv sign = fam genv sign []

@@ -27,27 +27,25 @@ let compile_sign =
     (LF_XLF.entry 
        (XLF_XLFa.entry
 	  (XLFa_XLFe.entry
-	     (XLFe_NLF.entry
-		(fun _ x -> x))))) NLFSign.empty
+	     (XLFe_XLFn.entry
+		(XLFn_NLF.entry
+		   (fun _ x -> x)))))) NLFSign.empty
 
-let reify_sign = XLFe_NLF.from_sign // XLFa_XLFe.from_sign //
+let reify_sign = XLFn_NLF.from_sign // XLFe_XLFn.from_sign // XLFa_XLFe.from_sign //
   XLF_XLFa.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
 
-let compile_term sign env =
+let compile_term sign subst =
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t	(* TEMP: LF_check *)
        | _ -> assert false) //
       LF_XLF.obj //
-      XLF_XLFa.obj env sign //
+      XLF_XLFa.obj subst sign //
       XLFa_XLFe.obj //
-      XLFe_NLF.obj env
-
-(* TEMP: XLFe_XLFn *)
-open XLFe_XLFn
-open XLFn_XLFm
+      XLFe_XLFn.obj //
+      XLFn_NLF.obj subst
 
 let reify_term t =
-  (XLFe_NLF.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
+  (XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
      LF_XLF.from_obj // SLF_LF.from_obj) t
 
 let init sign = 
@@ -65,10 +63,10 @@ let check repo =			(* TODO temp *)
 let commit repo term =
   match repo.term with
     | None -> 
-	let t = compile_term repo.sign NLFEnv.empty term in
+	let t = compile_term repo.sign NLFSubst.empty term in
 	{repo with term = Some t}
-    | Some (NLF.Obj(env,h,args,a,fargs)) -> 
-	let t = compile_term repo.sign env term in
+    | Some (NLF.Obj(env,subst,h,l,c,m)) -> 
+	let t = compile_term repo.sign subst term in
 	{repo with term = Some t}
 
 let show repo = 
