@@ -2,35 +2,24 @@ open Name
 
 include types of mli with
 
-module NLFEnv = struct
-  
-  type entry =
-    | ODecl of NLF.fam
-    | ODef of NLF.obj
-
-  type t = entry Varmap.t * variable list
-
-  let add (m,a:t) x e = Varmap.add x e m, x::a
-  let find (m,a:t) x = 
-    (* try Varmap.find x m with Not_found -> failwith ("not found "^x) *)
-    Varmap.find x m
+module NLFEnv = struct  
+  type t = NLF.fam Varmap.t * variable list
+  let add x e (m,a:t) = Varmap.add x e m, x::a
+  let find x (m,a:t) = Varmap.find x m
   let fold f (m,a:t) acc = List.fold_left
     (fun acc x -> f x (Varmap.find x m) acc
     ) acc a
-  let merge e1 e2 =
-    fold
-      (fun x e acc -> 
-	 try 
-	   match e, find acc x with
-	     | ODecl _, ODef t -> add acc x (ODef t)
-	     | ODecl _, ODecl a -> add acc x (ODecl a)
-	     | _ -> assert false
-	 with Not_found ->
-	   add acc x e			(* TODO ajouter les dépendances *)
-      ) e2 e1
-  let clear(m,_) = m, []
   let is_empty (_, t) = t = []
   let empty = Varmap.empty, []
+end
+
+and module NLFSubst = struct  
+  type t = NLF.obj Varmap.t
+  let add x e m = Varmap.add x e m
+  let find x m = Varmap.find x m
+  let fold f m acc = Varmap.fold f m acc
+  let is_empty t = Varmap.is_empty t
+  let empty = Varmap.empty
 end
 
 and module NLFSign = struct
@@ -56,8 +45,9 @@ and module Pp = struct
     | K of kind
     | F of fam
     | O of obj
-    | H of head
+    | H of ohead
     | E of env
+    | B of subst
     | S of sign
 
   let ent_prec = function
@@ -68,28 +58,34 @@ and module Pp = struct
   let pp pp fmt = function
     | K(KType e) when NLFEnv.is_empty e -> fprintf fmt "@[type@]"
     | K(KType e) -> fprintf fmt "@[%a@ type@]" (pp (<=)) (E e)
-    | F(Fam(e1,a,e2)) -> 
-	if NLFEnv.is_empty e1 then
-	  if NLFEnv.is_empty e2 then ident fmt a
-	  else fprintf fmt "@[%a@ %a@]" ident a (pp (<=)) (E e2)
-	else fprintf fmt "@[%a@ ⊢@ %a@ %a@]"
-	  (pp (<=)) (E e1) ident a (pp (<=)) (E e2)
-    | O(Obj(e, h, args, a, fargs)) -> 
+    | F(Fam(e,s1,a,s2)) -> 
+	let pr_head fmt () = if NLFSubst.is_empty s2 then ident fmt a else
+	  fprintf fmt "@[%a@ %a@]" ident a (pp (<=)) (B s2) in
+	begin match NLFEnv.is_empty e, NLFSubst.is_empty s1 with
+	  | true, true -> pr_head fmt ()
+	  | true, false -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (E e) pr_head ()
+	  | false, true -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s1) pr_head ()
+	  | false, false -> assert false
+	end
+    | O(Obj(e, s, h, args, a, fargs)) -> 
 	if NLFEnv.is_empty e then
 	  fprintf fmt "@[%a@ %a@ :@ %a@ %a@]" 
-	    (pp (<=)) (H h) (pp (<=)) (E args) ident a (pp (<=)) (E fargs)
+	    (pp (<=)) (H h) (pp (<=)) (B args) ident a (pp (<=)) (B fargs)
     | H(HVar x) -> ident fmt x
     | H(HConst c) -> ident fmt c
     | H(HObj t) -> pp (<) fmt (O t)
     | E e ->
-	NLFEnv.fold			(* TODO les dépendances! *)
-	  (fun x e () -> 
-	     match e with
-	       | NLFEnv.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@,"
-		   ident x (pp (<=)) (F a)
-	       | NLFEnv.ODef t -> fprintf fmt "@[[%a@ =@ %a]@]@,"
-		   ident x (pp (<=)) (O t)
+	NLFEnv.fold
+	  (fun x a () -> 
+	     fprintf fmt "@[[%a@ :@ %a]@]@,"
+	       ident x (pp (<=)) (F a)
 	  ) e ()
+    | B b -> 
+	NLFSubst.fold
+	  (fun x t () -> 
+	     fprintf fmt "@[[%a@ =@ %a]@]@,"
+	       ident x (pp (<=)) (O t)
+	  ) b ()
     | S s -> 
 	NLFSign.fold
 	  (fun x e () -> 
@@ -108,5 +104,5 @@ and module Pp = struct
 
 end
 
-let lift = function NLF.Obj(env, h, args , a, fargs) -> NLF.Fam(env, a, fargs)
+let lift = function NLF.Obj(env, subst, h, args , a, fargs) -> NLF.Fam(env, subst, a, fargs)
 

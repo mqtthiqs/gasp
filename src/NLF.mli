@@ -5,33 +5,38 @@ type constant = Name.constant
 
 module rec NLF : sig
   type env = NLFEnv.t
+  type subst = NLFSubst.t
   type sign = NLFSign.t
 
   type kind = 
     | KType of env			(* Γ type *)
 
   and fam = 
-    | Fam of env * constant * env	     (* Γ ⊢ a Δ *)
+    | Fam of env * subst * constant * subst	     (* Γ,σ ⊢ a σ *)
 
   and obj =
-    | Obj of env * head * env * constant * env     (* Γ ⊢ h Σ : a Δ *)
+    | Obj of env * subst * ohead * subst * constant * subst     (* Γ,σ ⊢ h σ : a σ *)
 
-  and head =
+  and ohead =
     | HVar of variable
     | HConst of constant
     | HObj of obj
 end
 
 and NLFEnv : sig
-  type entry =
-    | ODecl of NLF.fam
-    | ODef of NLF.obj
   type t
-  val add : t -> variable -> entry -> t
-  val find : t -> variable -> entry
-  val fold : (variable -> entry -> 'a -> 'a) -> t -> 'a -> 'a
-  val merge : t -> t -> t
-  val clear : t -> t
+  val add : variable -> NLF.fam -> t -> t
+  val find : variable -> t -> NLF.fam
+  val fold : (variable -> NLF.fam -> 'a -> 'a) -> t -> 'a -> 'a
+  val is_empty : t -> bool
+  val empty : t
+end
+
+and NLFSubst : sig
+  type t
+  val add : variable -> NLF.obj -> t -> t
+  val find : variable -> t -> NLF.obj
+  val fold : (variable -> NLF.obj -> 'a -> 'a) -> t -> 'a -> 'a
   val is_empty : t -> bool
   val empty : t
 end
