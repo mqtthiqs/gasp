@@ -100,3 +100,32 @@ let kind k = XLFw_XLFn.kind (XLFe_XLFw.kind k)
 let entry kont nlfs = function 
     | XLFe.ODecl a -> kont nlfs (XLFn.ODecl (fam a))
     | XLFe.FDecl k -> kont nlfs (XLFn.FDecl (kind k))
+
+(* ... and back: *)
+
+let ohead = function
+  | XLFn.HVar x -> XLFe.HVar x
+  | XLFn.HMeta x -> XLFe.HMeta x
+  | XLFn.HConst c -> XLFe.HConst c
+
+let rec from_obj = function
+  | XLFn.OLam(x,a,t) -> XLFe.OLam(x, from_fam a, from_obj t)
+  | XLFn.OHead(h,l,a) -> XLFe.OHead(ohead h, from_args l, from_fhead a)
+
+and from_fhead = function XLFn.FConst (a,l) -> XLFe.FConst(a, from_args l)
+
+and from_args l = List.map (fun (x,t) -> x, from_obj t) l
+
+and from_fam = function
+  | XLFn.FProd(x,a,b) -> XLFe.FProd(x, from_fam a, from_fam b)
+  | XLFn.FHead h -> XLFe.FHead (from_fhead h)
+
+let rec from_kind = function
+  | XLFn.KType -> XLFe.KType
+  | XLFn.KProd(x,a,k) -> XLFe.KProd(x, from_fam a, from_kind k)
+
+let from_sign s = List.map 
+  ( function 
+      | x, XLFn.ODecl a -> x, XLFe.ODecl (from_fam a)
+      | x, XLFn.FDecl k -> x, XLFe.FDecl (from_kind k)
+  ) s
