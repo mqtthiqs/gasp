@@ -65,22 +65,27 @@ program longer than a few dozen of lines is a highly non-linear task
 involving constant experiments, fixes, rollback on previous
 modifications etc., all of those eventually validated by some a
 posteriori criterion: execution and ``empirical'' test, and
-increasingly type-checking. In a nutshell, programmers spend more time
-\emph{editing} than \emph{writing}. Yet, this aspect of their
-day-to-day workflow is not, or poorly taken into account in a
-developer's toolchain:
+increasingly complex type-checking and type inference. In a nutshell,
+programmers spend more time \emph{editing} than \emph{writing}. Yet,
+this aspect of their day-to-day workflow is not, or poorly taken into
+account in a developer's toolchain:
 \begin{itemize}
 \item To avoid recompiling a whole program upon a change, we split
   them into files, and (re-)compile them separatly. Very often yet,
   this separation serve different purpose: abstraction, splitting into
   logical units, namespace management\ldots\ Why should these purposes
   coincide?
+
+% On propose quelque chose d'encore plus extreme: faire descendre
+% les VCS dans le type-checker. Voir deux paras plus loin.
 \item To keep track of past versions of a program, we use text-based
   version control systems that have no awareness of the actual content
   of the file. In a sense, the non-linearity of the task is managed
   outside the scope of the language, by manual, textual
   transformations. Isn't there a lot to gain in making these tools
   syntax-aware, even semantics-aware?
+
+% Je comprends mais je ne sais pas trop ou tu veux en venir.
 \item As a result, all the semantic information that could be
   available to the programmer and act as a \emph{guidance tool} to
   write programs (e.g. type informations) are only used by the
@@ -93,25 +98,68 @@ languages, but even if the current toolchain in use up to now was a
 reasonable approximation to the incremental interaction with the
 compiler intended by the user, they become \emph{a fortiori} necessary
 when it come to the new, demanding languages embedding formal
-verification aspects, like proof assistants or rich specification
-languages. In these emerging languages, interaction with a type- or
-proof-checker is unavoidable due to the difficulty of writing correct
-proofs without guidance from the system, and the constant modification
-of the source makes necessary to observe incrementally the effect of a
-small change on the whole edifice. Moreover, as the complexity of the
-object to check increases, we cannot afford anymore to rely on the
-usual unit of compilation, the file, a need a finer-grained tool.
+verification aspects, like proof assistants or programming languages
+with rich type system. In these emerging languages, interaction with a
+type- or proof-checker is unavoidable due to the difficulty of writing
+correct proofs without guidance from the system, and the constant
+modification of the source makes necessary to observe incrementally
+the effect of a small change on the whole edifice. Moreover, as the
+complexity of the object to check increases, we cannot afford anymore
+to rely on the usual unit of compilation, the file, a need a
+finer-grained tool. 
+% On pourrait parler de l'utilisation de l'incrementalite pour le type-checking
+% parallele et aussi pour le developpement concurrent.
+
+Current text-based version control technology is designed to help
+concurrent and collaborative development but are not used inside
+compilers or proof checkers. There is a good reason for that: a
+representation of changes at the textual level is not structured
+enough to be used easily and efficiently by such symbolic tools. They
+need instead a more structured representation of changes with a clear
+meaning with respect to the language semantics. For instance, if a
+formal argument of a function has been renamed in a source file
+edition, a textual representation would refer to a change in every
+line that contains an occurrence of that formal argument. A proof
+kernel would prefer a higher level description of that edition from
+which it would be simple to deduce that no proof has to be rechecked
+because the old and the new version of the development are
+$\alpha$-equivalent.
+
+% Prochain para: LF. Finir sur les petits problemes de LF.
+
+% Expliciter clairement les contributions du papier:
+% Une extension de LF avec des variables meta + lambda-selecteur-de-boite. (SLF)
+% Un langage pour representer efficacement un ensemble de termes validés. (NLF)
+% Une compilation de SLF vers NLF qui vérifie le bon typage.
+% Un typage incrémental par proof-search dans NLF.
+% La méta-théorie de NLF qui pose des bases pour la formalisation des VCS sémantiques.
+% Un prototype.
 
 We propose to devise here a data structure for repositories of
 programs and proofs allowing to take advantage of the incremental
 nature of a programmer's workflow.
 
-% The problem (1 page)
-% My idea (2 pages)
-% The details (5 pages)
-% related works (1-2 pages)
-%conclusion and further work (0.5 page)
+% The problem (1 page) et illustration sur un exemple utilisant SLF.
 
+% My idea (2 pages) - un peu vague.
+
+% Presentation de NLF.
+
+% SLF vers NLF
+
+% Metathéorie de NLF
+
+% Applications (typage incrémental, quelques premières pistes pour commit/merge)
+
+% Related works (1-2 pages) (à ne surtout pas négliger!)
+
+% Conclusion and further work (0.5 page)
+% Dans le future work, en vrac:
+%    - un meta-langage au dessus de NLF = un langage de tactique typé pour Coq?
+%    - des algorithmes de parsing incrémentaux
+%    - modélisation des conflits et de leur résolution dirigée par des types.
+%    - intégration dans Coq pour la parallélisation du noyau. 
+%   -  certification du checker pour être intégré dans le noyau de Coq 
 \bibliographystyle{abbrvnat}
 
 \end{document}
