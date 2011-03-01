@@ -20,7 +20,6 @@ module rec NLF : sig
   and ohead =
     | HVar of variable
     | HConst of constant
-    | HObj of obj
 end
 
 and NLFEnv : sig

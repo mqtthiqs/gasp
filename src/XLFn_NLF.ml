@@ -22,8 +22,8 @@ and obj1 sigma (x,t) : S.t * _ = match t with
       else 
 	let z = Name.gen_name() in
 	let sigma, oargs = args sigma l in
-	S.add z (NLF.Obj(E.empty, S.empty, x, oargs, c, fargs )) sigma,
-      (x, NLF.Obj(E.empty, S.empty, NLF.HVar z, S.empty, c, fargs))
+	S.add z (NLF.Obj(E.empty, S.empty, NLF.HVar x, oargs, c, fargs)) sigma,
+	(x, NLF.Obj(E.empty, S.empty, NLF.HVar z, S.empty, c, fargs))
   | XLFn.OLam _ -> 
       sigma, (x, obj E.empty t)
 
@@ -38,9 +38,13 @@ and fam env = function
   | XLFn.FProd (x,a,b) -> fam (E.add x (fam E.empty a) env) b
   | XLFn.FHead(XLFn.FConst(c,l)) -> assert false
 
+let rec kind env = function
+  | XLFn.KProd(x, a, k) -> kind (E.add x (fam E.empty a ) env) k
+  | XLFn.KType -> NLF.KType env
+
 let entry kont nlfs = function 
-    | XLFn.ODecl a -> kont nlfs (NLFSign.ODecl (fam a))
-    | XLFn.FDecl k -> kont nlfs (NLFSign.FDecl (kind k))
+    | XLFn.ODecl a -> kont nlfs (NLFSign.ODecl (fam E.empty a))
+    | XLFn.FDecl k -> kont nlfs (NLFSign.FDecl (kind E.empty k))
 
 (* and back *)
 
