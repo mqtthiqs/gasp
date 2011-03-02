@@ -74,13 +74,13 @@ let show repo =
   Pp.sign Format.std_formatter repo.sign;
   Format.printf " term:@.";
   match repo.term with
-    | None -> Format.printf "empty.\n"
-    | Some term -> Pp.obj Format.std_formatter term; Format.printf "\n"
+    | None -> Format.printf "empty.@."
+    | Some term -> Format.printf "@[%a@]@." Pp.obj term
 
 let checkout repo =
   match repo.term with
-    | None -> ()
-    | Some t -> SLF.Pp.term Format.std_formatter (reify_term t)
+    | None -> Format.printf "empty.@."
+    | Some t -> Format.printf "@[%a@]@." SLF.Pp.term (reify_term t)
 
 let load () = 
   let ch = open_in_bin !Settings.repo in

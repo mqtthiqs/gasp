@@ -76,7 +76,7 @@ and module Pp = struct
 	  | true, true -> pr_head fmt ()
 	  | true, false -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (E e) pr_head ()
 	  | false, true -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s1) pr_head ()
-	  | false, false -> assert false
+	  | false, false -> ()
 	end
     | O(Obj(e, s, h, args, a, fargs)) -> 
 	if NLFEnv.is_empty e then
