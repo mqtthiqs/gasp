@@ -5,7 +5,8 @@ module S = NLFSubst
 module A = NLFArgs
 
 let ohead = function
-  | XLFn.HVar x | XLFn.HMeta x -> NLF.HVar x
+  | XLFn.HVar x -> NLF.HVar x
+  | XLFn.HMeta x -> NLF.HDef x
   | XLFn.HConst c -> NLF.HConst c
 
 let rec obj env = function
@@ -24,7 +25,7 @@ and obj1 sigma (x,t) : S.t * _ = match t with
 	let z = Name.gen_name() in
 	let sigma, oargs = args sigma l in
 	S.add z (NLF.HVar x, oargs, c, fargs) sigma,
-	(x, NLF.Obj(E.empty, S.empty, NLF.HVar z, A.empty, c, fargs))
+	(x, NLF.Obj(E.empty, S.empty, NLF.HDef z, A.empty, c, fargs))
   | XLFn.OLam _ -> 
       sigma, (x, obj E.empty t)
 
@@ -51,16 +52,36 @@ let entry kont nlfs = function
 
 (* and back *)
 
-let rec from_obj t = assert false
+let from_ohead = function
+  | NLF.HDef x -> assert false
+  | NLF.HVar x -> XLFn.HVar x
+  | NLF.HConst c -> XLFn.HConst c
+
+let rec from_obj (NLF.Obj(env,sigma,h,oa,c,fa)) =
+  E.fold (fun x a t -> XLFn.OLam(x, from_fam a, t)) env
+    begin match h with
+      | NLF.HDef x -> 
+	  assert (A.is_empty oa);
+	  let h, oa, c, fa = S.find x sigma in
+	  XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa))
+      | NLF.HVar x ->
+	  XLFn.OHead(XLFn.HVar x, from_args sigma oa, XLFn.FConst(c,from_args sigma fa))
+      | NLF.HConst c -> 
+	  XLFn.OHead(XLFn.HConst c, from_args sigma oa, XLFn.FConst(c,from_args sigma fa))
+    end
 
 and from_args sigma args =
   A.fold (fun x t l -> (x, from_obj t) :: l) args []
 
 and from_fam (NLF.Fam(env,sigma,c,fargs)) =
   let l = from_args sigma fargs in
-  E.fold (fun x a acc -> XLFn.FProd(x, from_fam a, acc)) env (XLFn.FHead(XLFn.FConst(c,l)))
-  
-let rec from_kind (NLF.KType env) = 
-  E.fold (fun x a acc ->  XLFn.KProd(x, from_fam a, acc)) env XLFn.KType
+  E.fold (fun x a b -> XLFn.FProd(x, from_fam a, b)) env (XLFn.FHead(XLFn.FConst(c,l)))
 
-let rec from_sign s = assert false
+let rec from_kind (NLF.KType env) = 
+  E.fold (fun x a k ->  XLFn.KProd(x, from_fam a, k)) env XLFn.KType
+
+let rec from_sign s = NLFSign.fold
+  (fun x e s -> (x, match e with
+     | NLF.FDecl k -> XLFn.FDecl (from_kind k)
+     | NLF.ODecl a -> XLFn.ODecl (from_fam a)) :: s
+  ) s []
