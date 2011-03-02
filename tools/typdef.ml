@@ -10,6 +10,11 @@ let rec list_last = function
   | [x] -> x
   | x :: xs -> list_last xs
 
+let rec string_of_list sep f = function
+  | [] -> ""
+  | [a] -> f a
+  | a :: b :: tl -> f a ^ sep ^ f b ^ string_of_list sep f tl
+
 let rec with_constr_td_assoc path : with_constr list -> type_decl = function
   | [] -> raise Not_found
   | WcTyp(loc, p, tv, b, t) :: wcs -> 
@@ -49,13 +54,20 @@ and types path sigma : module_type -> module_expr = function
 	     | SgTyp(loc, tds) -> 
 		 StTyp(loc, subst_tds path sigma tds) :: acc
 	     | SgMod(loc, r, mts) ->
-		 StMod(loc, r, subst_mts path sigma r mts) :: acc
+ 		 (try StMod(loc, r, subst_mts path sigma r mts) :: acc
+ 		  with Invalid_argument _ -> acc)
+ 	     | SgMty(loc, n, mt) -> StMty(loc, n, mt) :: acc
 	     | SgExc(loc, n, ts) -> StExc(loc, n, ts, []) :: acc
 	     | _ -> acc
 	) items [] in
       MeStr(loc, l)
   | MtWit(_, mt, wcs) -> types path (wcs @ sigma) mt
-  | _ -> raise (Invalid_argument "types")
+  | MtFun (loc,argn, argt, mt) -> MeFun(loc, argn, argt, types path sigma mt)
+  | MtAcc _
+  | MtApp _
+  | MtLid _
+  | MtQuo _
+  | _ -> failwith ("Module "^string_of_list "." (fun x -> x) path^" is not a signature")
 
 EXTEND
 module_type:
