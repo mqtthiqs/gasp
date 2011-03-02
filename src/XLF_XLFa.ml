@@ -47,7 +47,7 @@ and fam genv sign env = function
       let k = match NLFSign.find c sign with
 	| NLFSign.ODecl _ -> assert false    (* bad kinding, checked in LF_XLF *)
 	| NLFSign.FDecl k -> k in
-      let k = XLFa_XLFe.from_kind (XLFn_NLF.from_kind k) in
+      let k = XLFa_XLFe.from_kind (XLFe_XLFn.from_kind (XLFn_NLF.from_kind k)) in
       let (l,k) = args_fam genv sign env l [] k in
       XLFa.FConst(c,l,k)
   | XLF.FProd(x,a,b) -> 
