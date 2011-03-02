@@ -5,7 +5,7 @@ module P = Position
 
 (* Typing: from SLF to LF *)
 
-let term : NLF.sign -> SLF.term -> LF.entity =
+let term : NLFSign.t -> SLF.term -> LF.entity =
 fun sign t ->
   let rec term env {P.value=t; P.position=pos} =
       match t with
@@ -48,8 +48,8 @@ fun sign t ->
 	    if List.mem_assoc x env then LF.Obj(LF.OVar x)
 	    else 
 	      try match NLFSign.find x sign with
-		| NLFSign.FDecl _ -> LF.Fam (LF.FConst x)
-		| NLFSign.ODecl _ -> LF.Obj (LF.OConst x)
+		| NLF.FDecl _ -> LF.Fam (LF.FConst x)
+		| NLF.ODecl _ -> LF.Obj (LF.OConst x)
 	      with Not_found -> Errors.not_bound pos x
   in
   term [] t

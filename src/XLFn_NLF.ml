@@ -2,6 +2,7 @@ open NLF
 
 module E = NLFEnv
 module S = NLFSubst
+module A = NLFArgs
 
 let ohead = function
   | XLFn.HVar x | XLFn.HMeta x -> NLF.HVar x
@@ -18,21 +19,21 @@ and obj1 sigma (x,t) : S.t * _ = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
       let sigma, fargs = args sigma m in
       if l = [] then
-	sigma, (x, NLF.Obj(E.empty, sigma, ohead h, S.empty, c, fargs))
+	sigma, (x, NLF.Obj(E.empty, sigma, ohead h, A.empty, c, fargs))
       else 
 	let z = Name.gen_name() in
 	let sigma, oargs = args sigma l in
-	S.add z (NLF.Obj(E.empty, S.empty, NLF.HVar x, oargs, c, fargs)) sigma,
-	(x, NLF.Obj(E.empty, S.empty, NLF.HVar z, S.empty, c, fargs))
+	S.add z (NLF.HVar x, oargs, c, fargs) sigma,
+	(x, NLF.Obj(E.empty, S.empty, NLF.HVar z, A.empty, c, fargs))
   | XLFn.OLam _ -> 
       sigma, (x, obj E.empty t)
 
-and args sigma : XLFn.args -> S.t * S.t =  function
-  | [] -> sigma, S.empty
+and args sigma : XLFn.args -> S.t * A.t =  function
+  | [] -> sigma, A.empty
   | e :: l -> 
       let sigma, (x,t) = obj1 sigma e in
       let sigma, l = args sigma l in
-      sigma, S.add x t l
+      sigma, A.add x t l
 
 and fam env = function
   | XLFn.FProd (x,a,b) -> fam (E.add x (fam E.empty a) env) b
@@ -45,22 +46,19 @@ let rec kind env = function
   | XLFn.KType -> NLF.KType env
 
 let entry kont nlfs = function 
-    | XLFn.ODecl a -> kont nlfs (NLFSign.ODecl (fam E.empty a))
-    | XLFn.FDecl k -> kont nlfs (NLFSign.FDecl (kind E.empty k))
+    | XLFn.ODecl a -> kont nlfs (NLF.ODecl (fam E.empty a))
+    | XLFn.FDecl k -> kont nlfs (NLF.FDecl (kind E.empty k))
 
 (* and back *)
 
 let rec from_obj t = assert false
 
 and from_args sigma args =
-  S.fold 
-    (fun x t l -> 
-       l
-    ) args []
+  A.fold (fun x t l -> (x, from_obj t) :: l) args []
 
 and from_fam (NLF.Fam(env,sigma,c,fargs)) =
   let l = from_args sigma fargs in
-  E.fold (fun x a acc -> XLFn.FProd(x, from_fam a, acc)) env (XLFn.FHead(c,l))
+  E.fold (fun x a acc -> XLFn.FProd(x, from_fam a, acc)) env (XLFn.FHead(XLFn.FConst(c,l)))
   
 let rec from_kind (NLF.KType env) = 
   E.fold (fun x a acc ->  XLFn.KProd(x, from_fam a, acc)) env XLFn.KType
