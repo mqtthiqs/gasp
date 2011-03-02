@@ -30,13 +30,15 @@ and obj1 sigma (x,t) : S.t * _ = match t with
 and args sigma : XLFn.args -> S.t * S.t =  function
   | [] -> sigma, S.empty
   | e :: l -> 
-      let (sigma, (x,t)) = obj1 sigma e in
-      let (sigma, l) = args sigma l in
+      let sigma, (x,t) = obj1 sigma e in
+      let sigma, l = args sigma l in
       sigma, S.add x t l
 
 and fam env = function
   | XLFn.FProd (x,a,b) -> fam (E.add x (fam E.empty a) env) b
-  | XLFn.FHead(XLFn.FConst(c,l)) -> assert false
+  | XLFn.FHead(XLFn.FConst(c,l)) ->
+      let sigma, fargs = args S.empty l in
+      NLF.Fam(env, sigma, c, fargs)
 
 let rec kind env = function
   | XLFn.KProd(x, a, k) -> kind (E.add x (fam E.empty a ) env) k
@@ -49,6 +51,18 @@ let entry kont nlfs = function
 (* and back *)
 
 let rec from_obj t = assert false
-and from_fam a = assert false
-let rec from_kind k = assert false
+
+and from_args sigma args =
+  S.fold 
+    (fun x t l -> 
+       l
+    ) args []
+
+and from_fam (NLF.Fam(env,sigma,c,fargs)) =
+  let l = from_args sigma fargs in
+  E.fold (fun x a acc -> XLFn.FProd(x, from_fam a, acc)) env (XLFn.FHead(c,l))
+  
+let rec from_kind (NLF.KType env) = 
+  E.fold (fun x a acc ->  XLFn.KProd(x, from_fam a, acc)) env XLFn.KType
+
 let rec from_sign s = assert false
