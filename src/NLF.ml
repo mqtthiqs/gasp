@@ -84,6 +84,7 @@ and module Pp = struct
 	    (pp (<=)) (H h) (pp (<=)) (A args) ident a (pp (<=)) (A fargs)
     | H(HVar x) -> ident fmt x
     | H(HConst c) -> ident fmt c
+    | H(HDef c) -> ident fmt c
     | E e ->
 	NLFEnv.fold
 	  (fun x a () -> 

@@ -21,6 +21,7 @@ module rec NLF : sig
   type ohead =
     | HVar of variable
     | HConst of constant
+    | HDef of variable
 
   type kind = 
     | KType of env
