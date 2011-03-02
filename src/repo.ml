@@ -42,7 +42,7 @@ let compile_term sign subst =
       XLF_XLFa.obj subst sign //
       XLFa_XLFe.obj //
       XLFe_XLFn.obj //
-      XLFn_NLF.obj subst
+      XLFn_NLF.obj NLFEnv.empty		(* TODO correct? *)
 
 let reify_term t =
   (XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
