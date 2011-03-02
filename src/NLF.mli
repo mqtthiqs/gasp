@@ -3,57 +3,47 @@ open Name
 type variable = Name.variable
 type constant = Name.constant
 
+module type SET = sig
+  type t
+  type value
+  val add : variable -> value -> t -> t
+  val find : variable -> t -> value
+  val fold : (variable -> value -> 'a -> 'a) -> t -> 'a -> 'a
+  val is_empty : t -> bool
+  val empty : t
+end
+
 module rec NLF : sig
   type env = NLFEnv.t
   type subst = NLFSubst.t
-  type sign = NLFSign.t
+  type args = NLFArgs.t
 
-  type kind = 
-    | KType of env			(* Γ type *)
-
-  and fam = 
-    | Fam of env * subst * constant * subst	     (* Γ,σ ⊢ a σ *)
-
-  and obj =
-    | Obj of env * subst * ohead * subst * constant * subst     (* Γ,σ ⊢ h σ : a σ *)
-
-  and ohead =
+  type ohead =
     | HVar of variable
     | HConst of constant
-end
 
-and NLFEnv : sig
-  type t
-  val add : variable -> NLF.fam -> t -> t
-  val find : variable -> t -> NLF.fam
-  val fold : (variable -> NLF.fam -> 'a -> 'a) -> t -> 'a -> 'a
-  val is_empty : t -> bool
-  val empty : t
-end
+  type kind = 
+    | KType of env
 
-and NLFSubst : sig
-  type t
-  val add : variable -> NLF.obj -> t -> t
-  val find : variable -> t -> NLF.obj
-  val fold : (variable -> NLF.obj -> 'a -> 'a) -> t -> 'a -> 'a
-  val is_empty : t -> bool
-  val empty : t
-end
+  and fam = 
+    | Fam of env * subst * constant * args
 
-and NLFSign : sig
+  and obj =
+    | Obj of env * subst * ohead * args * constant * args
+
   type entry =
     | FDecl of NLF.kind
     | ODecl of NLF.fam
-  type t
-  val add : constant -> entry -> t -> t
-  val find : constant -> t -> entry
-  val fold : (constant -> entry -> 'a -> 'a) -> t -> 'a -> 'a
-  val empty : t
 end
+
+and NLFEnv : (SET with type value = NLF.fam)
+and NLFSubst : (SET with type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t)
+and NLFSign : (SET with type value = NLF.entry)
+and NLFArgs : (SET with type value = NLF.obj)
 
 module Pp : sig
   open NLF
-  val sign : Format.formatter -> sign -> unit
+  val sign : Format.formatter -> NLFSign.t -> unit
   val obj : Format.formatter -> obj -> unit
 end
 
