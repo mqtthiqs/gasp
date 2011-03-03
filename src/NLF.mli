@@ -44,8 +44,12 @@ and NLFArgs : (SET with type value = NLF.obj)
 
 module Pp : sig
   open NLF
-  val sign : Format.formatter -> NLFSign.t -> unit
-  val obj : Format.formatter -> obj -> unit
+  open Format
+  val sign : formatter -> NLFSign.t -> unit
+  val obj : formatter -> obj -> unit
+  val fam : formatter -> fam -> unit
+  val kind : formatter -> kind -> unit
+  val entry : formatter -> entry -> unit
 end
 
 val lift : NLF.obj -> NLF.fam

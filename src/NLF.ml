@@ -105,6 +105,9 @@ and module Pp = struct
   let obj fmt s = pr pp ent_prec 100 (<=) fmt (O s)
   let fam fmt s = pr pp ent_prec 100 (<=) fmt (F s)
   let kind fmt s = pr pp ent_prec 100 (<=) fmt (K s)
+  let entry fmt = function
+    | NLF.FDecl k -> pr pp ent_prec 100 (<=) fmt (K k)
+    | NLF.ODecl a -> pr pp ent_prec 100 (<=) fmt (F a)
   let env fmt s = pr pp ent_prec 100 (<=) fmt (E s)
 
 end
