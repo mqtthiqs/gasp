@@ -1,3 +1,4 @@
+open Name
 open NLF
 
 module E = NLFEnv
@@ -16,7 +17,7 @@ let rec obj env = function
       let sigma, fargs = args sigma m in
       NLF.Obj(env, sigma, ohead h, oargs, c, fargs)
 
-and obj1 sigma (x,t) : S.t * _ = match t with
+and obj1 sigma (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
       let sigma, fargs = args sigma m in
       if l = [] then
@@ -57,17 +58,19 @@ let from_ohead = function
   | NLF.HVar x -> XLFn.HVar x
   | NLF.HConst c -> XLFn.HConst c
 
-let rec from_obj (NLF.Obj(env,sigma,h,oa,c,fa)) =
+let rec from_obj (NLF.Obj(env,sigma,h,oa,c,fa) as t) =
   E.fold (fun x a t -> XLFn.OLam(x, from_fam a, t)) env
     begin match h with
       | NLF.HDef x -> 
 	  assert (A.is_empty oa);
-	  let h, oa, c, fa = S.find x sigma in
+	  let h, oa, c, fa = 
+	    try S.find x sigma 
+	    with Not_found -> 
+	      Format.printf "%a not found in %a@." Name.Pp.definition x Pp.obj t;
+	      Error.global_error "definition not found" "" in
 	  XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa))
-      | NLF.HVar x ->
-	  XLFn.OHead(XLFn.HVar x, from_args sigma oa, XLFn.FConst(c,from_args sigma fa))
-      | NLF.HConst c -> 
-	  XLFn.OHead(XLFn.HConst c, from_args sigma oa, XLFn.FConst(c,from_args sigma fa))
+      | _ ->
+	  XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa))
     end
 
 and from_args sigma args =
