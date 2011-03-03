@@ -66,52 +66,39 @@ and module Pp = struct
 
   let ident fmt x = fprintf fmt "@[%s@]" x
 
-  let pp pp fmt = function
-    | K(KType e) when NLFEnv.is_empty e -> fprintf fmt "@[type@]"
-    | K(KType e) -> fprintf fmt "@[%a@ type@]" (pp (<=)) (E e)
-    | F(Fam(e,s1,a,fargs)) -> 
-	let pr_head fmt () = if NLFArgs.is_empty fargs then ident fmt a else
-	  fprintf fmt "@[%a@ %a@]" ident a (pp (<=)) (A fargs) in
-	begin match NLFEnv.is_empty e, NLFSubst.is_empty s1 with
-	  | true, true -> pr_head fmt ()
-	  | true, false -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (E e) pr_head ()
-	  | false, true -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s1) pr_head ()
-	  | false, false -> ()
-	end
-    | O(Obj(e, s, h, args, a, fargs)) -> 
-	if NLFEnv.is_empty e then
-	  fprintf fmt "@[%a@ %a@ :@ %a@ %a@]" 
-	    (pp (<=)) (H h) (pp (<=)) (A args) ident a (pp (<=)) (A fargs)
-    | H(HVar x) -> ident fmt x
-    | H(HConst c) -> ident fmt c
-    | H(HDef c) -> ident fmt c
-    | E e ->
-	NLFEnv.fold
-	  (fun x a () -> 
-	     fprintf fmt "@[[%a@ :@ %a]@]@,"
-	       ident x (pp (<=)) (F a)
-	  ) e ()
-    | A a ->
-	NLFArgs.fold
-	  (fun x t () -> 
-	     fprintf fmt "@[[%a@ :@ %a]@]@,"
-	       ident x (pp (<=)) (O t)
-	  ) a ()
-    | B b -> 
-	NLFSubst.fold
-	  (fun x (h,a,c,b) () -> 
-	     fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@,"
-	       ident x (pp (<=)) (H h) (pp (<=)) (A a) ident x (pp (<=)) (A b)
-	  ) b ()
-    | S s -> 
-	NLFSign.fold
-	  (fun x e () -> 
-	     match e with
-	       | NLF.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@,"
-		   ident x (pp (<=)) (F a)
-	       | NLF.FDecl k -> fprintf fmt "@[[%a@ :@ %a]@]@,"
-		   ident x (pp (<=)) (K k)
-	  ) s ()
+  let pp pp fmt t = 
+    let pr_envs e s pr_head fmt () = 
+      match NLFEnv.is_empty e, NLFSubst.is_empty s with
+	| true, true -> pr_head fmt ()
+	| true, false -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) pr_head ()
+	| false, true -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (E e) pr_head ()
+	| false, false -> fprintf fmt "@[%a@ ,@ %a@ ⊢@ %a@]" (pp (<=)) (E e) (pp (<=)) (B s) pr_head ()
+    in
+    let pr_fhead c fargs fmt () = 
+      if NLFArgs.is_empty fargs then ident fmt c else
+	fprintf fmt "@[%a@ %a@]" ident c (pp (<=)) (A fargs) in
+    match t with
+      | K(KType e) when NLFEnv.is_empty e -> fprintf fmt "@[type@]"
+      | K(KType e) -> fprintf fmt "@[%a@ type@]" (pp (<=)) (E e)
+      | F(Fam(e,s,c,fargs)) -> fprintf fmt "%a" (pr_envs e s (pr_fhead c fargs)) ()
+      | O(Obj(e, s, h, args, c, fargs)) ->
+	  let pr_ohead pr_fhead fmt () = 
+	    if NLFArgs.is_empty args 
+	    then fprintf fmt "%a@ :@ %a" (pp (<=)) (H h) pr_fhead ()
+	    else fprintf fmt "%a@ %a@ :@ %a" (pp (<=)) (H h) (pp (<=)) (A args) pr_fhead () in
+	  pr_envs e s (pr_ohead (pr_fhead c fargs)) fmt ()
+      | H(HVar x) -> ident fmt x
+      | H(HConst c) -> ident fmt c
+      | H(HDef c) -> ident fmt c
+      | E e -> NLFEnv.fold (fun x a () -> fprintf fmt "@[[%a@ :@ %a]@]@," ident x (pp (<=)) (F a)) e ()
+      | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[[%a@ =@ %a]@]@," ident x (pp (<=)) (O t)) a ()
+      | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," ident x (pp (<=)) (H h) (pp (<=)) (A a) ident x (pp (<=)) (A b)) b ()
+      | S s -> NLFSign.fold
+	    (fun x e () -> 
+	       match e with
+		 | NLF.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@," ident x (pp (<=)) (F a)
+		 | NLF.FDecl k -> fprintf fmt "@[[%a@ :@ %a]@]@," ident x (pp (<=)) (K k)
+	    ) s ()
 
   let sign fmt s = pr pp ent_prec 100 (<=) fmt (S s)
   let obj fmt s = pr pp ent_prec 100 (<=) fmt (O s)
