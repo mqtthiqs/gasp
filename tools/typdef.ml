@@ -51,6 +51,7 @@ and types path sigma : module_type -> module_expr = function
       let l = List.fold_right
 	(fun si acc ->
 	   match si with
+	     | SgOpn(loc, os) -> StOpn(loc, os) :: acc
 	     | SgTyp(loc, tds) -> 
 		 StTyp(loc, subst_tds path sigma tds) :: acc
 	     | SgMod(loc, r, mts) ->
