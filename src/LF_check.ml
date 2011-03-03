@@ -16,24 +16,20 @@ let reify_kind t =
   t
 
 module Subst = struct
-  module M = Map.Make(struct type t = string let compare = String.compare end)
+  module M = Name.Varmap
   type t = obj M.t
   let find = M.find
   let add x t s = M.add x t s
   let add_name x t s = match x with Name.Anonymous -> s | Name.Named x -> add x t s
   let empty = M.empty
   let pp fmt subst = M.iter 
-    (fun x t -> Format.fprintf fmt "[%s = %a]" x SLF.Pp.term (SLF_LF.from_obj t)
+    (fun x t -> Format.fprintf fmt "[%a = %a]" Name.Pp.variable x SLF.Pp.term (SLF_LF.from_obj t)
     ) subst
   let remove x t = M.remove x t
 end
 type subst = Subst.t
 
 module Ren = struct
-  let fresh =
-    let i = ref 0 in
-    fun () -> incr i; "_"^string_of_int !i
-
   let rec rename_fam x y = function		(* y must be fresh *)
     | FProd(z,a,b) -> 
 	if z=Name.Named x then FProd(z,rename_fam x y a,b) 
@@ -58,10 +54,10 @@ module Ren = struct
     | Name.Named x -> f x y t 
     | Name.Anonymous -> t
 
-  let refresh_obj x t = let y = fresh() in y, map_name rename_obj x y t
-  let refresh2_obj x y t u = let z = fresh() in z, map_name rename_obj x z t, map_name rename_obj y z u
-  let refresh2_fam x y t u = let z = fresh() in z, map_name rename_fam x z t, map_name rename_fam y z u
-  let refresh2_kind x y t u = let z = fresh() in z, map_name rename_kind x z t, map_name rename_kind y z u
+  let refresh_obj x t = let y = Name.gen_variable() in y, map_name rename_obj x y t
+  let refresh2_obj x y t u = let z = Name.gen_variable() in z, map_name rename_obj x z t, map_name rename_obj y z u
+  let refresh2_fam x y t u = let z = Name.gen_variable() in z, map_name rename_fam x z t, map_name rename_fam y z u
+  let refresh2_kind x y t u = let z = Name.gen_variable() in z, map_name rename_kind x z t, map_name rename_kind y z u
 end
 
 (* Conversion *)

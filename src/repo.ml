@@ -52,7 +52,7 @@ let reify_term t =
 let init sign = 
   let sign = compile_sign sign in
   {sign = sign;
-   varno = Name.gen_new();
+   varno = Name.gen_status();
    term = None}
 
 let check repo =			(* TODO temp *)
@@ -66,10 +66,10 @@ let commit repo term =
   match repo.term with
     | None -> 
 	let t = compile_term repo.sign NLFSubst.empty term in
-	{repo with term = Some t; varno = Name.gen_new()}
+	{repo with term = Some t; varno = Name.gen_status()}
     | Some (NLF.Obj(env,subst,h,l,c,m)) -> 
 	let t = compile_term repo.sign subst term in
-	{repo with term = Some t; varno = Name.gen_new()}
+	{repo with term = Some t; varno = Name.gen_status()}
 
 let show repo = 
   Format.printf " signature:@.";

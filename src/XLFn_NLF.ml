@@ -22,7 +22,7 @@ and obj1 sigma (x,t) : S.t * _ = match t with
       if l = [] then
 	sigma, (x, NLF.Obj(E.empty, sigma, ohead h, A.empty, c, fargs))
       else 
-	let z = Name.gen_name() in
+	let z = Name.gen_definition() in
 	let sigma, oargs = args sigma l in
 	S.add z (ohead h, oargs, c, fargs) sigma,
 	(x, NLF.Obj(E.empty, S.empty, NLF.HDef z, A.empty, c, fargs))

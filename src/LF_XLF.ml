@@ -50,8 +50,8 @@ and depends_args x l = List.exists (depends_obj x) l
 and depends_obj x = function
   | XLF.OLam (y,a,t) when x=y -> depends_fam x a
   | XLF.OLam (y,a,t) -> depends_fam x a || depends_obj x t
-  | XLF.OHead (XLF.HVar y,l) when x=y -> true
-  | XLF.OHead (XLF.HVar y,l) | XLF.OHead(XLF.HMeta y,l) -> depends_args x l
+  | XLF.OHead (XLF.HVar y,l) -> if x=y then true else depends_args x l
+  | XLF.OHead(XLF.HMeta y,l) -> depends_args x l
   | XLF.OHead (XLF.HConst c,l) -> depends_args x l
   | XLF.OHead (XLF.HApp t,l) -> depends_obj x t || depends_args x l
 

@@ -14,8 +14,8 @@ fun sign t ->
 	    begin match term env t with
 	      | LF.Fam a -> 
 		  begin match term ((x,a) :: env) u with
-		    | LF.Kind k -> LF.Kind(LF.KProd(Named x,a,k))
-		    | LF.Fam b -> LF.Fam(LF.FProd(Named x,a,b))
+		    | LF.Kind k -> LF.Kind(LF.KProd(Named (mk_variable x),a,k))
+		    | LF.Fam b -> LF.Fam(LF.FProd(Named (mk_variable x),a,b))
 		    | _ -> Errors.not_a_kind_or_fam u
 		  end
 	      | _ -> Errors.not_a_fam t
@@ -31,7 +31,7 @@ fun sign t ->
 	    begin match term env t with
 	      | LF.Fam a ->
 		  begin match term ((x,a) :: env) u with
-		    | LF.Obj o -> LF.Obj(LF.OLam(Named x,a,o))
+		    | LF.Obj o -> LF.Obj(LF.OLam(Named (mk_variable x),a,o))
 		    | _ -> Errors.not_an_obj u
 		  end
 	      | _ -> Errors.not_a_fam t
@@ -43,13 +43,13 @@ fun sign t ->
 	      | _, LF.Obj _ -> Errors.not_a_fam_or_obj t
 	      | _ -> Errors.not_an_obj u
 	    end
-	| SLF.Meta x -> LF.Obj(LF.OMeta x)
+	| SLF.Meta x -> LF.Obj(LF.OMeta (mk_definition x))
 	| SLF.Var x ->
-	    if List.mem_assoc x env then LF.Obj(LF.OVar x)
+	    if List.mem_assoc x env then LF.Obj(LF.OVar (mk_variable x))
 	    else 
-	      try match NLFSign.find x sign with
-		| NLF.FDecl _ -> LF.Fam (LF.FConst x)
-		| NLF.ODecl _ -> LF.Obj (LF.OConst x)
+	      try match NLFSign.find (mk_constant x) sign with
+		| NLF.FDecl _ -> LF.Fam (LF.FConst (mk_constant x))
+		| NLF.ODecl _ -> LF.Obj (LF.OConst (mk_constant x))
 	      with Not_found -> Errors.not_bound pos x
   in
   term [] t
@@ -57,33 +57,39 @@ fun sign t ->
 let entry kont nlfs =
   function SLF.Decl t -> 
     match term nlfs t with
-      | LF.Kind k -> kont nlfs (LF.FDecl k)
-      | LF.Fam a -> kont nlfs (LF.ODecl a)
+      | LF.Kind k -> 
+	  let e = kont nlfs (LF.FDecl k) in
+	  Format.printf "%a@." Pp.entry e;
+	  e
+      | LF.Fam a -> 
+	  let e = kont nlfs (LF.ODecl a) in
+	  Format.printf "%a@." Pp.entry e;
+	  e
       | LF.Obj _ -> assert false	(* OK *)
 
 let rec sign kont nlfs s =
     List.fold_left
       (fun nlfs (c,t) -> 
-	 NLFSign.add c (entry kont nlfs t) nlfs
+	 NLFSign.add (mk_constant c) (entry kont nlfs t) nlfs
       ) nlfs s
 
 (* Detyping: from LF to SLF *)
 
 let rec from_obj' = function
-  | LF.OConst c -> SLF.Var c
-  | LF.OVar c -> SLF.Var c
+  | LF.OConst c -> SLF.Var (of_constant c)
+  | LF.OVar x -> SLF.Var (of_variable x)
   | LF.OLam (Anonymous, a, t) -> 
       SLF.Lam ("_", from_fam a, from_obj t)
-  | LF.OLam (Named x, a, t) -> SLF.Lam (x, from_fam a, from_obj t)
+  | LF.OLam (Named x, a, t) -> SLF.Lam (of_variable x, from_fam a, from_obj t)
   | LF.OApp (t,u) -> SLF.App (from_obj t, from_obj u)
-  | LF.OMeta x -> SLF.Meta x
+  | LF.OMeta x -> SLF.Meta (of_definition x)
 
 and from_obj t = P.with_pos P.dummy (from_obj' t)
 
 and from_fam' = function
-  | LF.FConst c -> SLF.Var c
+  | LF.FConst c -> SLF.Var (of_constant c)
   | LF.FProd (Anonymous, a, b) -> SLF.Arr(from_fam a, from_fam b)
-  | LF.FProd (Named x, a, b) -> SLF.Prod(x, from_fam a, from_fam b)
+  | LF.FProd (Named x, a, b) -> SLF.Prod(of_variable x, from_fam a, from_fam b)
   | LF.FApp (a,t) -> SLF.App (from_fam a, from_obj t)
 
 and from_fam a = P.with_pos P.dummy (from_fam' a)
@@ -91,7 +97,7 @@ and from_fam a = P.with_pos P.dummy (from_fam' a)
 let rec from_kind' = function
   | LF.KType -> SLF.Type
   | LF.KProd(Anonymous,a,k) -> SLF.Arr(from_fam a, from_kind k)
-  | LF.KProd(Named x,a,k) -> SLF.Prod(x, from_fam a, from_kind k)
+  | LF.KProd(Named x,a,k) -> SLF.Prod(of_variable x, from_fam a, from_kind k)
 
 and from_kind (k:LF.kind) : SLF.term = 
   P.with_pos P.dummy (from_kind' k)
@@ -99,6 +105,6 @@ and from_kind (k:LF.kind) : SLF.term =
 let from_sign s =
   List.map
     (function
-       | (id, LF.FDecl k) -> (id, SLF.Decl(from_kind k))
-       | (id, LF.ODecl a) -> (id, SLF.Decl(from_fam a))
+       | (id, LF.FDecl k) -> (of_constant id, SLF.Decl(from_kind k))
+       | (id, LF.ODecl a) -> (of_constant id, SLF.Decl(from_fam a))
     ) s

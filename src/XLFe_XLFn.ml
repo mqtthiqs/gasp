@@ -22,7 +22,7 @@ module XLFw = struct
 
   and ohead =
     | HVar of variable
-    | HMeta of NLF.variable
+    | HMeta of definition
     | HConst of constant
 
   and obj =
@@ -55,7 +55,7 @@ module XLFe_XLFw = struct
 		
   and fhead e = function
     | XLFe.FConst(c,l) -> XLFw.FConst(c, args e l)
-	
+
   and fam e = function
     | XLFe.FProd(x,a,b) -> XLFw.FProd(x, fam e a, fam e b)
     | XLFe.FHead(XLFe.FConst(c,l)) -> XLFw.FHead(XLFw.FConst(c, args e l))
