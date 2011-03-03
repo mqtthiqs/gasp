@@ -95,8 +95,8 @@ and module Pp = struct
       | H(HConst c) -> constant fmt c
       | H(HDef d) -> definition fmt d
       | E e -> NLFEnv.fold (fun x a () -> fprintf fmt "@[[%a@ :@ %a]@]@," variable x (pp (<=)) (F a)) e ()
-      | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[[%a@ =@ %a]@]@," variable x (pp (<=)) (O t)) a ()
-      | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," definition x (pp (<=)) (H h) (pp (<=)) (A a) definition x (pp (<=)) (A b)) b ()
+      | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[{%a@ =@ %a}@]@," variable x (pp (<=)) (O t)) a ()
+      | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," definition x (pp (<=)) (H h) (pp (<=)) (A a) constant c (pp (<=)) (A b)) b ()
       | S s -> NLFSign.fold
 	    (fun c e () -> 
 	       match e with
