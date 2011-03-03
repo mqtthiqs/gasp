@@ -54,23 +54,23 @@ fun sign t ->
   in
   term [] t
 
-let entry kont nlfs =
+let entry c kont nlfs =
   function SLF.Decl t -> 
     match term nlfs t with
       | LF.Kind k -> 
 	  let e = kont nlfs (LF.FDecl k) in
-	  Format.printf "%a@." Pp.entry e;
+	  Util.if_debug (fun () -> Format.printf "%s :: @[%a@]@." c Pp.entry e);
 	  e
       | LF.Fam a -> 
 	  let e = kont nlfs (LF.ODecl a) in
-	  Format.printf "%a@." Pp.entry e;
+	  Util.if_debug (fun () -> Format.printf "%s :: @[%a@]@." c Pp.entry e);
 	  e
       | LF.Obj _ -> assert false	(* OK *)
 
 let rec sign kont nlfs s =
     List.fold_left
       (fun nlfs (c,t) -> 
-	 NLFSign.add (mk_constant c) (entry kont nlfs t) nlfs
+	 NLFSign.add (mk_constant c) (entry c kont nlfs t) nlfs
       ) nlfs s
 
 (* Detyping: from LF to SLF *)
