@@ -21,7 +21,7 @@ and obj1 sigma (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
       let sigma, fargs = args sigma m in
       if l = [] then
-	sigma, (x, NLF.Obj(E.empty, sigma, ohead h, A.empty, c, fargs))
+	sigma, (x, NLF.Obj(E.empty, S.empty, ohead h, A.empty, c, fargs))
       else 
 	let z = Name.gen_definition() in
 	let sigma, oargs = args sigma l in
