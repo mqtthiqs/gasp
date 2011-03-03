@@ -35,15 +35,16 @@ and module NLFSign = struct
   let is_empty = Constmap.is_empty
 end
 
-and module NLFArgs = struct
+and module NLFArgs = struct  
   type value = NLF.obj
-  type t = value Constmap.t
-      
-  let add x e env = Constmap.add x e env
-  let find x env = Constmap.find x env
-  let fold f env acc = Constmap.fold f env acc
-  let empty = Constmap.empty
-  let is_empty = Constmap.is_empty
+  type t = value Varmap.t * variable list
+  let add x e (m,a:t) = Varmap.add x e m, x::a
+  let find x (m,a:t) = Varmap.find x m
+  let fold f (m,a:t) acc = List.fold_right
+    (fun x acc -> f x (Varmap.find x m) acc
+    ) a acc
+  let is_empty (_, t) = t = []
+  let empty = Varmap.empty, []
 end
 
 and module Pp = struct
