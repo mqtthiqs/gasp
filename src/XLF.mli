@@ -13,7 +13,7 @@ and obj =
   | OHead of ohead * args
 
 and ohead = 
-  | HMeta of NLF.variable
+  | HMeta of definition
   | HVar of variable
   | HConst of constant
   | HApp of obj

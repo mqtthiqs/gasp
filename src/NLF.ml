@@ -2,7 +2,8 @@ open Name
 
 include types of mli with
 
-module NLFEnv = struct  
+module NLFEnv = struct
+  type key = variable  
   type value = NLF.fam
   type t = value Varmap.t * variable list
   let add x e (m,a:t) = Varmap.add x e m, x::a
@@ -15,16 +16,18 @@ module NLFEnv = struct
 end
 
 and module NLFSubst = struct  
+  type key = definition
   type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t
-  type t = value Varmap.t
-  let add x e m = Varmap.add x e m
-  let find x m = Varmap.find x m
-  let fold f m acc = Varmap.fold f m acc
-  let is_empty t = Varmap.is_empty t
-  let empty = Varmap.empty
+  type t = value Defmap.t
+  let add x e m = Defmap.add x e m
+  let find x m = Defmap.find x m
+  let fold f m acc = Defmap.fold f m acc
+  let is_empty t = Defmap.is_empty t
+  let empty = Defmap.empty
 end
 
 and module NLFSign = struct
+  type key = constant
   type value = NLF.entry
   type t = value Constmap.t
       
@@ -36,6 +39,7 @@ and module NLFSign = struct
 end
 
 and module NLFArgs = struct  
+  type key = variable
   type value = NLF.obj
   type t = value Varmap.t * variable list
   let add x e (m,a:t) = Varmap.add x e m, x::a
@@ -50,6 +54,7 @@ end
 and module Pp = struct
   open Format
   open Print
+  open Name.Pp
   open NLF
 
   type entity = 
@@ -65,8 +70,6 @@ and module Pp = struct
   let ent_prec = function
       _ -> 10
 
-  let ident fmt x = fprintf fmt "@[%s@]" x
-
   let pp pp fmt t = 
     let pr_envs e s pr_head fmt () = 
       match NLFEnv.is_empty e, NLFSubst.is_empty s with
@@ -76,8 +79,8 @@ and module Pp = struct
 	| false, false -> fprintf fmt "@[%a@ ,@ %a@ ⊢@ %a@]" (pp (<=)) (E e) (pp (<=)) (B s) pr_head ()
     in
     let pr_fhead c fargs fmt () = 
-      if NLFArgs.is_empty fargs then ident fmt c else
-	fprintf fmt "@[%a@ %a@]" ident c (pp (<=)) (A fargs) in
+      if NLFArgs.is_empty fargs then constant fmt c else
+	fprintf fmt "@[%a@ %a@]" Name.Pp.constant c (pp (<=)) (A fargs) in
     match t with
       | K(KType e) when NLFEnv.is_empty e -> fprintf fmt "@[type@]"
       | K(KType e) -> fprintf fmt "@[%a@ type@]" (pp (<=)) (E e)
@@ -88,17 +91,17 @@ and module Pp = struct
 	    then fprintf fmt "%a@ :@ %a" (pp (<=)) (H h) pr_fhead ()
 	    else fprintf fmt "%a@ %a@ :@ %a" (pp (<=)) (H h) (pp (<=)) (A args) pr_fhead () in
 	  pr_envs e s (pr_ohead (pr_fhead c fargs)) fmt ()
-      | H(HVar x) -> ident fmt x
-      | H(HConst c) -> ident fmt c
-      | H(HDef c) -> ident fmt c
-      | E e -> NLFEnv.fold (fun x a () -> fprintf fmt "@[[%a@ :@ %a]@]@," ident x (pp (<=)) (F a)) e ()
-      | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[[%a@ =@ %a]@]@," ident x (pp (<=)) (O t)) a ()
-      | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," ident x (pp (<=)) (H h) (pp (<=)) (A a) ident x (pp (<=)) (A b)) b ()
+      | H(HVar x) -> variable fmt x
+      | H(HConst c) -> constant fmt c
+      | H(HDef d) -> definition fmt d
+      | E e -> NLFEnv.fold (fun x a () -> fprintf fmt "@[[%a@ :@ %a]@]@," variable x (pp (<=)) (F a)) e ()
+      | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[[%a@ =@ %a]@]@," variable x (pp (<=)) (O t)) a ()
+      | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," definition x (pp (<=)) (H h) (pp (<=)) (A a) definition x (pp (<=)) (A b)) b ()
       | S s -> NLFSign.fold
-	    (fun x e () -> 
+	    (fun c e () -> 
 	       match e with
-		 | NLF.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@," ident x (pp (<=)) (F a)
-		 | NLF.FDecl k -> fprintf fmt "@[[%a@ :@ %a]@]@," ident x (pp (<=)) (K k)
+		 | NLF.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@," constant c (pp (<=)) (F a)
+		 | NLF.FDecl k -> fprintf fmt "@[[%a@ :@ %a]@]@," constant c (pp (<=)) (K k)
 	    ) s ()
 
   let sign fmt s = pr pp ent_prec 100 (<=) fmt (S s)

@@ -17,7 +17,7 @@ and obj =
 
 and ohead =
   | HVar of variable
-  | HMeta of NLF.variable
+  | HMeta of definition
   | HConst of constant
   | HApp of obj
 

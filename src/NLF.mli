@@ -1,14 +1,12 @@
 open Name
 
-type variable = Name.variable
-type constant = Name.constant
-
 module type SET = sig
   type t
+  type key
   type value
-  val add : variable -> value -> t -> t
-  val find : variable -> t -> value
-  val fold : (variable -> value -> 'a -> 'a) -> t -> 'a -> 'a
+  val add : key -> value -> t -> t
+  val find : key -> t -> value
+  val fold : (key -> value -> 'a -> 'a) -> t -> 'a -> 'a
   val is_empty : t -> bool
   val empty : t
 end
@@ -21,7 +19,7 @@ module rec NLF : sig
   type ohead =
     | HVar of variable
     | HConst of constant
-    | HDef of variable
+    | HDef of definition
 
   type kind = 
     | KType of env
@@ -37,10 +35,10 @@ module rec NLF : sig
     | ODecl of NLF.fam
 end
 
-and NLFEnv : (SET with type value = NLF.fam)
-and NLFSubst : (SET with type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t)
-and NLFSign : (SET with type value = NLF.entry)
-and NLFArgs : (SET with type value = NLF.obj)
+and NLFEnv : (SET with type key = variable and type value = NLF.fam)
+and NLFSubst : (SET with type key = definition and type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t)
+and NLFSign : (SET with type key = constant and type value = NLF.entry)
+and NLFArgs : (SET with type key = variable and type value = NLF.obj)
 
 module Pp : sig
   open NLF

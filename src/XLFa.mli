@@ -16,7 +16,7 @@ and ohead =
   | HVar of variable
   | HConst of constant
   | HApp of obj
-  | HMeta of NLF.variable
+  | HMeta of definition
 
 and args = (variable * obj) list
 

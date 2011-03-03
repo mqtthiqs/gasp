@@ -13,7 +13,7 @@ and fam =
 
 and ohead =
   | HVar of variable
-  | HMeta of NLF.variable
+  | HMeta of definition
   | HConst of constant
 
 and obj =
