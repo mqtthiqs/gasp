@@ -5,6 +5,8 @@ type name =
   | Named of variable
   | Anonymous
 
+val gen_new : unit -> int
+val gen_init : int -> unit
 val gen_name : unit -> variable
 val variable_for : name -> variable
 

@@ -3,7 +3,8 @@ open NLF
 
 type t = {
   sign : NLFSign.t;
-  term : NLF.obj option
+  term : NLF.obj option;
+  varno : int
 }
 
 (* TEMP: Override to use LF_check *)
@@ -36,7 +37,7 @@ let reify_sign = XLFn_NLF.from_sign // XLFe_XLFn.from_sign // XLFa_XLFe.from_sig
 
 let compile_term sign subst =
     (fun x -> match SLF_LF.term sign x with
-       | LF.Obj t -> t	(* TEMP: LF_check *)
+       | LF.Obj t -> t
        | _ -> assert false) //
       LF_XLF.obj //
       XLF_XLFa.obj subst sign //
@@ -51,6 +52,7 @@ let reify_term t =
 let init sign = 
   let sign = compile_sign sign in
   {sign = sign;
+   varno = Name.gen_new();
    term = None}
 
 let check repo =			(* TODO temp *)
@@ -64,10 +66,10 @@ let commit repo term =
   match repo.term with
     | None -> 
 	let t = compile_term repo.sign NLFSubst.empty term in
-	{repo with term = Some t}
+	{repo with term = Some t; varno = Name.gen_new()}
     | Some (NLF.Obj(env,subst,h,l,c,m)) -> 
 	let t = compile_term repo.sign subst term in
-	{repo with term = Some t}
+	{repo with term = Some t; varno = Name.gen_new()}
 
 let show repo = 
   Format.printf " signature:@.";
@@ -86,6 +88,7 @@ let load () =
   let ch = open_in_bin !Settings.repo in
   let repo = Marshal.from_channel (open_in_bin !Settings.repo) in
   close_in ch;
+  Name.gen_init repo.varno;
   repo
 
 let save repo = 

@@ -5,10 +5,12 @@ type name =
   | Named of variable
   | Anonymous
 
-let gen_name =
+let gen_new, gen_init =
   let c = ref 0 in
-  fun () ->
-    incr c; "x" ^ (string_of_int !c)
+  (fun () -> incr c; !c),
+  (fun n -> c := n)
+
+let gen_name () = "x" ^ (string_of_int (gen_new()))
 
 let variable_for = function
   | Named x -> x
