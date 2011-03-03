@@ -26,3 +26,11 @@ type entry =
 
 type sign = (constant * entry) list
 type env = (variable * fam) list
+
+module Pp : sig
+  open Format
+  val sign : formatter -> sign -> unit
+  val obj : formatter -> obj -> unit
+  val fam : formatter -> fam -> unit
+  val kind : formatter -> kind -> unit
+end
