@@ -24,7 +24,7 @@ and obj1 sigma (x,t) : S.t * _ = match t with
       else 
 	let z = Name.gen_name() in
 	let sigma, oargs = args sigma l in
-	S.add z (NLF.HVar x, oargs, c, fargs) sigma,
+	S.add z (ohead h, oargs, c, fargs) sigma,
 	(x, NLF.Obj(E.empty, S.empty, NLF.HDef z, A.empty, c, fargs))
   | XLFn.OLam _ -> 
       sigma, (x, obj E.empty t)
