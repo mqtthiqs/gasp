@@ -10,7 +10,7 @@ module Pp = struct
   open Format
   let variable fmt x = fprintf fmt "%s" x
   let constant fmt x = fprintf fmt "%s" x
-  let definition fmt x = fprintf fmt "%s" x
+  let definition fmt x = fprintf fmt "$%s" x
 end
 
 let gen_new, gen_init, gen_status =
@@ -21,7 +21,7 @@ let gen_new, gen_init, gen_status =
 
 let gen_variable () = "v" ^ (string_of_int (gen_new()))
 let gen_constant () = "c" ^ (string_of_int (gen_new()))
-let gen_definition () = "d" ^ (string_of_int (gen_new()))
+let gen_definition () = string_of_int (gen_new())
 
 let mk_variable s = s
 let mk_constant s = s
