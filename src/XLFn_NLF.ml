@@ -53,13 +53,17 @@ let entry kont nlfs = function
 
 (* and back *)
 
+let s_merge s1 s2 =
+  S.fold S.add s1 s2
+
 let from_ohead = function
   | NLF.HDef x -> assert false
   | NLF.HVar x -> XLFn.HVar x
   | NLF.HConst c -> XLFn.HConst c
 
-let rec from_obj (NLF.Obj(env,sigma,h,oa,c,fa) as t) =
-  E.fold (fun x a t -> XLFn.OLam(x, from_fam a, t)) env
+let rec from_obj sigma (NLF.Obj(env,sigma',h,oa,c,fa) as t) =
+  let sigma = s_merge sigma sigma' in
+  E.fold (fun x a t -> XLFn.OLam(x, from_fam sigma a, t)) env
     begin match h with
       | NLF.HDef x -> 
 	  assert (A.is_empty oa);
@@ -74,14 +78,18 @@ let rec from_obj (NLF.Obj(env,sigma,h,oa,c,fa) as t) =
     end
 
 and from_args sigma args =
-  A.fold (fun x t l -> (x, from_obj t) :: l) args []
+  A.fold (fun x t l -> (x, from_obj sigma t) :: l) args []
 
-and from_fam (NLF.Fam(env,sigma,c,fargs)) =
+and from_fam sigma (NLF.Fam(env,sigma',c,fargs)) =
+  let sigma = s_merge sigma sigma' in
   let l = from_args sigma fargs in
-  E.fold (fun x a b -> XLFn.FProd(x, from_fam a, b)) env (XLFn.FHead(XLFn.FConst(c,l)))
+  E.fold (fun x a b -> XLFn.FProd(x, from_fam sigma a, b)) env (XLFn.FHead(XLFn.FConst(c,l)))
 
 let rec from_kind (NLF.KType env) = 
-  E.fold (fun x a k ->  XLFn.KProd(x, from_fam a, k)) env XLFn.KType
+  E.fold (fun x a k ->  XLFn.KProd(x, from_fam S.empty a, k)) env XLFn.KType
+
+let from_obj = from_obj S.empty
+let from_fam = from_fam S.empty
 
 let rec from_sign s = NLFSign.fold
   (fun x e s -> (x, match e with
