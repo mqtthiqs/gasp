@@ -10,10 +10,10 @@ let ohead = function
   | XLFn.HMeta x -> NLF.HDef x
   | XLFn.HConst c -> NLF.HConst c
 
-let rec obj env = function
-  | XLFn.OLam (x,a,t) -> obj (E.add x (fam E.empty a) env) t
+let rec obj env sigma = function
+  | XLFn.OLam (x,a,t) -> obj (E.add x (fam E.empty a) env) sigma t
   | XLFn.OHead (h,l,XLFn.FConst(c,m)) -> 
-      let sigma, oargs = args S.empty l in
+      let sigma, oargs = args sigma l in
       let sigma, fargs = args sigma m in
       NLF.Obj(env, sigma, ohead h, oargs, c, fargs)
 
@@ -28,7 +28,7 @@ and obj1 sigma (x,t) : S.t * (variable * NLF.obj) = match t with
 	S.add z (ohead h, oargs, c, fargs) sigma,
 	(x, NLF.Obj(E.empty, S.empty, NLF.HDef z, A.empty, c, fargs))
   | XLFn.OLam _ -> 
-      sigma, (x, obj E.empty t)
+      sigma, (x, obj E.empty S.empty t)
 
 and args sigma : XLFn.args -> S.t * A.t =  function
   | [] -> sigma, A.empty

@@ -35,7 +35,7 @@ let compile_sign =
 let reify_sign = XLFn_NLF.from_sign // XLFe_XLFn.from_sign // XLFa_XLFe.from_sign //
   XLF_XLFa.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
 
-let compile_term sign subst =
+let compile_term sign env subst =
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t
        | _ -> assert false) //
@@ -43,7 +43,7 @@ let compile_term sign subst =
       XLF_XLFa.obj subst sign //
       XLFa_XLFe.obj //
       XLFe_XLFn.obj //
-      XLFn_NLF.obj NLFEnv.empty		(* TODO correct? *)
+      XLFn_NLF.obj env subst		(* TODO correct? *)
 
 let reify_term t =
   (XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
@@ -65,10 +65,10 @@ let check repo =			(* TODO temp *)
 let commit repo term =
   match repo.term with
     | None -> 
-	let t = compile_term repo.sign NLFSubst.empty term in
+	let t = compile_term repo.sign NLFEnv.empty NLFSubst.empty term in
 	{repo with term = Some t; varno = Name.gen_status()}
     | Some (NLF.Obj(env,subst,h,l,c,m)) -> 
-	let t = compile_term repo.sign subst term in
+	let t = compile_term repo.sign env subst term in
 	{repo with term = Some t; varno = Name.gen_status()}
 
 let show repo = 
