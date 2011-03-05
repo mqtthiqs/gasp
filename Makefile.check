@@ -6,6 +6,8 @@
 	@./${TARGET} commit $< --repo $@ || (rm $@; false)
 	@echo CHECK $<
 	@./${TARGET} check --repo $@ || (rm $@; false)
+	@echo CHECKOUT $<
+	@./${TARGET} checkout --repo $@ || (rm $@; false)
 
 %.gasp : %.elf ${TARGET}
 	@echo INIT $<
