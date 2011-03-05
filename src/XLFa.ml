@@ -86,9 +86,9 @@ module Pp = struct
 	    constant c (pp (<=)) (Entry e) (pp (<=)) (Sign s)
       end
 
-  let sign fmt s = pr pp ent_prec 100 (<=) fmt (Sign s)
-  let obj fmt s = pr pp ent_prec 100 (<=) fmt (Obj s)
-  let fam fmt s = pr pp ent_prec 100 (<=) fmt (Fam s)
-  let kind fmt s = pr pp ent_prec 100 (<=) fmt (Kind s)
-  let args fmt s = pr pp ent_prec 100 (<=) fmt (Args s)
+  let sign fmt s = pr_paren pp ent_prec 100 (<=) fmt (Sign s)
+  let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (Obj s)
+  let fam fmt s = pr_paren pp ent_prec 100 (<=) fmt (Fam s)
+  let kind fmt s = pr_paren pp ent_prec 100 (<=) fmt (Kind s)
+  let args fmt s = pr_paren pp ent_prec 100 (<=) fmt (Args s)
 end

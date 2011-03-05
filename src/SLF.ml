@@ -32,14 +32,14 @@ module Pp = struct
 	(pp (<=)) t (pp (<)) u
     | Type -> fprintf fmt "@[type@]"
 	
-  let term fmt t = pr pp_term term_prec 100 (<=) fmt t
+  let term fmt t = pr_paren pp_term term_prec 100 (<=) fmt t
     
   let pp_sign pp fmt = function
     | [] -> ()
     | (c, Decl t) :: tl -> fprintf fmt "@[%a@ :@ %a@].@.%a"
 	ident c term t (pp (<=)) tl
 	  
-  let sign fmt s = pr pp_sign list_prec 100 (<=) fmt s
+  let sign fmt s = pr_paren pp_sign list_prec 100 (<=) fmt s
     
 end
 

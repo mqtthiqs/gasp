@@ -9,6 +9,11 @@ type 'a printing_fun = formatter -> 'a -> unit
 
 type 'a precedence = 'a -> level
 
-val pr : 
+val pr_paren : 
   ('a level_printing_fun -> formatter -> 'a -> unit) ->
   'a precedence -> level -> 'a level_printing_fun
+
+val pr_list : unit printing_fun -> 'a printing_fun -> 'a list printing_fun
+
+val pr_comma : unit printing_fun
+val pr_dot : unit printing_fun
