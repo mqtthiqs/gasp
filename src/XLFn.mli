@@ -13,12 +13,12 @@ and fam =
 
 and ohead =
   | HVar of variable
-  | HMeta of definition
   | HConst of constant
 
 and obj =
   | OLam of variable * fam * obj
   | OHead of ohead * args * fhead
+  | OMeta of definition * fhead
 
 and args = (variable * obj) list
 

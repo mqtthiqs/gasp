@@ -89,7 +89,7 @@ let kind genv sign = kind genv sign []
 let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
   | XLFa.OHead(h,l,_) -> XLF.OHead(from_head h, from_args l)
-  | XLFa.OMeta (x,a) -> XLF.OMeta (x,a)
+  | XLFa.OMeta (x,_) -> XLF.OMeta x
 
 and from_head = function
   | XLFa.HVar x -> XLF.HVar x

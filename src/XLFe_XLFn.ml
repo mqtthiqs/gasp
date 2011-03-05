@@ -22,11 +22,11 @@ module XLFw = struct
 
   and ohead =
     | HVar of variable
-    | HMeta of definition
     | HConst of constant
 
   and obj =
     | OClos of variable * fam * XLFe.obj * Env.t
+    | OMeta of definition * fhead
     | OHead of ohead * args * fhead
 
   and args = (variable * obj) list
@@ -42,14 +42,15 @@ module XLFe_XLFw = struct
 	  obj f (XLFe.OHead(XLFe.HApp u, l, a))	(* TODO: variable capture in u *)
 	  with Not_found -> XLFw.OHead(XLFw.HVar x, args e l, fhead e a)
 	end
-    | XLFe.OMeta (x,a) -> assert false	(* TODO *)
+    | XLFe.OMeta (x,a) -> XLFw.OMeta(x, fhead e a)
     | XLFe.OHead(XLFe.HConst c,l,a) -> XLFw.OHead(XLFw.HConst c, args e l, fhead e a)
     | XLFe.OHead(XLFe.HApp t,l,a) -> 
 	match obj e t, l with
 	  | XLFw.OClos (y,a,t,f), (x,u)::l -> 
 	      assert (x=y);
 	      obj (XLFw.Env.add x (u,e) f) t
-	  | XLFw.OClos _, [] -> assert false (* OK b/c of the App invariant *)
+	  | XLFw.OClos _, [] -> assert false (* App invariant *)
+	  | XLFw.OMeta (x,a), _ -> assert false (* No applied Meta *)
 	  | XLFw.OHead (h,l',_), _ -> 
 	      XLFw.OHead (h, l' @ args e l, fhead e a)
 		
@@ -70,13 +71,13 @@ end
 module XLFw_XLFn = struct
 
   let rec obj e : XLFw.obj -> XLFn.obj = function
-    | XLFw.OHead (h,l,a) -> XLFn.OHead(ohead e h, args e l, fhead e a)
+    | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead e a) (* TODO *)
+    | XLFw.OHead(h,l,a) -> XLFn.OHead(ohead e h, args e l, fhead e a)
     | XLFw.OClos(x,a,t,f) -> XLFn.OLam(x, fam e a, obj f (XLFe_XLFw.obj f t)) (* TODO: Quand utiliser e ou f ? *)
 
   and ohead e = function
     | XLFw.HVar x -> XLFn.HVar x
     | XLFw.HConst c -> XLFn.HConst c
-    | XLFw.HMeta x -> XLFn.HMeta x	(* TODO *)
 
   and args e l = List.map (fun (x,t) -> x, obj e t) l
 
@@ -105,12 +106,12 @@ let entry kont nlfs = function
 
 let ohead = function
   | XLFn.HVar x -> XLFe.HVar x
-  | XLFn.HMeta x -> assert false
   | XLFn.HConst c -> XLFe.HConst c
 
 let rec from_obj = function
   | XLFn.OLam(x,a,t) -> XLFe.OLam(x, from_fam a, from_obj t)
   | XLFn.OHead(h,l,a) -> XLFe.OHead(ohead h, from_args l, from_fhead a)
+  | XLFn.OMeta(x,a) -> XLFe.OMeta(x, from_fhead a)
 
 and from_fhead = function XLFn.FConst (a,l) -> XLFe.FConst(a, from_args l)
 
