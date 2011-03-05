@@ -23,10 +23,10 @@ module Pp = struct
   let obj_prec = function
     | OLam _ -> 20
     | OHead _ -> 20
+    | OMeta _ -> 20
   let head_prec = function
     | HConst _ -> 20
     | HVar _ -> 20
-    | HMeta _ -> 20
     | HApp _ -> 30
   let args_prec = function
     | [] -> 0
@@ -62,13 +62,13 @@ module Pp = struct
 	| HApp t -> fprintf fmt "@[%a@]" (pp (<)) (Obj t)
 	| HVar x -> variable fmt x
 	| HConst x -> constant fmt x
-	| HMeta x -> definition fmt x
       end
     | Obj o -> begin match o with
 	| OLam(x,a,t) -> fprintf fmt "@[[%a@ :@ %a]@ %a@]" 
 	    variable x (pp (<=)) (Fam a) (pp (<=)) (Obj t)
 	| OHead(h,l,a) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
 	    (pp (<=)) (Head h) (pp (<=)) (Args l) (pp (<)) (Fam a)
+	| OMeta (x,a) -> fprintf fmt "@[%a@ :@ %a@]" definition x (pp (<=)) (Fam a)
       end
     | Args l -> begin match l with
 	|	[] -> ()

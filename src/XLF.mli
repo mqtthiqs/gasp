@@ -11,9 +11,9 @@ and fam =
 and obj =
   | OLam of variable * fam * obj
   | OHead of ohead * args
+  | OMeta of definition
 
 and ohead = 
-  | HMeta of definition
   | HVar of variable
   | HConst of constant
   | HApp of obj

@@ -8,12 +8,15 @@ let rec obj = function
       XLFe.OLam(y, fam a, obj (XLFa.OHead(h, (y, XLFa.OHead(XLFa.HVar y, [], a)) :: l, b)))
   | XLFa.OHead(h,l,XLFa.FConst(c,l',k)) ->
       XLFe.OHead(ohead h, args l, XLFe.FConst(c, args l'))
+  | XLFa.OMeta (x,a) -> 
+      match fam a with
+	| XLFe.FHead h -> XLFe.OMeta (x, h)
+	| _ -> assert false		(* the type of a meta is always a head *)
 
 and ohead = function
   | XLFa.HVar x -> XLFe.HVar x
   | XLFa.HConst c -> XLFe.HConst c
   | XLFa.HApp t -> XLFe.HApp (obj t)
-  | XLFa.HMeta x -> XLFe.HMeta x
 
 and args l = List.map (fun (x,t) -> x, obj t) l
 
@@ -35,6 +38,7 @@ let entry kont nlfs = function
 let rec from_obj = function
   | XLFe.OLam(x,a,t) -> XLFa.OLam(x, from_fam a, from_obj t)
   | XLFe.OHead (h,l,a) -> XLFa.OHead(from_ohead h, from_args l, from_fhead a)
+  | XLFe.OMeta (x,a) -> XLFa.OMeta (x, from_fhead a)
 
 and from_args l = List.map (fun (x,t) -> x, from_obj t) l
 
@@ -42,7 +46,6 @@ and from_ohead = function
   | XLFe.HVar x -> XLFa.HVar x
   | XLFe.HConst c -> XLFa.HConst c
   | XLFe.HApp t -> XLFa.HApp (from_obj t)
-  | XLFe.HMeta _ -> assert false
 
 and from_fhead = function
   | XLFe.FConst (c,l) -> XLFa.FConst(c,from_args l, XLFa.KType)

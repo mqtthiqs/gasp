@@ -7,7 +7,9 @@ module P = Position
 let rec obj l = function
   | LF.OConst c -> XLF.OHead(XLF.HConst c,l)
   | LF.OVar x -> XLF.OHead (XLF.HVar x,l)
-  | LF.OMeta x -> XLF.OHead(XLF.HMeta x,l)
+  | LF.OMeta x as t -> 
+      if l = [] then XLF.OMeta x
+      else Errors.bad_application (SLF_LF.from_obj t)
   | LF.OApp(t,u) -> obj (obj [] u :: l) t
   | LF.OLam(x,a,t) -> 
       if l = [] then
@@ -51,7 +53,7 @@ and depends_obj x = function
   | XLF.OLam (y,a,t) when x=y -> depends_fam x a
   | XLF.OLam (y,a,t) -> depends_fam x a || depends_obj x t
   | XLF.OHead (XLF.HVar y,l) -> if x=y then true else depends_args x l
-  | XLF.OHead(XLF.HMeta y,l) -> depends_args x l
+  | XLF.OMeta y -> false
   | XLF.OHead (XLF.HConst c,l) -> depends_args x l
   | XLF.OHead (XLF.HApp t,l) -> depends_obj x t || depends_args x l
 
@@ -78,10 +80,10 @@ and from_fam = function
 and from_obj = function
   | XLF.OLam (x,a,t) -> LF.OLam (name_for_obj x t, from_fam a, from_obj t)
   | XLF.OHead (h,l) -> from_oapp (from_head h) l
+  | XLF.OMeta x -> LF.OMeta x
 
 and from_head = function
   | XLF.HVar x -> LF.OVar x
-  | XLF.HMeta x -> LF.OMeta x
   | XLF.HConst c ->LF.OConst c
   | XLF.HApp t -> from_obj t
 

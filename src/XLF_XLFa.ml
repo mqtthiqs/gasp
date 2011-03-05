@@ -4,6 +4,7 @@ open NLF
 
 let rec type_of : XLFa.obj -> XLFa.fam = function
   | XLFa.OLam(x,a,t) -> XLFa.FProd(x, a, type_of t)
+  | XLFa.OMeta(x,a) -> a
   | XLFa.OHead(_,_,a) -> a
 
 let rec obj genv sign env : XLF.obj -> XLFa.obj = function
@@ -14,14 +15,14 @@ let rec obj genv sign env : XLF.obj -> XLFa.obj = function
       let (h,a) = head genv sign env h in
       let (l,a) = args genv sign env l [] a in
       XLFa.OHead(h,l,a)
-
-and head genv sign env = function
-  | XLF.HVar x -> XLFa.HVar x, List.assoc x env
-  | XLF.HMeta x ->
+  | XLF.OMeta x ->
       let _, _, c, a = NLFSubst.find x genv in
       let a = NLF.Fam(NLFEnv.empty, NLFSubst.empty, c, a) in
       let a = XLFa_XLFe.from_fam (XLFe_XLFn.from_fam (XLFn_NLF.from_fam a)) in
-      XLFa.HMeta x, a
+      XLFa.OMeta (x,a)
+
+and head genv sign env = function
+  | XLF.HVar x -> XLFa.HVar x, List.assoc x env
   | XLF.HConst c -> 
       let a = match NLFSign.find c sign with
 	| NLF.ODecl a -> a
@@ -38,7 +39,7 @@ and args genv sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam =
     | t::l, XLFa.FProd(x,a,b) -> 
 	args genv sign env l ((x, obj genv sign env t) :: l') b
 
-    (* La réification pourrait renvoyer des metas à aller chercher à
+    (* TODO: La réification pourrait renvoyer des metas à aller chercher à
        la main. Dans ce cas on rajoute un cas: *)
     (* | t::l, Meta x -> va chercher () *)
     | t::l, XLFa.FConst _ -> Errors.over_application (SLF_LF.from_obj (LF_XLF.from_obj t))
@@ -88,9 +89,9 @@ let kind genv sign = kind genv sign []
 let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
   | XLFa.OHead(h,l,_) -> XLF.OHead(from_head h, from_args l)
+  | XLFa.OMeta (x,a) -> XLF.OMeta (x,a)
 
 and from_head = function
-  | XLFa.HMeta x -> XLF.HMeta x
   | XLFa.HVar x -> XLF.HVar x
   | XLFa.HConst c -> XLF.HConst c
   | XLFa.HApp t -> XLF.HApp (from_obj t)

@@ -42,9 +42,7 @@ module XLFe_XLFw = struct
 	  obj f (XLFe.OHead(XLFe.HApp u, l, a))	(* TODO: variable capture in u *)
 	  with Not_found -> XLFw.OHead(XLFw.HVar x, args e l, fhead e a)
 	end
-    | XLFe.OHead(XLFe.HMeta x,l,a) -> 
-	assert (l = []);
-	XLFw.OHead(XLFw.HMeta x,args e l, fhead e a)
+    | XLFe.OMeta (x,a) -> assert false	(* TODO *)
     | XLFe.OHead(XLFe.HConst c,l,a) -> XLFw.OHead(XLFw.HConst c, args e l, fhead e a)
     | XLFe.OHead(XLFe.HApp t,l,a) -> 
 	match obj e t, l with
@@ -107,7 +105,7 @@ let entry kont nlfs = function
 
 let ohead = function
   | XLFn.HVar x -> XLFe.HVar x
-  | XLFn.HMeta x -> XLFe.HMeta x
+  | XLFn.HMeta x -> assert false
   | XLFn.HConst c -> XLFe.HConst c
 
 let rec from_obj = function
