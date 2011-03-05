@@ -91,9 +91,11 @@ and module Pp = struct
 	    then fprintf fmt "%a@ :@ %a" (pp (<=)) (H h) pr_fhead ()
 	    else fprintf fmt "%a@ %a@ :@ %a" (pp (<=)) (H h) (pp (<=)) (A args) pr_fhead () in
 	  pr_envs e s (pr_ohead (pr_fhead c fargs)) fmt ()
+      | O(OMeta(e,s,x,c,fargs)) ->
+	    let pr_hd fmt () = fprintf fmt "@[%a@ :@ %a@]" definition x (pr_fhead c fargs) () in
+	    pr_envs e s pr_hd fmt ()
       | H(HVar x) -> variable fmt x
       | H(HConst c) -> constant fmt c
-      | H(HDef d) -> definition fmt d
       | E e -> NLFEnv.fold (fun x a () -> fprintf fmt "@[[%a@ :@ %a]@]@," variable x (pp (<=)) (F a)) e ()
       | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[{%a@ =@ %a}@]@," variable x (pp (<=)) (O t)) a ()
       | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," definition x (pp (<=)) (H h) (pp (<=)) (A a) constant c (pp (<=)) (A b)) b ()
@@ -115,4 +117,6 @@ and module Pp = struct
 
 end
 
-let lift = function NLF.Obj(env, subst, h, args , a, fargs) -> NLF.Fam(env, subst, a, fargs)
+let lift = function
+  | NLF.Obj(env, subst, h, args , c, fargs) -> NLF.Fam(env, subst, c, fargs)
+  | NLF.OMeta(env, subst, x, c, fargs) -> NLF.Fam(env, subst, c, fargs)

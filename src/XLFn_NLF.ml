@@ -7,11 +7,13 @@ module A = NLFArgs
 
 let ohead = function
   | XLFn.HVar x -> NLF.HVar x
-  | XLFn.HMeta x -> NLF.HDef x
   | XLFn.HConst c -> NLF.HConst c
 
 let rec obj env sigma = function
   | XLFn.OLam (x,a,t) -> obj (E.add x (fam E.empty a) env) sigma t
+  | XLFn.OMeta (x,XLFn.FConst(c,m)) ->
+      let sigma, fargs = args sigma m in
+      NLF.OMeta(env, sigma, x, c, fargs)
   | XLFn.OHead (h,l,XLFn.FConst(c,m)) -> 
       let sigma, oargs = args sigma l in
       let sigma, fargs = args sigma m in
@@ -26,9 +28,12 @@ and obj1 sigma (x,t) : S.t * (variable * NLF.obj) = match t with
 	let z = Name.gen_definition() in
 	let sigma, oargs = args sigma l in
 	S.add z (ohead h, oargs, c, fargs) sigma,
-	(x, NLF.Obj(E.empty, S.empty, NLF.HDef z, A.empty, c, fargs))
+	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
   | XLFn.OLam _ -> 
       sigma, (x, obj E.empty S.empty t)
+  | XLFn.OMeta(z,XLFn.FConst(c,m)) -> 
+      let sigma, fargs = args sigma m in
+      sigma, (x, NLF.OMeta(E.empty, S.empty, z, c, fargs))
 
 and args sigma : XLFn.args -> S.t * A.t =  function
   | [] -> sigma, A.empty
@@ -57,25 +62,21 @@ let s_merge s1 s2 =
   S.fold S.add s1 s2
 
 let from_ohead = function
-  | NLF.HDef x -> assert false
   | NLF.HVar x -> XLFn.HVar x
   | NLF.HConst c -> XLFn.HConst c
 
-let rec from_obj sigma (NLF.Obj(env,sigma',h,oa,c,fa) as t) =
-  let sigma = s_merge sigma sigma' in
-  E.fold (fun x a t -> XLFn.OLam(x, from_fam sigma a, t)) env
-    begin match h with
-      | NLF.HDef x -> 
-	  assert (A.is_empty oa);
-	  let h, oa, c, fa = 
-	    try S.find x sigma 
-	    with Not_found -> 
-	      Format.printf "%a not found in %a@." Name.Pp.definition x Pp.obj t;
-	      Error.global_error "definition not found" "" in
-	  XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa))
-      | _ ->
-	  XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa))
-    end
+let rec from_obj sigma = function
+  | NLF.Obj(env, sigma', h, args, c, fargs) ->
+      let sigma = s_merge sigma sigma' in
+      E.fold (fun x a t -> XLFn.OLam(x, from_fam sigma a, t)) env
+	(XLFn.OHead(from_ohead h, from_args sigma args, XLFn.FConst(c, from_args sigma fargs)))
+  | NLF.OMeta(env, sigma', x, c, fargs) as t ->
+      let h, oa, c, fa = 
+	try S.find x sigma 
+	with Not_found -> 
+	  Format.printf "%a not found in %a@." Name.Pp.definition x Pp.obj t;
+	  Error.global_error "definition not found" "" in
+      XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa))
 
 and from_args sigma args =
   A.fold (fun x t l -> (x, from_obj sigma t) :: l) args []

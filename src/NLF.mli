@@ -19,7 +19,6 @@ module rec NLF : sig
   type ohead =
     | HVar of variable
     | HConst of constant
-    | HDef of definition
 
   type kind = 
     | KType of env
@@ -29,6 +28,7 @@ module rec NLF : sig
 
   and obj =
     | Obj of env * subst * ohead * args * constant * args
+    | OMeta of env * subst * definition * constant * args
 
   type entry =
     | FDecl of NLF.kind

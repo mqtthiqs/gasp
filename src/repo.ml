@@ -67,7 +67,8 @@ let commit repo term =
     | None -> 
 	let t = compile_term repo.sign NLFEnv.empty NLFSubst.empty term in
 	{repo with term = Some t; varno = Name.gen_status()}
-    | Some (NLF.Obj(env,subst,h,l,c,m)) -> 
+    | Some(NLF.Obj(env, subst, _, _, _, _))
+    | Some(NLF.OMeta(env, subst, _, _, _)) ->
 	let t = compile_term repo.sign env subst term in
 	{repo with term = Some t; varno = Name.gen_status()}
 
