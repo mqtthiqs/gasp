@@ -4,8 +4,6 @@ module P = Position
 
 include types of mli with 
 
-module Idmap = Map.Make(struct type t = ident let compare=Pervasives.compare end) and 
-
 module Pp = struct
     
   let term_prec a =  match P.value a with
@@ -44,9 +42,9 @@ module Pp = struct
   let sign fmt s = pr pp_sign list_prec 100 (<=) fmt s
     
 end
-  
-  
 
+module Idmap = Map.Make(struct type t = ident let compare=Pervasives.compare end)
+  
 let rec equals_term subst t u = 
   match P.value t, P.value u with
     | Type, Type -> true
@@ -74,4 +72,5 @@ let rec equals_sign subst s s' =
 	equals_term subst t u && equals_sign (Idmap.add x y subst) s s'
     | _ -> false
 
-
+let equals_term = equals_term Idmap.empty
+let equals_sign = equals_sign Idmap.empty

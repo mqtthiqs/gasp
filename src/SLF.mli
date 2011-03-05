@@ -17,12 +17,9 @@ type entry =
 
 type sign = (ident * entry) list
 
-module Idmap : Map.S with type key = ident
-type subst = ident Idmap.t
-
 (* Comparison of terms modulo alpha- and eta-conversion *)
-val equals_term : subst -> term -> term -> bool
-val equals_sign : subst -> sign -> sign -> bool
+val equals_term : term -> term -> bool
+val equals_sign : sign -> sign -> bool
 
 module Pp : sig
   val term : Format.formatter -> term -> unit
