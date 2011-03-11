@@ -44,7 +44,17 @@ fun sign t ->
 	      | _ -> Errors.not_an_obj u
 	    end
 	| SLF.Meta x -> LF.Obj(LF.OMeta (mk_definition x))
-	| SLF.Box _ -> assert false	(* TODO *)
+	| SLF.Box (t,p,s) ->
+	  begin match term env t with
+	    | LF.Obj t ->
+	      let s = List.map
+		(fun x, t -> mk_variable x,
+		  match term env t with
+		    | LF.Obj t -> t
+		    | _ -> Errors.not_an_obj t) s in
+	      LF.Obj(LF.OBox(t, mk_variable p, s))
+	    | _ -> Errors.not_an_obj t
+	  end
 	| SLF.Var x ->
 	    if List.mem_assoc x env then LF.Obj(LF.OVar (mk_variable x))
 	    else 
