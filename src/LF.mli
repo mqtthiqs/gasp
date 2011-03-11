@@ -11,6 +11,9 @@ and obj =
   | OVar of variable
   | OLam of name * fam * obj
   | OApp of obj * obj
+  | OBox of obj * path * subst
+
+and subst = (variable * obj) list
 
 type kind =
   | KType

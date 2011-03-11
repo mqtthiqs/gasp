@@ -8,9 +8,12 @@ type term' =
   | Lam of ident * term * term
   | App of term * term
   | Var of ident
+  | Box of term * ident list * subst
   | Meta of ident
 
 and term = term' Position.located
+
+and subst = (ident * term) list
 
 type entry =
   | Decl of term

@@ -16,6 +16,8 @@ val of_variable : variable -> string
 val of_constant : constant -> string
 val of_definition : definition -> string
 
+type path = variable list
+
 type name =
   | Named of variable
   | Anonymous

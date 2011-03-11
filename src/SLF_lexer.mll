@@ -45,7 +45,9 @@ rule main = parse
   | '}'                                   { RBRACE }
   | "->"                                  { RARROW  }
   | "<-"                                  { LARROW  }
+  | "=>"                                  { BIGRARROW  }
   | "$"                                   { DOLLAR  }
+  | "="                                   { EQUALS }
   | identifier                            { let id = lexeme lexbuf in
                                             try is_keyword id 
 					    with Not_found -> ID (id)

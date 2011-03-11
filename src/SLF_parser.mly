@@ -5,7 +5,7 @@
 %}
 
 %token EOF
-%token COLON TYPE DOT LARROW RARROW DOLLAR
+%token COLON TYPE DOT LARROW RARROW DOLLAR EQUALS BIGRARROW
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
 
@@ -21,6 +21,9 @@ signature:
 declaration:
   x=ID COLON t=loc(term) DOT { (x, Decl t) }
 
+subst:
+  LPAREN x=ID EQUALS t=loc(term) RPAREN { x, t}
+
 term1:
   t=loc(term2) RARROW u=loc(term1) { Arr(t,u) }
 | t=loc(term1) LARROW u=loc(term2) { Arr(u,t) }
@@ -29,6 +32,7 @@ term1:
 	(List.fold_left 
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Prod(x, t, acc))) u (List.rev xs)) }
+| LBRACE p=separated_nonempty_list(DOT,ID) BIGRARROW t=loc(term1) RBRACE s=subst+ { Box(t, p, s) }
 | x=term2 { x }
 
 term2:
