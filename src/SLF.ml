@@ -19,14 +19,14 @@ module Pp = struct
     | _::_ -> 50
 	
   let ident fmt x = fprintf fmt "@[%s@]" x
-
+  let meta fmt x = fprintf fmt "@[$%s@]" x
     
   let pp_term pp fmt t = 
     let pp_subst : subst printing_fun = pr_list (fun _ _ -> ()) 
       (fun fmt (x,t) -> fprintf fmt "@[(%a=%a)@]" ident x (pp (<=)) t) in
     match P.value t with
-    | Var x | Meta x -> 
-	ident fmt x
+    | Var x -> ident fmt x
+    | Meta x ->	meta fmt x
     | Arr (a,b) -> fprintf fmt "@[%a@ ->@ %a@]" 
 	(pp (<)) a (pp (<=)) b
     | Prod (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 

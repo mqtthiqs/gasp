@@ -1,7 +1,7 @@
 
 type ident = string
 
-type term' = 
+type term' =
   | Type
   | Prod of ident * term * term
   | Arr of term * term
