@@ -40,7 +40,7 @@ HEADACHE = headache
 all : all-generic check
 all-generic: clear $(STARGET) $(TARGET)
 
-$(TARGET):
+$(TARGET): $(STARGET)
 	ln -s $(STARGET) $(TARGET)
 
 clear:
