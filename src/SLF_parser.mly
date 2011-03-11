@@ -32,7 +32,7 @@ term1:
 	(List.fold_left 
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Prod(x, t, acc))) u (List.rev xs)) }
-| LBRACE p=separated_nonempty_list(DOT,ID) BIGRARROW t=loc(term1) RBRACE s=subst+ { Box(t, p, s) }
+| LBRACE p=ID BIGRARROW t=loc(term1) RBRACE s=subst+ { Box(t, p, s) }
 | x=term2 { x }
 
 term2:

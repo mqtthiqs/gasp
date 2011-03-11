@@ -11,7 +11,7 @@ and obj =
   | OVar of variable
   | OLam of name * fam * obj
   | OApp of obj * obj
-  | OBox of obj * path * subst
+  | OBox of obj * variable * subst
 
 and subst = (variable * obj) list
 

@@ -24,6 +24,7 @@ module Pp = struct
     | OLam _ -> 20
     | OHead _ -> 20
     | OMeta _ -> 20
+    | OBox _ -> 20
   let head_prec = function
     | HConst _ -> 20
     | HVar _ -> 20
@@ -68,7 +69,11 @@ module Pp = struct
 	    variable x (pp (<=)) (Fam a) (pp (<=)) (Obj t)
 	| OHead(h,l,a) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
 	    (pp (<=)) (Head h) (pp (<=)) (Args l) (pp (<)) (Fam a)
-	| OMeta (x,a) -> fprintf fmt "@[%a@ :@ %a@]" definition x (pp (<=)) (Fam a)
+	| OMeta(x,a) -> fprintf fmt "@[%a@ :@ %a@]" definition x (pp (<=)) (Fam a)
+	| OBox (t,p,s) -> 
+	    let pp_subst = pr_list (fun _ _ -> ()) 
+	      (fun fmt (x,t) -> fprintf fmt "@[(%a=%a)@]" variable x (pp (<=)) (Obj t)) in
+	    fprintf fmt "@[{%a@ =>@ %a}%a@]" variable p (pp (<=)) (Obj t) pp_subst s
       end
     | Args l -> begin match l with
 	|	[] -> ()

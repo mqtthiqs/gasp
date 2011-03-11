@@ -22,3 +22,9 @@ let read_in_buffer b =
       (Buffer.blit b !off s 0 rest; off := !off + rest; rest)
 
 let if_debug f = if !Settings.debug then f ()
+
+let curry f x y = f (x,y)
+
+module Pair = struct
+  let map_left f (x,y) = x, f y
+end

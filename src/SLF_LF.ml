@@ -84,7 +84,7 @@ let rec from_obj' = function
   | LF.OLam (Named x, a, t) -> SLF.Lam (of_variable x, from_fam a, from_obj t)
   | LF.OApp (t,u) -> SLF.App (from_obj t, from_obj u)
   | LF.OMeta x -> SLF.Meta (of_definition x)
-  | LF.OBox (t,p,s) -> SLF.Box (from_obj t, List.map of_variable p, List.map (fun (x,t) -> of_variable x, from_obj t)) s
+  | LF.OBox (t,p,s) -> SLF.Box (from_obj t, of_variable p, List.map (fun (x,t) -> of_variable x, from_obj t)) s
 
 and from_obj t = P.with_pos P.dummy (from_obj' t)
 

@@ -15,6 +15,7 @@ and obj =
   | OLam of variable * fam * obj
   | OHead of ohead * args * fhead
   | OMeta of definition * fhead
+  | OBox of obj * variable * args
 
 and ohead =
   | HVar of variable
