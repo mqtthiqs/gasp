@@ -5,43 +5,53 @@ module E = NLFEnv
 module S = NLFSubst
 module A = NLFArgs
 
+let env_add x a = function
+  | NLF.Obj(e,s,h,l,c,m) -> NLF.Obj(E.add x a e,s,h,l,c,m)
+  | NLF.OMeta(e,s,d,c,m) -> NLF.OMeta(E.add x a e,s,d,c,m)
+let env_of = function
+  | NLF.Obj(e,s,_,_,_,_)
+  | NLF.OMeta(e,s,_,_,_) -> e
+let subst_of = function
+  | NLF.Obj(e,s,_,_,_,_)
+  | NLF.OMeta(e,s,_,_,_) -> s
+
 let ohead = function
   | XLFn.HVar x -> NLF.HVar x
   | XLFn.HConst c -> NLF.HConst c
 
-let rec obj term env = function
-  | XLFn.OLam (x,a,t) -> obj term (E.add x (fam term E.empty a) env) t
+let rec obj term = function
+  | XLFn.OLam (x,a,t) -> obj (env_add x (fam term E.empty a) term) t
   | XLFn.OMeta (x,XLFn.FConst(c,m)) ->
-      let sigma, fargs = args term S.empty m in
-      NLF.OMeta(env, sigma, x, c, fargs)
+      let sigma, fargs = args term m in
+      NLF.OMeta(env_of term, sigma, x, c, fargs)
   | XLFn.OHead (h,l,XLFn.FConst(c,m)) -> 
-      let sigma, oargs = args term S.empty l in
-      let sigma, fargs = args term sigma m in
-      NLF.Obj(env, sigma, ohead h, oargs, c, fargs)
+      let sigma, oargs = args term l in
+      let sigma, fargs = args sigma m in
+      NLF.Obj(env_of term, sigma, ohead h, oargs, c, fargs)
   | XLFn.OBox(t,p,s) -> 
-      obj (go p term) env t		(* TODO subst *)
+      obj (go p term) t		(* TODO subst *)
 
-and obj1 term sigma (x,t) : S.t * (variable * NLF.obj) = match t with
+and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
-      let sigma, fargs = args term sigma m in
+      let sigma, fargs = args (subst_of term) m in
       if l = [] then
 	sigma, (x, NLF.Obj(E.empty, S.empty, ohead h, A.empty, c, fargs))
       else 
 	let z = Name.gen_definition() in
-	let sigma, oargs = args term sigma l in
+	let sigma, oargs = args (subst_of term) l in
 	S.add z (ohead h, oargs, c, fargs) sigma,
-	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
+	(x, NLF.OMeta(env_of term, sigma, z, c, fargs)) (* TODO: S: include defs de fargs? *)
   | XLFn.OLam _ -> 
-      sigma, (x, obj term E.empty t)
+      subst_of term, (x, obj term t)
   | XLFn.OMeta(z,XLFn.FConst(c,m)) -> 
-      let sigma, fargs = args term sigma m in
+      let sigma, fargs = args (subst_of term) m in
       sigma, (x, NLF.OMeta(E.empty, S.empty, z, c, fargs))
   | XLFn.OBox _ -> assert false		(* TODO *)
 
-and args term sigma : XLFn.args -> S.t * A.t =  function
+and args term : XLFn.args -> S.t * A.t =  function
   | [] -> sigma, A.empty
   | e :: l -> 
-      let sigma, (x,t) = obj1 term sigma e in
+      let sigma, (x,t) = arg term sigma e in
       let sigma, l = args term sigma l in
       sigma, A.add x t l
 
