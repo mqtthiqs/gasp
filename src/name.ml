@@ -33,4 +33,3 @@ let of_definition s = s
 let variable_for = function
   | Named x -> x
   | Anonymous -> gen_variable()
-

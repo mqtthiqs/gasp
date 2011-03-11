@@ -17,7 +17,7 @@ let not_bound pos x =
 
 let over_application t =
   type_error (Position.position t)
-    (fun fmt -> fprintf fmt "@[The function %a is over-applied.@]" SLF.Pp.term t)
+    (fun fmt -> fprintf fmt "@[The argument %a is over-applied.@]" SLF.Pp.term t)
 
 let bad_application t =
   type_error (Position.position t)
