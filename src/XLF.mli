@@ -19,6 +19,8 @@ and ohead =
   | HConst of constant
   | HApp of obj
 
+and subst = (variable * obj) list
+
 and args = obj list
 
 type entry =
