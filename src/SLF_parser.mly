@@ -32,7 +32,6 @@ term1:
 	(List.fold_left 
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Prod(x, t, acc))) u (List.rev xs)) }
-| LBRACE p=ID BIGRARROW t=loc(term1) RBRACE s=subst+ { Box(t, p, s) }
 | x=term2 { x }
 
 term2:
@@ -47,6 +46,7 @@ term3:
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
 | x=ID { Var x }
+| LBRACE p=ID BIGRARROW t=loc(term1) RBRACE s=subst* { Box(t, p, s) }
 | DOLLAR x=ID { Meta x }
 | TYPE { Type }
 
