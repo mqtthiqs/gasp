@@ -3,7 +3,7 @@ open NLF
 
 type t = {
   sign : NLFSign.t;
-  term : NLF.obj option;
+  term : NLF.obj;
   varno : int
 }
 
@@ -22,7 +22,6 @@ let entry kont nlfs = function
   let from_obj = LF_XLF.from_obj
 end
 
-
 let compile_sign = 
   SLF_LF.sign 
     (LF_XLF.entry 
@@ -35,15 +34,15 @@ let compile_sign =
 let reify_sign = XLFn_NLF.from_sign // XLFe_XLFn.from_sign // XLFa_XLFe.from_sign //
   XLF_XLFa.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
 
-let compile_term sign env subst =
+let compile_term sign term =
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t
        | _ -> assert false) //
       LF_XLF.obj //
-      XLF_XLFa.obj subst sign //
+      XLF_XLFa.obj sign term //
       XLFa_XLFe.obj //
       XLFe_XLFn.obj //
-      XLFn_NLF.obj env subst		(* TODO correct? *)
+      XLFn_NLF.obj term NLFEnv.empty		(* TODO correct? *)
 
 let reify_term t =
   (XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
@@ -53,7 +52,7 @@ let init sign =
   let sign = compile_sign sign in
   {sign = sign;
    varno = Name.gen_status();
-   term = None}
+   term = bidon}				(* TODO *)
 
 let check repo =			(* TODO temp *)
   ()
@@ -63,27 +62,17 @@ let check repo =			(* TODO temp *)
   (*   | Some term -> NLF_check.obj repo.sign term *)
 
 let commit repo term =
-  match repo.term with
-    | None -> 
-	let t = compile_term repo.sign NLFEnv.empty NLFSubst.empty term in
-	{repo with term = Some t; varno = Name.gen_status()}
-    | Some(NLF.Obj(env, subst, _, _, _, _))
-    | Some(NLF.OMeta(env, subst, _, _, _)) ->
-	let t = compile_term repo.sign env subst term in
-	{repo with term = Some t; varno = Name.gen_status()}
+  let t = compile_term repo.sign repo.term term in
+  {repo with term = t; varno = Name.gen_status()}
 
 let show repo = 
   Format.printf " signature:@.";
   Pp.sign Format.std_formatter repo.sign;
   Format.printf " term:@.";
-  match repo.term with
-    | None -> Format.printf "empty.@."
-    | Some term -> Format.printf "@[%a@]@." Pp.obj term
+  Format.printf "@[%a@]@." Pp.obj repo.term
 
 let checkout repo =
-  match repo.term with
-    | None -> Format.printf "empty.@."
-    | Some t -> Format.printf "@[%a@]@." SLF.Pp.term (reify_term t)
+  Format.printf "@[%a@]@." SLF.Pp.term (reify_term repo.term)
 
 let load () = 
   let ch = open_in_bin !Settings.repo in
@@ -96,4 +85,3 @@ let save repo =
   let ch = open_out_bin !Settings.repo in
   Marshal.to_channel ch repo [];
   close_out ch
-

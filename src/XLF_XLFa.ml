@@ -1,82 +1,85 @@
-open NLF
-
 (* XLF to XLFa : type annotation on @-spines, argument naming *)
+
+let reify_fam a = XLFa_XLFe.from_fam (XLFe_XLFn.from_fam (XLFn_NLF.from_fam a))
+let reify_kind a = XLFa_XLFe.from_kind (XLFe_XLFn.from_kind (XLFn_NLF.from_kind a))
 
 let rec type_of : XLFa.obj -> XLFa.fam = function
   | XLFa.OLam(x,a,t) -> XLFa.FProd(x, a, type_of t)
   | XLFa.OMeta(x,a) -> a
   | XLFa.OHead(_,_,a) -> a
+  | XLFa.OBox(t,_,_) -> type_of t
 
-let rec obj genv sign env : XLF.obj -> XLFa.obj = function
+let rec obj sign term env : XLF.obj -> XLFa.obj = function
   | XLF.OLam (x,a,t) -> 
-      let a = fam genv sign env a in
-      XLFa.OLam (x, a, obj genv sign ((x,a)::env) t)
+      let a = fam sign term env a in
+      XLFa.OLam (x, a, obj sign term ((x,a)::env) t)
   | XLF.OHead (h,l) -> 
-      let (h,a) = head genv sign env h in
-      let (l,a) = args genv sign env l [] a in
+      let (h,a) = head sign term env h in
+      let (l,a) = args sign term env l [] a in
       XLFa.OHead(h,l,a)
   | XLF.OMeta x ->
-      let _, _, c, a = NLFSubst.find x genv in
-      let a = NLF.Fam(NLFEnv.empty, NLFSubst.empty, c, a) in
-      let a = XLFa_XLFe.from_fam (XLFe_XLFn.from_fam (XLFn_NLF.from_fam a)) in
+      let a = reify_fam (NLF.lift_def x term) in
       XLFa.OMeta (x,a)
+  | XLF.OBox(t,p,s) -> 
+      let term = NLF.go p term in
+      let s = List.map (fun x, t -> x, obj sign term [] t) s in
+      XLFa.OBox(obj sign term env t, p, s) (* TODO subst!*)
 
-and head genv sign env = function
+and head sign term env = function
   | XLF.HVar x -> XLFa.HVar x, List.assoc x env
   | XLF.HConst c -> 
-      let a = match NLFSign.find c sign with
-	| NLF.ODecl a -> a
-	| NLF.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
-      let a = XLFa_XLFe.from_fam (XLFe_XLFn.from_fam (XLFn_NLF.from_fam a)) in
+      let a = match NLF.NLFSign.find c sign with
+	| NLF.NLF.ODecl a -> a
+	| NLF.NLF.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
+      let a = reify_fam a in
       XLFa.HConst c, a
   | XLF.HApp t -> 
-      let t = obj genv sign env t in
+      let t = obj sign term env t in
       XLFa.HApp t, type_of t
 
-and args genv sign env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
+and args sign term env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
     | [], _ -> l', a
     | t::l, XLFa.FProd(x,a,b) -> 
-	args genv sign env l ((x, obj genv sign env t) :: l') b
-
+	args sign term env l ((x, obj sign term env t) :: l') b
     (* TODO: La réification pourrait renvoyer des metas à aller chercher à
        la main. Dans ce cas on rajoute un cas: *)
     (* | t::l, Meta x -> va chercher () *)
     | t::l, XLFa.FConst _ -> Errors.over_application (SLF_LF.from_obj (LF_XLF.from_obj t))
 
-and fam genv sign env = function 
+and fam sign term env = function 
   | XLF.FConst(c,l) ->
-      let k = match NLFSign.find c sign with
-	| NLF.ODecl _ -> assert false    (* bad kinding, checked in LF_XLF *)
-	| NLF.FDecl k -> k in
-      let k = XLFa_XLFe.from_kind (XLFe_XLFn.from_kind (XLFn_NLF.from_kind k)) in
-      let (l,k) = args_fam genv sign env l [] k in
+      let k = match NLF.NLFSign.find c sign with
+	| NLF.NLF.ODecl _ -> assert false    (* bad kinding, checked in LF_XLF *)
+	| NLF.NLF.FDecl k -> k in
+      let k = reify_kind k in
+      let (l,k) = args_fam sign term env l [] k in
       XLFa.FConst(c,l,k)
   | XLF.FProd(x,a,b) -> 
-      let a = fam genv sign env a in
-      XLFa.FProd(x,a, fam genv sign ((x,a)::env) b)
+      let a = fam sign term env a in
+      XLFa.FProd(x,a, fam sign term ((x,a)::env) b)
 
-and args_fam genv sign env l l' (k:XLFa.kind) =
+and args_fam sign term env l l' (k:XLFa.kind) =
   match l,k with
     | [], _ -> l', k
     | t::l, XLFa.KProd(x,a,k) ->
-	args_fam genv sign env l ((x, obj genv sign env t) :: l') k
+	args_fam sign term env l ((x, obj sign term env t) :: l') k
     | t::l, XLFa.KType -> Errors.over_application (SLF_LF.from_obj (LF_XLF.from_obj t))
 
-let rec kind genv sign env = function
+let rec kind sign term env = function
   | XLF.KType -> XLFa.KType
   | XLF.KProd(x,a,k) -> 
-      let a = fam genv sign env a in
-      XLFa.KProd(x, a, kind genv sign ((x,a)::env) k)
+      let a = fam sign term env a in
+      XLFa.KProd(x, a, kind sign term ((x,a)::env) k)
 
 let entry kont nlfs = function 
-    | XLF.ODecl a -> kont nlfs (XLFa.ODecl (fam NLFSubst.empty nlfs [] a))
-    | XLF.FDecl k -> kont nlfs (XLFa.FDecl (kind NLFSubst.empty nlfs [] k))
+    | XLF.ODecl a -> kont nlfs (XLFa.ODecl (fam nlfs NLF.bidon [] a))
+    | XLF.FDecl k -> kont nlfs (XLFa.FDecl (kind nlfs NLF.bidon [] k))
 
 let sign kont nlfs xlfs =
     List.fold_left
       (fun nlfs (c,t) -> 
-	 NLFSign.add c (entry kont nlfs t) nlfs
+	 NLF.NLFSign.add c (entry kont nlfs t) nlfs
       ) nlfs xlfs
 
 let obj genv sign = obj genv sign []
@@ -90,6 +93,7 @@ let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
   | XLFa.OHead(h,l,_) -> XLF.OHead(from_head h, from_args l)
   | XLFa.OMeta (x,_) -> XLF.OMeta x
+  | XLFa.OBox(t,p,s) -> XLF.OBox(from_obj t, p, List.map (fun x, t -> x, from_obj t) s)
 
 and from_head = function
   | XLFa.HVar x -> XLF.HVar x

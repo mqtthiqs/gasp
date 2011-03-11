@@ -117,6 +117,16 @@ and module Pp = struct
 
 end
 
-let lift = function
-  | NLF.Obj(env, subst, h, args , c, fargs) -> NLF.Fam(env, subst, c, fargs)
-  | NLF.OMeta(env, subst, x, c, fargs) -> NLF.Fam(env, subst, c, fargs)
+let lift_def x = function
+  | NLF.OMeta(_, subst, _, _, _)
+  | NLF.Obj(_, subst, _, _ , _, _) -> 
+      let _, _, c, fargs = NLFSubst.find x subst in
+      NLF.Fam(NLFEnv.empty, NLFSubst.empty, c, fargs)
+
+let rec go x = function
+  | NLF.OMeta(env,sigma,d,_,_) -> 
+      let(h,args,c,fargs) = NLFSubst.find d sigma in
+      go x (NLF.Obj(env,sigma,h,args,c,fargs))
+  | NLF.Obj(_,_,_,args,_,_) -> NLFArgs.find x args
+
+let bidon = NLF.Obj(NLFEnv.empty,NLFSubst.empty,NLF.HConst(Name.mk_constant"bidon"),NLFArgs.empty,Name.mk_constant"Bidon",NLFArgs.empty)

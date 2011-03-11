@@ -28,6 +28,7 @@ module XLFw = struct
     | OClos of variable * fam * XLFe.obj * Env.t
     | OMeta of definition * fhead
     | OHead of ohead * args * fhead
+    | OBox of obj * variable * args
 
   and args = (variable * obj) list
 end
@@ -45,15 +46,18 @@ module XLFe_XLFw = struct
     | XLFe.OMeta (x,a) -> XLFw.OMeta(x, fhead e a)
     | XLFe.OHead(XLFe.HConst c,l,a) -> XLFw.OHead(XLFw.HConst c, args e l, fhead e a)
     | XLFe.OHead(XLFe.HApp t,l,a) -> 
-	match obj e t, l with
-	  | XLFw.OClos (y,a,t,f), (x,u)::l -> 
+	begin match obj e t, l with
+	  | XLFw.OClos(y,a,t,f), (x,u)::l -> 
 	      assert (x=y);
 	      obj (XLFw.Env.add x (u,e) f) t
 	  | XLFw.OClos _, [] -> assert false (* App invariant *)
-	  | XLFw.OMeta (x,a), _ -> assert false (* No applied Meta *)
-	  | XLFw.OHead (h,l',_), _ -> 
+	  | XLFw.OMeta(x,a), _ -> assert false (* No applied Meta *)
+	  | XLFw.OHead(h,l',_), _ -> 
 	      XLFw.OHead (h, l' @ args e l, fhead e a)
-		
+	  | XLFw.OBox(t,p,s), _ -> assert false (* TODO *)
+	end
+    | XLFe.OBox(t,p,s) -> XLFw.OBox(obj e t,p,List.map (fun x, t -> x, obj e t) s)
+
   and fhead e = function
     | XLFe.FConst(c,l) -> XLFw.FConst(c, args e l)
 
@@ -74,6 +78,7 @@ module XLFw_XLFn = struct
     | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead e a) (* TODO *)
     | XLFw.OHead(h,l,a) -> XLFn.OHead(ohead e h, args e l, fhead e a)
     | XLFw.OClos(x,a,t,f) -> XLFn.OLam(x, fam e a, obj f (XLFe_XLFw.obj f t)) (* TODO: Quand utiliser e ou f ? *)
+    | XLFw.OBox _ -> assert false	(* TODO *)
 
   and ohead e = function
     | XLFw.HVar x -> XLFn.HVar x
@@ -112,6 +117,7 @@ let rec from_obj = function
   | XLFn.OLam(x,a,t) -> XLFe.OLam(x, from_fam a, from_obj t)
   | XLFn.OHead(h,l,a) -> XLFe.OHead(ohead h, from_args l, from_fhead a)
   | XLFn.OMeta(x,a) -> XLFe.OMeta(x, from_fhead a)
+  | XLFn.OBox _ -> assert false 	(* TODO *)
 
 and from_fhead = function XLFn.FConst (a,l) -> XLFe.FConst(a, from_args l)
 

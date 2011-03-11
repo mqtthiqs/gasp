@@ -1,4 +1,5 @@
 open NLF
+open Util
 
 (* From XLF to XLFe (eta-expansion) *)
 
@@ -9,9 +10,11 @@ let rec obj = function
   | XLFa.OHead(h,l,XLFa.FConst(c,l',k)) ->
       XLFe.OHead(ohead h, args l, XLFe.FConst(c, args l'))
   | XLFa.OMeta (x,a) -> 
-      match fam a with
+      begin match fam a with
 	| XLFe.FHead h -> XLFe.OMeta (x, h)
 	| _ -> assert false		(* the type of a meta is always a head *)
+      end
+  | XLFa.OBox(t,p,s) -> XLFe.OBox(obj t, p, List.map (Pair.map_left obj) s)
 
 and ohead = function
   | XLFa.HVar x -> XLFe.HVar x
@@ -37,8 +40,9 @@ let entry kont nlfs = function
 
 let rec from_obj = function
   | XLFe.OLam(x,a,t) -> XLFa.OLam(x, from_fam a, from_obj t)
-  | XLFe.OHead (h,l,a) -> XLFa.OHead(from_ohead h, from_args l, from_fhead a)
-  | XLFe.OMeta (x,a) -> XLFa.OMeta (x, from_fhead a)
+  | XLFe.OHead(h,l,a) -> XLFa.OHead(from_ohead h, from_args l, from_fhead a)
+  | XLFe.OMeta(x,a) -> XLFa.OMeta (x, from_fhead a)
+  | XLFe.OBox(t,p,s) -> XLFa.OBox(from_obj t, p, List.map (Pair.map_left from_obj) s)
 
 and from_args l = List.map (fun (x,t) -> x, from_obj t) l
 

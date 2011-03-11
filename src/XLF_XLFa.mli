@@ -1,8 +1,8 @@
 open NLF
 
-val obj : NLFSubst.t -> NLFSign.t -> XLF.obj -> XLFa.obj
-val fam : NLFSubst.t -> NLFSign.t -> XLF.fam -> XLFa.fam
-val kind : NLFSubst.t -> NLFSign.t -> XLF.kind -> XLFa.kind
+val obj : NLFSign.t -> NLF.obj -> XLF.obj -> XLFa.obj
+val fam : NLFSign.t -> NLF.obj -> XLF.fam -> XLFa.fam
+val kind : NLFSign.t -> NLF.obj -> XLF.kind -> XLFa.kind
 val entry : (NLFSign.t -> XLFa.entry -> NLF.entry) -> 
   NLFSign.t -> XLF.entry -> NLF.entry 
 

@@ -9,52 +9,55 @@ let ohead = function
   | XLFn.HVar x -> NLF.HVar x
   | XLFn.HConst c -> NLF.HConst c
 
-let rec obj env sigma = function
-  | XLFn.OLam (x,a,t) -> obj (E.add x (fam E.empty a) env) sigma t
+let rec obj term env = function
+  | XLFn.OLam (x,a,t) -> obj term (E.add x (fam term E.empty a) env) t
   | XLFn.OMeta (x,XLFn.FConst(c,m)) ->
-      let sigma, fargs = args sigma m in
+      let sigma, fargs = args term S.empty m in
       NLF.OMeta(env, sigma, x, c, fargs)
   | XLFn.OHead (h,l,XLFn.FConst(c,m)) -> 
-      let sigma, oargs = args sigma l in
-      let sigma, fargs = args sigma m in
+      let sigma, oargs = args term S.empty l in
+      let sigma, fargs = args term sigma m in
       NLF.Obj(env, sigma, ohead h, oargs, c, fargs)
+  | XLFn.OBox(t,p,s) -> 
+      obj (go p term) env t		(* TODO subst *)
 
-and obj1 sigma (x,t) : S.t * (variable * NLF.obj) = match t with
+and obj1 term sigma (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
-      let sigma, fargs = args sigma m in
+      let sigma, fargs = args term sigma m in
       if l = [] then
 	sigma, (x, NLF.Obj(E.empty, S.empty, ohead h, A.empty, c, fargs))
       else 
 	let z = Name.gen_definition() in
-	let sigma, oargs = args sigma l in
+	let sigma, oargs = args term sigma l in
 	S.add z (ohead h, oargs, c, fargs) sigma,
 	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
   | XLFn.OLam _ -> 
-      sigma, (x, obj E.empty S.empty t)
+      sigma, (x, obj term E.empty t)
   | XLFn.OMeta(z,XLFn.FConst(c,m)) -> 
-      let sigma, fargs = args sigma m in
+      let sigma, fargs = args term sigma m in
       sigma, (x, NLF.OMeta(E.empty, S.empty, z, c, fargs))
+  | XLFn.OBox _ -> assert false		(* TODO *)
 
-and args sigma : XLFn.args -> S.t * A.t =  function
+and args term sigma : XLFn.args -> S.t * A.t =  function
   | [] -> sigma, A.empty
   | e :: l -> 
-      let sigma, (x,t) = obj1 sigma e in
-      let sigma, l = args sigma l in
+      let sigma, (x,t) = obj1 term sigma e in
+      let sigma, l = args term sigma l in
       sigma, A.add x t l
 
-and fam env = function
-  | XLFn.FProd (x,a,b) -> fam (E.add x (fam E.empty a) env) b
+and fam term env = function
+  | XLFn.FProd (x,a,b) -> fam term (E.add x (fam term E.empty a) env) b
   | XLFn.FHead(XLFn.FConst(c,l)) ->
-      let sigma, fargs = args S.empty l in
+      let sigma, fargs = args term S.empty l in
       NLF.Fam(env, sigma, c, fargs)
 
-let rec kind env = function
-  | XLFn.KProd(x, a, k) -> kind (E.add x (fam E.empty a ) env) k
+let rec kind term env = function
+  | XLFn.KProd(x, a, k) -> kind term (E.add x (fam term E.empty a) env) k
   | XLFn.KType -> NLF.KType env
 
 let entry kont nlfs = function 
-    | XLFn.ODecl a -> kont nlfs (NLF.ODecl (fam E.empty a))
-    | XLFn.FDecl k -> kont nlfs (NLF.FDecl (kind E.empty k))
+    | XLFn.ODecl a -> kont nlfs (NLF.ODecl (fam bidon E.empty a))
+    | XLFn.FDecl k -> kont nlfs (NLF.FDecl (kind bidon E.empty k))
 
 (* and back *)
 

@@ -50,4 +50,6 @@ module Pp : sig
   val entry : formatter -> entry -> unit
 end
 
-val lift : NLF.obj -> NLF.fam
+val go : variable -> NLF.obj -> NLF.obj
+val lift_def : definition -> NLF.obj -> NLF.fam
+val bidon : NLF.obj
