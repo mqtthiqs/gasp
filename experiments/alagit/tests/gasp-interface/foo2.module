@@ -1,5 +1,0 @@
-import 
-  <interface_foo{55}>
-in
-  let h : int -> int -> int = 
-    fun (x : int) -> fun (y : int) -> g y.

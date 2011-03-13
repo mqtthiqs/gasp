@@ -1,4 +1,0 @@
-(a:(t:Type). Type -> (u:Type). Type -> Type).
-(b:Type).
-(x : a b b b b).
-Type

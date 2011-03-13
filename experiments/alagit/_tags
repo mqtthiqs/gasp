@@ -1,2 +1,0 @@
-<src/*> : use_unix, use_camlp5, use_ledit, pkg_menhirLib, use_str
-<*>: use_unix, use_ledit, use_menhir
