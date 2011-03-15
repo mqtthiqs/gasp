@@ -29,11 +29,11 @@ let ohead = function
 
 let rec obj term = function
   | XLFn.OLam (x,a,t) ->
-    let a = fam (with_env E.empty term) a in
+    let a = fam (no_env term) a in
     obj (env_add x a term) t
   | XLFn.OMeta (x,XLFn.FConst(c,m)) ->
-      let sigma, fargs = args (no_env term) m in
-      NLF.OMeta(env_of term, sigma, x, c, fargs)
+    let sigma, fargs = args (no_env term) m in
+    NLF.OMeta(env_of term, sigma, x, c, fargs)
   | XLFn.OHead (h,l,XLFn.FConst(c,m)) ->
       let sigma, oargs = args (no_env term) l in
       let sigma, fargs = args (with_subst sigma (no_env term)) m in
@@ -43,18 +43,18 @@ let rec obj term = function
 
 and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
-      let sigma, fargs = args term m in
+      let sigma, fargs = args (no_env term) m in
       if l = [] then
 	sigma, (x, NLF.Obj(E.empty, S.empty, ohead h, A.empty, c, fargs))
       else 
 	let z = Name.gen_definition() in
-	let sigma, oargs = args term l in
+	let sigma, oargs = args (no_env term) l in
 	S.add z (ohead h, oargs, c, fargs) sigma,
 	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
   | XLFn.OLam _ -> 
       subst_of term, (x, obj term t)
   | XLFn.OMeta(z,XLFn.FConst(c,m)) -> 
-      let sigma, fargs = args term m in
+      let sigma, fargs = args (no_env term) m in
       sigma, (x, NLF.OMeta(E.empty, S.empty, z, c, fargs))
   | XLFn.OBox _ -> assert false		(* TODO *)
 
@@ -62,20 +62,20 @@ and args term : XLFn.args -> S.t * A.t =  function
   | [] -> subst_of term, A.empty
   | e :: l -> 
       let sigma, (x,t) = arg term e in
-      let sigma, l = args (with_subst sigma term) l in
+      let sigma, l = args (with_subst sigma (no_env term)) l in
       sigma, A.add x t l
 
 and fam term = function
   | XLFn.FProd (x,a,b) ->
-    let a = fam (with_env E.empty term) a in
+    let a = fam (no_env term) a in
     fam (env_add x a term) b
   | XLFn.FHead(XLFn.FConst(c,l)) ->
-      let sigma, fargs = args term l in
+      let sigma, fargs = args (no_env term) l in
       NLF.Fam(env_of term, sigma, c, fargs)
 
 let rec kind term = function
   | XLFn.KProd(x, a, k) ->
-    let a = fam (with_env E.empty term) a in
+    let a = fam (no_env term) a in
     kind (env_add x a term) k
   | XLFn.KType -> NLF.KType (env_of term)
 
@@ -121,6 +121,6 @@ let from_fam = from_fam S.empty
 
 let rec from_sign s = NLFSign.fold
   (fun x e s -> (x, match e with
-     | NLF.FDecl k -> XLFn.FDecl (from_kind k)
-     | NLF.ODecl a -> XLFn.ODecl (from_fam a)) :: s
+    | NLF.FDecl k -> XLFn.FDecl (from_kind k)
+    | NLF.ODecl a -> XLFn.ODecl (from_fam a)) :: s
   ) s []
