@@ -35,11 +35,12 @@ let rec obj term = function
     let sigma, fargs = args (no_env term) m in
     NLF.OMeta(env_of term, sigma, x, c, fargs)
   | XLFn.OHead (h,l,XLFn.FConst(c,m)) ->
-      let sigma, oargs = args (no_env term) l in
-      let sigma, fargs = args (with_subst sigma (no_env term)) m in
-      NLF.Obj(env_of term, sigma, ohead h, oargs, c, fargs)
-  | XLFn.OBox(t,p,s) -> 
-      obj (go p term) t		(* TODO subst *)
+    let sigma, oargs = args (no_env term) l in
+    let sigma, fargs = args (with_subst sigma (no_env term)) m in
+    NLF.Obj(env_of term, sigma, ohead h, oargs, c, fargs)
+  | XLFn.OBox(t,p,s) ->
+    let term = with_env (env_of term) (go p term) in
+    obj term t		(* TODO subst *)
 
 and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
@@ -51,12 +52,14 @@ and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
 	let sigma, oargs = args (no_env term) l in
 	S.add z (ohead h, oargs, c, fargs) sigma,
 	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
-  | XLFn.OLam _ -> 
+  | XLFn.OLam _ ->
       subst_of term, (x, obj term t)
   | XLFn.OMeta(z,XLFn.FConst(c,m)) -> 
       let sigma, fargs = args (no_env term) m in
       sigma, (x, NLF.OMeta(E.empty, S.empty, z, c, fargs))
-  | XLFn.OBox _ -> assert false		(* TODO *)
+  | XLFn.OBox(t,p,s) ->
+    let term = with_env (env_of term) (go p term) in
+    arg term (x,t)    (* TODO subst *)
 
 and args term : XLFn.args -> S.t * A.t =  function
   | [] -> subst_of term, A.empty
