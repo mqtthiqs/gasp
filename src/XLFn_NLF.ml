@@ -28,7 +28,9 @@ let ohead = function
   | XLFn.HConst c -> NLF.HConst c
 
 let rec obj term = function
-  | XLFn.OLam (x,a,t) -> obj (env_add x (fam term E.empty a) term) t
+  | XLFn.OLam (x,a,t) ->
+    (* TODO *)
+    obj (env_add x (fam term a) term) t
   | XLFn.OMeta (x,XLFn.FConst(c,m)) ->
       let sigma, fargs = args (no_env term) m in
       NLF.OMeta(env_of term, sigma, x, c, fargs)
@@ -63,19 +65,23 @@ and args term : XLFn.args -> S.t * A.t =  function
       let sigma, l = args (with_subst sigma term) l in
       sigma, A.add x t l
 
-and fam term env = function
-  | XLFn.FProd (x,a,b) -> fam term (E.add x (fam term E.empty a) env) b
+and fam term = function
+  | XLFn.FProd (x,a,b) ->
+    let a = fam (with_env E.empty term) a in
+    fam (env_add x a term) b
   | XLFn.FHead(XLFn.FConst(c,l)) ->
       let sigma, fargs = args term l in
-      NLF.Fam(env, sigma, c, fargs)
+      NLF.Fam(env_of term, sigma, c, fargs)
 
-let rec kind term env = function
-  | XLFn.KProd(x, a, k) -> kind term (E.add x (fam term E.empty a) env) k
-  | XLFn.KType -> NLF.KType env
+let rec kind term = function
+  | XLFn.KProd(x, a, k) ->
+    let a = fam (with_env E.empty term) a in
+    kind (env_add x a term) k
+  | XLFn.KType -> NLF.KType (env_of term)
 
 let entry kont nlfs = function 
-    | XLFn.ODecl a -> kont nlfs (NLF.ODecl (fam bidon E.empty a))
-    | XLFn.FDecl k -> kont nlfs (NLF.FDecl (kind bidon E.empty k))
+    | XLFn.ODecl a -> kont nlfs (NLF.ODecl (fam bidon a))
+    | XLFn.FDecl k -> kont nlfs (NLF.FDecl (kind bidon k))
 
 (* and back *)
 
