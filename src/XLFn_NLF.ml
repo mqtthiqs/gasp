@@ -29,8 +29,8 @@ let ohead = function
 
 let rec obj term = function
   | XLFn.OLam (x,a,t) ->
-    (* TODO *)
-    obj (env_add x (fam term a) term) t
+    let a = fam (with_env E.empty term) a in
+    obj (env_add x a term) t
   | XLFn.OMeta (x,XLFn.FConst(c,m)) ->
       let sigma, fargs = args (no_env term) m in
       NLF.OMeta(env_of term, sigma, x, c, fargs)
