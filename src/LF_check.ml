@@ -222,3 +222,9 @@ and kind sign env subst k =
   let () = kind' sign env subst k in
   Util.if_debug (fun () -> Format.printf "@]} K %a : ok.@," SLF.Pp.term (SLF_LF.from_kind k))
 
+let obj sign t = obj sign [] Subst.empty t
+
+let sign s = NLFSign.fold (fun k v () -> match v with
+  | NLF.FDecl k -> kind s [] Subst.empty (reify_kind k)
+  | NLF.ODecl a -> ignore (fam s [] Subst.empty (reify_fam a))
+) s ()

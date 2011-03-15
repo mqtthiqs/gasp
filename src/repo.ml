@@ -7,21 +7,6 @@ type t = {
   varno : int
 }
 
-(* TEMP: Override to use LF_check *)
-module LF_XLF = struct
-let entry kont nlfs = function
-  | LF.FDecl k -> 
-      ignore (LF_check.kind nlfs [] LF_check.Subst.empty k);
-      kont nlfs (XLF.FDecl (LF_XLF.kind k))
-  | LF.ODecl a -> 
-      ignore (LF_check.fam nlfs [] LF_check.Subst.empty a);
-      kont nlfs (XLF.ODecl (LF_XLF.fam a))
-
-  let obj t = LF_XLF.obj t
-  let from_sign = LF_XLF.from_sign
-  let from_obj = LF_XLF.from_obj
-end
-
 let compile_sign = 
   SLF_LF.sign 
     (LF_XLF.entry 
@@ -48,14 +33,17 @@ let reify_term t =
   (XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj // 
      LF_XLF.from_obj // SLF_LF.from_obj) t
 
-let init sign = 
+let init sign =
+  let sign =  ("Bidon", SLF.Decl(Position.with_pos Position.dummy SLF.Type)) :: ("bidon", SLF.Decl(Position.with_pos Position.dummy (SLF.Var"Bidon"))) :: sign in 			(* TODO temp *)
   let sign = compile_sign sign in
   {sign = sign;
    varno = Name.gen_status();
    term = bidon}				(* TODO *)
 
 let check repo =			(* TODO temp *)
-  ()
+  LF_check.sign repo.sign;
+  ignore(LF_check.obj repo.sign ((XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj //
+     LF_XLF.from_obj) repo.term))
   (* NLF_check.sign repo.sign; *)
   (* match repo.term with *)
   (*   | None -> () *)
@@ -64,6 +52,7 @@ let check repo =			(* TODO temp *)
 let commit repo term =
   let t = compile_term repo.sign repo.term term in
   {repo with term = t; varno = Name.gen_status()}
+
 
 let show repo = 
   Format.printf " signature:@.";
