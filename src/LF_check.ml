@@ -166,8 +166,12 @@ let rec obj' sign env subst t : fam * subst =
       | NLF.FDecl k -> Errors.not_an_obj (SLF_LF.from_obj t)
       | NLF.ODecl a -> reify_fam a, subst
     end
-  | OVar x -> List.assoc x env, subst
-  | OLam (x,a,t) -> 
+  | OVar x ->
+    begin
+      try List.assoc x env, subst
+      with Not_found -> Errors.not_bound Position.dummy (Name.of_variable x)
+    end
+  | OLam (x,a,t) ->
       let k, _ = fam sign env subst a in
       conv_kind subst Subst.empty k KType;
       let b, _ = obj sign ((Name.variable_for x,a)::env) subst t in
@@ -224,7 +228,13 @@ and kind sign env subst k =
 
 let obj sign t = obj sign [] Subst.empty t
 
-let sign s = NLFSign.fold (fun k v () -> match v with
-  | NLF.FDecl k -> kind s [] Subst.empty (reify_kind k)
-  | NLF.ODecl a -> ignore (fam s [] Subst.empty (reify_fam a))
+let sign s = NLFSign.fold (fun x e () -> match e with
+  | NLF.FDecl k ->
+    let k = reify_kind k in
+    Util.if_debug (fun () -> Format.printf "checking %a : %a@." Name.Pp.constant x SLF.Pp.term (SLF_LF.from_kind k));
+    kind s [] Subst.empty k
+  | NLF.ODecl a ->
+    let a = reify_fam a in
+    Util.if_debug (fun () -> Format.printf "checking %a : %a@." Name.Pp.constant x SLF.Pp.term (SLF_LF.from_fam a));
+    ignore (fam s [] Subst.empty a)
 ) s ()
