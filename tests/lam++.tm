@@ -1,2 +1,2 @@
-lam [z:tm -> tm] {v4 => {v4 => z $35 }}
+lam [x:tm] {v2 => lam [y:tm] {v2 => $23}}
 
