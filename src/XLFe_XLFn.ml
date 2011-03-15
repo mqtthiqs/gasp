@@ -54,7 +54,7 @@ module XLFe_XLFw = struct
 	  | XLFw.OMeta(x,a), _ -> assert false (* No applied Meta *)
 	  | XLFw.OHead(h,l',_), _ -> 
 	      XLFw.OHead (h, l' @ args e l, fhead e a)
-	  | XLFw.OBox(t,p,s), _ -> assert false (* TODO *)
+	  | XLFw.OBox(t,p,s), _ -> assert false (* TODO (error message): applied box is forbidden *)
 	end
     | XLFe.OBox(t,p,s) -> XLFw.OBox(obj e t,p,List.map (fun x, t -> x, obj e t) s)
 
@@ -75,10 +75,10 @@ end
 module XLFw_XLFn = struct
 
   let rec obj e : XLFw.obj -> XLFn.obj = function
-    | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead e a) (* TODO *)
+    | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead e a)
     | XLFw.OHead(h,l,a) -> XLFn.OHead(ohead e h, args e l, fhead e a)
     | XLFw.OClos(x,a,t,f) -> XLFn.OLam(x, fam e a, obj f (XLFe_XLFw.obj f t)) (* TODO: Quand utiliser e ou f ? *)
-    | XLFw.OBox _ -> assert false	(* TODO *)
+    | XLFw.OBox (t,p,s) -> XLFn.OBox(obj e t, p, List.map (fun x, t -> x, obj e t) s)
 
   and ohead e = function
     | XLFw.HVar x -> XLFn.HVar x
@@ -117,7 +117,7 @@ let rec from_obj = function
   | XLFn.OLam(x,a,t) -> XLFe.OLam(x, from_fam a, from_obj t)
   | XLFn.OHead(h,l,a) -> XLFe.OHead(ohead h, from_args l, from_fhead a)
   | XLFn.OMeta(x,a) -> XLFe.OMeta(x, from_fhead a)
-  | XLFn.OBox _ -> assert false 	(* TODO *)
+  | XLFn.OBox(t,p,s) -> XLFe.OBox(from_obj t, p, List.map (fun x, t -> x, from_obj t) s)
 
 and from_fhead = function XLFn.FConst (a,l) -> XLFe.FConst(a, from_args l)
 
