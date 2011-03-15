@@ -1,2 +1,2 @@
-lam [x:tm] lam [y:tm] lam [z:tm] app (app x y) z
+lam [z:tm -> tm] {v4 => {v4 => z $35 }}
 
