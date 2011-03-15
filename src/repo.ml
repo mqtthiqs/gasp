@@ -42,17 +42,13 @@ let init sign =
 
 let check repo =			(* TODO temp *)
   LF_check.sign repo.sign;
-  ignore(LF_check.obj repo.sign ((XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj //
-     LF_XLF.from_obj) repo.term))
-  (* NLF_check.sign repo.sign; *)
-  (* match repo.term with *)
-  (*   | None -> () *)
-  (*   | Some term -> NLF_check.obj repo.sign term *)
+  let t = (XLFn_NLF.from_obj // XLFe_XLFn.from_obj // XLFa_XLFe.from_obj //
+	     XLF_XLFa.from_obj // LF_XLF.from_obj) repo.term in
+  ignore(LF_check.obj repo.sign t)
 
 let commit repo term =
   let t = compile_term repo.sign repo.term term in
   {repo with term = t; varno = Name.gen_status()}
-
 
 let show repo = 
   Format.printf " signature:@.";
