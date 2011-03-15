@@ -21,7 +21,6 @@ let with_env e = function
   | NLF.Obj(_,s,h,args,c,fargs) -> NLF.Obj(e,s,h,args,c,fargs)
   | NLF.OMeta(_,s,x,c,fargs) -> NLF.OMeta(e,s,x,c,fargs)
 let no_env = with_env E.empty
-let no_subst = with_subst S.empty
 
 let ohead = function
   | XLFn.HVar x -> NLF.HVar x
@@ -40,16 +39,16 @@ let rec obj term = function
     NLF.Obj(env_of term, sigma, ohead h, oargs, c, fargs)
   | XLFn.OBox(t,p,s) ->
     let term = with_env (env_of term) (go p term) in
-    obj term t		(* TODO subst *)
+    obj term t          (* TODO subst *)
 
 and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
       let sigma, fargs = args (no_env term) m in
       if l = [] then
-	sigma, (x, NLF.Obj(E.empty, S.empty, ohead h, A.empty, c, fargs))
+        sigma, (x, NLF.Obj(E.empty, S.empty, ohead h, A.empty, c, fargs))
       else 
-	let z = Name.gen_definition() in
-	let sigma, oargs = args (no_env term) l in
+        let z = Name.gen_definition() in
+	let sigma, oargs = args (with_subst sigma (no_env term)) l in
 	S.add z (ohead h, oargs, c, fargs) sigma,
 	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
   | XLFn.OLam _ ->
@@ -105,7 +104,7 @@ let rec from_obj sigma = function
     let h, oa, c, fa =
       try S.find x sigma
       with Not_found ->
-	Format.printf "%a not found in %a@." Name.Pp.definition x Pp.obj t;
+	Format.printf "%a not found in %a@." Name.Pp.definition x Pp.obj (with_subst sigma t);
 	Error.global_error "definition not found" "" in
     E.fold (fun x a t -> XLFn.OLam(x, from_fam sigma a, t)) env
       (XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa)))
