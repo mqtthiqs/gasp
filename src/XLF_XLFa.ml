@@ -27,7 +27,7 @@ let rec obj sign term env : XLF.obj -> XLFa.obj = function
 
 and head sign term env = function
   | XLF.HVar x -> XLFa.HVar x, List.assoc x env
-  | XLF.HConst c -> 
+  | XLF.HConst c ->
       let a = match NLF.NLFSign.find c sign with
 	| NLF.NLF.ODecl a -> a
 	| NLF.NLF.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
@@ -40,8 +40,10 @@ and head sign term env = function
 and args sign term env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
     | [], _ -> l', a
-    | t::l, XLFa.FProd(x,a,b) -> 
-	args sign term env l ((x, obj sign term env t) :: l') b
+    | t::l, XLFa.FProd(x,a,b) ->
+      let a' = obj sign term env t in
+      (* TODO: comparer les types a et a' ici *)
+      args sign term env l ((x, a') :: l') b
     (* TODO: La réification pourrait renvoyer des metas à aller chercher à
        la main. Dans ce cas on rajoute un cas: *)
     (* | t::l, Meta x -> va chercher () *)
