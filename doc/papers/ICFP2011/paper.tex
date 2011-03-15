@@ -5,13 +5,37 @@
 \usepackage[utf8x]{inputenc}
 \usepackage[usenames,dvipsnames]{color}
 \usepackage[pdftex,backref=page,colorlinks=true]{hyperref}
+\usepackage{ucs}
+\usepackage{mathpartir}
+\usepackage{amsfonts,amsmath,amscd}
+\usepackage{stmaryrd}
+\usepackage[utf8x]{inputenc}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{listings}
 
-\definecolor{bwgreen}{rgb}{0.183,1,0.5}
-\definecolor{bwmagenta}{rgb}{1,0.169,0.909}
-\definecolor{bwblue}{rgb}{0.317,0.161,1}
 \hypersetup{
   linkcolor=blue,
   citecolor=blue
+}
+
+% Various
+\newcommand\gray[1]{\textcolor{gray}{#1}}
+\newcommand\cit[1]{[\textcolor{blue}{#1}]}
+\newcommand\To{\Rightarrow}
+\newcommand\too{\longrightarrow}
+\newcommand\Too{\Longrightarrow}
+\newcommand\nat{\mathbb N}
+\newcommand\FV[1]{\mathsf{FV}({#1})}
+\newcommand\notinfv[2]{{#1}\notin\FV{#2}}
+
+\newcommand\itplus{\textcolor{green!60!black}{\textbf{\textsf{+}}}}
+\newcommand\itminus{\textcolor{red}{\textbf{\textsf{--}}}}
+
+\newenvironment{smallright}{
+  \begin{flushright}
+    \footnotesize
+  }{
+  \end{flushright}
 }
 
 % Remarks
@@ -20,12 +44,16 @@
 \newcommand\mrem[1]{\rem{M}{#1}}
 \newcommand\yrem[1]{\rem{Y}{#1}}
 
+% Constructors
+\newcommand\pair[2]{{#1},{#2}}
+
 % Grammars
 \newcommand\gor{\ |\ }
 \newcommand\gequal{\ ::=\ }
 
 % Variables
 \newcommand\meta[1]{\ensuremath\textsc{#1}}
+\newcommand\ameta[2]{\ensuremath\meta{#1}:{#2}}
 
 % Terms
 \newcommand\postbinder{\cdot}
@@ -48,7 +76,9 @@
 \newcommand\laapp[3]{{#1}[{#2}]:{#3}}
 \newcommand\lnil{\cdot}
 \newcommand\lcons[2]{{#1};{#2}}
+\newcommand\lsing[1]{{#1}}
 \newcommand\lncons[3]{{#1}={#2};{#3}}
+\newcommand\lnsing[2]{{#1}={#2}}
 
 %Environments
 \newcommand\enil\cdot
@@ -65,17 +95,27 @@
 \newcommand\edecls[1]{\mathsf{decls}({#1})}
 \newcommand\edefs[1]{\mathsf{defs}({#1})}
 
+\newcommand\snil\enil
+\newcommand\sent[2]{\left[{#1}={#2}\right]}
+\newcommand\scons[3]{{#1}\sent{#2}{#3}}
 
 % Term operations
 \newcommand\subst[2]{\{{#1}/{#2}\}}
 \newcommand\repl[2]{\subst{#1}{{#2}}}
 \newcommand\conv{\equiv}
 
+% Languages
+\newcommand\lang[1]{\textsf{#1}}
+\newcommand\LF{\lang{LF}}
+\newcommand\XLF{\lang{XLF}}
+\newcommand\XLFa{\lang{XLF$_a$}}
+\newcommand\NLF{\lang{NLF}}
+
 % Judgements
-\newcommand\jlang[3]{{#2}\vdash_{\mathrm{#1}}{#3}}
-\newcommand\jlangt[4]{{#2}\vdash_{\mathrm{#1}}{#3}:{#4}}
-\newcommand\jlangA[3]{{#2}\vdash_{\mathrm{#1}}{#3}\mathsf{\ type}}
-\newcommand\jlangK[3]{{#2}\vdash_{\mathrm{#1}}{#3}\mathsf{\ kind}}
+\newcommand\jlang[3]{{#2}\vdash_{\lang{#1}}{#3}}
+\newcommand\jlangt[4]{{#2}\vdash_{\lang{#1}}{#3}:{#4}}
+\newcommand\jlangA[3]{{#2}\vdash_{\lang{#1}}{#3}\mathsf{\ type}}
+\newcommand\jlangK[3]{{#2}\vdash_{\lang{#1}}{#3}\mathsf{\ kind}}
 
 \newcommand\jlft[3]{\jlangt{LF}{#1}{#2}{#3}}
 \newcommand\jlfA[2]{\jlangA{LF}{#1}{#2}}
@@ -94,34 +134,18 @@
 \newcommand\jnlfconvt[4]{\jnlft{#1}{{#2}\conv{#3}}{#4}}
 \newcommand\jnlfconve[3]{\jlang{}{#1}{{#2}\conv{#3}}}
 
-% simple judgements with no environments (NLF)
+\newcommand\jannot[3]{\jlang{}{#1}{{#2}\rightarrow{#3}}}
+\newcommand\jannotK[3]{\jannot{#1}{#2}{#3}}
+\newcommand\jannotA[3]{\jannot{#1}{#2}{#3}}
+\newcommand\jannott[3]{\jannot{#1}{#2}{#3}}
+\newcommand\jannoth[4]{\jannot{#1}{#2}{{#3} : {#4}}}
+\newcommand\jannotl[6]{\jannot{\pair{#1}{{#2}:{#3}}}{#4}{{#5}:{#6}}}
+
+% Simple judgements with no environments (NLF)
 \newcommand\jwf[1]{{#1}\ \mathsf{wf}}
 
-% Animations
-\newcommand\alta[4]{\alt<-#1>{#3}{\alert<#2>{#4}}}
-\newcommand\uncovera[2]{\uncover<#1->{\alert<#1>{#2}}}
-\newcommand\onlya[2]{\only<#1->{\alert<#1>{#2}}}
-
-% Various
-\newcommand\gray[1]{\textcolor{gray}{#1}}
-\newcommand\cit[1]{[\textcolor{blue}{#1}]}
-\newcommand\To{\Rightarrow}
-\newcommand\too{\longrightarrow}
-\newcommand\Too{\Longrightarrow}
-\newcommand\nat{\mathbb N}
-\newcommand\FV[1]{\mathsf{FV}({#1})}
-\newcommand\notinfv[2]{{#1}\notin\FV{#2}}
-
-\newcommand\itplus{\textcolor{green!60!black}{\textbf{\textsf{+}}}}
-\newcommand\itminus{\textcolor{red}{\textbf{\textsf{--}}}}
-
-\newenvironment{smallright}{
-  \begin{flushright}
-    \footnotesize
-  }{
-  \end{flushright}
-}
-
+% Functions
+\newcommand\typeof[1]{{#1}\uparrow}
 
 \begin{document}
 
@@ -284,23 +308,135 @@ keyword1, keyword2
 
 \subsection{Architecture of the system}
 
-\subsection{From LF to NLF}
+\subsection{From \LF\ to \NLF}
 
 \subsubsection{The source language}
 
 \begin{figure}
-  \centering
   \begin{align*}
     K &\gequal { \prd x A K \gor \type } \\
-    A &\gequal { \prd x A A \gor \lapp A l } \\
+    A &\gequal { \prd x A A \gor \lapp a l } \\
     t &\gequal { \lam x A t \gor \lapp h l \gor \meta x \gor \obox t x
       \sigma } \\
     h &\gequal { t \gor c \gor x } \\
-    l &\gequal { \lnil \gor \lcons t l }
+    l &\gequal { \lnil \gor \lcons t l } \\
+    \sigma &\gequal { \snil \gor \scons \sigma x t } %TODO
   \end{align*}
+  \caption{\XLF: Spine-form \LF\ plus the \textsf{Box} and \textsf{Meta} constructs}
 \end{figure}
 
-\subsubsection{Typing annotation}
+\subsubsection{Typing annotation and argument naming}
+
+The first step in the translation is the embedding of \XLF\ into a
+language with two small variations:
+\begin{itemize}
+\item application spines are annotated with their types, and
+\item each argument of such a spine bears the name of the ``formal
+  argument'' in the type of the head. For example, the function $t :
+  \prd x A \prd y B C$ applied to terms $u$ and $v$ will be written
+  $\laapp{t}{\lncons x u {\lnsing y v}} C$.
+\end{itemize}
+
+While the first point is easily justified by our goal, the second will
+be motivated in the next section. Informally, naming all arguments
+with their expected variable in the type allow to forget their order
+in a list $l$.
+
+We thus modify the syntax of \XLF\ in this way to obtain \XLFa:
+
+\begin{align*}
+  t &\gequal \ldots \gor \laapp h l A \gor \ameta x A \\
+  l &\gequal \lnil \gor \lncons x a l
+\end{align*}
+
+Let us move on to the translation.
+% parler de \Sigma
+
+\begin{figure}
+  \underline{Judgements}
+  \begin{gather}
+    \jannotK\Gamma {\mathbf K} {K'} \\
+    \jannotA\Gamma {\mathbf A} {A'} \\
+    \jannott\Gamma {\mathbf t} {t'} \\
+    \jannoth\Gamma {\mathbf h} {h'} A \\
+    \jannotl\Gamma {\mathbf l'} A l {l''} A'
+  \end{gather}
+  \underline{Translation}
+  \begin{mathpar}
+    %% kind
+    \infer{ }{\jannotK\Gamma\type\type}
+    \and
+    \infer{
+      \jannotK\Gamma A {A'} \and \jannotK{\econs\Gamma{x:A'}} K {K'}
+    }{
+      \jannotK\Gamma{\prd x A K}{\prd x {A'}{K'}}
+    }
+    \and
+    %% fam
+    \infer{
+      \jannotl\Gamma\lnil{\elookup\Sigma a} l {l'} K
+    }{
+      \jannotK\Gamma{\lapp a l}{\lapp a {l'}}{K}
+    }
+    \and
+    \infer{
+      \jannotA\Gamma A {A'} \and \jannotA{\econs\Gamma{x:A}}{B}{B'}
+    }{
+      \jannotA\Gamma{\prd x A B}{\prd x {A'}{B'}}
+    }
+    \and
+    %% obj
+    \infer{
+      \jannotA\Gamma A {A'} \and \jannott{\econs\Gamma{x:A'}} t {t'}
+    }{
+      \jannott\Gamma{\lam x A t}{\lam x {A'}{t'}}
+    }
+    \and
+    \infer{
+      \jannoth\Gamma h {h'} A \and
+      \jannotl\Gamma\lnil A l {l'} {A'}
+    }{
+      \jannott\Gamma{\lapp h l}{\lapp{h'}{l'}}
+    }
+    \and
+    %% args
+    \infer{  }{
+      \jannotl\Gamma l A \lnil l A
+    }
+    \and
+    \infer{
+      \jannott\Gamma t {t'} \and
+      \jannotl\Gamma{\lcons {x=t'} {l'}} B l {l''} C
+    }{
+      \jannotl\Gamma{l'}{\prd x A B} {\lcons t l} {l''} C
+    }
+    \and
+    %% head
+    \infer{ }{
+      \jannoth\Gamma x x {\elookup\Gamma x}
+    }
+    \and
+    \infer{ }{
+      \jannoth\Gamma c c {\elookup\Sigma c}
+    }
+    \and
+    \infer{ }{
+      \jannoth\Gamma a a {\elookup\Sigma a}
+    }
+    \and
+    \infer{
+      \jannott\Gamma t {t'}
+    }{
+      \jannoth\Gamma t {t'} {(\typeof {t'})}
+    }
+  \end{mathpar}
+  \underline{where}
+  \begin{align*}
+    \typeof{(\lam x A t)} &= \prd x A {(\typeof t)} \\
+    \typeof{(\laapp h l A)} &= A
+  \end{align*}
+  \caption{From \XLF\ to \XLFa: type-annotations on spines}
+\end{figure}
 
 \subsubsection{Non-positional calculus}
 
