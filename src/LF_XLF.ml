@@ -68,10 +68,6 @@ let name_for_obj x t = if depends_obj x t then Named x else Anonymous
 let name_for_fam x t = if depends_fam x t then Named x else Anonymous
 let name_for_kind x t = if depends_kind x t then Named x else Anonymous
 
-let name_for_obj x t = Named x
-let name_for_fam x t = Named x
-let name_for_kind x t = Named x
-
 let rec from_fapp f = function
   | [] -> f
   | t :: args -> LF.FApp(from_fapp f args, from_obj t)
