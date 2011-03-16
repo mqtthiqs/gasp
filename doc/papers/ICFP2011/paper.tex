@@ -37,6 +37,7 @@
   }{
   \end{flushright}
 }
+\newcommand\memph[1]{\underline{#1}}
 
 % Remarks
 \newcommand\rem[2]{\textcolor{Mahogany}{{\textsf{#1}} $\triangleright$
@@ -52,22 +53,36 @@
 \newcommand\gequal{\ ::=\ }
 
 % Variables
-\newcommand\meta[1]{\ensuremath\textsc{#1}}
-\newcommand\ameta[2]{\ensuremath\meta{#1}:{#2}}
+\newcommand\var[1]{#1}
+\newcommand\meta[1]{\textsc{#1}}
+\newcommand\typ[2]{{#1}:{#2}}
+
+\newcommand\mv{x}
+\newcommand\mmv{y}
+\newcommand\mmmv{z}
+
+\newcommand\mmeta{\meta x}
+\newcommand\mmmeta{\meta y}
+\newcommand\mmmmeta{\meta z}
+\newcommand\mameta[1]{\typ{\mmeta}{#1}}
+
+% \newcommand\setdefaultlang[1]{\providecommand{\thedefaultlang}{#1}}
+% \newcommand\thedefaultlang{UNDEFINED}
+% \newcommand\m[2][\thedefaultlang]{\m#2#1}
 
 % Terms
 \newcommand\postbinder{\cdot}
-\newcommand\prd[2]{\ensuremath\Pi{#1}^{#2}\postbinder}
-\newcommand\prdi[1]{\ensuremath\forall{#1}\postbinder}
+\newcommand\prd[2]{\Pi{#1}:{#2}\postbinder}
+\newcommand\prdi[1]{\forall{#1}\postbinder}
 \newcommand\app[1]{{#1}\ }
-\newcommand\tlam[2]{\ensuremath\lambda{#1}^{#2}\postbinder}
-\newcommand\ulam[1]{\ensuremath\lambda{#1}\postbinder}
-\newcommand\letb[2]{\ensuremath\mathsf{let}\ {#1}={#2}\ \mathsf{in}\ }
+\newcommand\tlam[2]{\lambda{#1}^{#2}\postbinder}
+\newcommand\ulam[1]{\lambda{#1}\postbinder}
+\newcommand\letb[2]{\mathsf{let}\ {#1}={#2}\ \mathsf{in}\ }
 \newcommand\lam{\tlam}
-\newcommand\obox[3]{\ensuremath\{{#1}\}^{#2}_{#3}}
+\newcommand\obox[3]{\{{#1}\}^{#2}_{#3}}
 
 % Sorts
-\newcommand\srt[1]{\ensuremath\mathsf{#1}}
+\newcommand\srt[1]{\mathsf{#1}}
 \newcommand\type{\srt *}
 \newcommand\kind{\srt \Box}
 
@@ -80,24 +95,26 @@
 \newcommand\lncons[3]{{#1}={#2};{#3}}
 \newcommand\lnsing[2]{{#1}={#2}}
 
-%Environments
+% Environments
 \newcommand\enil\cdot
-\newcommand\eent[1]{\left[{#1}\right]}
+\newcommand\eent[1]{[{#1}]}
 \newcommand\econs[2]{{#1}\eent{#2}}
 \newcommand\esing[1]{\econs{}{#1}}
 \newcommand\emerge[2]{{#1}\cdot{#2}}
-\newcommand\elookup[2]{{#1}({#2})}
-\newcommand\elookupdef[3]{{#1}({#2}) = {#3}}
-\newcommand\elookupdecl[3]{{#1}({#2}) : {#3}}
+\newcommand\elook[2]{{#1}({#2})}
+\newcommand\elookdef[3]{{#1}({#2}) = {#3}}
+\newcommand\elookdecl[3]{{#1}({#2}) : {#3}}
 \newcommand\ebind[2]{\econs{#1}{#2}}
 \newcommand\ebinddef[3]{\econs{#1}{{#2}={#3}}}
 \newcommand\ebinddecl[3]{\econs{#1}{{#2}:{#3}}}
 \newcommand\edecls[1]{\mathsf{decls}({#1})}
 \newcommand\edefs[1]{\mathsf{defs}({#1})}
 
+% Substitutions
 \newcommand\snil\enil
-\newcommand\sent[2]{\left[{#1}={#2}\right]}
+\newcommand\sent[2]{[{#1}={#2}]}
 \newcommand\scons[3]{{#1}\sent{#2}{#3}}
+\newcommand\slook[2]{{#1}({#2})}
 
 % Term operations
 \newcommand\subst[2]{\{{#1}/{#2}\}}
@@ -110,6 +127,41 @@
 \newcommand\XLF{\lang{XLF}}
 \newcommand\XLFa{\lang{XLF$_a$}}
 \newcommand\NLF{\lang{NLF}}
+
+\newcommand\XLFmod[1]{#1}
+\newcommand\XLFamod[1]{\bar{#1}}
+
+% Metavariables (as appear in the rules & syntax description)
+
+\newcommand\setlangmod[1]{\def{\thelangmod}{#1}}
+\def\thelangmod{UNDEFINED}
+
+\newcommand\mk{\thelangmod{K}}
+\newcommand\mmk{\thelangmod{K'}}
+\newcommand\mmmk{\thelangmod{K''}}
+\newcommand\mf{\thelangmod{A}}
+\newcommand\mmf{\thelangmod{B}}
+\newcommand\mmmf{\thelangmod{C}}
+\newcommand\mo{\thelangmod{t}}
+\newcommand\mmo{\thelangmod{u}}
+\newcommand\mmmo{\thelangmod{v}}
+\newcommand\mh{\thelangmod{h}}
+\newcommand\mmh{\thelangmod{h'}}
+\newcommand\mmmh{\thelangmod{h''}}
+\newcommand\ma{\thelangmod{l}}
+\newcommand\mma{\thelangmod{m}}
+\newcommand\mmma{\thelangmod{n}}
+\newcommand\ms{\thelangmod{\sigma}}
+\newcommand\mms{\thelangmod{\rho}}
+\newcommand\mmms{\thelangmod{\theta}}
+\newcommand\me{\thelangmod{\Gamma}}
+\newcommand\mme{\thelangmod{\Delta}}
+\newcommand\mmme{\thelangmod{\Xi}}
+\newcommand\msi{\thelangmod{\Delta}}
+\newcommand\mco{\thelangmod{c}}
+\newcommand\mmco{\thelangmod{c'}}
+\newcommand\mcf{\thelangmod{a}}
+\newcommand\mmcf{\thelangmod{a'}}
 
 % Judgements
 \newcommand\jlang[3]{{#2}\vdash_{\lang{#1}}{#3}}
@@ -125,27 +177,32 @@
 \newcommand\jxlfA[2]{\jlangA{XLF}{#1}{#2}}
 \newcommand\jxlfK[2]{\jlangK{XLF}{#1}{#2}}
 
-\newcommand\jnlft[3]{\jlangt{}{#1}{#2}{#3}}
+\newcommand\jnlft{\jlangt{}}
 \newcommand\jnlfA[2]{\jlangA{}{#1}{#2}}
 \newcommand\jnlfK[1]{{#1}\ \mathsf{kind}} %on peut pas utiliser \jlangK
 
-\newcommand\jnlfargs[3]{\jnlft{#1}{#2}{#3}}
+\newcommand\jnlfargs\jnlft
 \newcommand\jnlfconvA[3]{\jnlfA{#1}{{#2}\conv{#3}}}
 \newcommand\jnlfconvt[4]{\jnlft{#1}{{#2}\conv{#3}}{#4}}
 \newcommand\jnlfconve[3]{\jlang{}{#1}{{#2}\conv{#3}}}
 
-\newcommand\jannot[3]{\jlang{}{#1}{{#2}\rightarrow{#3}}}
-\newcommand\jannotK[3]{\jannot{#1}{#2}{#3}}
-\newcommand\jannotA[3]{\jannot{#1}{#2}{#3}}
-\newcommand\jannott[3]{\jannot{#1}{#2}{#3}}
-\newcommand\jannoth[4]{\jannot{#1}{#2}{{#3} : {#4}}}
-\newcommand\jannotl[6]{\jannot{\pair{#1}{{#2}:{#3}}}{#4}{{#5}:{#6}}}
+\newcommand\jindex[3]{{#2}\vdash_{#1}{#3}}
+
+\newcommand\jannot[4]{\jindex{#1}{#2}{{#3}\rightarrow{#4}}}
+\newcommand\jannotK{\jannot}
+\newcommand\jannotA{\jannot}
+\newcommand\jannott{\jannot}
+\newcommand\jannoth[5]{\jannot{#1}{#2}{#3}{{#4} : {#5}}}
+\newcommand\jannotl[7]{\jannot{#1}{\pair{#2}{{#3}:{#4}}}{#5}{{#6}:{#7}}}
+\newcommand\jannots{\jannot}
 
 % Simple judgements with no environments (NLF)
 \newcommand\jwf[1]{{#1}\ \mathsf{wf}}
 
 % Functions
 \newcommand\typeof[1]{{#1}\uparrow}
+\newcommand\nlfgo[2]{{#1}|_{#2}}
+\newcommand\nlflook\slook
 
 \begin{document}
 
@@ -313,14 +370,17 @@ keyword1, keyword2
 \subsubsection{The source language}
 
 \begin{figure}
+  \def\thelangmod{\XLFmod}
   \begin{align*}
-    K &\gequal { \prd x A K \gor \type } \\
-    A &\gequal { \prd x A A \gor \lapp a l } \\
-    t &\gequal { \lam x A t \gor \lapp h l \gor \meta x \gor \obox t x
-      \sigma } \\
-    h &\gequal { t \gor c \gor x } \\
-    l &\gequal { \lnil \gor \lcons t l } \\
-    \sigma &\gequal { \snil \gor \scons \sigma x t } %TODO
+    \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
+    \mf &\gequal { \prd\mv\mf\mmf \gor \lapp\mcf\ma } \\
+    \mo &\gequal { \lam\mv\mf\mo \gor \lapp\mh\ma \gor \mmeta \gor \obox\mo\mv\ms } \\
+    \mh &\gequal { \mo \gor \mco \gor \mv } \\
+    \ma &\gequal { \lnil \gor \lcons\mo\ma } \\
+    \ms &\gequal { \snil \gor \scons \sigma\mv\mo } \\[0.5em]
+    \me &\gequal { \enil \gor \ebinddecl \Gamma\mv\mf } \\
+    \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
+      \ebinddecl\msi\mcf\mk }
   \end{align*}
   \caption{\XLF: Spine-form \LF\ plus the \textsf{Box} and \textsf{Meta} constructs}
 \end{figure}
@@ -330,104 +390,165 @@ keyword1, keyword2
 The first step in the translation is the embedding of \XLF\ into a
 language with two small variations:
 \begin{itemize}
-\item application spines are annotated with their types, and
-\item each argument of such a spine bears the name of the ``formal
+\item application spines are annotated with their types, as well as
+  metavariables and
+\item each argument of such spines bears the name of the ``formal
   argument'' in the type of the head. For example, the function $t :
   \prd x A \prd y B C$ applied to terms $u$ and $v$ will be written
   $\laapp{t}{\lncons x u {\lnsing y v}} C$.
 \end{itemize}
 
-While the first point is easily justified by our goal, the second will
-be motivated in the next section. Informally, naming all arguments
-with their expected variable in the type allow to forget their order
-in a list $l$.
+While the first point is easily justified by above arguments, the
+second will be motivated in the next section. Informally, naming all
+arguments with their expected variable in the type allow to forget
+their order in a list $l$; a side-effect of this choice is discussed
+below.
 
-We thus modify the syntax of \XLF\ in this way to obtain \XLFa:
-
-\begin{align*}
-  t &\gequal \ldots \gor \laapp h l A \gor \ameta x A \\
-  l &\gequal \lnil \gor \lncons x a l
-\end{align*}
-
-Let us move on to the translation.
-% parler de \Sigma
+We thus modify the syntax of \XLF\ to obtain \XLFa (Fig. \ref{fig:XLFa}):
 
 \begin{figure}
+  \def\thelangmod{\XLFamod}
+  \begin{align*}
+    \mk &\gequal { \prd\mv\mf\mk
+      \gor \type } \\
+    \mf &\gequal { \prd\mv\mf\mmf
+      \gor \memph{\laapp\mcf\ma\mk} } \\
+    \mo &\gequal { \lam\mv\mf\mo
+      \gor \memph{\laapp\mh\ma\mf}
+      \gor \memph{\typ\mmeta\mf}
+      \gor \obox\mo\mv\ms } \\
+    \mh &\gequal { \mo
+      \gor \mco
+      \gor \mv } \\
+    \ma &\gequal {\lnil
+      \gor \memph{\lncons \mv\mo\ma}} \\
+    \ma &\gequal { \lnil
+      \gor \lcons\mo\ma } \\
+    \ms &\gequal { \snil
+      \gor \scons \sigma\mv\mo } \\[0.5em]
+    \me &\gequal { \enil
+      \gor \ebinddecl \Gamma\mv\mf } \\
+    \msi &\gequal { \enil
+      \gor \ebinddecl\msi\mco\mf
+      \gor \ebinddecl\msi\mcf\mk }
+  \end{align*}
+  \caption{\XLFa: \XLF\ with type annotations and named arguments}
+\label{fig:XLFa}
+\end{figure}
+Let us move on to the translation (Fig. \ref{fig:XLF_XLFa}). As usual,
+it is parameterized implicitely by a signature $\Sigma$, unchanged
+thus omitted in the rules. The judgements are first enumerated. All
+the variables in them belong to the \XLFa\ world, except for the
+\underline{underlined} one, which belongs to \XLF.
+
+Since we are annotating terms with types, you will not be surprized
+that the structure of the translation will closely follow the typing
+rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
+
+\newcommand\repo{\mathcal R}
+
+\begin{figure}
+  \def\thelangmod{\XLFamod}
   \underline{Judgements}
   \begin{gather}
-    \jannotK\Gamma {\mathbf K} {K'} \\
-    \jannotA\Gamma {\mathbf A} {A'} \\
-    \jannott\Gamma {\mathbf t} {t'} \\
-    \jannoth\Gamma {\mathbf h} {h'} A \\
-    \jannotl\Gamma {\mathbf l'} A l {l''} A'
+    \jannotK\repo\me {\underline K} {K'} \\
+    \jannotA\repo\me {\underline A} {A'} \\
+    \jannott\repo\me {\underline t} {t'} \\
+    \jannoth\repo\me {\underline h} {h'} A \\
+    \jannotl\repo\me {l'} A {\underline l} {l''} A' \\
+    \jannots\repo\me {\underline\sigma} {\sigma'}
   \end{gather}
   \underline{Translation}
   \begin{mathpar}
     %% kind
-    \infer{ }{\jannotK\Gamma\type\type}
+    \infer{ }{\jannotK\repo\me\type\type}
     \and
     \infer{
-      \jannotK\Gamma A {A'} \and \jannotK{\econs\Gamma{x:A'}} K {K'}
+      \jannotK\repo\me\mf\mmf \and
+      \jannotK\repo{\ebinddecl\me\mv\mf} \mk\mmk
     }{
-      \jannotK\Gamma{\prd x A K}{\prd x {A'}{K'}}
+      \jannotK\repo\me{\prd\mv\mf\mk}{\prd\mv\mmf\mmk}
     }
     \and
     %% fam
     \infer{
-      \jannotl\Gamma\lnil{\elookup\Sigma a} l {l'} K
+      \jannotl\repo\me\lnil{\elook\Sigma a} l {l'} K
     }{
-      \jannotK\Gamma{\lapp a l}{\lapp a {l'}}{K}
+      \jannotK\repo\me{\lapp a l}{\laapp a {l'} K}
     }
     \and
     \infer{
-      \jannotA\Gamma A {A'} \and \jannotA{\econs\Gamma{x:A}}{B}{B'}
+      \jannotA\repo\me A {A'} \and \jannotA\repo{\ebinddecl\me x A}{B}{B'}
     }{
-      \jannotA\Gamma{\prd x A B}{\prd x {A'}{B'}}
+      \jannotA\repo\me{\prd x A B}{\prd x {A'}{B'}}
     }
     \and
     %% obj
     \infer{
-      \jannotA\Gamma A {A'} \and \jannott{\econs\Gamma{x:A'}} t {t'}
+      \jannotA\repo\me A {A'} \and \jannott\repo{\ebinddecl\me x {A'}} t {t'}
     }{
-      \jannott\Gamma{\lam x A t}{\lam x {A'}{t'}}
+      \jannott\repo\me{\lam x A t}{\lam x {A'}{t'}}
     }
     \and
     \infer{
-      \jannoth\Gamma h {h'} A \and
-      \jannotl\Gamma\lnil A l {l'} {A'}
+      \jannoth\repo\me h {h'} A \and
+      \jannotl\repo\me\lnil A l {l'} {A'}
     }{
-      \jannott\Gamma{\lapp h l}{\lapp{h'}{l'}}
+      \jannott\repo\me{\lapp h l}{\lapp{h'}{l'}}
+    }
+    \and
+    \infer{
+      \jannott{\nlfgo\repo p}\me t {t'} \and
+      \jannott\repo\me\sigma{\sigma'}
+    }{
+      \jannott\repo\me{\obox t p\sigma}{\obox t p \sigma}
+    }
+    \and
+    \infer{ }{
+      \jannott\repo\me{\meta x}{\mameta {\nlflook\repo {\mmeta}}}
     }
     \and
     %% args
     \infer{  }{
-      \jannotl\Gamma l A \lnil l A
+      \jannotl\repo\me l A \lnil l A
     }
     \and
     \infer{
-      \jannott\Gamma t {t'} \and
-      \jannotl\Gamma{\lcons {x=t'} {l'}} B l {l''} C
+      \jannott\repo\me t {t'} \and
+      \jannotl\repo\me{\lncons x {t'} {l'}} B l {l''} C
     }{
-      \jannotl\Gamma{l'}{\prd x A B} {\lcons t l} {l''} C
+      \jannotl\repo\me{l'}{\prd x A B} {\lcons t l} {l''} C
     }
     \and
     %% head
     \infer{ }{
-      \jannoth\Gamma x x {\elookup\Gamma x}
+      \jannoth\repo\me x x {\elook\me x}
     }
     \and
     \infer{ }{
-      \jannoth\Gamma c c {\elookup\Sigma c}
+      \jannoth\repo\me c c {\elook\Sigma c}
     }
     \and
     \infer{ }{
-      \jannoth\Gamma a a {\elookup\Sigma a}
+      \jannoth\repo\me a a {\elook\Sigma a}
     }
     \and
     \infer{
-      \jannott\Gamma t {t'}
+      \jannott\repo\me t {t'}
     }{
-      \jannoth\Gamma t {t'} {(\typeof {t'})}
+      \jannoth\repo\me t {t'} {(\typeof {t'})}
+    }
+    \and
+    %% subst
+    \infer{ }{
+      \jannots\repo\me\snil\snil
+    }
+    \and
+    \infer{
+      \jannott\repo\me t {t'} \and
+      \jannots\repo\me \sigma{\sigma'}
+    }{
+      \jannots\repo\me{\scons \sigma x t}{\scons \sigma x {t'}}
     }
   \end{mathpar}
   \underline{where}
@@ -436,6 +557,7 @@ Let us move on to the translation.
     \typeof{(\laapp h l A)} &= A
   \end{align*}
   \caption{From \XLF\ to \XLFa: type-annotations on spines}
+  \label{fig:XLF_XLFa}
 \end{figure}
 
 \subsubsection{Non-positional calculus}
