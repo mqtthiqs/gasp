@@ -37,7 +37,7 @@
   }{
   \end{flushright}
 }
-\newcommand\memph[1]{\underline{#1}}
+\newcommand\memph[1]{\boxed{#1}}
 
 % Remarks
 \newcommand\rem[2]{\textcolor{Mahogany}{{\textsf{#1}} $\triangleright$
@@ -66,6 +66,11 @@
 \newcommand\mmmmeta{\meta z}
 \newcommand\mameta[1]{\typ{\mmeta}{#1}}
 
+\newcommand\mco{c}
+\newcommand\mmco{c'}
+\newcommand\mcf{a}
+\newcommand\mmcf{a'}
+
 % \newcommand\setdefaultlang[1]{\providecommand{\thedefaultlang}{#1}}
 % \newcommand\thedefaultlang{UNDEFINED}
 % \newcommand\m[2][\thedefaultlang]{\m#2#1}
@@ -75,7 +80,7 @@
 \newcommand\prd[2]{\Pi{#1}:{#2}\postbinder}
 \newcommand\prdi[1]{\forall{#1}\postbinder}
 \newcommand\app[1]{{#1}\ }
-\newcommand\tlam[2]{\lambda{#1}^{#2}\postbinder}
+\newcommand\tlam[2]{\lambda{#1}:{#2}\postbinder}
 \newcommand\ulam[1]{\lambda{#1}\postbinder}
 \newcommand\letb[2]{\mathsf{let}\ {#1}={#2}\ \mathsf{in}\ }
 \newcommand\lam{\tlam}
@@ -129,12 +134,13 @@
 \newcommand\NLF{\lang{NLF}}
 
 \newcommand\XLFmod[1]{#1}
-\newcommand\XLFamod[1]{\bar{#1}}
+\newcommand\XLFamod[1]{\underline{#1}}
+
+\global\def\thelangmod{UNDEFINED}
+\def\inXLFa{\def\thelangmod{\XLFamod}}
+\def\inXLF{\def\thelangmod{\XLFmod}}
 
 % Metavariables (as appear in the rules & syntax description)
-
-\newcommand\setlangmod[1]{\def{\thelangmod}{#1}}
-\def\thelangmod{UNDEFINED}
 
 \newcommand\mk{\thelangmod{K}}
 \newcommand\mmk{\thelangmod{K'}}
@@ -142,6 +148,7 @@
 \newcommand\mf{\thelangmod{A}}
 \newcommand\mmf{\thelangmod{B}}
 \newcommand\mmmf{\thelangmod{C}}
+\newcommand\mmmmf{\thelangmod{D}}
 \newcommand\mo{\thelangmod{t}}
 \newcommand\mmo{\thelangmod{u}}
 \newcommand\mmmo{\thelangmod{v}}
@@ -157,11 +164,7 @@
 \newcommand\me{\thelangmod{\Gamma}}
 \newcommand\mme{\thelangmod{\Delta}}
 \newcommand\mmme{\thelangmod{\Xi}}
-\newcommand\msi{\thelangmod{\Delta}}
-\newcommand\mco{\thelangmod{c}}
-\newcommand\mmco{\thelangmod{c'}}
-\newcommand\mcf{\thelangmod{a}}
-\newcommand\mmcf{\thelangmod{a'}}
+\newcommand\msi{\thelangmod{\Sigma}}
 
 % Judgements
 \newcommand\jlang[3]{{#2}\vdash_{\lang{#1}}{#3}}
@@ -188,7 +191,8 @@
 
 \newcommand\jindex[3]{{#2}\vdash_{#1}{#3}}
 
-\newcommand\jannot[4]{\jindex{#1}{#2}{{#3}\rightarrow{#4}}}
+\newcommand\jannot[4]{\jindex{#1}{\inXLFa
+    #2}{{\inXLF{#3}}\rightarrow{\inXLFa{#4}}}}
 \newcommand\jannotK{\jannot}
 \newcommand\jannotA{\jannot}
 \newcommand\jannott{\jannot}
@@ -370,7 +374,7 @@ keyword1, keyword2
 \subsubsection{The source language}
 
 \begin{figure}
-  \def\thelangmod{\XLFmod}
+  \inXLF
   \begin{align*}
     \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
     \mf &\gequal { \prd\mv\mf\mmf \gor \lapp\mcf\ma } \\
@@ -407,7 +411,7 @@ below.
 We thus modify the syntax of \XLF\ to obtain \XLFa (Fig. \ref{fig:XLFa}):
 
 \begin{figure}
-  \def\thelangmod{\XLFamod}
+  \inXLFa
   \begin{align*}
     \mk &\gequal { \prd\mv\mf\mk
       \gor \type } \\
@@ -446,19 +450,18 @@ that the structure of the translation will closely follow the typing
 rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
 
 \newcommand\repo{\mathcal R}
-
 \begin{figure}
-  \def\thelangmod{\XLFamod}
-  \underline{Judgements}
+  \it
+  \paragraph{Judgements}
   \begin{gather}
-    \jannotK\repo\me {\underline K} {K'} \\
-    \jannotA\repo\me {\underline A} {A'} \\
-    \jannott\repo\me {\underline t} {t'} \\
-    \jannoth\repo\me {\underline h} {h'} A \\
-    \jannotl\repo\me {l'} A {\underline l} {l''} A' \\
-    \jannots\repo\me {\underline\sigma} {\sigma'}
+    \jannotK\repo\me\mk\mmk \\
+    \jannotA\repo\me\mf\mmf \\
+    \jannott\repo\me\mo\mmo \\
+    \jannoth\repo\me\mh\mmh\mf \\
+    \jannotl\repo\me\mma\mf\ma\mmma\mmf \\
+    \jannots\repo\me\ms\mms
   \end{gather}
-  \underline{Translation}
+  Kind
   \begin{mathpar}
     %% kind
     \infer{ }{\jannotK\repo\me\type\type}
@@ -469,92 +472,105 @@ rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
     }{
       \jannotK\repo\me{\prd\mv\mf\mk}{\prd\mv\mmf\mmk}
     }
-    \and
+  \end{mathpar}
+  Family
+  \begin{mathpar}
     %% fam
     \infer{
-      \jannotl\repo\me\lnil{\elook\Sigma a} l {l'} K
+      \jannotl\repo\me\lnil{\elook\msi\mcf} \ma\mma\mk
     }{
-      \jannotK\repo\me{\lapp a l}{\laapp a {l'} K}
+      \jannotK\repo\me{\lapp\mcf\ma}{\laapp\mcf\mma\mk}
     }
     \and
     \infer{
-      \jannotA\repo\me A {A'} \and \jannotA\repo{\ebinddecl\me x A}{B}{B'}
+      \jannotA\repo\me\mf\mf \and
+      \jannotA\repo{\ebinddecl\me\mv\mf}\mmf\mmf
     }{
-      \jannotA\repo\me{\prd x A B}{\prd x {A'}{B'}}
+      \jannotA\repo\me{\prd\mv\mf\mmf}{\prd\mv\mf\mmf}
     }
-    \and
+  \end{mathpar}
+  Object
+  \begin{mathpar}
     %% obj
     \infer{
-      \jannotA\repo\me A {A'} \and \jannott\repo{\ebinddecl\me x {A'}} t {t'}
+      \jannotA\repo\me\mf\mf \and
+      \jannott\repo{\ebinddecl\me\mv\mf}\mo\mo
     }{
-      \jannott\repo\me{\lam x A t}{\lam x {A'}{t'}}
+      \jannott\repo\me{\lam\mv\mf\mo}{\lam\mv\mf\mo}
     }
     \and
     \infer{
-      \jannoth\repo\me h {h'} A \and
-      \jannotl\repo\me\lnil A l {l'} {A'}
+      \jannoth\repo\me\mh\mh\mf \and
+      \jannotl\repo\me\lnil\mf\ma\ma\mf
     }{
-      \jannott\repo\me{\lapp h l}{\lapp{h'}{l'}}
+      \jannott\repo\me{\lapp\mh\ma}{\lapp\mh\ma}
     }
     \and
     \infer{
-      \jannott{\nlfgo\repo p}\me t {t'} \and
-      \jannott\repo\me\sigma{\sigma'}
+      \jannott{\nlfgo\repo\mv}\me\mo\mo \and
+      \jannott\repo\me\ms\ms
     }{
-      \jannott\repo\me{\obox t p\sigma}{\obox t p \sigma}
+      \jannott\repo\me{\obox\mo\mv\ms}{\obox\mo\mv\ms}
     }
     \and
     \infer{ }{
-      \jannott\repo\me{\meta x}{\mameta {\nlflook\repo {\mmeta}}}
+      \jannott\repo\me{\meta x}{\mameta {\nlflook\repo\mmeta}}
     }
-    \and
+  \end{mathpar}
+  Arguments
+  \begin{mathpar}
     %% args
-    \infer{  }{
-      \jannotl\repo\me l A \lnil l A
+    \infer{ }{
+      \jannotl\repo\me\ma\mf\lnil\ma\mf
     }
     \and
     \infer{
-      \jannott\repo\me t {t'} \and
-      \jannotl\repo\me{\lncons x {t'} {l'}} B l {l''} C
+      \jannott\repo\me\mo\mo \and
+      \jannotl\repo\me{\lncons\mv\mo\ma}\mmf\ma\mma\mmmf
     }{
-      \jannotl\repo\me{l'}{\prd x A B} {\lcons t l} {l''} C
+      \jannotl\repo\me\ma{\prd\mv\mf\mmf}{\lcons\mo\ma}\mma\mmmf
     }
-    \and
+  \end{mathpar}
+  Head
+  \begin{mathpar}
     %% head
     \infer{ }{
-      \jannoth\repo\me x x {\elook\me x}
+      \jannoth\repo\me\mo\mo{\elook\me\mo}
     }
     \and
     \infer{ }{
-      \jannoth\repo\me c c {\elook\Sigma c}
+      \jannoth\repo\me\mcf\mcf{\elook\msi\mcf}
     }
     \and
     \infer{ }{
-      \jannoth\repo\me a a {\elook\Sigma a}
+      \jannoth\repo\me\mco\mco{\elook\msi\mco}
     }
     \and
     \infer{
-      \jannott\repo\me t {t'}
+      \jannott\repo\me\mo\mo
     }{
-      \jannoth\repo\me t {t'} {(\typeof {t'})}
+      \jannoth\repo\me\mo\mo{(\typeof\mo)}
     }
-    \and
+  \end{mathpar}
+  Substitution
+  \begin{mathpar}
     %% subst
     \infer{ }{
       \jannots\repo\me\snil\snil
     }
     \and
     \infer{
-      \jannott\repo\me t {t'} \and
-      \jannots\repo\me \sigma{\sigma'}
+      \jannott\repo\me\mo\mo \and
+      \jannots\repo\me\ms\ms
     }{
-      \jannots\repo\me{\scons \sigma x t}{\scons \sigma x {t'}}
+      \jannots\repo\me{\scons\ms\mv\mo}{\scons\ms\mv\mo}
     }
   \end{mathpar}
-  \underline{where}
+  \paragraph{where}
+  \inXLFa
   \begin{align*}
-    \typeof{(\lam x A t)} &= \prd x A {(\typeof t)} \\
-    \typeof{(\laapp h l A)} &= A
+    \typeof{(\lam\mv\mf\mo)} &= \prd\mv\mf{(\typeof\mo)} \\
+    \typeof{(\laapp\mh\ma\mf)} &= \mf
   \end{align*}
   \caption{From \XLF\ to \XLFa: type-annotations on spines}
   \label{fig:XLF_XLFa}
