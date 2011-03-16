@@ -38,6 +38,8 @@
   \end{flushright}
 }
 \newcommand\memph[1]{\boxed{#1}}
+\newcommand\ruleblock[1]{\textit{#1}}
+\newcommand\anonarg{\cdot}
 
 % Remarks
 \newcommand\rem[2]{\textcolor{Mahogany}{{\textsf{#1}} $\triangleright$
@@ -167,6 +169,7 @@
 \newcommand\msi{\thelangmod{\Sigma}}
 
 % Judgements
+\newcommand\jindex[3]{{#2}\vdash_{#1}{#3}}
 \newcommand\jlang[3]{{#2}\vdash_{\lang{#1}}{#3}}
 \newcommand\jlangt[4]{{#2}\vdash_{\lang{#1}}{#3}:{#4}}
 \newcommand\jlangA[3]{{#2}\vdash_{\lang{#1}}{#3}\mathsf{\ type}}
@@ -189,10 +192,8 @@
 \newcommand\jnlfconvt[4]{\jnlft{#1}{{#2}\conv{#3}}{#4}}
 \newcommand\jnlfconve[3]{\jlang{}{#1}{{#2}\conv{#3}}}
 
-\newcommand\jindex[3]{{#2}\vdash_{#1}{#3}}
-
-\newcommand\jannot[4]{\jindex{#1}{\inXLFa
-    #2}{{\inXLF{#3}}\rightarrow{\inXLFa{#4}}}}
+\newcommand\jannot[4]{\jlang{}{\inXLFa
+    \pair{#1}{#2}}{{\inXLF{#3}}\rightarrow{\inXLFa{#4}}}}
 \newcommand\jannotK{\jannot}
 \newcommand\jannotA{\jannot}
 \newcommand\jannott{\jannot}
@@ -396,19 +397,18 @@ language with two small variations:
 \begin{itemize}
 \item application spines are annotated with their types, as well as
   metavariables and
-\item each argument of such spines bears the name of the ``formal
-  argument'' in the type of the head. For example, the function $t :
-  \prd x A \prd y B C$ applied to terms $u$ and $v$ will be written
-  $\laapp{t}{\lncons x u {\lnsing y v}} C$.
+\item \inXLF each argument of such spines bears the name of the ``formal
+  argument'' in the type of the head. For example, a function $\mo :
+  \prd\mv\mf\prd\mmv\mmf\mmmf$ applied to terms $\mo$ and $\mmo$ will be written
+  $\laapp{\mo}{\lncons \mv \mmf {\lnsing\mmv\mmmf}} C$.
 \end{itemize}
 
 While the first point is easily justified by above arguments, the
 second will be motivated in the next section. Informally, naming all
 arguments with their expected variable in the type allow to forget
 their order in a list $l$; a side-effect of this choice is discussed
-below.
-
-We thus modify the syntax of \XLF\ to obtain \XLFa (Fig. \ref{fig:XLFa}):
+below. We thus modify the syntax of \XLF\ to obtain \XLFa
+(Fig. \ref{fig:XLFa}).
 
 \begin{figure}
   \inXLFa
@@ -439,19 +439,19 @@ We thus modify the syntax of \XLF\ to obtain \XLFa (Fig. \ref{fig:XLFa}):
   \caption{\XLFa: \XLF\ with type annotations and named arguments}
 \label{fig:XLFa}
 \end{figure}
+
 Let us move on to the translation (Fig. \ref{fig:XLF_XLFa}). As usual,
 it is parameterized implicitely by a signature $\Sigma$, unchanged
-thus omitted in the rules. The judgements are first enumerated. All
-the variables in them belong to the \XLFa\ world, except for the
-\underline{underlined} one, which belongs to \XLF.
-
-Since we are annotating terms with types, you will not be surprized
-that the structure of the translation will closely follow the typing
-rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
+thus omitted in the rules. You will not be surprized that the
+structure of the translation closely follows the typing rules of \XLF,
+except that the object judgements synthesizes an \XLFa\ \emph{object},
+and not an \XLF\ \emph{family} as it would be the case if we were to
+write an \XLF\ type-checker. This is because the returned \XLFa\ term
+already contains all type information necessary (see the function
+$\typeof\anonarg$)
 
 \newcommand\repo{\mathcal R}
 \begin{figure}
-  \it
   \paragraph{Judgements}
   \begin{gather}
     \jannotK\repo\me\mk\mmk \\
@@ -461,19 +461,19 @@ rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
     \jannotl\repo\me\mma\mf\ma\mmma\mmf \\
     \jannots\repo\me\ms\mms
   \end{gather}
-  Kind
+  \ruleblock{Kind}
   \begin{mathpar}
     %% kind
     \infer{ }{\jannotK\repo\me\type\type}
     \and
     \infer{
-      \jannotK\repo\me\mf\mmf \and
-      \jannotK\repo{\ebinddecl\me\mv\mf} \mk\mmk
+      \jannotK\repo\me\mf\mf \and
+      \jannotK\repo{\ebinddecl\me\mv\mf} \mk\mk
     }{
-      \jannotK\repo\me{\prd\mv\mf\mk}{\prd\mv\mmf\mmk}
+      \jannotK\repo\me{\prd\mv\mf\mk}{\prd\mv\mf\mk}
     }
   \end{mathpar}
-  Family
+  \ruleblock{Family}
   \begin{mathpar}
     %% fam
     \infer{
@@ -489,7 +489,7 @@ rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
       \jannotA\repo\me{\prd\mv\mf\mmf}{\prd\mv\mf\mmf}
     }
   \end{mathpar}
-  Object
+  \ruleblock{Object}
   \begin{mathpar}
     %% obj
     \infer{
@@ -517,7 +517,7 @@ rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
       \jannott\repo\me{\meta x}{\mameta {\nlflook\repo\mmeta}}
     }
   \end{mathpar}
-  Arguments
+  \ruleblock{Arguments}
   \begin{mathpar}
     %% args
     \infer{ }{
@@ -531,7 +531,7 @@ rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
       \jannotl\repo\me\ma{\prd\mv\mf\mmf}{\lcons\mo\ma}\mma\mmmf
     }
   \end{mathpar}
-  Head
+  \ruleblock{Head}
   \begin{mathpar}
     %% head
     \infer{ }{
@@ -552,7 +552,7 @@ rules of \XLF, except that the object () judgement ``return'' an \XLFa %TODO
       \jannoth\repo\me\mo\mo{(\typeof\mo)}
     }
   \end{mathpar}
-  Substitution
+  \ruleblock{Substitution}
   \begin{mathpar}
     %% subst
     \infer{ }{
