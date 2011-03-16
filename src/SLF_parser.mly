@@ -15,11 +15,11 @@
 %%
 
 signature:
-  ds=declaration* EOF { ds }
+  ds=declaration* EOF { List.flatten ds }
 | error { parse_error (Position.lex_join $startpos $endpos) "Syntax error." }
 
 declaration:
-  x=ID COLON t=loc(term) DOT { (x, Decl t) }
+  xs=ID+ COLON t=loc(term) DOT { List.map (fun x -> (x, Decl t)) xs }
 
 subst:
   LPAREN x=ID EQUALS t=loc(term) RPAREN { x, t}

@@ -1,3 +1,7 @@
 <tools/typdef.ml> : use_camlp5, pp(camlp5o)
 <src/*> : use_unix, pkg_menhirLib, use_str, need_td
 <*>: use_unix, use_menhir
+<front-end/spl/*> : use_unix, pkg_menhirLib, use_str, need_td
+<src> : include
+<front-end/spl> : include
+<front-end/pprint> : include

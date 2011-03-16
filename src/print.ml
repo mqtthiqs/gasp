@@ -1,6 +1,6 @@
-include types of mli
-
 open Format
+
+include types of mli
 
 let surround fmt f x = fprintf fmt "(@[%a@])" f x
 
