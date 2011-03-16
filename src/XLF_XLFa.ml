@@ -41,9 +41,9 @@ and args sign term env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam =
   match l,a with
     | [], _ -> l', a
     | t::l, XLFa.FProd(x,a,b) ->
-      let a' = obj sign term env t in
-      (* TODO: comparer les types a et a' ici *)
-      args sign term env l ((x, a') :: l') b
+      let t' = obj sign term env t in
+      (* TODO: comparer les types a et type_of(t') ici *)
+      args sign term env l ((x, t') :: l') b
     (* TODO: La réification pourrait renvoyer des metas à aller chercher à
        la main. Dans ce cas on rajoute un cas: *)
     (* | t::l, Meta x -> va chercher () *)
