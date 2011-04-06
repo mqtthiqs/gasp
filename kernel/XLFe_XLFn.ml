@@ -76,38 +76,42 @@ end
 
 module XLFw_XLFn = struct
 
-  let rec obj e : XLFw.obj -> XLFn.obj = function
-    | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead e a)
-    | XLFw.OHead(h,l,a) -> XLFn.OHead(ohead e h, args e l, fhead e a)
-    | XLFw.OClos(x,a,t,f) -> XLFn.OLam(x, fam e a, obj f (XLFe_XLFw.obj f t)) (* TODO: Quand utiliser e ou f ? *)
-    | XLFw.OBox (t,p,s) -> XLFn.OBox(obj e t, p, List.map (fun x, t -> x, obj e t) s)
+  let rec obj : XLFw.obj -> XLFn.obj = function
+    | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead a)
+    | XLFw.OHead(h,l,a,f) -> XLFn.OHead(ohead h, args l, fhead a)
+    | XLFw.OClos(x,a,t,f) -> XLFn.OLam(x, fam a, obj (XLFe_XLFw.obj f t)) (* TODO: Quand utiliser e ou f ? *)
+    | XLFw.OBox (t,p,s) -> XLFn.OBox(obj t, p, List.map (fun x, t -> x, obj t) s)
 
-  and ohead e = function
+  and ohead = function
     | XLFw.HVar x -> XLFn.HVar x
     | XLFw.HConst c -> XLFn.HConst c
 
-  and args e l = List.map (fun (x,t) -> x, obj e t) l
+  and args l = List.map (fun (x,t) -> x, obj t) l
 
-  and fhead e = function
-    | XLFw.FConst(c,l) -> XLFn.FConst(c, args e l)
+  and fhead = function
+    | XLFw.FConst(c,l) -> XLFn.FConst(c, args l)
 
-  and fam e = function
-    | XLFw.FProd(x,a,b) -> XLFn.FProd(x, fam e a, fam e b)
-    | XLFw.FHead h -> XLFn.FHead (fhead e h)
+  and fam = function
+    | XLFw.FProd(x,a,b) -> XLFn.FProd(x, fam a, fam b)
+    | XLFw.FHead h -> XLFn.FHead (fhead h)
 
   let rec kind = function
     | XLFw.KType -> XLFn.KType
-    | XLFw.KProd(x,a,k) -> XLFn.KProd(x, fam XLFw.Env.empty a, kind k)
+    | XLFw.KProd(x,a,k) -> XLFn.KProd(x, fam a, kind k)
 
 end
 
-let obj t = XLFw_XLFn.obj XLFw.Env.empty (XLFe_XLFw.obj XLFw.Env.empty t)
-let fam a = XLFw_XLFn.fam XLFw.Env.empty (XLFe_XLFw.fam XLFw.Env.empty a)
-let kind k = XLFw_XLFn.kind (XLFe_XLFw.kind k)
+module XLFe_XLFn = struct
+  let obj t = XLFw_XLFn.obj (XLFe_XLFw.obj XLFw.Env.empty t)
+  let fam a = XLFw_XLFn.fam (XLFe_XLFw.fam XLFw.Env.empty a)
+  let kind k = XLFw_XLFn.kind (XLFe_XLFw.kind k)
 
-let entry kont nlfs = function 
+  let entry kont nlfs = function 
     | XLFe.ODecl a -> kont nlfs (XLFn.ODecl (fam a))
     | XLFe.FDecl k -> kont nlfs (XLFn.FDecl (kind k))
+end
+
+include XLFe_XLFn
 
 (* ... and back: *)
 
