@@ -39,24 +39,26 @@ module XLFe_XLFw = struct
     | XLFe.OLam(x,a,t) -> XLFw.OClos(x, fam e a, t, e)
     | XLFe.OHead(XLFe.HVar x,l,a) -> 
 	begin
-	  try let (u,f) = XLFw.Env.find x e in
-	  obj f (XLFe.OHead(XLFe.HApp u, l, a))	(* TODO: variable capture in u *)
+	  try let (t,f) = XLFw.Env.find x e in
+	      red e t f l        (* TODO: variable capture in u *)
 	  with Not_found -> XLFw.OHead(XLFw.HVar x, args e l, fhead e a)
 	end
-    | XLFe.OMeta (x,a) -> XLFw.OMeta(x, fhead e a)
     | XLFe.OHead(XLFe.HConst c,l,a) -> XLFw.OHead(XLFw.HConst c, args e l, fhead e a)
-    | XLFe.OHead(XLFe.HApp t,l,a) -> 
-	begin match obj e t, l with
-	  | XLFw.OClos(y,a,t,f), (x,u)::l -> 
-	      assert (x=y);
-	      obj (XLFw.Env.add x (u,e) f) t
-	  | XLFw.OClos _, [] -> assert false (* App invariant *)
-	  | XLFw.OMeta(x,a), _ -> assert false (* No applied Meta *)
-	  | XLFw.OHead(h,l',_), _ -> 
-	      XLFw.OHead (h, l' @ args e l, fhead e a)
-	  | XLFw.OBox(t,p,s), _ -> assert false (* TODO (error message): applied box is forbidden *)
-	end
+    | XLFe.OHead(XLFe.HApp t,l,a) -> red e t e l
+    | XLFe.OMeta (x,a) -> XLFw.OMeta(x, fhead e a)
     | XLFe.OBox(t,p,s) -> XLFw.OBox(obj e t,p,List.map (fun x, t -> x, obj e t) s)
+
+  and red e t f = function
+    | [] -> obj f t
+    | (x,u) :: l ->
+      begin match obj f t with
+	| XLFw.OClos(y,a,v,g) ->
+	  assert(x=y);
+	  red e v (XLFw.Env.add x (u,e) g) l
+	| XLFw.OHead _ -> assert false 	(* bc a head is not a function (eta) *)
+	| XLFw.OMeta _ -> assert false	(* TODO error: applied meta forbidden *)
+	| XLFw.OBox _ -> assert false	(* TODO error: applied box forbidden *)
+      end
 
   and fhead e = function
     | XLFe.FConst(c,l) -> XLFw.FConst(c, args e l)
