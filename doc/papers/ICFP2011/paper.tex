@@ -27,7 +27,6 @@
 \newcommand\nat{\mathbb N}
 \newcommand\FV[1]{\mathsf{FV}({#1})}
 \newcommand\notinfv[2]{{#1}\notin\FV{#2}}
-
 \newcommand\itplus{\textcolor{green!60!black}{\textbf{\textsf{+}}}}
 \newcommand\itminus{\textcolor{red}{\textbf{\textsf{--}}}}
 
@@ -56,7 +55,7 @@
 
 % Variables
 \newcommand\var[1]{#1}
-\newcommand\meta[1]{\textsc{#1}}
+\newcommand\meta[1]{\textsf{#1}}
 \newcommand\typ[2]{{#1}:{#2}}
 
 \newcommand\mv{x}
@@ -72,6 +71,10 @@
 \newcommand\mmco{c'}
 \newcommand\mcf{a}
 \newcommand\mmcf{a'}
+
+\newcommand\repo[1]{\mathcal{#1}}
+\newcommand\mr{\repo R}
+\newcommand\mmr{\repo{R'}}
 
 % \newcommand\setdefaultlang[1]{\providecommand{\thedefaultlang}{#1}}
 % \newcommand\thedefaultlang{UNDEFINED}
@@ -132,7 +135,7 @@
 \newcommand\lang[1]{\textsf{#1}}
 \newcommand\LF{\lang{LF}}
 \newcommand\XLF{\lang{XLF}}
-\newcommand\XLFa{\lang{XLF$_a$}}
+\newcommand\XLFa{\lang{XLF$_\lang A$}}
 \newcommand\NLF{\lang{NLF}}
 
 \newcommand\XLFmod[1]{#1}
@@ -205,9 +208,10 @@
 \newcommand\jwf[1]{{#1}\ \mathsf{wf}}
 
 % Functions
-\newcommand\typeof[1]{{#1}\uparrow}
-\newcommand\nlfgo[2]{{#1}|_{#2}}
-\newcommand\nlflook\slook
+\newcommand\function[2]{\ensuremath\textsf{#1}(#2)}
+\newcommand\typeof[1]{\function{typeof}{#1}}
+\newcommand\rgo[2]{{#1}|_{#2}}
+\newcommand\rlook\slook
 
 \begin{document}
 
@@ -231,6 +235,31 @@
 \maketitle
 
 \begin{abstract}
+  We investigate the problem of writing type-checkers which in the
+  ubiquitous situation where it is fed repeatedly with almost the same
+  piece of program can take advantage of previous knowledge to build
+  new derivations. Beyond the obvious gains in terms of performance
+  and availability of type information, we advocate that it is
+  interesting to refine existing models of incremental computation to
+  this particular problem because it allows for more flexibility , the
+  possibility to validate changes \emph{a posteriori}, and it exhibits
+  the semantic nature of incrementality, i.e. the use of a
+  \emph{metalanguage}.
+
+  We make use of a variant of \LF, \NLF\ as our metalanguage, and we
+  model:
+  \begin{itemize}
+  \item the type system of the object language by an \NLF\ signature,
+  \item a repository of derivations by an \NLF\ object
+  \item the reuse of a piece of derivation by a cut,
+  \item the incorporation and verification of a change and the
+    checkout of a previous version as transformations, from the object
+    language to \NLF.
+  \end{itemize}
+
+  We provide an architecture and a language for repositories to
+  implement a generic incremental type-checker, providing a unifying
+  approach to deal with incrementality in typed programming languages.
 
 %% Four sentences:
 %% State the problem
@@ -408,7 +437,7 @@ second will be motivated in the next section. Informally, naming all
 arguments with their expected variable in the type allow to forget
 their order in a list $l$; a side-effect of this choice is discussed
 below. We thus modify the syntax of \XLF\ to obtain \XLFa
-(Fig. \ref{fig:XLFa}).
+(Fig. \ref{fig:XLFa}, changes are framed).
 
 \begin{figure}
   \inXLFa
@@ -442,135 +471,144 @@ below. We thus modify the syntax of \XLF\ to obtain \XLFa
 
 Let us move on to the translation (Fig. \ref{fig:XLF_XLFa}). As usual,
 it is parameterized implicitely by a signature $\Sigma$, unchanged
-thus omitted in the rules. You will not be surprized that the
-structure of the translation closely follows the typing rules of \XLF,
-except that the object judgements synthesizes an \XLFa\ \emph{object},
-and not an \XLF\ \emph{family} as it would be the case if we were to
-write an \XLF\ type-checker. This is because the returned \XLFa\ term
-already contains all type information necessary (see the function
-$\typeof\anonarg$)
+thus omitted in the rules. It is also indexed by a \emph{repository}
+$\mr$ and two operations: $\rlook\mr\anonarg$ and
+$\rgo\mr\anonarg$. Their definitions is the subject of section
+\ref{sec:interaction}, but consider for the moment that they are
+triggered by the \textsf{Box} and \textsf{Meta} constructions.
 
-\newcommand\repo{\mathcal R}
+You will not be surprized that the structure of the translation
+closely follows the typing rules of \XLF, except that the object
+judgement synthesizes an \XLFa\ \emph{object}, and not an \XLF\
+\emph{family} (and idem for family judgements), as it would be the
+case if we were to write an \XLF\ type-checker. This is because the
+returned \XLFa\ term already contains all type information necessary
+(see function $\typeof\anonarg$). Note that for lack of space, we
+didn't duplicate the argument judgement in the case of family
+arguments; just read it as overloaded to kinds also.
+
 \begin{figure}
   \paragraph{Judgements}
-  \begin{gather}
-    \jannotK\repo\me\mk\mmk \\
-    \jannotA\repo\me\mf\mmf \\
-    \jannott\repo\me\mo\mmo \\
-    \jannoth\repo\me\mh\mmh\mf \\
-    \jannotl\repo\me\mma\mf\ma\mmma\mmf \\
-    \jannots\repo\me\ms\mms
-  \end{gather}
+  \begin{align*}
+    &\jannotK\mr\me\mk\mk && \textit{Kind} \\
+    &\jannotA\mr\me\mf\mf && \textit{Family} \\
+    &\jannott\mr\me\mo\mo && \textit{Object} \\
+    &\jannoth\mr\me\mh\mh\mf && \textit{Head} \\
+    &\jannotl\mr\me\mma\mf\ma\ma\mf && \textit{Arguments} \\
+    &\jannots\mr\me\ms\ms && \textit{Substitution} \\
+  \end{align*}
   \ruleblock{Kind}
   \begin{mathpar}
     %% kind
-    \infer{ }{\jannotK\repo\me\type\type}
+    \infer{ }{\jannotK\mr\me\type\type}
     \and
     \infer{
-      \jannotK\repo\me\mf\mf \and
-      \jannotK\repo{\ebinddecl\me\mv\mf} \mk\mk
+      \jannotK\mr\me\mf\mf \and
+      \jannotK\mr{\ebinddecl\me\mv\mf} \mk\mk
     }{
-      \jannotK\repo\me{\prd\mv\mf\mk}{\prd\mv\mf\mk}
+      \jannotK\mr\me{\prd\mv\mf\mk}{\prd\mv\mf\mk}
     }
   \end{mathpar}
   \ruleblock{Family}
   \begin{mathpar}
     %% fam
     \infer{
-      \jannotl\repo\me\lnil{\elook\msi\mcf} \ma\mma\mk
+      \jannotl\mr\me\lnil{\elook\msi\mcf} \ma\ma\mk
     }{
-      \jannotK\repo\me{\lapp\mcf\ma}{\laapp\mcf\mma\mk}
+      \jannotK\mr\me{\lapp\mcf\ma}{\laapp\mcf\ma\mk}
     }
     \and
     \infer{
-      \jannotA\repo\me\mf\mf \and
-      \jannotA\repo{\ebinddecl\me\mv\mf}\mmf\mmf
+      \jannotA\mr\me\mf\mf \and
+      \jannotA\mr{\ebinddecl\me\mv\mf}\mmf\mmf
     }{
-      \jannotA\repo\me{\prd\mv\mf\mmf}{\prd\mv\mf\mmf}
+      \jannotA\mr\me{\prd\mv\mf\mmf}{\prd\mv\mf\mmf}
     }
   \end{mathpar}
   \ruleblock{Object}
   \begin{mathpar}
     %% obj
     \infer{
-      \jannotA\repo\me\mf\mf \and
-      \jannott\repo{\ebinddecl\me\mv\mf}\mo\mo
+      \jannotA\mr\me\mf\mf \and
+      \jannott\mr{\ebinddecl\me\mv\mf}\mo\mo
     }{
-      \jannott\repo\me{\lam\mv\mf\mo}{\lam\mv\mf\mo}
+      \jannott\mr\me{\lam\mv\mf\mo}{\lam\mv\mf\mo}
     }
     \and
     \infer{
-      \jannoth\repo\me\mh\mh\mf \and
-      \jannotl\repo\me\lnil\mf\ma\ma\mf
+      \jannoth\mr\me\mh\mh\mf \and
+      \jannotl\mr\me\lnil\mf\ma\ma\mmf
     }{
-      \jannott\repo\me{\lapp\mh\ma}{\lapp\mh\ma}
+      \jannott\mr\me{\lapp\mh\ma}{\laapp\mh\ma\mmf}
     }
     \and
     \infer{
-      \jannott{\nlfgo\repo\mv}\me\mo\mo \and
-      \jannott\repo\me\ms\ms
+      \jannott{\rgo\mr\mv}\me\mo\mo \and
+      \jannott\mr\me\ms\ms
     }{
-      \jannott\repo\me{\obox\mo\mv\ms}{\obox\mo\mv\ms}
+      \jannott\mr\me{\obox\mo\mv\ms}{\obox\mo\mv\ms}
     }
     \and
     \infer{ }{
-      \jannott\repo\me{\meta x}{\mameta {\nlflook\repo\mmeta}}
+      \jannott\mr\me{\meta x}{\mameta {\rlook\mr\mmeta}}
     }
   \end{mathpar}
   \ruleblock{Arguments}
   \begin{mathpar}
     %% args
     \infer{ }{
-      \jannotl\repo\me\ma\mf\lnil\ma\mf
+      \jannotl\mr\me\ma\mf\lnil\ma\mf
     }
     \and
     \infer{
-      \jannott\repo\me\mo\mo \and
-      \jannotl\repo\me{\lncons\mv\mo\ma}\mmf\ma\mma\mmmf
+      \jannott\mr\me\mo\mo \and
+      \jannotl\mr\me{\lncons\mv\mo\ma}\mmf\ma\mma\mmmf
     }{
-      \jannotl\repo\me\ma{\prd\mv\mf\mmf}{\lcons\mo\ma}\mma\mmmf
+      \jannotl\mr\me\ma{\prd\mv\mf\mmf}{\lcons\mo\ma}\mma\mmmf
     }
   \end{mathpar}
   \ruleblock{Head}
   \begin{mathpar}
     %% head
     \infer{ }{
-      \jannoth\repo\me\mo\mo{\elook\me\mo}
+      \jannoth\mr\me\mv\mv{\elook\me\mv}
     }
     \and
     \infer{ }{
-      \jannoth\repo\me\mcf\mcf{\elook\msi\mcf}
+      \jannoth\mr\me\mcf\mcf{\elook\msi\mcf}
     }
     \and
     \infer{ }{
-      \jannoth\repo\me\mco\mco{\elook\msi\mco}
+      \jannoth\mr\me\mco\mco{\elook\msi\mco}
     }
     \and
     \infer{
-      \jannott\repo\me\mo\mo
+      \jannott\mr\me\mo\mo
     }{
-      \jannoth\repo\me\mo\mo{(\typeof\mo)}
+      \jannoth\mr\me\mo\mo{\typeof\mo}
     }
   \end{mathpar}
   \ruleblock{Substitution}
   \begin{mathpar}
     %% subst
     \infer{ }{
-      \jannots\repo\me\snil\snil
+      \jannots\mr\me\snil\snil
     }
     \and
     \infer{
-      \jannott\repo\me\mo\mo \and
-      \jannots\repo\me\ms\ms
+      \jannott\mr\me\mo\mo \and
+      \jannots\mr\me\ms\ms
     }{
-      \jannots\repo\me{\scons\ms\mv\mo}{\scons\ms\mv\mo}
+      \jannots\mr\me{\scons\ms\mv\mo}{\scons\ms\mv\mo}
     }
   \end{mathpar}
   \paragraph{where}
   \inXLFa
   \begin{align*}
-    \typeof{(\lam\mv\mf\mo)} &= \prd\mv\mf{(\typeof\mo)} \\
-    \typeof{(\laapp\mh\ma\mf)} &= \mf
+    \typeof{\lam\mv\mf\mo} &= \prd\mv\mf{(\typeof\mo)} \\
+    \typeof{\obox\mo\mv\ms} &= \typeof\mo \\
+    \typeof{\laapp\mh\ma\mf} &= \mf \\
+    \typeof{\mameta{\mf}} &= \mf
   \end{align*}
   \caption{From \XLF\ to \XLFa: type-annotations on spines}
   \label{fig:XLF_XLFa}
@@ -579,7 +617,7 @@ $\typeof\anonarg$)
 \subsubsection{Non-positional calculus}
 
 \subsection{Interaction with a repository}
-
+\label{sec:interaction}
 % Metathéorie de NLF
 
 % Applications (typage incrémental, quelques premières pistes pour commit/merge)
