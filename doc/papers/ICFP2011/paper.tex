@@ -235,17 +235,20 @@
 \maketitle
 
 \begin{abstract}
+  %% State the problem
   We investigate the problem of writing type-checkers which in the
   ubiquitous situation where it is fed repeatedly with almost the same
-  piece of program can take advantage of previous knowledge to build
-  new derivations. Beyond the obvious gains in terms of performance
-  and availability of type information, we advocate that it is
-  interesting to refine existing models of incremental computation to
-  this particular problem because it allows for more flexibility , the
-  possibility to validate changes \emph{a posteriori}, and it exhibits
-  the semantic nature of incrementality, i.e. the use of a
-  \emph{metalanguage}.
+  piece of program, can take advantage of previous knowledge to build
+  new derivations.
+  %% Say why it’s an interesting problem
+  Beyond the obvious gains in terms of performance and availability of
+  type information, we advocate that it is interesting to refine
+  existing models of incremental computation to this particular
+  problem because it allows for more flexibility, the possibility to
+  validate changes \emph{a posteriori}, and it exhibits the semantic
+  nature of incrementality, i.e. the use of a \emph{metalanguage}.
 
+  %% Say what your solution achieves
   We make use of a variant of \LF, \NLF\ as our metalanguage, and we
   model:
   \begin{itemize}
@@ -256,18 +259,16 @@
     checkout of a previous version as transformations, from the object
     language to \NLF.
   \end{itemize}
-
-  We provide an architecture and a language for repositories to
-  implement a generic incremental type-checker, providing a unifying
-  approach to deal with incrementality in typed programming languages.
-
-%% Four sentences:
-%% State the problem
-%% Say why it’s an interesting problem
-%% Say what your solution achieves
-%% Say what follows from your solution
-
+  In a nutshell, pick a typed language, give me a type-checker and its
+  specification (written in \LF) and I will give you a certified,
+  incremental type-checker. 
+  %% Say what follows from your solution
+  We provide an architecture and a language
+  for repositories to implement a generic incremental type-checker,
+  providing a unifying approach to deal with incrementality in typed
+  programming languages.
 \end{abstract}
+\vfill
 
 \category{CR-number}{subcategory}{third-level}
 
@@ -469,13 +470,14 @@ below. We thus modify the syntax of \XLF\ to obtain \XLFa
 \label{fig:XLFa}
 \end{figure}
 
-Let us move on to the translation (Fig. \ref{fig:XLF_XLFa}). As usual,
-it is parameterized implicitely by a signature $\Sigma$, unchanged
-thus omitted in the rules. It is also indexed by a \emph{repository}
-$\mr$ and two operations: $\rlook\mr\anonarg$ and
-$\rgo\mr\anonarg$. Their definitions is the subject of section
-\ref{sec:interaction}, but consider for the moment that they are
-triggered by the \textsf{Box} and \textsf{Meta} constructions.
+Let us move on to the translation (Fig. \ref{fig:XLF_XLFa}). It is
+presented as a set of syntax-directed inference rules. As usual, it is
+parameterized implicitely by a signature $\Sigma$, unchanged thus
+omitted in the rules. It is also indexed by a \emph{repository} $\mr$
+and two operations: $\rlook\mr\anonarg$ and $\rgo\mr\anonarg$. Their
+definitions is the subject of section \ref{sec:interaction}, but
+consider for the moment that they are triggered by the \textsf{Box}
+and \textsf{Meta} constructions.
 
 You will not be surprized that the structure of the translation
 closely follows the typing rules of \XLF, except that the object
