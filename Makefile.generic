@@ -51,10 +51,10 @@ opt: $(OTARGET)
 byte: $(BTARGET)
 
 %:
-	@ $(OCAMLBUILD) src/$@
+	@ $(OCAMLBUILD) kernel/$@
 
 byte-debug:
-	$(OCAMLBUILD) -tag debug src/$(BTARGET)
+	$(OCAMLBUILD) -tag debug kernel/$(BTARGET)
 
 ifeq ($(strip $(PREFIX)),)
 install uninstall:
@@ -72,7 +72,7 @@ endif
 #######################
 
 headers:
-	for i in src/*.ml src/*.mli src/*.mly; do \
+	for i in kernel/*.ml kernel/*.mli kernel/*.mly; do \
 	   $(HEADACHE) -h admin/header -c admin/headache.cfg $$i; \
         done
 
