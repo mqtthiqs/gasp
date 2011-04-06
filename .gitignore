@@ -4,6 +4,7 @@ gasp.native
 *.vo
 *.glob
 *.aux
+*.out
 *.log
 *.pdf
 userInput.ml
