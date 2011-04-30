@@ -75,8 +75,8 @@ module rec XLFw_XLFn : sig
 end = struct
 
   let rec obj : XLFw.obj -> XLFn.obj = function
-    | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead a)
-    | XLFw.OHead(h,l,a,f) -> XLFn.OHead(ohead h, XLFe_XLFn.args f l, fhead a)
+    | XLFw.OMeta(x,a) -> XLFn.OMeta(x, fhead XLFw.Env.empty a)
+    | XLFw.OHead(h,l,a,f) -> XLFn.OHead(ohead h, XLFe_XLFn.args f l, fhead f a)
     | XLFw.OClos(x,a,t,f) -> XLFn.OLam(x, fam a, obj (XLFe_XLFw.obj f t))
     | XLFw.OBox (t,p,s) -> XLFn.OBox(obj t, p, List.map (fun x, t -> x, obj t) s)
 
@@ -84,12 +84,12 @@ end = struct
     | XLFw.HVar x -> XLFn.HVar x
     | XLFw.HConst c -> XLFn.HConst c
 
-  and fhead = function
-    | XLFw.FConst(c,l) -> XLFn.FConst(c, XLFe_XLFn.args XLFw.Env.empty l)
+  and fhead e = function
+    | XLFw.FConst(c,l) -> XLFn.FConst(c, XLFe_XLFn.args e l)
 
   and fam = function
     | XLFw.FProd(x,a,b) -> XLFn.FProd(x, fam a, fam b)
-    | XLFw.FHead h -> XLFn.FHead (fhead h)
+    | XLFw.FHead h -> XLFn.FHead (fhead XLFw.Env.empty h)
 
   let rec kind = function
     | XLFw.KType -> XLFn.KType
