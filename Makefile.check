@@ -1,19 +1,27 @@
 # -*- Makefile -*-
 
+TARGETOPTS=
+
+ifdef DEBUG
+	TARGETOPTS += --debug
+else
+	TARGETOPTS +=
+endif
+
 %+.gasp: %+.tm %.gasp ${TARGET}
 	@echo COMMIT $<
 	@cp  $*.gasp $@
-	@./${TARGET} commit $< --repo $@ || (rm $@; false)
+	@./${TARGET} ${TARGETOPTS} commit $< --repo $@ || (rm $@; false)
 	@echo CHECK $<
-	@./${TARGET} check --repo $@ || (rm $@; false)
+	@./${TARGET} ${TARGETOPTS} check --repo $@ || (rm $@; false)
 	@echo CHECKOUT $<
-	@./${TARGET} checkout --repo $@ || (rm $@; false)
+	@./${TARGET} ${TARGETOPTS} checkout --repo $@ || (rm $@; false)
 
 %.gasp : %.elf ${TARGET}
 	@echo INIT $<
-	@./${TARGET} init $< --repo $@
+	@./${TARGET} ${TARGETOPTS} init $< --repo $@
 	@echo CHECK $<
-	@./${TARGET} check --repo $@ || (rm $@; false)
+	@./${TARGET} ${TARGETOPTS} check --repo $@ || (rm $@; false)
 
 check-clean:
 	-rm tests/*.gasp
