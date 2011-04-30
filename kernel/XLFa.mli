@@ -34,5 +34,6 @@ module Pp : sig
   val obj : formatter -> obj -> unit
   val fam : formatter -> fam -> unit
   val kind : formatter -> kind -> unit
+  val args : formatter -> args -> unit
 end
 

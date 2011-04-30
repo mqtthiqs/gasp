@@ -16,10 +16,10 @@ module Pp = struct
 
   let kind_prec = function
     | KType -> 0
-    | KProd _ -> 30
+    | KProd _ -> 20
   let fam_prec = function
-    | FConst _ -> 30
-    | FProd _ -> 30
+    | FConst _ -> 20
+    | FProd _ -> 20
   let obj_prec = function
     | OLam _ -> 20
     | OHead _ -> 20
@@ -31,7 +31,7 @@ module Pp = struct
     | HApp _ -> 30
   let args_prec = function
     | [] -> 0
-    | _::_ -> 30
+    | _::_ -> 20
   let entry_prec = function
     | FDecl _ -> 50
     | ODecl _ -> 50
@@ -51,16 +51,16 @@ module Pp = struct
     | Kind k -> begin match k with
 	| KType -> fprintf fmt "@[type@]"
 	| KProd (x,a,k) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
-	    variable x (pp (<)) (Fam a) (pp (<=)) (Kind k)
+	    variable x (pp (<=)) (Fam a) (pp (<=)) (Kind k)
       end
     | Fam a -> begin match a with
 	| FProd (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
-	    variable x (pp (<)) (Fam a) (pp (<=)) (Fam b)
+	    variable x (pp (<=)) (Fam a) (pp (<=)) (Fam b)
 	| FConst (c,l,k) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
-	    constant c (pp (<=)) (Args l) (pp (<)) (Kind k)
+	    constant c (pp (<=)) (Args l) (pp (<=)) (Kind k)
       end
     | Head h -> begin match h with
-	| HApp t -> fprintf fmt "@[%a@]" (pp (<)) (Obj t)
+	| HApp t -> fprintf fmt "@[%a@]" (pp (<=)) (Obj t)
 	| HVar x -> variable fmt x
 	| HConst x -> constant fmt x
       end
@@ -68,7 +68,7 @@ module Pp = struct
 	| OLam(x,a,t) -> fprintf fmt "@[[%a@ :@ %a]@ %a@]" 
 	    variable x (pp (<=)) (Fam a) (pp (<=)) (Obj t)
 	| OHead(h,l,a) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
-	    (pp (<=)) (Head h) (pp (<=)) (Args l) (pp (<)) (Fam a)
+	    (pp (<=)) (Head h) (pp (<=)) (Args l) (pp (<=)) (Fam a)
 	| OMeta(x,a) -> fprintf fmt "@[%a@ :@ %a@]" definition x (pp (<=)) (Fam a)
 	| OBox (t,p,s) -> 
 	    let pp_subst = pr_list (fun _ _ -> ()) 
