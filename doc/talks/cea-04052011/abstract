@@ -1,0 +1,23 @@
+A logical framework for incremental type-checking
+-------------------------------------------------
+
+In this talk, I will present an ongoing work on a variant of the LF
+metalanguage, suitable as the core data structure of an /incremental
+type-checker/. Such a type-checker would allow eventually to provide
+in turn different versions of a typing derivation, of which only the
+differing sub-derivations are to be rechecked. It is the key
+ingredient for designing an enhanced interaction model with our
+well-known coding/proving tools: non-linear user interaction, typed
+version control system, type-directed programming...
+
+Designing such a type-checker involves feeding it with a /repository/
+containing the previous version(s) of the derivation, and making it
+return the updated repository. Following popular VCS systems, we
+explore a data-oriented approach to versioning and use the LF
+metalanguage for representing derivations in the repository: the reuse
+of a piece of sub-derivation is encoded as a cut in LF, and subsequent
+versions as object-level data structures. For this, we need to modify
+only slightly the usual syntax and metatheory of LF. I will discuss
+the overall architecture involved in this design, and focus on the
+repository and the interaction with it.
+
