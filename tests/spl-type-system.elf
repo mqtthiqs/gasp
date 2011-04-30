@@ -66,8 +66,8 @@ subenv_evidence : {E1 : tenv } { E2 : tenv } subenv E1 E2.
 %% Equivalence modulo associativity
 %%---------------------------------
 equiv : tenv -> program -> tenv -> program -> type.
-equiv_evidence : 
-  { E1 : tenv } { P1 : tenv } { E2 : tenv } { P2 : tenv } 
+equiv_evidence :
+  { E1 : tenv } { P1 : program } { E2 : tenv } { P2 : program }
   equiv E1 P1 E2 P2.
 
 %% Typing rules
@@ -76,7 +76,7 @@ tc_declprog :
   { E1 : tenv } { d : declaration } { E2 : tenv } { H : tc_declaration E1 d E2 }
   tc_program E1 (declprog d) E2.
 
-tc_emptyprog : 
+tc_emptyprog :
   { E : tenv } 
   tc_program E emptyprog E.
 
@@ -88,12 +88,12 @@ tc_joinprog :
   { H3 : tc_program E' P2 E2 }
   tc_program E (joinprog P1 P2) (joinenv E1 E2).
 
-tc_valdecl : 
+tc_valdecl :
   { E : tenv } { x : identifier } { ty : typ } { e : expression } 
   { H : tc_expression E e ty } 
-  tc_declaration E (valdecl (bind x ty) e) (bindval x ty).
+  tc_declaration E (valdecl (bind x ty) e) (bindval (bind x ty) E).
 
-tc_eint : 
+tc_eint :
   { E : tenv } { x : int } 
   tc_expression E (eint x) tint.
 
