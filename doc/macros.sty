@@ -1,0 +1,251 @@
+% Theorem
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}{Lemma}
+%\newtheorem{example}{Example}
+
+% Various
+\newcommand\gray[1]{\textcolor{gray}{#1}}
+\newcommand\cit[1]{[\textcolor{blue}{#1}]}
+\newcommand\To{\Rightarrow}
+\newcommand\too{\longrightarrow}
+\newcommand\Too{\Longrightarrow}
+\newcommand\nat{\mathbb N}
+\newcommand\FV[1]{\mathsf{FV}({#1})}
+\newcommand\notinfv[2]{{#1}\notin\FV{#2}}
+\newcommand\itplus{\textcolor{green!60!black}{\textbf{\textsf{+}}}}
+\newcommand\itminus{\textcolor{red}{\textbf{\textsf{--}}}}
+\newcommand\assertfalse{\textsf{assert false}}
+
+\newenvironment{smallright}{
+  \begin{flushright}
+    \footnotesize
+  }{
+  \end{flushright}
+}
+\newcommand\memph[1]{\boxed{#1}}
+\newcommand\ruleblock[1]{\textit{#1}}
+\newcommand\anonarg{\cdot}
+
+% Remarks
+\newcommand\rem[2]{\textcolor{Mahogany}{{\textsf{#1}} $\triangleright$
+    \textsl{#2}}}
+\newcommand\mrem[1]{\rem{M}{#1}}
+\newcommand\yrem[1]{\rem{Y}{#1}}
+
+% Constructors
+\newcommand\pair[2]{{#1},{#2}}
+
+% Grammars
+\newcommand\gor{\ |\ }
+\newcommand\gequal{\ ::=\ }
+
+% Variables
+\newcommand\var[1]{#1}
+\newcommand\meta[1]{\textsf{#1}}
+\newcommand\typ[2]{{#1}:{#2}}
+
+\newcommand\mv{x}
+\newcommand\mmv{y}
+\newcommand\mmmv{z}
+
+\newcommand\mmeta{\meta x}
+\newcommand\mmmeta{\meta y}
+\newcommand\mmmmeta{\meta z}
+\newcommand\mameta[1]{\typ{\mmeta}{#1}}
+
+\newcommand\mco{c}
+\newcommand\mmco{c'}
+\newcommand\mcf{a}
+\newcommand\mmcf{a'}
+
+\newcommand\repo[1]{\mathcal{#1}}
+\newcommand\mr{\repo R}
+\newcommand\mmr{\repo{R'}}
+
+% Terms
+\newcommand\postbinder{\cdot}
+\newcommand\prd[2]{\Pi{#1}:{#2}\postbinder}
+\newcommand\prdi[1]{\forall{#1}\postbinder}
+\newcommand\app[1]{{#1}\ }
+\newcommand\tlam[2]{\lambda{#1}:{#2}\postbinder}
+\newcommand\ulam[1]{\lambda{#1}\postbinder}
+\newcommand\letb[2]{\mathsf{let}\ {#1}={#2}\ \mathsf{in}\ }
+\newcommand\lam{\tlam}
+\newcommand\clos[2]{{#1}[{#2}]}
+\newcommand\lclos[4]{\clos{\tlam{#1}{#2}{#3}}{#4}}
+
+% Sorts
+\newcommand\srt[1]{\mathsf{#1}}
+\newcommand\type{\srt *}
+\newcommand\kind{\srt \Box}
+
+% Sequent-like application
+\newcommand\lapp[2]{{#1}[{#2}]}
+\newcommand\laapp[3]{{#1}[{#2}]:{#3}}
+\newcommand\laaapp[5]{\laapp{#1}{#2}{\laapp{#3}{#4}{#5}}}
+\newcommand\lnil{\cdot}
+\newcommand\lcons[2]{{#1};{#2}}
+\newcommand\lsing[1]{{#1}}
+\newcommand\lncons[3]{{#1}={#2};{#3}}
+\newcommand\lnsing[2]{{#1}={#2}}
+
+% Environments
+\newcommand\enil\cdot
+\newcommand\eent[1]{[{#1}]}
+\newcommand\econs[2]{{#1}\eent{#2}}
+\newcommand\esing[1]{\econs{}{#1}}
+\newcommand\emerge[2]{{#1}\cdot{#2}}
+\newcommand\elook[2]{{#1}({#2})}
+\newcommand\elookdef[3]{{#1}({#2}) = {#3}}
+\newcommand\elookdecl[3]{{#1}({#2}) : {#3}}
+\newcommand\ebind[2]{\econs{#1}{#2}}
+\newcommand\ebinddef[3]{\econs{#1}{{#2}={#3}}}
+\newcommand\ebinddecl[3]{\econs{#1}{{#2}:{#3}}}
+\newcommand\edecls[1]{\mathsf{decls}({#1})}
+\newcommand\edefs[1]{\mathsf{defs}({#1})}
+
+% Substitutions
+\newcommand\snil\enil
+\newcommand\sent[2]{[{#1}={#2}]}
+\newcommand\scons[3]{{#1}\sent{#2}{#3}}
+\newcommand\slook[2]{{#1}({#2})}
+\newcommand\snolook[2]{\slook{#1}{#2}\neq}
+\newcommand\slookdef\elookdef
+
+% Term operations
+\newcommand\subst[3]{{#1}\{{#2}/{#3}\}}
+\newcommand\repl[3]{\subst{#1}{#2}{#3}}
+\newcommand\conv[2]{{#1}\equiv{#2}}
+
+% Languages
+\newcommand\lang[1]{\text{\rm\textsf{#1}}}
+\newcommand\LF{\lang{LF}}
+\newcommand\XLF{\lang{XLF}}
+\newcommand\XLFa{\lang{XLF$_\lang A$}}
+\newcommand\XLFe{\lang{XLF$_\lang E$}}
+\newcommand\XLFw{\lang{XLF$_\lang W$}}
+\newcommand\XLFn{\lang{XLF$_\lang N$}}
+\newcommand\NLF{\lang{NLF}}
+
+\newcommand\XLFmod[1]{#1}
+\newcommand\XLFamod[1]{\underline{#1}}
+\newcommand\XLFemod[1]{\overline{#1}}
+\newcommand\XLFwmod[1]{\dot{#1}}
+\newcommand\XLFnmod[1]{\ddot{#1}}
+
+\newcommand\xlfwscons[4]{\scons{#1}{#2}{\clos{\inXLFe{#3}}{#4}}}
+
+\global\def\thelangmod{UNDEFINED}
+\def\inXLF{\def\thelangmod{\XLFmod}}
+\def\inXLFa{\def\thelangmod{\XLFamod}}
+\def\inXLFe{\def\thelangmod{\XLFemod}}
+\def\inXLFw{\def\thelangmod{\XLFwmod}}
+\def\inXLFn{\def\thelangmod{\XLFnmod}}
+
+% Metavariables (as appear in the rules & syntax description)
+
+\newcommand\mk{\thelangmod{K}}
+\newcommand\mmk{\thelangmod{K'}}
+\newcommand\mmmk{\thelangmod{K''}}
+\newcommand\mf{\thelangmod{A}}
+\newcommand\mmf{\thelangmod{B}}
+\newcommand\mmmf{\thelangmod{C}}
+\newcommand\mmmmf{\thelangmod{D}}
+\newcommand\mo{\thelangmod{t}}
+\newcommand\mmo{\thelangmod{u}}
+\newcommand\mmmo{\thelangmod{v}}
+\newcommand\mh{\thelangmod{h}}
+\newcommand\mmh{\thelangmod{h'}}
+\newcommand\mmmh{\thelangmod{h''}}
+\newcommand\ma{\thelangmod{l}}
+\newcommand\mma{\thelangmod{m}}
+\newcommand\mmma{\thelangmod{n}}
+\newcommand\ms{\thelangmod{\sigma}}
+\newcommand\mms{\thelangmod{\rho}}
+\newcommand\mmms{\thelangmod{\theta}}
+\newcommand\me{\thelangmod{\Gamma}}
+\newcommand\mme{\thelangmod{\Delta}}
+\newcommand\mmme{\thelangmod{\Xi}}
+\newcommand\msi{\thelangmod{\Sigma}}
+\newcommand\mc{\thelangmod{\eta}}
+\newcommand\mmc{\thelangmod{\eta'}}
+\newcommand\mmmc{\thelangmod{\eta_0}}
+
+% Judgements
+\newcommand\jindex[3]{{#2}\vdash_{#1}{#3}}
+\newcommand\jlang[3]{{#2}\vdash_{\lang{#1}}{#3}}
+\newcommand\jlangt[4]{{#2}\vdash_{\lang{#1}}{#3}:{#4}}
+\newcommand\jlangA[4]{{#2}\vdash_{\lang{#1}}{#3}:{#4}}
+\newcommand\jlangK[3]{{#2}\vdash_{\lang{#1}}{#3}\mathsf{\ type}}
+
+\newcommand\jlft[3]{\jlangt{\LF}{#1}{#2}{#3}}
+\newcommand\jlfA[3]{\jlangA{\LF}{#1}{#2}{#3}}
+\newcommand\jlfK[2]{\jlangK{\LF}{#1}{#2}}
+
+\newcommand\jxlft[3]{\inXLF\jlangt{\XLF}{#1}{#2}{#3}}
+\newcommand\jxlfA[3]{\inXLF\jlangA{\XLF}{#1}{#2}{#3}}
+\newcommand\jxlfK[2]{\inXLF\jlangK{\XLF}{#1}{#2}}
+\newcommand\jxlfa[4]{\inXLF\jlangt{\XLF}{\pair{#1}{#2}}{#3}{#4}}
+\newcommand\jxlfh\jxlft
+
+\newcommand\jnlft{\jlangt{}}
+\newcommand\jnlfA[2]{\jlangA{}{#1}{#2}}
+\newcommand\jnlfK[1]{{#1}\ \mathsf{kind}} %on peut pas utiliser \jlangK
+
+\newcommand\jnlfargs\jnlft
+\newcommand\jnlfconvA[3]{\jnlfA{#1}{\conv{#2}{#3}}}
+\newcommand\jnlfconvt[4]{\jnlft{#1}{\conv{#2}{#3}}{#4}}
+\newcommand\jnlfconve[3]{\jlang{}{#1}{\conv{#2}{#3}}}
+
+\newcommand\jtrans[2]{{#1}\to{#2}}
+\newcommand\jtranse[3]{\jlang{}{#1}{\jtrans{#2}{#3}}}
+
+\newcommand\jannot[3]{\jtranse{\inXLFa{#1}}{\inXLF{#2}}{\inXLFa{#3}}}
+\newcommand\jannotK{\jannot}
+\newcommand\jannotA{\jannot}
+\newcommand\jannott{\jannot}
+\newcommand\jannoth[4]{\jannot{#1}{#2}{{#3} : {#4}}}
+\newcommand\jannotl[6]{\jannot{\pair{#1}{{#2}:{#3}}}{#4}{{#5}:{#6}}}
+\newcommand\jannots{\jannot}
+\newcommand\jannote{\jannot}
+
+\newcommand\jcompose[3]{\jtranse{\inXLFa{#1}}{\inXLF{#2}}{\inXLFn{#3}}}
+\newcommand\jcomposeK\jcompose
+\newcommand\jcomposeA\jcompose
+\newcommand\jcomposet\jcompose
+\newcommand\jcomposee\jcompose
+
+\newcommand\whclos[2]{\clos{\inXLFe{#1}}{#2}}
+\newcommand\jwh[3]{\jtranse{\inXLFw{#1}}{\inXLFe{#2}}{\inXLFw{#3}}}
+\newcommand\jwhK[2]{\jtrans{\inXLFe{#1}}{\inXLFw{#2}}}
+\newcommand\jwhA\jwh
+\newcommand\jwht\jwh
+\newcommand\jwhl\jwh
+\newcommand\jwhh\jwh
+\newcommand\jwhr[5]{\jtranse{\inXLFw\pair{#1}{\whclos{#3}{#2}}}{\inXLFe{#4}}{#5}}
+
+\newcommand\jrb[2]{{\inXLFw{#1}}\leadsto{\inXLFn{#2}}}
+\newcommand\jrbK\jrb
+\newcommand\jrbA\jrb
+\newcommand\jrbt\jrb
+\newcommand\jrbl\jrb
+\newcommand\jrbh\jrb
+
+\newcommand\jnorm[2]{{\inXLFe{#1}}\Rightarrow{\inXLFn{#2}}}
+\newcommand\jnormt[3]{\jlang{}{\inXLFw{#1}}{\jnorm{#2}{#3}}}
+\newcommand\jnorma\jnormt
+\newcommand\jnormh\jnormt
+\newcommand\jnormA\jnorm
+\newcommand\jnormK\jnorm
+
+% Simple judgements with no environments (NLF)
+\newcommand\jwf[1]{{#1}\ \mathsf{wf}}
+
+% Functions
+\newcommand\function[2]{{\rm\mathsf{#1}}({#2})}
+\newcommand\ftypeof[1]{\function{typeof}{\inXLFa{#1}}}
+
+\newcommand\fexpand[1]{\llbracket{\inXLFa{#1}}\rrbracket}
+\newcommand\jexpand[2]{\fexpand{\inXLFa{#1}}&={\inXLFe{#2}}}
+
+\newcommand\freify[1]{\function{reify}{#1}}
