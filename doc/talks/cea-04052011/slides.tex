@@ -112,9 +112,9 @@ Today, we use:
   \begin{block}{Applications}
     \small
     \begin{itemize}
-    \item non-linear user interaction
-    \item type-directed programming
+    \item non-(linear$|$batch) user interaction
     \item typed version control systems
+    \item type-directed programming
     \item tactic languages
     \end{itemize}
   \end{block}
@@ -226,9 +226,9 @@ Today, we use:
   \pause
 
   \begin{block}{More precisely}
-    Given a well-typed $\mr : repository$ and a $\delta : change$
-    and $$\mathsf{apply} : repository \to change \to term\ ,$$an
-    incremental type-checker $$\mathsf{tc} : repository \to change \to
+    Given a well-typed $\mr : repository$ and a $\delta : delta$
+    and $$\mathsf{apply} : repository \to delta \to term\ ,$$an
+    incremental type-checker $$\mathsf{tc} : repository \to delta \to
     \alt<-2>{bool}{repository\ option} $$ decides if $\delta(\mr)$ is
     well-typed in $O(|\delta|)$. \\
     {\hfill\scriptsize (and not $O(|\delta(\mr)|)$)}
@@ -274,7 +274,7 @@ and infer env t =
     \begin{enumerate}
     \item[\itplus] lightweight, efficient implementation
       \pause
-    \item[\itplus] $repository = \mathsf{table}$, $change =
+    \item[\itplus] $repository = \mathsf{table}$, $delta =
       \mathsf{t}$
       \pause
     \item [\itminus] syntactic comparison (no quotient on judgements) \\
@@ -307,7 +307,7 @@ and infer env t =
 
 \section{Our approach}
 
-\subsection{A popular storage model for repositories}
+\subsection{The data-oriented way}
 
 \begin{frame}{A popular storage model for repositories}
   \begin{onlyenv}<1-7>
@@ -322,152 +322,151 @@ and infer env t =
     \end{center}
   \end{onlyenv}
   \begin{onlyenv}<8->
-    The repository $R$ is a pair $(\Delta, x)$:
-    \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
-    \gor \mathsf{Blob}\ string)\]
-    with the invariants:
-    \begin{itemize}
-    \item if $(x, \mathsf{Commit}\ (y,z)) \in\Delta$ then
-      \begin{itemize}
-      \item $(y, \mathsf{Tree}\ t)\in\Delta$
-      \item $(z, \mathsf{Commit}\ (t,v))\in\Delta$
-      \end{itemize}
-    \item if $(x, \mathsf{Tree}(\vec y))\in\Delta$ then \\
-      for all $y_i$, either $(y_i, \mathsf{Tree}(\vec z))$ or $(y_i,
-      \mathsf{Blob}(s))\in\Delta$
-    \end{itemize}
-    \pause
+    \begin{onlyenv}<-8>
+      The repository $R$ is a pair $(\Delta, x)$:
+      \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
+      \gor \mathsf{Blob}\ string)\]
+      \begin{block}{Invariants}
+        \begin{itemize}
+        \item $\Delta$ forms a DAG
+        \item if $(x, \mathsf{Commit}\ (y,z)) \in\Delta$ then
+          \begin{itemize}
+          \item $(y, \mathsf{Tree}\ t)\in\Delta$
+          \item $(z, \mathsf{Commit}\ (t,v))\in\Delta$
+          \end{itemize}
+        \item if $(x, \mathsf{Tree}(\vec y))\in\Delta$ then \\
+          for all $y_i$, either $(y_i, \mathsf{Tree}(\vec z))$ or
+          $(y_i, \mathsf{Blob}(s))\in\Delta$
+        \end{itemize}
+      \end{block}
+    \end{onlyenv}
+    \begin{onlyenv}<9->
+      \begin{block}{Operations}
+        \begin{description}
+        \item[\texttt{commit $\delta$}]
+          \begin{itemize}
+          \item extend the database with \textsf{Tree}/\textsf{Blob}
+            objects
+          \item add a \textsf{Commit} object
+          \item update head
+          \end{itemize}
+        \item[\texttt{checkout $v$}]
+          \begin{itemize}
+          \item follow $v$ all the way to the \textsf{Blob}s
+          \end{itemize}
+        \item[\texttt{diff $v_1$ $v_2$}]
+          \begin{itemize}
+          \item follow simultaneously $v_1$ and $v_2$
+          \item if object names are equal, stop (content is equal)
+          \item otherwise continue
+          \end{itemize}
+        \item[\dots]
+        \end{description}
+      \end{block}
+    \pause\pause
     \begin{center}
-      \vspace{4em} {\Large Let's do the same with \emph{proofs}}
-     \end{center}
+      \vspace{2em} {\Large Let's do the same with \emph{proofs}}
+    \end{center}
+    \end{onlyenv}
   \end{onlyenv}
 \end{frame}
 
 \begin{frame}[fragile]{A \emph{typed} repository of proofs}
-  \begin{onlyenv}<1-5>
-    \begin{center}
-      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp1.pdf}}%
-      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp2.pdf}}%
-      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp3.pdf}}%
-      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp4.pdf}}%
-      \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp5.pdf}}%
-    \end{center}
-  \end{onlyenv}
-  \begin{onlyenv}<6-9>
-    \small
-    \begin{overlayarea}{0pt}{\textheight}
-      \begin{align*}
-        x &= \ldots\ : A\wedge B\vdash C \\
-        y &= \ldots\ :\ \vdash A \\
-        z &= \ldots\ :\ \vdash B \\
-        t &= \lam a {A\wedge B} x :\ \vdash A\wedge B\to C \\
-        u &= (y, z) :\ \vdash A\wedge B \\
-        v &= \app t u :\ \vdash C \\
-        w &= \mathsf{Commit}(v,w1) : \mathsf{Version} \only<7>{
-          \alert{\qquad,\quad w} }
-        \only<8-9>{ \\
-          p &=\ldots\ :\ \vdash B \\
-          q &= (y, p) :\ \vdash A \wedge B \\
-          r &= \app t q :\ \vdash C \\
-          s &= \mathsf{Commit}(r,w) : \mathsf{Version} \only<9>{
-            \alert{\qquad,\quad s} } }
-      \end{align*}
-    \end{overlayarea}
-  \end{onlyenv}
-  \begin{onlyenv}<10->
-\footnotesize
-\begin{uncoverenv}<12>
-\begin{lstlisting}
-...
-val is : env -> prop -> type
-val conj : prop -> prop -> prop
-val pair : is 'a 'b -> is 'a 'c -> is 'a (conj 'b 'c)
-val version : type
-val commit : is nil C -> version -> version
-...
-\end{lstlisting}
-\end{uncoverenv}
-\begin{overlayarea}{\textwidth}{\textheight}
-\begin{onlyenv}<10>
-\begin{lstlisting}
-let x = ... : is (cons (conj A B) nil) C in
-  let y = ... : is nil A in
-    let z = ... : is nil B in
-      let t = lam (conj A B) x : is nil (arr (conj A B) C) in
-        let u = pair y z : is nil (conj A B) in
-          let v = app t u : is nil C in
-            let w = commit v w1 : version in
-              w
-\end{lstlisting}
-\end{onlyenv}
-\begin{onlyenv}<11->
-\begin{lstlisting}
-let x = ... : is (cons (conj A B) nil) C in
-  let y = ... : is nil A in
-    let z = ... : is nil B in
-      let t = lam (conj A B) x : is nil (arr (conj A B) C) in
-        let u = pair y z : is nil (conj A B) in
-          let v = app t u : is nil C in
-            let w = commit v w1 : version in
-              let p = ... : is nil B
-                let q = pair y p : is nil (conj A B) in
-                  let r = t q : is nil C
-                    let s = commit r w : version in
-                      s
-\end{lstlisting}
-\end{onlyenv}
-\end{overlayarea}
-  \end{onlyenv}
+  \begin{center}
+    \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp1.pdf}}%
+    \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp2.pdf}}%
+    \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp3.pdf}}%
+    \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp4.pdf}}%
+    \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp5.pdf}}%
+  \end{center}
+\end{frame}
+
+\begin{frame}{Towards a metalanguage of proof repository}
+  \begin{block}{New issues \emph{wrt.} directory storage}
+    \begin{itemize}
+    \item annotation of proof steps
+    \item type-checking
+    \item dealing with binders
+    \end{itemize}
+  \end{block}
+  \begin{block}{Remark}
+    We need extra-logical features:
+    \begin{itemize}
+    \item naming of all proof steps
+    \item adressing sub-proofs
+    \item checking deltas (proofs with red links)
+    \item versioning
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \subsection{Logical framework}
 
 \begin{frame}{\gray{A} logical framework \gray{for incremental type-checking}}
-  LF \cit{Harper et al. 1992} (a.k.a. $\lambda\Pi$) provides a {\bf meta-logic} to represent
-  and validate syntax, rules and proofs of an \textbf{object language},
-  by means of a typed $\lambda$-calculus.
+  \begin{onlyenv}<-2>
+    LF \cit{Harper et al. 1992} (a.k.a. $\lambda\Pi$) provides a {\bf
+      meta-logic} to represent and validate syntax, rules and proofs
+    of an \textbf{object language}, by means of a typed
+    $\lambda$-calculus.
 
-  \begin{description}
-  \item[Dependent types] to express object-judgements
-  \item[Signature] separation from terms
-  \item[HOAS] to easily manipulate hypothesis
-  \item[Stratification] into terms (syntax/proofs), types (syntactic
-    categories/statements), kinds (types of types)
-  \end{description}
-  \pause
-  \begin{example}
-    \scriptsize
-    \[
-    \begin{array}{c}
-      [x:A]\\
-      \vdots\\
-      t : B \\\hline
-      \ulam x t : A\to B
-    \end{array}
-    \qquad\leadsto\qquad
-    \begin{array}{l}
-      \prd {A,B}{ty} \prd t {tm\to tm} \\
-      (\prd x {tm} {\textsf{is}\ x\ A} \to \textsf{is}\ (t\ x)\ B) \to \\
-      \textsf{is}\ (\textsf{lam}\ A\ (\ulam x t\ x))(\textsf{arrow}\ A\ B)
-    \end{array}
-    \]
-  \end{example}
-\end{frame}
-
-\begin{frame}{\gray{A} logical framework \gray{for incremental type-checking}}
-  \begin{block}{Original purpose}
-    \begin{itemize}
-    \item encode language \& typing rules (signature)
-    \item prove inductive properties (signature)
-    \item verify well-typing, termination \& coverage
-    \end{itemize}
-  \end{block}
-  \begin{block}{Our use}
-    \begin{itemize}
-    \item encode language \& typing rules (signature)
-    \item write object language typing derivation (term)
-    \end{itemize}
-  \end{block}
+    \begin{description}
+    \item[Dependent types] to express object-judgements
+    \item[Signature] separation from terms
+    \item[HOAS] to easily manipulate hypothesis
+    \end{description}
+    \pause
+    \begin{example}
+      \scriptsize
+      \[
+      \begin{array}{c}
+        [x:A]\\
+        \vdots\\
+        t : B \\\hline
+        \ulam x t : A\to B
+      \end{array}
+      \qquad\leadsto\qquad
+      \begin{array}{l}
+        \prd {A,B}{ty} \prd t {tm\to tm} \\
+        (\prd x {tm} {\textsf{is}\ x\ A} \to \textsf{is}\ (t\ x)\ B) \to \\
+        \textsf{is}\ (\textsf{lam}\ A\ (\ulam x t\ x))(\textsf{arrow}\ A\ B)
+      \end{array}
+      \]
+    \end{example}
+  \end{onlyenv}
+  \begin{onlyenv}<3>
+    \begin{block}{Syntax}
+      \inXLF
+      \begin{align*}
+        \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
+        \mf &\gequal { \prd\mv\mf\mf \gor \app\mf\mo \gor \mcf } \\
+        \mo &\gequal { \lam\mv\mf\mo \gor \app\mo\mo \gor \mv \gor \mco } \\[0.5em]
+%        \me &\gequal { \enil \gor \ebinddecl \Gamma\mv\mf } \\
+        \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
+          \ebinddecl\msi\mcf\mk }
+      \end{align*}
+    \end{block}
+    \begin{block}{Judgements}
+      
+    \end{block}
+  \end{onlyenv}
+  \begin{onlyenv}<4->
+    \begin{block}{\textsf{Twelf}'s use}
+      \begin{enumerate}
+      \item encode language \& typing rules (signature)
+      \item prove inductive properties (signature)
+      \item verify well-typing, termination \& coverage
+      \end{enumerate}
+    \end{block}
+    \pause\pause
+    \begin{block}{Our use}
+      \begin{enumerate}
+      \item encode language \& typing rules (signature)
+      \item write object language derivation deltas (term)
+      \item check deltas \emph{wrt.} signature
+      \item GOTO 2
+      \end{enumerate}
+    \end{block}
+  \end{onlyenv}
 \end{frame}
 
 %  But
@@ -511,6 +510,79 @@ let x = ... : is (cons (conj A B) nil) C in
 %   {\footnotesize (from inside and from outside)}
 % \end{itemize}
 % \end{frame}
+
+
+
+
+
+
+
+
+%   \begin{onlyenv}<6-9>
+%     \small
+%     \begin{overlayarea}{0pt}{\textheight}
+%       \begin{align*}
+%         x &= \ldots\ : A\wedge B\vdash C \\
+%         y &= \ldots\ :\ \vdash A \\
+%         z &= \ldots\ :\ \vdash B \\
+%         t &= \lam a {A\wedge B} x :\ \vdash A\wedge B\to C \\
+%         u &= (y, z) :\ \vdash A\wedge B \\
+%         v &= \app t u :\ \vdash C \\
+%         w &= \mathsf{Commit}(v,w1) : \mathsf{Version} \only<7>{
+%           \alert{\qquad,\quad w} }
+%         \only<8-9>{ \\
+%           p &=\ldots\ :\ \vdash B \\
+%           q &= (y, p) :\ \vdash A \wedge B \\
+%           r &= \app t q :\ \vdash C \\
+%           s &= \mathsf{Commit}(r,w) : \mathsf{Version} \only<9>{
+%             \alert{\qquad,\quad s} } }
+%       \end{align*}
+%     \end{overlayarea}
+%   \end{onlyenv}
+%   \begin{onlyenv}<10->
+% \footnotesize
+% \begin{uncoverenv}<12>
+% \begin{lstlisting}
+% ...
+% val is : env -> prop -> type
+% val conj : prop -> prop -> prop
+% val pair : is 'a 'b -> is 'a 'c -> is 'a (conj 'b 'c)
+% val version : type
+% val commit : is nil C -> version -> version
+% ...
+% \end{lstlisting}
+% \end{uncoverenv}
+% \begin{overlayarea}{\textwidth}{\textheight}
+% \begin{onlyenv}<10>
+% \begin{lstlisting}
+% let x = ... : is (cons (conj A B) nil) C in
+%   let y = ... : is nil A in
+%     let z = ... : is nil B in
+%       let t = lam (conj A B) x : is nil (arr (conj A B) C) in
+%         let u = pair y z : is nil (conj A B) in
+%           let v = app t u : is nil C in
+%             let w = commit v w1 : version in
+%               w
+% \end{lstlisting}
+% \end{onlyenv}
+% \begin{onlyenv}<11->
+% \begin{lstlisting}
+% let x = ... : is (cons (conj A B) nil) C in
+%   let y = ... : is nil A in
+%     let z = ... : is nil B in
+%       let t = lam (conj A B) x : is nil (arr (conj A B) C) in
+%         let u = pair y z : is nil (conj A B) in
+%           let v = app t u : is nil C in
+%             let w = commit v w1 : version in
+%               let p = ... : is nil B
+%                 let q = pair y p : is nil (conj A B) in
+%                   let r = t q : is nil C
+%                     let s = commit r w : version in
+%                       s
+% \end{lstlisting}
+% \end{onlyenv}
+% \end{overlayarea}
+%   \end{onlyenv}
 
 \end{document}
 
