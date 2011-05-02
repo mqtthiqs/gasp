@@ -217,23 +217,29 @@ Today, we use:
 
 \begin{frame}{\gray{A logical framework for} incremental
     \gray{type-checking}}
-  \inXLF
-  \begin{description}
-  \item[Goal] Type-check a large derivation taking
-    advantage of the knowledge from type-checking previous versions
-  \item[Idea] Remember all derivations!
-  \end{description}
-  \pause
-
-  \begin{block}{More precisely}
-    Given a well-typed $\mr : repository$ and a $\delta : delta$
-    and $$\mathsf{apply} : repository \to delta \to term\ ,$$an
-    incremental type-checker $$\mathsf{tc} : repository \to delta \to
-    \alt<-2>{bool}{repository\ option} $$ decides if $\delta(\mr)$ is
-    well-typed in $O(|\delta|)$. \\
-    {\hfill\scriptsize (and not $O(|\delta(\mr)|)$)}
-  \end{block}
-  \pause
+  \begin{onlyenv}<-3>
+    \begin{description}
+    \item[Goal] Type-check a large derivation taking advantage of the
+      knowledge from type-checking previous versions
+    \item[Idea] Remember all derivations!
+    \end{description}
+    \pause \inXLF
+    \begin{block}{More precisely}
+      Given a well-typed $\mr : repository$ and a $\delta : delta$
+      and $$\mathsf{apply} : repository \to delta \to term\ ,$$an
+      incremental type-checker $$\mathsf{tc} : repository \to delta
+      \to \alt<-2>{bool}{repository\ option} $$ decides if
+      $\delta(\mr)$ is
+      well-typed in $O(|\delta|)$. \\
+      {\hfill\scriptsize (and not $O(|\delta(\mr)|)$)}
+    \end{block}
+  \end{onlyenv}
+  \begin{onlyenv}<4->
+    from \\
+    {\centering\includegraphics[width=0.5\textwidth]{images/tc-classic.png}\\}
+    to \\
+    {\centering\includegraphics[width=0.5\textwidth]{images/tc-delta1.png}\\}
+  \end{onlyenv}
 \end{frame}
 
 \subsection{Why not memoization?}
@@ -306,6 +312,13 @@ and infer env t =
 \end{frame}
 
 \section{Our approach}
+
+\subsection{Two-passes type-checking}
+
+\begin{frame}{Two-passes type-checking}
+
+  {\centering\includegraphics[width=0.7\textwidth]{images/tc-delta2.png}\\}
+\end{frame}
 
 \subsection{The data-oriented way}
 
@@ -381,22 +394,27 @@ and infer env t =
   \end{center}
 \end{frame}
 
+\begin{frame}{A data-oriented notion of delta}
+  {\centering\includegraphics[width=0.80\textwidth]{images/delta.png}\\}%
+  A delta is a term with \emph{metavariables} $\mmeta, \mmmeta$,
+  defined in the repository
+\end{frame}
+
 \begin{frame}{Towards a metalanguage of proof repository}
   \begin{block}{New issues \emph{wrt.} directory storage}
-    \begin{itemize}
-    \item annotation of proof steps
+    \begin{enumerate}
+    \item annotation of proof steps by judgement
     \item type-checking
     \item dealing with binders
-    \end{itemize}
+    \end{enumerate}
   \end{block}
-  \begin{block}{Remark}
-    We need extra-logical features:
-    \begin{itemize}
+  \begin{block}{Extra-logical needs \emph{wrt.} the type system}
+    \begin{enumerate}
     \item naming of all proof steps
     \item adressing sub-proofs
     \item checking deltas (proofs with red links)
     \item versioning
-    \end{itemize}
+    \end{enumerate}
   \end{block}
 \end{frame}
 
@@ -411,7 +429,7 @@ and infer env t =
 
     \begin{description}
     \item[Dependent types] to express object-judgements
-    \item[Signature] separation from terms
+    \item[Signature] to encode the object language
     \item[HOAS] to easily manipulate hypothesis
     \end{description}
     \pause
@@ -434,22 +452,6 @@ and infer env t =
     \end{example}
   \end{onlyenv}
   \begin{onlyenv}<3>
-    \begin{block}{Syntax}
-      \inXLF
-      \begin{align*}
-        \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
-        \mf &\gequal { \prd\mv\mf\mf \gor \app\mf\mo \gor \mcf } \\
-        \mo &\gequal { \lam\mv\mf\mo \gor \app\mo\mo \gor \mv \gor \mco } \\[0.5em]
-%        \me &\gequal { \enil \gor \ebinddecl \Gamma\mv\mf } \\
-        \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
-          \ebinddecl\msi\mcf\mk }
-      \end{align*}
-    \end{block}
-    \begin{block}{Judgements}
-      
-    \end{block}
-  \end{onlyenv}
-  \begin{onlyenv}<4->
     \begin{block}{\textsf{Twelf}'s use}
       \begin{enumerate}
       \item encode language \& typing rules (signature)
@@ -457,7 +459,6 @@ and infer env t =
       \item verify well-typing, termination \& coverage
       \end{enumerate}
     \end{block}
-    \pause\pause
     \begin{block}{Our use}
       \begin{enumerate}
       \item encode language \& typing rules (signature)
@@ -467,6 +468,30 @@ and infer env t =
       \end{enumerate}
     \end{block}
   \end{onlyenv}
+  \begin{onlyenv}<4>
+    \begin{block}{Syntax}
+      \inXLF
+      \begin{align*}
+        \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
+        \mf &\gequal { \prd\mv\mf\mf \gor \app\mf\mo \gor \mcf } \\
+        \mo &\gequal { \lam\mv\mf\mo \gor \app\mo\mo \gor \mv \gor \mco } \\[0.5em]
+        \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
+          \ebinddecl\msi\mcf\mk }
+      \end{align*}
+    \end{block}
+    \begin{block}{Judgements}
+      \begin{itemize}
+      \item $\jindex\Sigma\Gamma K$
+      \item $\jindex\Sigma\Gamma {\typ A K}$
+      \item $\jindex\Sigma\Gamma {\typ t A}$
+      \item $\vdash \Sigma$
+      \end{itemize}
+    \end{block}
+  \end{onlyenv}
+\end{frame}
+
+\begin{frame}{The repository language}
+  
 \end{frame}
 
 %  But
