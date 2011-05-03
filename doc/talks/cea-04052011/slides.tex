@@ -336,52 +336,55 @@ and infer env t =
     \end{center}
   \end{onlyenv}
   \begin{onlyenv}<8->
-    \begin{onlyenv}<-8>
-      The repository $R$ is a pair $(\Delta, x)$:
-      \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
-      \gor \mathsf{Blob}\ string)\]
-      \begin{block}{Invariants}
-        \begin{itemize}
-        \item $\Delta$ forms a DAG
-        \item if $(x, \mathsf{Commit}\ (y,z)) \in\Delta$ then
+    The repository $R$ is a pair $(\Delta, x)$:
+    \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
+    \gor \mathsf{Blob}\ string)\]
+    \begin{overlayarea}{\textwidth}{12em}
+      \begin{onlyenv}<8>
+        \begin{block}{Operations}
+          \begin{description}
+          \item[\texttt{commit $\delta$}]
+            \begin{itemize}
+            \item extend the database with \textsf{Tree}/\textsf{Blob}
+              objects
+            \item add a \textsf{Commit} object
+            \item update head
+            \end{itemize}
+          \item[\texttt{checkout $v$}]
+            \begin{itemize}
+            \item follow $v$ all the way to the \textsf{Blob}s
+            \end{itemize}
+          \item[\texttt{diff $v_1$ $v_2$}]
+            \begin{itemize}
+            \item follow simultaneously $v_1$ and $v_2$
+            \item if object names are equal, stop (content is equal)
+            \item otherwise continue
+            \end{itemize}
+          \item[\dots]
+          \end{description}
+        \end{block}
+      \end{onlyenv}
+      \begin{onlyenv}<9->
+        \begin{block}{Invariants}
           \begin{itemize}
-          \item $(y, \mathsf{Tree}\ t)\in\Delta$
-          \item $(z, \mathsf{Commit}\ (t,v))\in\Delta$
+          \item $\Delta$ forms a DAG
+          \item if $(x, \mathsf{Commit}\ (y,z)) \in\Delta$ then
+            \begin{itemize}
+            \item $(y, \mathsf{Tree}\ t)\in\Delta$
+            \item $(z, \mathsf{Commit}\ (t,v))\in\Delta$
+            \end{itemize}
+          \item if $(x, \mathsf{Tree}(\vec y))\in\Delta$ then \\
+            for all $y_i$, either $(y_i, \mathsf{Tree}(\vec z))$ or
+            $(y_i, \mathsf{Blob}(s))\in\Delta$
           \end{itemize}
-        \item if $(x, \mathsf{Tree}(\vec y))\in\Delta$ then \\
-          for all $y_i$, either $(y_i, \mathsf{Tree}(\vec z))$ or
-          $(y_i, \mathsf{Blob}(s))\in\Delta$
-        \end{itemize}
-      \end{block}
+        \end{block}
+    \begin{onlyenv}<10>
+      \begin{center}
+        {\Large Let's do the same with \emph{proofs}}
+      \end{center}
     \end{onlyenv}
-    \begin{onlyenv}<9->
-      \begin{block}{Operations}
-        \begin{description}
-        \item[\texttt{commit $\delta$}]
-          \begin{itemize}
-          \item extend the database with \textsf{Tree}/\textsf{Blob}
-            objects
-          \item add a \textsf{Commit} object
-          \item update head
-          \end{itemize}
-        \item[\texttt{checkout $v$}]
-          \begin{itemize}
-          \item follow $v$ all the way to the \textsf{Blob}s
-          \end{itemize}
-        \item[\texttt{diff $v_1$ $v_2$}]
-          \begin{itemize}
-          \item follow simultaneously $v_1$ and $v_2$
-          \item if object names are equal, stop (content is equal)
-          \item otherwise continue
-          \end{itemize}
-        \item[\dots]
-        \end{description}
-      \end{block}
-    \pause\pause
-    \begin{center}
-      \vspace{2em} {\Large Let's do the same with \emph{proofs}}
-    \end{center}
-    \end{onlyenv}
+      \end{onlyenv}
+    \end{overlayarea}
   \end{onlyenv}
 \end{frame}
 
