@@ -396,6 +396,28 @@ and infer env t =
     \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp4.pdf}}%
     \only<+>{\includegraphics[width=0.85\textwidth]{images/gasp5.pdf}}%
   \end{center}
+
+  \begin{onlyenv}<+->
+    \small
+    \begin{overlayarea}{0pt}{\textheight}
+      \begin{align*}
+        x &= \ldots\ : A\wedge B\vdash C \\
+        y &= \ldots\ :\ \vdash A \\
+        z &= \ldots\ :\ \vdash B \\
+        t &= \lam a {A\wedge B} x :\ \vdash A\wedge B\to C \\
+        u &= (y, z) :\ \vdash A\wedge B \\
+        v &= \app t u :\ \vdash C \\
+        w &= \mathsf{Commit}(v,w1) : \mathsf{Version} \only<7>{
+          \alert{\qquad,\quad w} }
+        \only<8-9>{ \\
+          p &=\ldots\ :\ \vdash B \\
+          q &= (y, p) :\ \vdash A \wedge B \\
+          r &= \app t q :\ \vdash C \\
+          s &= \mathsf{Commit}(r,w) : \mathsf{Version} \only<9>{
+            \alert{\qquad,\quad s} } }
+      \end{align*}
+    \end{overlayarea}
+  \end{onlyenv}
 \end{frame}
 
 \begin{frame}{A data-oriented notion of delta}
@@ -407,7 +429,7 @@ and infer env t =
     \end{overlayarea}
     A delta is a term $t$ with \emph{metavariables} \alert{$\mmeta,
       \mmmeta$}
-    \alt<1>{, defined in the repository}{and \emph{boxes} \alert{$\ibox t \mmeta y u$} to
+    \alt<1>{, defined in the repository}{and \emph{boxes} \alert{$\ibox t {\mmeta.n} y u$} to
       jump over binders in the repository}
   \pause
   \end{block}
@@ -446,23 +468,39 @@ and infer env t =
     \item[HOAS] to easily manipulate hypothesis
     \end{description}
     \pause
-    \begin{example}
-      \scriptsize
-      \[
-      \begin{array}{c}
-        [x:A]\\
-        \vdots\\
-        t : B \\\hline
-        \ulam x t : A\to B
-      \end{array}
-      \qquad\leadsto\qquad
-      \begin{array}{l}
-        \prd {A,B}{ty} \prd t {tm\to tm} \\
-        (\prd x {tm} {\textsf{is}\ x\ A} \to \textsf{is}\ (t\ x)\ B) \to \\
-        \textsf{is}\ (\textsf{lam}\ A\ (\ulam x t\ x))(\textsf{arrow}\ A\ B)
-      \end{array}
-      \]
-    \end{example}
+    \begin{examples}
+      \begin{itemize}
+      \item \scriptsize
+        $
+        \begin{array}{c}
+          [x:A]\\
+          \vdots\\
+          t : B \\\hline
+          \ulam x t : A\to B
+        \end{array}
+        \qquad\leadsto\qquad
+        \begin{array}{ll}
+          \text{\textsf{is-lam}} :& \prd {A,B}{\mathsf{ty}} \prd t {\mathsf{tm}\to \mathsf{tm}} \\
+          & (\prd x {\mathsf{tm}} {\textsf{is}\ x\ A} \to \textsf{is}\ (t\ x)\ B) \to \\
+          & \textsf{is}\ (\textsf{lam}\ A\ (\ulam x t\ x))(\textsf{arrow}\ A\ B)
+        \end{array}
+        $
+      \item
+        $
+        \begin{array}{c}
+          [x:\nat]\\\hline
+          \ulam x x : \nat\to\nat
+        \end{array}
+        \qquad\leadsto\qquad
+        \begin{array}{l}
+          \text{\textsf{is-lam}}\ \mathsf{nat}\ \mathsf{nat}\ (\ulam x
+          x)\ (\ulam {y z} z) \\ \qquad : \mathsf{is}\ (\mathsf{lam}\
+          \mathsf{nat}\ (\ulam x x))\ (\mathsf{arr}\ \mathsf{nat}\
+          \mathsf{nat})
+        \end{array}
+        $
+      \end{itemize}
+    \end{examples}
   \end{onlyenv}
   \begin{onlyenv}<3>
     \begin{block}{\textsf{Twelf}'s use}
@@ -486,8 +524,10 @@ and infer env t =
     \begin{block}{Syntax}
       \begin{align*}
         \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
-        \mf &\gequal { \prd\mv\mf\mf \gor \app\mf\mo \gor \mcf } \\
-        \mo &\gequal { \lam\mv\mf\mo \gor \app\mo\mo \gor \mv \gor \mco } \\[0.5em]
+        \mf &\gequal { \prd\mv\mf\mf \gor \lapp\mf\ma \gor \mcf } \\
+        \mo &\gequal { \lam\mv\mf\mo \gor \lapp\mo\ma \gor \mv \gor
+          \mco } \\
+        \ma &\gequal { \lnil \gor \lcons\mo\ma} \\[0.5em]
         \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
           \ebinddecl\msi\mcf\mk }
       \end{align*}
@@ -510,10 +550,11 @@ and infer env t =
       \begin{block}{Syntax} \vspace{-2em}
         \begin{align*}
           \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
-          \mf &\gequal { \prd\mv\mf\mf \gor \app\mf\mo \gor \mcf } \\
-          \mo &\gequal { \lam\mv\mf\mo \gor \app\mo\mo \gor \mv \gor \mco
-            \gor \alert{\mmeta \gor \ibox\mo\mmeta\mv\mo}
-          } \\[0.5em]
+          \mf &\gequal { \prd\mv\mf\mf \gor \lapp\mf\ma \gor \mcf } \\
+          \mo &\gequal { \lam\mv\mf\mo \gor \lapp\mo\ma \gor \mv \gor \mco
+            \gor \alert{\mmeta \gor \ibox\mo{\mmeta.n}\mv\mo}
+          } \\
+        \ma &\gequal { \lnil \gor \lcons\mo\ma} \\[0.5em]
           \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
             \ebinddecl\msi\mcf\mk }
         \end{align*}
@@ -525,7 +566,7 @@ and infer env t =
         \item $\jindex\msi{\pair{\alert\mr}\me}\mk\alert{\To\mr}$
         \item $\jindex\msi{\pair{\alert\mr}\me}{\typ\mf\mk}\alert{\To\mr}$
         \item $\jindex\msi{\pair{\alert\mr}\me}{\typ\mo\mf}\alert{\To\mr}$
-        \item $\vdash\msi\alert{\To\mr}$
+        \item $\vdash\msi$
         \end{itemize}
       \end{block}
     \end{column}
@@ -534,20 +575,159 @@ and infer env t =
     \begin{itemize}
     \item $\jindex\msi{\pair\mr\me}\mmeta\To\mmr$ {\footnotesize
         means}\\ “I am what $\mmeta$ stands for in $\mr$ (and produce $\mmr$)”.
-    \item $\jindex\msi{\pair\mr\me}{\ibox\mo\mmeta\mv\mmo}\To\mmr$ {\footnotesize
-        means}\\ “Meta $\mmeta$ has the form $\ulam \mv\ldots$ in $\mr$. Make all
+    \item $\jindex\msi{\pair\mr\me}{\ibox\mo{\mmeta.n}\mv\mmo}\To\mmr$
+      {\footnotesize means}\\ “Meta $\mmeta$ has the form
+      $t\ldots(\ulam \mv\ldots)^n\ldots$ in $\mr$. Make all
       metavariables under this lambda in scope for $\mo$, taking
       $\mmo$ for $\mv$. $\mo$ will produce $\mmr$”
     \end{itemize}
   \end{block}
 \end{frame}
 
-\begin{frame}{The repository language}
-  
+\begin{frame}{Naming of proof steps}
+  \begin{onlyenv}<+>
+    \begin{block}{Remark}
+      In LF, proof step = term application spine
+
+      \textcolor{green!50!black}{Example} $ \text{\textsf{is-lam}}\
+      \mathsf{nat}\ \mathsf{nat}\ (\ulam x x)\ (\ulam {y z} z) $
+    \end{block}
+
+    \begin{block}{Monadic Normal Form (\textsf{MNF})}
+      Program transformation, IR for FP compilers
+
+      \textbf{Goal:} sequentialize all computations by naming them
+      (\textsf{let}s)
+      \[
+      \inXLF
+      \begin{array}{ll}
+        \mo &\gequal \ulam\mv\mo \gor \lapp\mo\ma \gor \mv \\
+        \ma &\gequal \lnil \gor \lcons\mo\ma \\
+      \end{array}
+      \ \Longrightarrow\ \inXLFa
+      \begin{array}{ll}
+        \mo &\gequal \ret\mval \gor \letb\mv{\lapp\mval\ma}\mo \gor \lapp\mval\ma \\
+        \ma &\gequal \lnil \gor \lcons\mval\ma \\
+        \mval &\gequal \mv \gor \ulam\mv\mo
+      \end{array}
+      \]
+      \begin{examples}
+        \begin{itemize}
+        \item $\inXLFa \lapp f {\lapp g {\lsing x}} \quad\notin\quad
+          \mathsf{MNF}$
+        \item $\ulam x \lapp f {\lsing{\lapp g {\lcons{\ulam y
+                  y}{\lsing x}}}} \quad\Longrightarrow\quad
+          \ret{(\ulam x \letb a {{\lapp g {\lcons{\ulam y y}{\lsing
+                    x}}}} \lapp f {\lsing a})} $
+        \end{itemize}
+      \end{examples}
+    \end{block}
+  \end{onlyenv}
+  \begin{onlyenv}<2->
+    \begin{block}{Positionality inefficiency}
+      \inXLFa
+      \[
+      \begin{array}{l}
+        \letb x \ldots \\
+        \quad \letb y \ldots \\
+        \quad\quad\letb z \ldots \\
+        \quad\quad\quad\vdots \\
+        \quad\quad\quad\quad\lapp\mval\ma
+      \end{array}
+      \pause
+      \quad\Longrightarrow\quad
+      \left(
+        \begin{array}{l}
+          x=\ldots \\
+          y=\ldots \\
+          z=\ldots \\
+          \vdots
+        \end{array}
+      \right)
+      \vdash \lapp\mval\ma
+      \]
+    \end{block}
+    \pause
+    \begin{block}{Non-positional monadic calculus}
+      \inXLFa
+      \begin{overlayarea}\textwidth{5em}
+        \vspace{-1em}
+        \begin{align*}
+          \mo &\gequal \ret\mval \gor \alt<4>
+          {\letb\mv{\lapp\mval\ma}\mo \gor \lapp\mval\ma}
+          {\alert{\ms\vdash\lapp\mval\ma}} \\
+          \ma &\gequal \lnil \gor \lcons\mval\ma \\
+          \mval &\gequal \mv \gor \ulam\mv\mo
+          \alt<4>{}{\\
+            \alt<5>
+            {\alert\ms &\alert{\gequal \snil \gor \scons\ms\mv{\lapp\mval\ma}} }
+            {\ \alert\ms\ &\alert{:\ \mv\mapsto{\lapp\mval\ma}}}
+          }
+        \end{align*}
+        \pause
+      \end{overlayarea}
+    \end{block}
+  \end{onlyenv}
+  \pause
 \end{frame}
 
-\begin{frame}{Commit/Checkout}
-  
+\begin{frame}{Monadic LF}
+  \inXLF
+  \begin{align*}
+    \mk &\gequal \prd\mv\mf\mk \gor \type \\
+    \mf &\gequal \prd\mv\mf\mf \gor \ms\vdash\lapp\mcf\ma \\
+    \mo &\gequal \ret\mval \gor \ms\vdash\lapp\mval\ma \\
+    \ma &\gequal \lnil \gor \lcons\mval\ma \\
+    \mval &\gequal \mco \gor \mv \gor \lam\mv\mf\mo \\
+    \ms\ &\ :\ \mv\mapsto{\lapp\mval\ma} \\
+    \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
+      \ebinddecl\msi\mcf\mk }
+  \end{align*}
+\end{frame}
+
+\begin{frame}{\alt<1>{Type annotation}{The repository language}}
+  \begin{block}{Remark}
+    In LF, judgement annotation = type annotation
+
+    \begin{example}
+      $
+      \begin{array}{l}
+        \text{\textsf{is-lam}}\ \mathsf{nat}\ \mathsf{nat}\ (\ulam x
+        x)\ (\ulam {y z} z) \\ \qquad : \mathsf{is}\ (\mathsf{lam}\
+        \mathsf{nat}\ (\ulam x x))\ (\mathsf{arr}\ \mathsf{nat}\
+        \mathsf{nat})
+      \end{array}
+      $
+    \end{example}
+  \end{block}
+  \inXLF
+  \begin{align*}
+    \mk &\gequal \prd\mv\mf\mk \gor \type \\
+    \mf &\gequal \prd\mv\mf\mf \gor \ms\vdash\lapp\mcf\ma \\
+    \alt<1>\mo{\alert\mr} &\gequal \ret\mval \gor \ms\vdash\laapp\mval\ma{\alert{\lapp\mcf\ma}} \\
+    \ma &\gequal \lnil \gor \lcons\mval\ma \\
+    \mval &\gequal \mco \gor \mv \gor \lam\mv\mf{\alt<1>\mo{\alert\mr}} \\
+    \ms\ &\ :\ \mv\mapsto{\laapp\mval\ma{\alert{\lapp\mcf\ma}}} \\
+    \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
+      \ebinddecl\msi\mcf\mk }
+  \end{align*}
+  \pause
+\end{frame}
+
+\begin{frame}{Commit}
+  \inXLF {\Large
+  \[ \jindex{\msi^+}{\pair{\mr^+}{\enil^+}}{\typ{\mo^+}{\mf^-}} \To{\mr^-} \]}
+\begin{block}{What does it do?}
+  \begin{itemize}
+  \item type-checks $\mo$ \emph{wrt.} $\mr$ (obviously)
+  \item puts $\mo$ in non-pos. \textsf{MNF}
+  \item with the adapted rules for variable \& box:
+    \begin{mathpar}
+      \infer[Var]{ \elookdef\me\mv\mf \and \text{or} \and \elookdef\ms\mv\mf }{
+        \jindex\msi{\pair{(\ms\vdash\_:\_)}\me}{\typ\mv\mf}\To(\ms\vdash\mv:\mf) }
+    \end{mathpar}
+  \end{itemize}
+\end{block}
 \end{frame}
 
 \begin{frame}{Example}
@@ -565,121 +745,6 @@ and infer env t =
 \begin{frame}{Further work}
   
 \end{frame}
-
-%  But
-%   we need a little bit more: \\[1em]
-
-%   {\small\textsf{
-%       \noindent\ldots\\
-%       \alert<2>{\textbf{let}} \alert<5>u = \alert<4>{pair y z} : \alert<3>{is nil (conj A B)} \textbf{in}\\
-%       \hspace{2ex}\textbf{let} \alert<5>v = app t u : is nil C \textbf{in}\\
-%       \ldots
-%   }}
-% \pause
-% \begin{enumerate}[<+->]
-% \item definitions / explicit substitutions
-% \item type annotations on application spines
-% \item fully applied constants / $\eta$-long NF
-% \item Naming of all application spines / A-normal form\\
-%   {\footnotesize(= construction of syntax/proofs)}
-% \end{enumerate}
-
-% \subsection{Positionality}
-
-% \begin{frame}[fragile]{Positionality}
-% $R =$ \scriptsize
-% \begin{lstlisting}
-%     let x = ... : is (cons (conj A B) nil) C in
-%       let y = ... : is nil A in
-%         let z = ... : is nil B in
-%           let t = lam (conj A B) x : is nil (arr (conj A B) C) in
-%             let u = pair y z : is nil (conj A B) in
-%               let v = app t u : is nil C in
-%                 let w = commit v w1 : version in
-%                   w
-% \end{lstlisting}
-% \normalsize
-% \pause
-% \begin{itemize}
-% \item Expose the \emph{head} of the term
-% \pause {\Large \[(\lambda x.\lambda y. T)\ U\ V\]}
-% \item \pause Abstract from the \emph{positions} of the binders \\
-%   {\footnotesize (from inside and from outside)}
-% \end{itemize}
-% \end{frame}
-
-
-
-
-
-
-
-
-%   \begin{onlyenv}<6-9>
-%     \small
-%     \begin{overlayarea}{0pt}{\textheight}
-%       \begin{align*}
-%         x &= \ldots\ : A\wedge B\vdash C \\
-%         y &= \ldots\ :\ \vdash A \\
-%         z &= \ldots\ :\ \vdash B \\
-%         t &= \lam a {A\wedge B} x :\ \vdash A\wedge B\to C \\
-%         u &= (y, z) :\ \vdash A\wedge B \\
-%         v &= \app t u :\ \vdash C \\
-%         w &= \mathsf{Commit}(v,w1) : \mathsf{Version} \only<7>{
-%           \alert{\qquad,\quad w} }
-%         \only<8-9>{ \\
-%           p &=\ldots\ :\ \vdash B \\
-%           q &= (y, p) :\ \vdash A \wedge B \\
-%           r &= \app t q :\ \vdash C \\
-%           s &= \mathsf{Commit}(r,w) : \mathsf{Version} \only<9>{
-%             \alert{\qquad,\quad s} } }
-%       \end{align*}
-%     \end{overlayarea}
-%   \end{onlyenv}
-%   \begin{onlyenv}<10->
-% \footnotesize
-% \begin{uncoverenv}<12>
-% \begin{lstlisting}
-% ...
-% val is : env -> prop -> type
-% val conj : prop -> prop -> prop
-% val pair : is 'a 'b -> is 'a 'c -> is 'a (conj 'b 'c)
-% val version : type
-% val commit : is nil C -> version -> version
-% ...
-% \end{lstlisting}
-% \end{uncoverenv}
-% \begin{overlayarea}{\textwidth}{\textheight}
-% \begin{onlyenv}<10>
-% \begin{lstlisting}
-% let x = ... : is (cons (conj A B) nil) C in
-%   let y = ... : is nil A in
-%     let z = ... : is nil B in
-%       let t = lam (conj A B) x : is nil (arr (conj A B) C) in
-%         let u = pair y z : is nil (conj A B) in
-%           let v = app t u : is nil C in
-%             let w = commit v w1 : version in
-%               w
-% \end{lstlisting}
-% \end{onlyenv}
-% \begin{onlyenv}<11->
-% \begin{lstlisting}
-% let x = ... : is (cons (conj A B) nil) C in
-%   let y = ... : is nil A in
-%     let z = ... : is nil B in
-%       let t = lam (conj A B) x : is nil (arr (conj A B) C) in
-%         let u = pair y z : is nil (conj A B) in
-%           let v = app t u : is nil C in
-%             let w = commit v w1 : version in
-%               let p = ... : is nil B
-%                 let q = pair y p : is nil (conj A B) in
-%                   let r = t q : is nil C
-%                     let s = commit r w : version in
-%                       s
-% \end{lstlisting}
-% \end{onlyenv}
-% \end{overlayarea}
-%   \end{onlyenv}
 
 \end{document}
 
