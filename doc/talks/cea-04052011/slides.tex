@@ -226,10 +226,10 @@ Today, we use:
       \begin{onlyenv}<-3>
         \begin{block}{More precisely}
           Given a well-typed $\mr : repository$ and a $\delta : delta$
-          and $$\mathsf{apply} : repository \to delta \to term\ ,$$an
+          and $$\mathsf{apply} : repository \to delta \to derivation\ ,$$an
           incremental type-checker $$\mathsf{tc} : repository \to
           delta \to \alt<-2>{bool}{repository\ option} $$ decides if
-          $\delta(\mr)$ is
+          $\mathsf{apply}(\delta,\mr)$ is
           well-typed in $O(|\delta|)$. \\
           {\hfill\scriptsize (and not
             $O(|\mathsf{apply}(\delta,\mr)|)$)}
@@ -336,7 +336,7 @@ and infer env t =
 
 \subsection{The data-oriented way}
 
-\begin{frame}{A popular storage model for repositories}
+\begin{frame}{A popular storage model for directories}
   \begin{onlyenv}<1-7>
     \begin{center}
       \only<+>{\includegraphics[width=0.85\textwidth]{images/git1.pdf}}%
@@ -349,7 +349,7 @@ and infer env t =
     \end{center}
   \end{onlyenv}
   \begin{onlyenv}<8->
-    The repository $R$ is a pair $(\Delta, x)$:
+    The repository $\mr$ is a pair $(\Delta, x)$:
     \[ \Delta : x \mapsto (\mathsf{Commit}\ (x\times y) \gor \mathsf{Tree}\ \vec x
     \gor \mathsf{Blob}\ string)\]
     \begin{overlayarea}{\textwidth}{12em}
@@ -443,7 +443,7 @@ and infer env t =
     \begin{overlayarea}\textwidth{3em}
       A delta is a term $t$ with \emph{variables} \alert{$\mv, \mmv $}
       \alt<1>{, defined in the repository}{and \emph{boxes}
-        \alert{$\ibox t {\mv.n} y u$} to jump over binders in the
+        \alert{$\ibox t {y.n} x u$} to jump over binders in the
         repository}
     \end{overlayarea}
   \pause
@@ -576,8 +576,8 @@ and infer env t =
         means}\\ “I am what $\mv$ stands for, in $\me$ or in $\mr$ (and produce $\mr$)”.
     \item $\jindex\msi{\pair\mr\me}{\ibox\mo{\mmv.n}\mv\mmo}\To\mmr$
       {\footnotesize means}\\ “Variable $\mmv$ has the form
-      $\lapp\_{\mmmo_1\ldots\mmmo_{n-1}(\ulam x \mmmo)\ldots}$ in $\mr$. Make all
-      variables in $\mmmo$ in scope for $\mo$, taking
+      $\lapp\_{\mmmo_1\ldots\mmmo_{n-1}(\ulam x \mmmr)\ldots}$ in $\mr$. Make all
+      variables in $\mmmr$ in scope for $\mo$, taking
       $\mmo$ for $\mv$. $\mo$ will produce $\mmr$”
     \end{itemize}
   \end{block}
@@ -679,7 +679,7 @@ and infer env t =
     \mf &\gequal \prd\mv\mf\mf \gor \ms\vdash\lapp\mcf\ma \\
     \mo &\gequal \alt<-1>{\ret\mval\gor}{\alt<-2>{\alert{\ret\mval
           \gor}}{}} \ms\vdash\lapp\mh\ma \\
-    \mh &\gequal \mv \gor \mcf \\
+    \mh &\gequal \mv \gor \mco \\
     \ma &\gequal \lnil \gor \lcons\mval\ma \\
     \mval &\gequal \mco \gor \mv \gor \lam\mv\mf\mo \\
     \ms\ &\ :\ \mv\mapsto{\lapp\mh\ma} \\
@@ -729,11 +729,12 @@ and infer env t =
     \begin{itemize}
     \item type-checks $\mo$ \emph{wrt.} $\mr$ (in $O(\mo)$)
     \item puts $\mo$ in non-pos. \textsf{MNF}
+    \item annotate with type
     \item with the adapted rules for variable \& box:
       \small
       \begin{mathpar}
         \infer[Var]{
-          \elookdef\me\mv\mf \and \text{or} \and \elookdef\ms\mv\mf
+          \elookdef\me\mv\mf \and \text{or} \and \elookdecl\ms\mv\mf
         }{
           \jindex\msi{\pair{(\ms\vdash\_:\_)}\me}{\typ\mv\mf}\To(\ms\vdash\mv:\mf)
         }
@@ -741,7 +742,7 @@ and infer env t =
         \infer[Box]{
           \ms(\mv).i = \lam\mmv\mmf{(\mms\vdash H'')} \\
           (\ms\vdash H),\me\vdash \mmo:\mmf \To (\mmms\vdash H') \\
-          (\mms\cup\mmms[\mmv=H']\vdash H''),\me\vdash\mo:\ma\To\mr
+          (\mms\cup\mmms[\mmv=H']\vdash H''),\me\vdash\mo:\mf\To\mr
         }{
           (\ms\vdash H),\me\vdash \ibox\mo{\mv.i} \mmv\mmo : \mf \To\mr
         }
