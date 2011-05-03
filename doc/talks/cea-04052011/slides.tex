@@ -689,7 +689,7 @@ and infer env t =
   \pause\pause
 \end{frame}
 
-\begin{frame}{\alt<2>{Type annotation}{The repository language}}
+\begin{frame}{\alt<-2>{Type annotation}{The repository language}}
   \begin{block}{Remark}
     In LF, judgement annotation = type annotation
 
@@ -727,7 +727,7 @@ and infer env t =
   {\Large \[ \jindex{\msi^-}{\pair{\mr^-}{\enil^-}}{\typ{\mo^-}{\mf^+}} \To{\mr^+} \]}
   \begin{block}{What does it do?}
     \begin{itemize}
-    \item type-checks $\mo$ \emph{wrt.} $\mr$ (obviously)
+    \item type-checks $\mo$ \emph{wrt.} $\mr$ (in $O(\mo)$)
     \item puts $\mo$ in non-pos. \textsf{MNF}
     \item with the adapted rules for variable \& box:
       \small
