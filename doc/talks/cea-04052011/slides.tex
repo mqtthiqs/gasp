@@ -126,7 +126,6 @@ Today, we use:
   \begin{itemize}
   \item What data structure for storing type derivations?
   \item What language for expressing changes?
-  \item How to implement basic operations?
   \end{itemize}
 \end{frame}
 
@@ -217,29 +216,32 @@ Today, we use:
 
 \begin{frame}{\gray{A logical framework for} incremental
     \gray{type-checking}}
-  \begin{onlyenv}<-3>
     \begin{description}
     \item[Goal] Type-check a large derivation taking advantage of the
       knowledge from type-checking previous versions
     \item[Idea] Remember all derivations!
     \end{description}
     \pause \inXLF
-    \begin{block}{More precisely}
-      Given a well-typed $\mr : repository$ and a $\delta : delta$
-      and $$\mathsf{apply} : repository \to delta \to term\ ,$$an
-      incremental type-checker $$\mathsf{tc} : repository \to delta
-      \to \alt<-2>{bool}{repository\ option} $$ decides if
-      $\delta(\mr)$ is
-      well-typed in $O(|\delta|)$. \\
-      {\hfill\scriptsize (and not $O(|\delta(\mr)|)$)}
-    \end{block}
-  \end{onlyenv}
-  \begin{onlyenv}<4->
-    from \\
-    {\centering\includegraphics[width=0.5\textwidth]{images/tc-classic.png}\\}
-    to \\
-    {\centering\includegraphics[width=0.5\textwidth]{images/tc-delta1.png}\\}
-  \end{onlyenv}
+    \begin{overlayarea}\textwidth{12em}
+      \begin{onlyenv}<-3>
+        \begin{block}{More precisely}
+          Given a well-typed $\mr : repository$ and a $\delta : delta$
+          and $$\mathsf{apply} : repository \to delta \to term\ ,$$an
+          incremental type-checker $$\mathsf{tc} : repository \to
+          delta \to \alt<-2>{bool}{repository\ option} $$ decides if
+          $\delta(\mr)$ is
+          well-typed in $O(|\delta|)$. \\
+          {\hfill\scriptsize (and not
+            $O(|\mathsf{apply}(\delta,\mr)|)$)}
+        \end{block}
+      \end{onlyenv}
+      \begin{onlyenv}<4->
+        \textbf{from}\\
+        {\includegraphics[width=0.5\textwidth]{images/tc-classic.png}} \\
+        \textbf{to}\\
+        {\includegraphics[width=0.5\textwidth]{images/tc-delta1.png}} \\
+      \end{onlyenv}
+    \end{overlayarea}
 \end{frame}
 
 \subsection{Why not memoization?}
@@ -316,9 +318,20 @@ and infer env t =
 \subsection{Two-passes type-checking}
 
 \begin{frame}{Two-passes type-checking}
-
-  {\centering\includegraphics[width=0.7\textwidth]{images/tc-delta2.png}\\}
-  focus on \textsf{tc}
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{images/tc-delta2.png}
+  \end{center}
+  \begin{description}
+    \item[\textsf{ti}] = type inference = derivation delta synthesis
+    \item[\textsf{tc}] = type checking = derivation delta checking
+    \item[$\delta$] = program delta
+    \item[$\delta_{LF}$] = derivation delta
+    \item[$\mr$] = repository of derivations
+  \end{description}
+  \vspace{1em}
+  \pause
+  \emph{Shift of trust:} \textsf{ti} (complex algorithm) $\to$ \textsf{tc}
+  (simple kernel)
 \end{frame}
 
 \subsection{The data-oriented way}
@@ -427,10 +440,12 @@ and infer env t =
       {\vspace{0.6em}\centering\includegraphics[width=0.90\textwidth]{images/delta.png}\\}%
       {\hspace{1em}\centering\includegraphics[width=0.90\textwidth]{images/delta2.png}\\}%
     \end{overlayarea}
-    A delta is a term $t$ with \emph{metavariables} \alert{$\mmeta,
-      \mmmeta$}
-    \alt<1>{, defined in the repository}{and \emph{boxes} \alert{$\ibox t {\mmeta.n} y u$} to
-      jump over binders in the repository}
+    \begin{overlayarea}\textwidth{3em}
+      A delta is a term $t$ with \emph{variables} \alert{$\mv, \mmv $}
+      \alt<1>{, defined in the repository}{and \emph{boxes}
+        \alert{$\ibox t {\mv.n} y u$} to jump over binders in the
+        repository}
+    \end{overlayarea}
   \pause
   \end{block}
 \end{frame}
@@ -444,7 +459,7 @@ and infer env t =
   \end{block}
   \begin{block}{Delta language}
     \begin{enumerate}
-    \item address sub-proofs (metavariables)
+    \item address sub-proofs (variables)
     \item instantiate lambdas (boxes)
     \item check against $\mr$
     \end{enumerate}
@@ -463,9 +478,9 @@ and infer env t =
     $\lambda$-calculus.
 
     \begin{description}
-    \item[Dependent types] to express object-judgements
-    \item[Signature] to encode the object language
-    \item[HOAS] to easily manipulate hypothesis
+    \item[dependent types] to express object-judgements
+    \item[signature] to encode the object language
+    \item[higher-order abstract syntax] to easily manipulate hypothesis
     \end{description}
     \pause
     \begin{examples}
@@ -482,7 +497,7 @@ and infer env t =
         \begin{array}{ll}
           \text{\textsf{is-lam}} :& \prd {A,B}{\mathsf{ty}} \prd t {\mathsf{tm}\to \mathsf{tm}} \\
           & (\prd x {\mathsf{tm}} {\textsf{is}\ x\ A} \to \textsf{is}\ (t\ x)\ B) \to \\
-          & \textsf{is}\ (\textsf{lam}\ A\ (\ulam x t\ x))(\textsf{arrow}\ A\ B)
+          & \textsf{is}\ (\textsf{lam}\ A\ (\ulam x t\ x))(\textsf{arr}\ A\ B)
         \end{array}
         $
       \item
@@ -503,30 +518,12 @@ and infer env t =
     \end{examples}
   \end{onlyenv}
   \begin{onlyenv}<3>
-    \begin{block}{\textsf{Twelf}'s use}
-      \begin{enumerate}
-      \item encode language \& typing rules (signature)
-      \item prove inductive properties (signature)
-      \item verify well-typing, termination \& coverage
-      \end{enumerate}
-    \end{block}
-    \begin{block}{Our use}
-      \begin{enumerate}
-      \item encode language \& typing rules (signature)
-      \item write object language derivation deltas (term)
-      \item check deltas \emph{wrt.} signature
-      \item GOTO 2
-      \end{enumerate}
-    \end{block}
-  \end{onlyenv}
-  \begin{onlyenv}<4>
     \inXLF
     \begin{block}{Syntax}
       \begin{align*}
         \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
-        \mf &\gequal { \prd\mv\mf\mf \gor \lapp\mf\ma \gor \mcf } \\
-        \mo &\gequal { \lam\mv\mf\mo \gor \lapp\mo\ma \gor \mv \gor
-          \mco } \\
+        \mf &\gequal { \prd\mv\mf\mf \gor \lapp\mcf\ma } \\
+        \mo &\gequal { \lam\mv\mf\mo \gor \lapp\mv\ma \gor \lapp\mco\ma } \\
         \ma &\gequal { \lnil \gor \lcons\mo\ma} \\[0.5em]
         \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
           \ebinddecl\msi\mcf\mk }
@@ -550,9 +547,9 @@ and infer env t =
       \begin{block}{Syntax} \vspace{-2em}
         \begin{align*}
           \mk &\gequal { \prd\mv\mf\mk \gor \type } \\
-          \mf &\gequal { \prd\mv\mf\mf \gor \lapp\mf\ma \gor \mcf } \\
-          \mo &\gequal { \lam\mv\mf\mo \gor \lapp\mo\ma \gor \mv \gor \mco
-            \gor \alert{\mmeta \gor \ibox\mo{\mmeta.n}\mv\mo}
+          \mf &\gequal { \prd\mv\mf\mf \gor \lapp\mcf\ma } \\
+          \mo &\gequal { \lam\mv\mf\mo \gor \lapp\mv\ma \gor \lapp\mco\ma
+            \gor \alert{\ibox\mo{\mv.n}\mv\mo}
           } \\
         \ma &\gequal { \lnil \gor \lcons\mo\ma} \\[0.5em]
           \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
@@ -573,12 +570,12 @@ and infer env t =
   \end{columns}
   \begin{block}{Informally}
     \begin{itemize}
-    \item $\jindex\msi{\pair\mr\me}\mmeta\To\mmr$ {\footnotesize
-        means}\\ “I am what $\mmeta$ stands for in $\mr$ (and produce $\mmr$)”.
-    \item $\jindex\msi{\pair\mr\me}{\ibox\mo{\mmeta.n}\mv\mmo}\To\mmr$
-      {\footnotesize means}\\ “Meta $\mmeta$ has the form
-      $t\ldots(\ulam \mv\ldots)^n\ldots$ in $\mr$. Make all
-      metavariables under this lambda in scope for $\mo$, taking
+    \item $\jindex\msi{\pair\mr\me}\mv\To\mr$ {\footnotesize
+        means}\\ “I am what $\mv$ stands for, in $\me$ or in $\mr$ (and produce $\mr$)”.
+    \item $\jindex\msi{\pair\mr\me}{\ibox\mo{\mmv.n}\mv\mmo}\To\mmr$
+      {\footnotesize means}\\ “Variable $\mmv$ has the form
+      $\lapp\_{\mmmo_1\ldots\mmmo_{n-1}(\ulam x \mmmo)\ldots}$ in $\mr$. Make all
+      variables in $\mmmo$ in scope for $\mo$, taking
       $\mmo$ for $\mv$. $\mo$ will produce $\mmr$”
     \end{itemize}
   \end{block}
@@ -676,16 +673,19 @@ and infer env t =
   \begin{align*}
     \mk &\gequal \prd\mv\mf\mk \gor \type \\
     \mf &\gequal \prd\mv\mf\mf \gor \ms\vdash\lapp\mcf\ma \\
-    \mo &\gequal \ret\mval \gor \ms\vdash\lapp\mval\ma \\
+    \mo &\gequal \alt<-1>{\ret\mval\gor}{\alt<-2>{\alert{\ret\mval
+          \gor}}{}} \ms\vdash\lapp\mh\ma \\
+    \mh &\gequal \mv \gor \mcf \\
     \ma &\gequal \lnil \gor \lcons\mval\ma \\
     \mval &\gequal \mco \gor \mv \gor \lam\mv\mf\mo \\
-    \ms\ &\ :\ \mv\mapsto{\lapp\mval\ma} \\
+    \ms\ &\ :\ \mv\mapsto{\lapp\mh\ma} \\
     \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
       \ebinddecl\msi\mcf\mk }
   \end{align*}
+  \pause\pause
 \end{frame}
 
-\begin{frame}{\alt<1>{Type annotation}{The repository language}}
+\begin{frame}{\alt<2>{Type annotation}{The repository language}}
   \begin{block}{Remark}
     In LF, judgement annotation = type annotation
 
@@ -700,50 +700,83 @@ and infer env t =
       $
     \end{example}
   \end{block}
+  \pause
   \inXLF
   \begin{align*}
     \mk &\gequal \prd\mv\mf\mk \gor \type \\
     \mf &\gequal \prd\mv\mf\mf \gor \ms\vdash\lapp\mcf\ma \\
-    \alt<1>\mo{\alert\mr} &\gequal \ret\mval \gor \ms\vdash\laapp\mval\ma{\alert{\lapp\mcf\ma}} \\
+    \alt<2>\mo{\alert\mr} &\gequal \ms\vdash\laapp\mh\ma{\alert{\lapp\mcf\ma}} \\
+    \mh &\gequal \mv \gor \mcf \\
     \ma &\gequal \lnil \gor \lcons\mval\ma \\
-    \mval &\gequal \mco \gor \mv \gor \lam\mv\mf{\alt<1>\mo{\alert\mr}} \\
-    \ms\ &\ :\ \mv\mapsto{\laapp\mval\ma{\alert{\lapp\mcf\ma}}} \\
+    \mval &\gequal \mco \gor \mv \gor \lam\mv\mf{\alt<2>\mo{\alert\mr}} \\
+    \ms\ &\ :\ \mv\mapsto{\laapp\mh\ma{\alert{\lapp\mcf\ma}}} \\
     \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
       \ebinddecl\msi\mcf\mk }
   \end{align*}
   \pause
 \end{frame}
 
-\begin{frame}{Commit}
-  \inXLF {\Large
-  \[ \jindex{\msi^+}{\pair{\mr^+}{\enil^+}}{\typ{\mo^+}{\mf^-}} \To{\mr^-} \]}
-\begin{block}{What does it do?}
-  \begin{itemize}
-  \item type-checks $\mo$ \emph{wrt.} $\mr$ (obviously)
-  \item puts $\mo$ in non-pos. \textsf{MNF}
-  \item with the adapted rules for variable \& box:
-    \begin{mathpar}
-      \infer[Var]{ \elookdef\me\mv\mf \and \text{or} \and \elookdef\ms\mv\mf }{
-        \jindex\msi{\pair{(\ms\vdash\_:\_)}\me}{\typ\mv\mf}\To(\ms\vdash\mv:\mf) }
-    \end{mathpar}
-  \end{itemize}
-\end{block}
+\begin{frame}{\textsf{Commit} (WIP)}
+  \inXLF
+  {\Large \[ \jindex{\msi^-}{\pair{\mr^-}{\enil^-}}{\typ{\mo^-}{\mf^+}} \To{\mr^+} \]}
+  \begin{block}{What does it do?}
+    \begin{itemize}
+    \item type-checks $\mo$ \emph{wrt.} $\mr$ (obviously)
+    \item puts $\mo$ in non-pos. \textsf{MNF}
+    \item with the adapted rules for variable \& box:
+      \small
+      \begin{mathpar}
+        \infer[Var]{
+          \elookdef\me\mv\mf \and \text{or} \and \elookdef\ms\mv\mf
+        }{
+          \jindex\msi{\pair{(\ms\vdash\_:\_)}\me}{\typ\mv\mf}\To(\ms\vdash\mv:\mf)
+        }
+
+        \infer[Box]{
+          \ms(\mv).i = \lam\mmv\mmf{(\mms\vdash H'')} \\
+          (\ms\vdash H),\me\vdash \mmo:\mmf \To (\mmms\vdash H') \\
+          (\mms\cup\mmms[\mmv=H']\vdash H''),\me\vdash\mo:\ma\To\mr
+        }{
+          (\ms\vdash H),\me\vdash \ibox\mo{\mv.i} \mmv\mmo : \mf \To\mr
+        }
+      \end{mathpar}
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{Example}
-  
+  \underline{Signature}
+  \begin{align*}
+    A&\ B\ C\ D : * \\
+    a &: (D\to B)\to C\to A     & b&\ b' : C\to B \\
+    c &: D\to C                 & d &: D
+  \end{align*}
+  \underline{Terms}
+  \begin{align*}
+    t_1\quad&=\quad
+    \lapp a {\lcons{\lam x D \lapp b {\lapp c x}}{\lapp c d}} \\
+    \mr_1\quad&=\quad
+    \sent v {\lapp c d : C} \vdash \lapp a {\lcons{\lam x D
+        \sent w {\lapp c x : C}\vdash \lapp b w : B}{v}} : A \\
+    t_2 \quad&=\quad
+    \lapp a {\lam y D {\ibox {\lapp{b'} w} 1 x y}} \\
+    \mr_2\quad&=\quad
+    \sent v {\lapp c d : C} \vdash \lapp a {\lcons{\lam y D
+        \sent w {\lapp c y : C}\vdash \lapp {b'} w : B}{v}} : A
+  \end{align*}
 \end{frame}
 
 \begin{frame}{Regaining version management}
-  
-\end{frame}
 
-\begin{frame}{A word on \textsf{ti}}
-  
 \end{frame}
 
 \begin{frame}{Further work}
-  
+  \begin{itemize}
+  \item implementation \& metatheory of \textsf{Commit}
+  \item from terms to derivations (\textsf{ti})
+  \item \textsf{diff} on terms
+  \item mimick other operations from VCS (\textsf{Merge})
+  \end{itemize}
 \end{frame}
 
 \end{document}

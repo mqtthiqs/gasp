@@ -81,11 +81,13 @@
 \newcommand\kind{\srt \Box}
 
 % Sequent-like application
-\newcommand\lapp[2]{{#1}[{#2}]}
-\newcommand\laapp[3]{{#1}[{#2}]:{#3}}
-\newcommand\laaapp[5]{\laapp{#1}{#2}{\laapp{#3}{#4}{#5}}}
+%\newcommand\lapp[2]{{#1}[{#2}]}
+\newcommand\lapp[2]{{#1}({#2})}
+%\newcommand\lcons[2]{{#1};{#2}}
+\newcommand\lcons[2]{{#1},{#2}}
 \newcommand\lnil{\cdot}
-\newcommand\lcons[2]{{#1};{#2}}
+\newcommand\laapp[3]{\lapp{#1}{#2}:{#3}}
+\newcommand\laaapp[5]{\laapp{#1}{#2}{\laapp{#3}{#4}{#5}}}
 \newcommand\lsing[1]{{#1}}
 \newcommand\lncons[3]{{#1}={#2};{#3}}
 \newcommand\lnsing[2]{{#1}={#2}}
@@ -163,6 +165,7 @@
 \newcommand\ma{\thelangmod{l}}
 \newcommand\mma{\thelangmod{m}}
 \newcommand\mmma{\thelangmod{n}}
+\newcommand\mmmma{\thelangmod{p}}
 \newcommand\ms{\thelangmod{\sigma}}
 \newcommand\mms{\thelangmod{\rho}}
 \newcommand\mmms{\thelangmod{\theta}}
