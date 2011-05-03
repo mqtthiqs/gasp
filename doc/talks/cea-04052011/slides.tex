@@ -330,8 +330,8 @@ and infer env t =
   \end{description}
   \vspace{1em}
   \pause
-  \emph{Shift of trust:} \textsf{ti} (complex algorithm) $\to$ \textsf{tc}
-  (simple kernel)
+  \emph{Shift of trust:} \textsf{ti} (complex, ad-hoc algorithm) $\to$ \textsf{tc}
+  (simple, generic kernel)
 \end{frame}
 
 \subsection{The data-oriented way}
@@ -468,7 +468,9 @@ and infer env t =
   $\leadsto$ \bf Need extra-logical features!
 \end{frame}
 
-\subsection{Logical framework}
+\section{A metalanguage of repository}
+
+\subsection{The LF logical framework}
 
 \begin{frame}{\gray{A} logical framework \gray{for incremental type-checking}}
   \begin{onlyenv}<-2>
@@ -580,6 +582,8 @@ and infer env t =
     \end{itemize}
   \end{block}
 \end{frame}
+
+\subsection{Monadic LF}
 
 \begin{frame}{Naming of proof steps}
   \begin{onlyenv}<+>
@@ -716,6 +720,8 @@ and infer env t =
   \pause
 \end{frame}
 
+\subsection{Committing to MLF}
+
 \begin{frame}{\textsf{Commit} (WIP)}
   \inXLF
   {\Large \[ \jindex{\msi^-}{\pair{\mr^-}{\enil^-}}{\typ{\mo^-}{\mf^+}} \To{\mr^+} \]}
@@ -761,13 +767,34 @@ and infer env t =
     t_2 \quad&=\quad
     \lapp a {\lam y D {\ibox {\lapp{b'} w} 1 x y}} \\
     \mr_2\quad&=\quad
-    \sent v {\lapp c d : C} \vdash \lapp a {\lcons{\lam y D
-        \sent w {\lapp c y : C}\vdash \lapp {b'} w : B}{v}} : A
+    \sent v {\lapp c d : C} \vdash \\ &\qquad\qquad \lapp a {\lcons{\lam y D
+        \sent x y \sent w {\lapp c x : C}\vdash \lapp {b'} w : B}{v}} : A
   \end{align*}
 \end{frame}
 
 \begin{frame}{Regaining version management}
-
+  \inXLF
+  Just add to the signature $\msi$:
+  \begin{align*}
+    \mathsf{Version} &: \type \\
+    \mathsf{Commit0} &: \mathsf{Version} \\
+    \mathsf{Commit} &:
+    \prd t {\mathsf{tm}}{\lapp{\mathsf{is}}{\lcons{t}{\mathsf{unit}}} \to
+    \mathsf{Version} \to \mathsf{Version}}
+  \end{align*}
+  \vspace{-2em}
+  \begin{block}{Commit $t$}
+    \vspace{-1em}
+    \[ \text{if} \qquad
+    \mr = \ms\vdash v : \mathsf{Version} \qquad\text{and}\qquad
+    \mr,\enil\vdash_\msi t : \lapp{\mathsf{is}}{\lcons p
+      {\mathsf{unit}}}\To(\mms\vdash k)
+    \]
+    then
+    \[\scons\mms\mv{\lapp{\mathsf{Commit}}{\lcons p {\lcons k v}}}\vdash x :
+    \mathsf{Version}\]
+    is the new repository
+  \end{block}
 \end{frame}
 
 \begin{frame}{Further work}
