@@ -17,10 +17,7 @@ and obj =
   | OMeta of definition * fhead
   | OBox of obj * variable * args
 
-and ohead =
-  | HVar of variable
-  | HConst of constant
-  | HApp of obj
+and ohead = XLF.ohead
 
 and args = (variable * obj) list
 

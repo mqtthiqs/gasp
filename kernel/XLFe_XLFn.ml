@@ -25,14 +25,14 @@ module XLFe_XLFw = struct
 
   let rec obj' e : XLFe.obj -> XLFw.obj = function
     | XLFe.OLam(x,a,t) -> XLFw.OClos(x, a, t, e)
-    | XLFe.OHead(XLFe.HVar x,l,a) -> 
+    | XLFe.OHead(XLF.HVar x,l,a) ->
 	begin
 	  try let (t,f) = XLFw.Env.find x e in
 	      red e f (t,List.rev l)        (* TODO: variable capture in u *)
 	  with Not_found -> XLFw.OHead(XLFw.HVar x, l, a, e)
 	end
-    | XLFe.OHead(XLFe.HConst c,l,a) -> XLFw.OHead(XLFw.HConst c, l, a, e)
-    | XLFe.OHead(XLFe.HApp t,l,a) -> red e e (t, List.rev l)
+    | XLFe.OHead(XLF.HConst c,l,a) -> XLFw.OHead(XLFw.HConst c, l, a, e)
+    (* | XLFe.OHead(XLF.HApp t,l,a) -> red e e (t, List.rev l) *)
     | XLFe.OMeta (x,a) -> XLFw.OMeta(x, a)
     | XLFe.OBox(t,p,s) -> XLFw.OBox(obj e t,p,List.map (fun x, t -> x, obj e t) s)
 
@@ -114,8 +114,8 @@ let entry kont nlfs = function
 (* ... and back: *)
 
 let ohead = function
-  | XLFn.HVar x -> XLFe.HVar x
-  | XLFn.HConst c -> XLFe.HConst c
+  | XLFn.HVar x -> XLF.HVar x
+  | XLFn.HConst c -> XLF.HConst c
 
 let rec from_obj = function
   | XLFn.OLam(x,a,t) -> XLFe.OLam(x, from_fam a, from_obj t)
