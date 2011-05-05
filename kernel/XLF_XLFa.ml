@@ -26,16 +26,16 @@ let rec obj sign term env : XLF.obj -> XLFa.obj = function
       XLFa.OBox(obj sign term env t, p, s) (* TODO subst!*)
 
 and head sign term env = function
-  | XLF.HVar x -> XLFa.HVar x, List.assoc x env
+  | XLF.HVar x -> XLF.HVar x, List.assoc x env
   | XLF.HConst c ->
       let a = match NLF.NLFSign.find c sign with
 	| NLF.NLF.ODecl a -> a
 	| NLF.NLF.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
       let a = reify_fam a in
-      XLFa.HConst c, a
-  | XLF.HApp t -> 
-      let t = obj sign term env t in
-      XLFa.HApp t, type_of t
+      XLF.HConst c, a
+  (* | XLF.HApp t ->  *)
+  (*     let t = obj sign term env t in *)
+  (*     XLFa.HApp t, type_of t *)
 
 and args sign term env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
@@ -93,14 +93,9 @@ let kind genv sign = kind genv sign []
 
 let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
-  | XLFa.OHead(h,l,_) -> XLF.OHead(from_head h, from_args l)
+  | XLFa.OHead(h,l,_) -> XLF.OHead(h, from_args l)
   | XLFa.OMeta (x,_) -> XLF.OMeta x
   | XLFa.OBox(t,p,s) -> XLF.OBox(from_obj t, p, List.map (fun x, t -> x, from_obj t) s)
-
-and from_head = function
-  | XLFa.HVar x -> XLF.HVar x
-  | XLFa.HConst c -> XLF.HConst c
-  | XLFa.HApp t -> XLF.HApp (from_obj t)
 
 and from_args l = List.map (fun (_,t) -> from_obj t) l
 and from_fam = function

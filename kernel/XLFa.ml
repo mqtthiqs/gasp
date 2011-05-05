@@ -26,9 +26,8 @@ module Pp = struct
     | OMeta _ -> 20
     | OBox _ -> 20
   let head_prec = function
-    | HConst _ -> 20
-    | HVar _ -> 20
-    | HApp _ -> 30
+    | XLF.HConst _ -> 20
+    | XLF.HVar _ -> 20
   let args_prec = function
     | [] -> 0
     | _::_ -> 20
@@ -60,9 +59,8 @@ module Pp = struct
 	    constant c (pp (<=)) (Args l) (pp (<=)) (Kind k)
       end
     | Head h -> begin match h with
-	| HApp t -> fprintf fmt "@[%a@]" (pp (<=)) (Obj t)
-	| HVar x -> variable fmt x
-	| HConst x -> constant fmt x
+	| XLF.HVar x -> variable fmt x
+	| XLF.HConst x -> constant fmt x
       end
     | Obj o -> begin match o with
 	| OLam(x,a,t) -> fprintf fmt "@[[%a@ :@ %a]@ %a@]" 
