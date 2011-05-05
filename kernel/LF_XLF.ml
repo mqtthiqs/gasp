@@ -15,7 +15,8 @@ let rec obj l = function
       if l = [] then
 	XLF.OLam(variable_for x, fam [] a, obj [] t)
       else 
-	XLF.OHead(XLF.HApp(XLF.OLam(variable_for x, fam [] a,obj [] t)), l)
+	(* XLF.OHead(XLF.HApp(XLF.OLam(variable_for x, fam [] a,obj [] t)), l) *)
+	failwith "redex"
   | LF.OBox(t,p,s) ->
       if l = [] then
 	XLF.OBox(obj [] t, p, List.map (fun (x,t) -> x, obj [] t) s)
@@ -59,9 +60,8 @@ and depends_obj x = function
   | XLF.OLam (y,a,t) when x=y -> depends_fam x a
   | XLF.OLam (y,a,t) -> depends_fam x a || depends_obj x t
   | XLF.OHead (XLF.HVar y,l) -> if x=y then true else depends_args x l
-  | XLF.OMeta y -> false
   | XLF.OHead (XLF.HConst c,l) -> depends_args x l
-  | XLF.OHead (XLF.HApp t,l) -> depends_obj x t || depends_args x l
+  | XLF.OMeta y -> false
   | XLF.OBox(t,p,s) -> depends_obj x t || List.exists (fun (_,t) -> depends_obj x t) s
 
 let name_for_obj x t = if depends_obj x t then Named x else Anonymous
@@ -89,7 +89,6 @@ and from_obj = function
 and from_head = function
   | XLF.HVar x -> LF.OVar x
   | XLF.HConst c ->LF.OConst c
-  | XLF.HApp t -> from_obj t
 
 let rec from_kind = function
   | XLF.KType -> LF.KType
