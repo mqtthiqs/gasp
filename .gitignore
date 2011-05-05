@@ -6,6 +6,11 @@ gasp.native
 *.aux
 *.out
 *.log
+*.nav
+*.snm
+*.vrb
+*.toc
+*.pdf
 userInput.ml
 myocamlbuild_config.ml
 experiments/alagit/tests/*.ga.out
