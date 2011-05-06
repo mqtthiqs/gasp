@@ -67,7 +67,7 @@ module Pp = struct
 	    variable x (pp (<=)) (Fam a) (pp (<=)) (Obj t)
 	| OHead(h,l,a) -> fprintf fmt "@[%a@ [%a]@ :@ %a@]"
 	    (pp (<=)) (Head h) (pp (<=)) (Args l) (pp (<=)) (Fam a)
-	| OMeta(x,a) -> fprintf fmt "@[%a@ :@ %a@]" definition x (pp (<=)) (Fam a)
+	| OMeta(x,a) -> fprintf fmt "@[%a@ :@ %a@]" variable x (pp (<=)) (Fam a)
 	| OBox (t,p,s) -> 
 	    let pp_subst fmt (x,t) = fprintf fmt "@[(%a=%a)@]" variable x (pp (<=)) (Obj t) in
 	    fprintf fmt "@[{%a@ =>@ %a}%a@]" variable p (pp (<=)) (Obj t) pp_subst s

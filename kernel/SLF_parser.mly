@@ -5,7 +5,7 @@
 %}
 
 %token EOF
-%token COLON TYPE DOT LARROW RARROW DOLLAR EQUALS BIGRARROW
+%token COLON TYPE DOT LARROW RARROW EQUALS BIGRARROW
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
 
@@ -47,7 +47,6 @@ term3:
 	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
 | x=ID { Var x }
 | LBRACE p=ID BIGRARROW t=loc(term1) RBRACE s=subst { Box(t, p, s) }
-| DOLLAR x=ID { Meta x }
 | TYPE { Type }
 
 term: x=term1 { x }

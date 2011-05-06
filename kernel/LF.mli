@@ -6,7 +6,6 @@ type fam =
   | FApp of fam * obj
 
 and obj = 
-  | OMeta of definition
   | OConst of constant
   | OVar of variable
   | OLam of name * fam * obj

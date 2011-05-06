@@ -16,14 +16,14 @@ module NLFEnv = struct
 end
 
 and module NLFSubst = struct  
-  type key = definition
+  type key = variable
   type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t
-  type t = value Defmap.t
-  let add x e m = Defmap.add x e m
-  let find x m = Defmap.find x m
-  let fold f m acc = Defmap.fold f m acc
-  let is_empty t = Defmap.is_empty t
-  let empty = Defmap.empty
+  type t = value Varmap.t
+  let add x e m = Varmap.add x e m
+  let find x m = Varmap.find x m
+  let fold f m acc = Varmap.fold f m acc
+  let is_empty t = Varmap.is_empty t
+  let empty = Varmap.empty
 end
 
 and module NLFSign = struct
@@ -92,13 +92,13 @@ and module Pp = struct
 	    else fprintf fmt "%a@ %a@ :@ %a" (pp (<=)) (H h) (pp (<=)) (A args) pr_fhead () in
 	  pr_envs e s (pr_ohead (pr_fhead c fargs)) fmt ()
       | O(OMeta(e,s,x,c,fargs)) ->
-	    let pr_hd fmt () = fprintf fmt "@[%a@ :@ %a@]" definition x (pr_fhead c fargs) () in
+	    let pr_hd fmt () = fprintf fmt "@[%a@ :@ %a@]" variable x (pr_fhead c fargs) () in
 	    pr_envs e s pr_hd fmt ()
       | H(XLF.HVar x) -> variable fmt x
       | H(XLF.HConst c) -> constant fmt c
       | E e -> NLFEnv.fold (fun x a () -> fprintf fmt "@[[%a@ :@ %a]@]@," variable x (pp (<=)) (F a)) e ()
       | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[{%a@ =@ %a}@]@," variable x (pp (<=)) (O t)) a ()
-      | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," definition x (pp (<=)) (H h) (pp (<=)) (A a) constant c (pp (<=)) (A b)) b ()
+      | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) constant c (pp (<=)) (A b)) b ()
       | S s -> NLFSign.fold
 	    (fun c e () -> 
 	       match e with

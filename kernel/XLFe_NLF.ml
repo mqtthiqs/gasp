@@ -43,7 +43,7 @@ and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
       if l = [] then
         sigma, (x, NLF.Obj(E.empty, S.empty, h, A.empty, c, fargs))
       else 
-        let z = Name.gen_definition() in
+        let z = Name.gen_variable() in
 	let sigma, oargs = args (with_subst sigma (no_env term)) l in
 	S.add z (h, oargs, c, fargs) sigma,
 	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
@@ -96,7 +96,7 @@ let rec from_obj sigma = function
     let h, oa, c, fa =
       try S.find x sigma
       with Not_found ->
-	Format.printf "%a not found in %a@." Name.Pp.definition x Pp.obj (with_subst sigma t);
+	Format.printf "%a not found in %a@." Name.Pp.variable x Pp.obj (with_subst sigma t);
 	Error.global_error "definition not found" "" in
     E.fold (fun x a t -> XLFe.OLam(x, from_fam sigma a, t)) env
       (XLFe.OHead(h, from_args sigma oa, XLFe.FConst(c, from_args sigma fa)))

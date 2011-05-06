@@ -17,9 +17,6 @@ let rec obj sign term env : XLF.obj -> XLFa.obj = function
       let (h,a) = head sign term env h in
       let (l,a) = args sign term env l [] a in
       XLFa.OHead(h,l,a)
-  | XLF.OMeta x ->
-      let a = reify_fam (NLF.lift_def x term) in
-      XLFa.OMeta (x,a)
   | XLF.OBox(t,p,(x,u)) ->
       let term = NLF.go p term in
       let s = x, obj sign term [] u in
@@ -27,6 +24,7 @@ let rec obj sign term env : XLF.obj -> XLFa.obj = function
 
 and head sign term env = function
   | XLF.HVar x -> XLF.HVar x, List.assoc x env
+  (* TODO si pas trouvé, alors dans les Metas!!! *)
   | XLF.HConst c ->
       let a = match NLF.NLFSign.find c sign with
 	| NLF.NLF.ODecl a -> a
@@ -94,7 +92,7 @@ let kind genv sign = kind genv sign []
 let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
   | XLFa.OHead(h,l,_) -> XLF.OHead(h, from_args l)
-  | XLFa.OMeta (x,_) -> XLF.OMeta x
+  | XLFa.OMeta (x,_) -> XLF.OHead(XLF.HVar x, [])
   | XLFa.OBox(t,p,(x,u)) -> XLF.OBox(from_obj t, p, (x, from_obj u))
 
 and from_args l = List.map (fun (_,t) -> from_obj t) l

@@ -46,7 +46,6 @@ rule main = parse
   | "->"                                  { RARROW  }
   | "<-"                                  { LARROW  }
   | "=>"                                  { BIGRARROW  }
-  | "$"                                   { DOLLAR  }
   | "="                                   { EQUALS }
   | identifier                            { let id = lexeme lexbuf in
                                             try is_keyword id 

@@ -26,7 +26,7 @@ module rec NLF : sig
 
   and obj =
     | Obj of env * subst * ohead * args * constant * args
-    | OMeta of env * subst * definition * constant * args
+    | OMeta of env * subst * variable * constant * args
 
   type entry =
     | FDecl of NLF.kind
@@ -34,7 +34,7 @@ module rec NLF : sig
 end
 
 and NLFEnv : (SET with type key = variable and type value = NLF.fam)
-and NLFSubst : (SET with type key = definition and type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t)
+and NLFSubst : (SET with type key = variable and type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t)
 and NLFSign : (SET with type key = constant and type value = NLF.entry)
 and NLFArgs : (SET with type key = variable and type value = NLF.obj)
 
@@ -49,5 +49,5 @@ module Pp : sig
 end
 
 val go : variable -> NLF.obj -> NLF.obj
-val lift_def : definition -> NLF.obj -> NLF.fam
+val lift_def : variable -> NLF.obj -> NLF.fam
 val bidon : NLF.obj

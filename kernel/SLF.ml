@@ -7,7 +7,7 @@ include types of mli with
 module Pp = struct
     
   let term_prec a = match P.value a with
-    | Type | Var _ | Meta _ -> 0
+    | Type | Var _
     | App _ -> 10
     | Lam _ -> 30
     | Prod _ -> 30
@@ -19,14 +19,12 @@ module Pp = struct
     | _::_ -> 50
 	
   let ident fmt x = fprintf fmt "@[%s@]" x
-  let meta fmt x = fprintf fmt "@[$%s@]" x
-    
+
   let pp_term pp fmt t = 
     let pp_subst : subst printing_fun = (fun fmt (x,t) -> fprintf fmt "@[(%a=%a)@]" ident x (pp (<=)) t) in
     match P.value t with
     | Var x -> ident fmt x
-    | Meta x ->	meta fmt x
-    | Arr (a,b) -> fprintf fmt "@[%a@ ->@ %a@]" 
+    | Arr (a,b) -> fprintf fmt "@[%a@ ->@ %a@]"
 	(pp (<)) a (pp (<=)) b
     | Prod (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
 	ident x (pp (<=)) a (pp (<=)) b

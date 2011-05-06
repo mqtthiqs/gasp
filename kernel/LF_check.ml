@@ -37,7 +37,7 @@ module Ren = struct
     | FApp(a,t) -> FApp(rename_fam x y a, rename_obj x y t)
     | FConst c -> FConst c
   and rename_obj x y = function
-    | OMeta _ | OBox _ -> assert false
+    | OBox _ -> assert false
     | OConst c -> OConst c
     | OVar z -> if z=x then OVar y else OVar z
     | OApp(t,u) -> OApp(rename_obj x y t, rename_obj x y u)
@@ -121,8 +121,6 @@ and conv_obj' st1 st2 =
     | (_, _::_, OLam _), _ | _, (_, _::_, OLam _) -> 
 	assert false (* whd would have eaten it *)
 
-    | (_, _, OMeta _), (_, _, OMeta _) -> assert false (* not implemented *)
-
     | _ -> Errors.not_convertible (SLF_LF.from_obj (State.unwind st1)) (SLF_LF.from_obj (State.unwind st2))
 
 and conv_obj st1 st2 =
@@ -184,7 +182,7 @@ let rec obj' sign env subst t : fam * subst =
 	    b, Subst.add_name x u e1
 	| _ -> Errors.bad_application (SLF_LF.from_obj t)
       end
-  | OMeta _ | OBox _ -> assert false
+  | OBox _ -> assert false
 
 and fam' sign env subst = function
   | FProd(x,a,b) -> 

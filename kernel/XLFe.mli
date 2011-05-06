@@ -14,7 +14,7 @@ and fam =
 and obj =
   | OLam of variable * fam * obj
   | OHead of ohead * args * fhead
-  | OMeta of definition * fhead
+  | OMeta of variable * fhead
   | OBox of obj * variable * (variable * obj)
 
 and ohead = XLF.ohead
