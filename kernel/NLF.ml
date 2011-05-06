@@ -94,8 +94,8 @@ and module Pp = struct
       | O(OMeta(e,s,x,c,fargs)) ->
 	    let pr_hd fmt () = fprintf fmt "@[%a@ :@ %a@]" definition x (pr_fhead c fargs) () in
 	    pr_envs e s pr_hd fmt ()
-      | H(HVar x) -> variable fmt x
-      | H(HConst c) -> constant fmt c
+      | H(XLFn.HVar x) -> variable fmt x
+      | H(XLFn.HConst c) -> constant fmt c
       | E e -> NLFEnv.fold (fun x a () -> fprintf fmt "@[[%a@ :@ %a]@]@," variable x (pp (<=)) (F a)) e ()
       | A a -> NLFArgs.fold (fun x t () -> fprintf fmt "@[{%a@ =@ %a}@]@," variable x (pp (<=)) (O t)) a ()
       | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," definition x (pp (<=)) (H h) (pp (<=)) (A a) constant c (pp (<=)) (A b)) b ()
@@ -129,4 +129,4 @@ let rec go x = function
       go x (NLF.Obj(env,sigma,h,args,c,fargs))
   | NLF.Obj(_,_,_,args,_,_) -> NLFArgs.find x args
 
-let bidon = NLF.Obj(NLFEnv.empty,NLFSubst.empty,NLF.HConst(Name.mk_constant"bidon"),NLFArgs.empty,Name.mk_constant"Bidon",NLFArgs.empty)
+let bidon = NLF.Obj(NLFEnv.empty,NLFSubst.empty,XLFn.HConst(Name.mk_constant"bidon"),NLFArgs.empty,Name.mk_constant"Bidon",NLFArgs.empty)

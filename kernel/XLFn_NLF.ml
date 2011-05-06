@@ -22,10 +22,6 @@ let with_env e = function
   | NLF.OMeta(_,s,x,c,fargs) -> NLF.OMeta(e,s,x,c,fargs)
 let no_env = with_env E.empty
 
-let ohead = function
-  | XLFn.HVar x -> NLF.HVar x
-  | XLFn.HConst c -> NLF.HConst c
-
 let rec obj term = function
   | XLFn.OLam (x,a,t) ->
     let a = fam (no_env term) a in
@@ -36,7 +32,7 @@ let rec obj term = function
   | XLFn.OHead (h,l,XLFn.FConst(c,m)) ->
     let sigma, oargs = args (no_env term) l in
     let sigma, fargs = args (with_subst sigma (no_env term)) m in
-    NLF.Obj(env_of term, sigma, ohead h, oargs, c, fargs)
+    NLF.Obj(env_of term, sigma, h, oargs, c, fargs)
   | XLFn.OBox(t,p,s) ->
     let term = with_env (env_of term) (go p term) in
     obj term t          (* TODO subst *)
@@ -45,11 +41,11 @@ and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
   | XLFn.OHead(h,l,XLFn.FConst(c,m)) ->
       let sigma, fargs = args (no_env term) m in
       if l = [] then
-        sigma, (x, NLF.Obj(E.empty, S.empty, ohead h, A.empty, c, fargs))
+        sigma, (x, NLF.Obj(E.empty, S.empty, h, A.empty, c, fargs))
       else 
         let z = Name.gen_definition() in
 	let sigma, oargs = args (with_subst sigma (no_env term)) l in
-	S.add z (ohead h, oargs, c, fargs) sigma,
+	S.add z (h, oargs, c, fargs) sigma,
 	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
   | XLFn.OLam _ ->
       subst_of term, (x, obj term t)
@@ -90,15 +86,11 @@ let entry kont nlfs = function
 let s_merge s1 s2 =
   S.fold S.add s1 s2
 
-let from_ohead = function
-  | NLF.HVar x -> XLFn.HVar x
-  | NLF.HConst c -> XLFn.HConst c
-
 let rec from_obj sigma = function
   | NLF.Obj(env, sigma', h, args, c, fargs) ->
     let sigma = s_merge sigma sigma' in
     E.fold (fun x a t -> XLFn.OLam(x, from_fam sigma a, t)) env
-      (XLFn.OHead(from_ohead h, from_args sigma args, XLFn.FConst(c, from_args sigma fargs)))
+      (XLFn.OHead(h, from_args sigma args, XLFn.FConst(c, from_args sigma fargs)))
   | NLF.OMeta(env, sigma', x, c, fargs) as t ->
     let sigma = s_merge sigma sigma' in
     let h, oa, c, fa =
@@ -107,7 +99,7 @@ let rec from_obj sigma = function
 	Format.printf "%a not found in %a@." Name.Pp.definition x Pp.obj (with_subst sigma t);
 	Error.global_error "definition not found" "" in
     E.fold (fun x a t -> XLFn.OLam(x, from_fam sigma a, t)) env
-      (XLFn.OHead(from_ohead h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa)))
+      (XLFn.OHead(h, from_args sigma oa, XLFn.FConst(c, from_args sigma fa)))
 
 and from_args sigma args =
   A.fold (fun x t l -> (x, from_obj sigma t) :: l) args []
