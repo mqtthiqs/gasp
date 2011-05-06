@@ -1,3 +1,4 @@
+open Util
 open Name
 open NLF
 
@@ -13,7 +14,7 @@ fun sign t ->
 	| SLF.Prod(x,t,u) ->
 	    begin match term env t with
 	      | LF.Fam a -> 
-		  begin match term ((x,a) :: env) u with
+		  begin match term (Stringset.add x env) u with
 		    | LF.Kind k -> LF.Kind(LF.KProd(Named (mk_variable x),a,k))
 		    | LF.Fam b -> LF.Fam(LF.FProd(Named (mk_variable x),a,b))
 		    | _ -> Errors.not_a_kind_or_fam u
@@ -30,7 +31,7 @@ fun sign t ->
 	| SLF.Lam(x,t,u) ->
 	    begin match term env t with
 	      | LF.Fam a ->
-		  begin match term ((x,a) :: env) u with
+		  begin match term (Stringset.add x env) u with
 		    | LF.Obj o -> LF.Obj(LF.OLam(Named (mk_variable x),a,o))
 		    | _ -> Errors.not_an_obj u
 		  end
@@ -56,14 +57,14 @@ fun sign t ->
 	    | _ -> Errors.not_an_obj t
 	  end
 	| SLF.Var x ->
-	    if List.mem_assoc x env then LF.Obj(LF.OVar (mk_variable x))
+	    if Stringset.mem x env then LF.Obj(LF.OVar (mk_variable x))
 	    else 
 	      try match NLFSign.find (mk_constant x) sign with
 		| NLF.FDecl _ -> LF.Fam (LF.FConst (mk_constant x))
 		| NLF.ODecl _ -> LF.Obj (LF.OConst (mk_constant x))
 	      with Not_found -> Errors.not_bound pos x
   in
-  term [] t
+  term Stringset.empty t
 
 let entry c kont nlfs =
   function SLF.Decl t -> 

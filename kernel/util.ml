@@ -28,3 +28,5 @@ let curry f x y = f (x,y)
 module Pair = struct
   let map_left f (x,y) = x, f y
 end
+
+module Stringset = Set.Make(struct type t = string let compare = Pervasives.compare end)
