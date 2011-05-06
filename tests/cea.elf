@@ -1,0 +1,5 @@
+A B C D : type.
+a : (D -> B) -> C -> A.
+b b' : C -> B.
+c : D -> C.
+d : D.
