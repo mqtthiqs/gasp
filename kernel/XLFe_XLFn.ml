@@ -17,7 +17,7 @@ module XLFw = struct
     | OClos of variable * XLFe.fam * XLFe.obj * Env.t
     | OMeta of definition * XLFe.fhead
     | OHead of ohead * XLFe.args * XLFe.fhead * Env.t (* this env applies to the arguments only *)
-    | OBox of obj * variable * (variable * obj) list
+    | OBox of obj * variable * (variable * obj)
 
 end
 
@@ -34,7 +34,7 @@ module XLFe_XLFw = struct
     | XLFe.OHead(XLF.HConst c,l,a) -> XLFw.OHead(XLFw.HConst c, l, a, e)
     (* | XLFe.OHead(XLF.HApp t,l,a) -> red e e (t, List.rev l) *)
     | XLFe.OMeta (x,a) -> XLFw.OMeta(x, a)
-    | XLFe.OBox(t,p,s) -> XLFw.OBox(obj e t,p,List.map (fun x, t -> x, obj e t) s)
+    | XLFe.OBox(t,p,(x,u)) -> XLFw.OBox(obj e t,p, (x, obj e u))
 
   and red' e f = function
     | XLFe.OHead(h,l,a), [] -> obj f (XLFe.OHead(h,l,a))
@@ -73,7 +73,7 @@ end = struct
     | XLFw.OMeta(x,a) -> XLFn.OMeta(x, XLFe_XLFn.fhead XLFw.Env.empty a)
     | XLFw.OHead(h,l,a,f) -> XLFn.OHead(ohead h, XLFe_XLFn.args f l, XLFe_XLFn.fhead f a)
     | XLFw.OClos(x,a,t,f) -> XLFn.OLam(x, XLFe_XLFn.fam a, obj (XLFe_XLFw.obj f t))
-    | XLFw.OBox (t,p,s) -> XLFn.OBox(obj t, p, List.map (fun x, t -> x, obj t) s)
+    | XLFw.OBox (t,p,(x,u)) -> XLFn.OBox(obj t, p, (x, obj u))
 
   and ohead = function
     | XLFw.HVar x -> XLFn.HVar x
@@ -121,7 +121,7 @@ let rec from_obj = function
   | XLFn.OLam(x,a,t) -> XLFe.OLam(x, from_fam a, from_obj t)
   | XLFn.OHead(h,l,a) -> XLFe.OHead(ohead h, from_args l, from_fhead a)
   | XLFn.OMeta(x,a) -> XLFe.OMeta(x, from_fhead a)
-  | XLFn.OBox(t,p,s) -> XLFe.OBox(from_obj t, p, List.map (fun x, t -> x, from_obj t) s)
+  | XLFn.OBox(t,p,(x,u)) -> XLFe.OBox(from_obj t, p, (x, from_obj u))
 
 and from_fhead = function XLFn.FConst (a,l) -> XLFe.FConst(a, from_args l)
 

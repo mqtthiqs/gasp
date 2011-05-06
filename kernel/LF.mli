@@ -13,7 +13,7 @@ and obj =
   | OApp of obj * obj
   | OBox of obj * variable * subst
 
-and subst = (variable * obj) list
+and subst = variable * obj
 
 type kind =
   | KType

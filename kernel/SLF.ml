@@ -22,8 +22,7 @@ module Pp = struct
   let meta fmt x = fprintf fmt "@[$%s@]" x
     
   let pp_term pp fmt t = 
-    let pp_subst : subst printing_fun = pr_list (fun _ _ -> ()) 
-      (fun fmt (x,t) -> fprintf fmt "@[(%a=%a)@]" ident x (pp (<=)) t) in
+    let pp_subst : subst printing_fun = (fun fmt (x,t) -> fprintf fmt "@[(%a=%a)@]" ident x (pp (<=)) t) in
     match P.value t with
     | Var x -> ident fmt x
     | Meta x ->	meta fmt x

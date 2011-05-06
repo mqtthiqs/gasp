@@ -45,14 +45,13 @@ fun sign t ->
 	      | _ -> Errors.not_an_obj u
 	    end
 	| SLF.Meta x -> LF.Obj(LF.OMeta (mk_definition x))
-	| SLF.Box (t,p,s) ->
+	| SLF.Box (t,p,(x,u)) ->
 	  begin match term env t with
 	    | LF.Obj t ->
-	      let s = List.map
-		(fun x, t -> mk_variable x,
-		  match term env t with
-		    | LF.Obj t -> t
-		    | _ -> Errors.not_an_obj t) s in
+	      let s = mk_variable x,
+	      match term env u with
+		| LF.Obj u -> u
+		| _ -> Errors.not_an_obj u in
 	      LF.Obj(LF.OBox(t, mk_variable p, s))
 	    | _ -> Errors.not_an_obj t
 	  end
@@ -95,7 +94,7 @@ let rec from_obj' = function
   | LF.OLam (Named x, a, t) -> SLF.Lam (of_variable x, from_fam a, from_obj t)
   | LF.OApp (t,u) -> SLF.App (from_obj t, from_obj u)
   | LF.OMeta x -> SLF.Meta (of_definition x)
-  | LF.OBox (t,p,s) -> SLF.Box (from_obj t, of_variable p, List.map (fun (x,t) -> of_variable x, from_obj t)) s
+  | LF.OBox (t,p,(x,u)) -> SLF.Box (from_obj t, of_variable p, (of_variable x, from_obj u))
 
 and from_obj t = P.with_pos P.dummy (from_obj' t)
 

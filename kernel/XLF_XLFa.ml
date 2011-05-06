@@ -20,9 +20,9 @@ let rec obj sign term env : XLF.obj -> XLFa.obj = function
   | XLF.OMeta x ->
       let a = reify_fam (NLF.lift_def x term) in
       XLFa.OMeta (x,a)
-  | XLF.OBox(t,p,s) -> 
+  | XLF.OBox(t,p,(x,u)) ->
       let term = NLF.go p term in
-      let s = List.map (fun x, t -> x, obj sign term [] t) s in
+      let s = x, obj sign term [] u in
       XLFa.OBox(obj sign term env t, p, s) (* TODO subst!*)
 
 and head sign term env = function
@@ -95,7 +95,7 @@ let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
   | XLFa.OHead(h,l,_) -> XLF.OHead(h, from_args l)
   | XLFa.OMeta (x,_) -> XLF.OMeta x
-  | XLFa.OBox(t,p,s) -> XLF.OBox(from_obj t, p, List.map (fun x, t -> x, from_obj t) s)
+  | XLFa.OBox(t,p,(x,u)) -> XLF.OBox(from_obj t, p, (x, from_obj u))
 
 and from_args l = List.map (fun (_,t) -> from_obj t) l
 and from_fam = function

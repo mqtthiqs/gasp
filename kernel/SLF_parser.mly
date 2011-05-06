@@ -46,7 +46,7 @@ term3:
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
 | x=ID { Var x }
-| LBRACE p=ID BIGRARROW t=loc(term1) RBRACE s=subst* { Box(t, p, s) }
+| LBRACE p=ID BIGRARROW t=loc(term1) RBRACE s=subst { Box(t, p, s) }
 | DOLLAR x=ID { Meta x }
 | TYPE { Type }
 

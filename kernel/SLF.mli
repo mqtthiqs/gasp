@@ -13,7 +13,7 @@ type term' =
 
 and term = term' Position.located
 
-and subst = (ident * term) list
+and subst = ident * term
 
 type entry =
   | Decl of term

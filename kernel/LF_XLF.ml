@@ -17,9 +17,9 @@ let rec obj l = function
       else 
 	(* XLF.OHead(XLF.HApp(XLF.OLam(variable_for x, fam [] a,obj [] t)), l) *)
 	failwith "redex"
-  | LF.OBox(t,p,s) ->
+  | LF.OBox(t,p,(x,u)) ->
       if l = [] then
-	XLF.OBox(obj [] t, p, List.map (fun (x,t) -> x, obj [] t) s)
+	XLF.OBox(obj [] t, p, (x, obj [] u))
       else
 	Errors.bad_application (SLF_LF.from_obj t)	(* Product application *)
 
@@ -62,7 +62,7 @@ and depends_obj x = function
   | XLF.OHead (XLF.HVar y,l) -> if x=y then true else depends_args x l
   | XLF.OHead (XLF.HConst c,l) -> depends_args x l
   | XLF.OMeta y -> false
-  | XLF.OBox(t,p,s) -> depends_obj x t || List.exists (fun (_,t) -> depends_obj x t) s
+  | XLF.OBox(t,p,(_,u)) -> depends_obj x t || depends_obj x t
 
 let name_for_obj x t = if depends_obj x t then Named x else Anonymous
 let name_for_fam x t = if depends_fam x t then Named x else Anonymous
@@ -84,7 +84,7 @@ and from_obj = function
   | XLF.OLam (x,a,t) -> LF.OLam (name_for_obj x t, from_fam a, from_obj t)
   | XLF.OHead (h,l) -> from_oapp (from_head h) l
   | XLF.OMeta x -> LF.OMeta x
-  | XLF.OBox(t,p,s) -> LF.OBox(from_obj t, p, List.map (fun (x,t) -> x, from_obj t) s)
+  | XLF.OBox(t,p,(x,u)) -> LF.OBox(from_obj t, p, (x, from_obj u))
 
 and from_head = function
   | XLF.HVar x -> LF.OVar x

@@ -18,7 +18,7 @@ and ohead =
   | HVar of variable
   | HConst of constant
 
-and subst = (variable * obj) list
+and subst = variable * obj
 
 and args = obj list
 
