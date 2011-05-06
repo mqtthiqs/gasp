@@ -32,7 +32,7 @@ let reify_term t =
      LF_XLF.from_obj // SLF_LF.from_obj) t
 
 let init sign =
-  let sign =  ("Bidon", SLF.Decl(Position.with_pos Position.dummy SLF.Type)) :: ("bidon", SLF.Decl(Position.with_pos Position.dummy (SLF.Var"Bidon"))) :: sign in 			(* TODO temp *)
+  let sign =  ("Bidon", SLF.Decl(Position.with_pos Position.dummy SLF.Type)) :: ("bidon", SLF.Decl(Position.with_pos Position.dummy (SLF.Ident"Bidon"))) :: sign in 			(* TODO temp *)
   let sign = compile_sign sign in
   {sign = sign;
    varno = Name.gen_status();

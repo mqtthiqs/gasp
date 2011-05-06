@@ -7,7 +7,7 @@ type term' =
   | Arr of term * term
   | Lam of ident * term * term
   | App of term * term
-  | Var of ident
+  | Ident of ident
   | Box of term * ident * subst
 
 and term = term' Position.located

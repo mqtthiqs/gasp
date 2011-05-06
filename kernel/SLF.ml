@@ -7,7 +7,7 @@ include types of mli with
 module Pp = struct
     
   let term_prec a = match P.value a with
-    | Type | Var _
+    | Type | Ident _
     | App _ -> 10
     | Lam _ -> 30
     | Prod _ -> 30
@@ -23,7 +23,7 @@ module Pp = struct
   let pp_term pp fmt t = 
     let pp_subst : subst printing_fun = (fun fmt (x,t) -> fprintf fmt "@[(%a=%a)@]" ident x (pp (<=)) t) in
     match P.value t with
-    | Var x -> ident fmt x
+    | Ident x -> ident fmt x
     | Arr (a,b) -> fprintf fmt "@[%a@ ->@ %a@]"
 	(pp (<)) a (pp (<=)) b
     | Prod (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
@@ -60,11 +60,11 @@ let rec equals_term subst t u =
     | Lam(x,a,b), Lam(x',a',b') ->
 	x=x' && equals_term subst a a' && equals_term (Idmap.add x x' subst) b b'
     | App(t,u), App(t',u') -> equals_term subst t t' && equals_term subst u u'
-    | Var x, Var x' -> 
+    | Ident x, Ident x' ->
 	(try x = Idmap.find x' subst
 	with Not_found -> false)
-    | _, Lam(x,_,{P.value=App(u, {P.value=Var x'})}) (* Eta *)
-    | Lam(x,_,{P.value=App(u, {P.value=Var x'})}), _ when x=x' ->
+    | _, Lam(x,_,{P.value=App(u, {P.value=Ident x'})}) (* Eta *)
+    | Lam(x,_,{P.value=App(u, {P.value=Ident x'})}), _ when x=x' ->
 	equals_term subst t u
     | _ -> false
 

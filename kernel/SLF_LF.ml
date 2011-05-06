@@ -54,7 +54,7 @@ fun sign t ->
 	      LF.Obj(LF.OBox(t, mk_variable p, s))
 	    | _ -> Errors.not_an_obj t
 	  end
-	| SLF.Var x ->
+	| SLF.Ident x ->
 	    if Stringset.mem x env then LF.Obj(LF.OVar (mk_variable x))
 	    else 			(* TODO dans le repo!!! *)
 	      try match NLFSign.find (mk_constant x) sign with
@@ -86,8 +86,8 @@ let rec sign kont nlfs s =
 (* Detyping: from LF to SLF *)
 
 let rec from_obj' = function
-  | LF.OConst c -> SLF.Var (of_constant c)
-  | LF.OVar x -> SLF.Var (of_variable x)
+  | LF.OConst c -> SLF.Ident (of_constant c)
+  | LF.OVar x -> SLF.Ident (of_variable x)
   | LF.OLam (Anonymous, a, t) -> 
       SLF.Lam ("_", from_fam a, from_obj t)
   | LF.OLam (Named x, a, t) -> SLF.Lam (of_variable x, from_fam a, from_obj t)
@@ -97,7 +97,7 @@ let rec from_obj' = function
 and from_obj t = P.with_pos P.dummy (from_obj' t)
 
 and from_fam' = function
-  | LF.FConst c -> SLF.Var (of_constant c)
+  | LF.FConst c -> SLF.Ident (of_constant c)
   | LF.FProd (Anonymous, a, b) -> SLF.Arr(from_fam a, from_fam b)
   | LF.FProd (Named x, a, b) -> SLF.Prod(of_variable x, from_fam a, from_fam b)
   | LF.FApp (a,t) -> SLF.App (from_fam a, from_obj t)
