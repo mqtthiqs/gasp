@@ -4,13 +4,13 @@ open LF
 
 let reify_fam t =
   let t = 
-  ( XLFn_NLF.from_fam // XLFe_XLFn.from_fam // XLFa_XLFe.from_fam // XLF_XLFa.from_fam // 
+  ( XLFe_NLF.from_fam // XLFa_XLFe.from_fam // XLF_XLFa.from_fam //
       LF_XLF.from_fam) t
   in Util.if_debug (fun () -> Format.printf "** reified: %a@." SLF.Pp.term (SLF_LF.from_fam t));
   t
 let reify_kind t =
   let t =
-  ( XLFn_NLF.from_kind // XLFe_XLFn.from_kind // XLFa_XLFe.from_kind // XLF_XLFa.from_kind // 
+  ( XLFe_NLF.from_kind // XLFa_XLFe.from_kind // XLF_XLFa.from_kind //
       LF_XLF.from_kind) t
   in Util.if_debug (fun () -> Format.printf "** reified: %a@." SLF.Pp.term (SLF_LF.from_kind t));
   t

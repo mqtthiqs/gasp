@@ -1,7 +1,7 @@
 (* XLF to XLFa : type annotation on @-spines, argument naming *)
 
-let reify_fam a = XLFa_XLFe.from_fam (XLFe_XLFn.from_fam (XLFn_NLF.from_fam a))
-let reify_kind a = XLFa_XLFe.from_kind (XLFe_XLFn.from_kind (XLFn_NLF.from_kind a))
+let reify_fam a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a)
+let reify_kind a = XLFa_XLFe.from_kind (XLFe_NLF.from_kind a)
 
 let rec type_of : XLFa.obj -> XLFa.fam = function
   | XLFa.OLam(x,a,t) -> XLFa.FProd(x, a, type_of t)

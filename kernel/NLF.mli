@@ -16,7 +16,7 @@ module rec NLF : sig
   type subst = NLFSubst.t
   type args = NLFArgs.t
 
-  type ohead = XLFn.ohead
+  type ohead = XLF.ohead
 
   type kind = 
     | KType of env
