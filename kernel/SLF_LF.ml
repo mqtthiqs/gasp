@@ -55,12 +55,16 @@ fun sign t ->
 	    | _ -> Errors.not_an_obj t
 	  end
 	| SLF.Ident x ->
+	    (* if it's in [env] it's a (declared) variable *)
 	    if Stringset.mem x env then LF.Obj(LF.OVar (mk_variable x))
 	    else 			(* TODO dans le repo!!! *)
+	      (* if it's in [sign] it's a constant*)
 	      try match NLFSign.find (mk_constant x) sign with
 		| NLF.FDecl _ -> LF.Fam (LF.FConst (mk_constant x))
 		| NLF.ODecl _ -> LF.Obj (LF.OConst (mk_constant x))
-	      with Not_found -> Errors.not_bound pos x
+	      with Not_found ->
+		(* otherwise it might still be a (defined) variable looked up in XLFa *)
+		LF.Obj(LF.OVar (mk_variable x))
   in
   term Stringset.empty t
 
