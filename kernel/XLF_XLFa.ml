@@ -1,3 +1,5 @@
+module E = Name.Varmap
+
 (* XLF to XLFa : type annotation on @-spines, argument naming *)
 
 let reify_fam a = XLFa_XLFe.from_fam (XLFe_NLF.from_fam a)
@@ -12,18 +14,18 @@ let rec type_of : XLFa.obj -> XLFa.fam = function
 let rec obj sign term env : XLF.obj -> XLFa.obj = function
   | XLF.OLam (x,a,t) -> 
       let a = fam sign term env a in
-      XLFa.OLam (x, a, obj sign term ((x,a)::env) t)
+      XLFa.OLam (x, a, obj sign term (E.add x a env) t)
   | XLF.OHead (h,l) -> 
       let (h,a) = head sign term env h in
       let (l,a) = args sign term env l [] a in
       XLFa.OHead(h,l,a)
   | XLF.OBox(t,p,(x,u)) ->
       let term = NLF.go p term in
-      let s = x, obj sign term [] u in
+      let s = x, obj sign term env u in
       XLFa.OBox(obj sign term env t, p, s) (* TODO subst!*)
 
 and head sign term env = function
-  | XLF.HVar x -> XLF.HVar x, List.assoc x env
+  | XLF.HVar x -> XLF.HVar x, E.find x env
   (* TODO si pas trouvé, alors dans les Metas!!! *)
   | XLF.HConst c ->
       let a = match NLF.NLFSign.find c sign with
@@ -57,7 +59,7 @@ and fam sign term env = function
       XLFa.FConst(c,l,k)
   | XLF.FProd(x,a,b) -> 
       let a = fam sign term env a in
-      XLFa.FProd(x,a, fam sign term ((x,a)::env) b)
+      XLFa.FProd(x,a, fam sign term (E.add x a env) b)
 
 and args_fam sign term env l l' (k:XLFa.kind) =
   match l,k with
@@ -70,11 +72,11 @@ let rec kind sign term env = function
   | XLF.KType -> XLFa.KType
   | XLF.KProd(x,a,k) -> 
       let a = fam sign term env a in
-      XLFa.KProd(x, a, kind sign term ((x,a)::env) k)
+      XLFa.KProd(x, a, kind sign term (E.add x a env) k)
 
 let entry kont nlfs = function 
-    | XLF.ODecl a -> kont nlfs (XLFa.ODecl (fam nlfs NLF.bidon [] a))
-    | XLF.FDecl k -> kont nlfs (XLFa.FDecl (kind nlfs NLF.bidon [] k))
+    | XLF.ODecl a -> kont nlfs (XLFa.ODecl (fam nlfs NLF.bidon E.empty a))
+    | XLF.FDecl k -> kont nlfs (XLFa.FDecl (kind nlfs NLF.bidon E.empty k))
 
 let sign kont nlfs xlfs =
     List.fold_left
@@ -82,9 +84,9 @@ let sign kont nlfs xlfs =
 	 NLF.NLFSign.add c (entry kont nlfs t) nlfs
       ) nlfs xlfs
 
-let obj genv sign = obj genv sign []
-let fam genv sign = fam genv sign []
-let kind genv sign = kind genv sign []
+let obj genv sign = obj genv sign E.empty
+let fam genv sign = fam genv sign E.empty
+let kind genv sign = kind genv sign E.empty
 
 
 (* ... and back *)
