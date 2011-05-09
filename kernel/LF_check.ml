@@ -167,7 +167,7 @@ let rec obj' sign env subst t : fam * subst =
   | OVar x ->
     begin
       try List.assoc x env, subst
-      with Not_found -> Errors.not_bound Position.dummy (Name.of_variable x)
+      with Not_found -> Errors.not_bound Position.dummy x
     end
   | OLam (x,a,t) ->
       let k, _ = fam sign env subst a in

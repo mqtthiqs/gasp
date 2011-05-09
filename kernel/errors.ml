@@ -13,7 +13,7 @@ let type_error pos msg =
 
 let not_bound pos x =
   type_error pos
-    (fun fmt -> fprintf fmt "@[Variable %s is not bound.@]@." x)
+    (fun fmt -> fprintf fmt "@[Variable %a is not bound.@]@." Name.Pp.variable x)
 
 let over_application t =
   type_error (Position.position t)
