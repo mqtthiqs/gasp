@@ -51,7 +51,7 @@ fun sign t ->
 	      match term env u with
 		| LF.Obj u -> u
 		| _ -> Errors.not_an_obj u in
-	      LF.Obj(LF.OBox(t, mk_variable p, s))
+	      LF.Obj(LF.OBox(t, Option.map (fun x,n -> mk_variable x, n) p, s))
 	    | _ -> Errors.not_an_obj t
 	  end
 	| SLF.Ident x ->
@@ -96,7 +96,7 @@ let rec from_obj' = function
       SLF.Lam ("_", from_fam a, from_obj t)
   | LF.OLam (Named x, a, t) -> SLF.Lam (of_variable x, from_fam a, from_obj t)
   | LF.OApp (t,u) -> SLF.App (from_obj t, from_obj u)
-  | LF.OBox (t,p,(x,u)) -> SLF.Box (from_obj t, of_variable p, (of_variable x, from_obj u))
+  | LF.OBox (t,p,(x,u)) -> SLF.Box (from_obj t, Option.map (fun x,n -> of_variable x, n) p, (of_variable x, from_obj u))
 
 and from_obj t = P.with_pos P.dummy (from_obj' t)
 

@@ -70,7 +70,9 @@ module Pp = struct
 	| OMeta(x,a) -> fprintf fmt "@[%a@ :@ %a@]" variable x (pp (<=)) (Fam a)
 	| OBox (t,p,s) -> 
 	    let pp_subst fmt (x,t) = fprintf fmt "@[(%a=%a)@]" variable x (pp (<=)) (Obj t) in
-	    fprintf fmt "@[{%a@ =>@ %a}%a@]" variable p (pp (<=)) (Obj t) pp_subst s
+	    match p with
+	      | Some (x,n) -> fprintf fmt "@[{%a.%d@ =>@ %a}%a@]" variable x n (pp (<=)) (Obj t) pp_subst s
+	      | None -> fprintf fmt "@[{%a}%a@]" (pp (<=)) (Obj t) pp_subst s
       end
     | Args l -> begin match l with
 	|	[] -> ()

@@ -11,7 +11,7 @@ and fam =
 and obj =
   | OLam of variable * fam * obj
   | OHead of ohead * args
-  | OBox of obj * variable * subst
+  | OBox of obj * position * subst
 
 and ohead = 
   | HVar of variable

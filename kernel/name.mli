@@ -16,6 +16,8 @@ type name =
   | Named of variable
   | Anonymous
 
+type position = (variable * int) option
+
 val variable_for : name -> variable
 
 module Varmap : Map.S with type key = variable

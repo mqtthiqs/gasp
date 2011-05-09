@@ -25,8 +25,10 @@ let if_debug f = if !Settings.debug then f ()
 
 let curry f x y = f (x,y)
 
-module Pair = struct
-  let map_left f (x,y) = x, f y
+module Option = struct
+  let map f = function
+    | None -> None
+    | Some x -> Some (f x)
 end
 
 module Stringset = Set.Make(struct type t = string let compare = Pervasives.compare end)

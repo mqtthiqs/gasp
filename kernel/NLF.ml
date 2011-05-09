@@ -129,4 +129,6 @@ let rec go x = function
       go x (NLF.Obj(env,sigma,h,args,c,fargs))
   | NLF.Obj(_,_,_,args,_,_) -> NLFArgs.find x args
 
+let go p = assert false			(* TODO *)
+
 let bidon = NLF.Obj(NLFEnv.empty,NLFSubst.empty,XLF.HConst(Name.mk_constant"bidon"),NLFArgs.empty,Name.mk_constant"Bidon",NLFArgs.empty)
