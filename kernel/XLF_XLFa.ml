@@ -15,27 +15,32 @@ let rec obj sign term env : XLF.obj -> XLFa.obj = function
   | XLF.OLam (x,a,t) -> 
       let a = fam sign term env a in
       XLFa.OLam (x, a, obj sign term (E.add x a env) t)
-  | XLF.OHead (h,l) -> 
-      let (h,a) = head sign term env h in
-      let (l,a) = args sign term env l [] a in
-      XLFa.OHead(h,l,a)
+  | XLF.OHead (h,l) ->
+    begin
+      match h with
+	| XLF.HConst c ->
+	  let a = try match NLF.NLFSign.find c sign with
+	    | NLF.NLF.ODecl a -> reify_fam a
+	    | NLF.NLF.FDecl _ -> assert false (* bad kinding, checked in LF_XLF *)
+	    with Not_found -> assert false in (* constant not found, checked in LF_XLF *)
+	  let l, a = args sign term env l [] a in
+	  XLFa.OHead(XLF.HConst c, l, a)
+	| XLF.HVar x ->
+	  try
+	    let a = E.find x env in
+	    let l, a = args sign term env l [] a in
+	    XLFa.OHead(XLF.HVar x, l, a)
+	  with Not_found ->
+	    try
+	      let a = reify_fam (NLF.lift_def x term) in
+	      if l = [] then XLFa.OMeta(x, a)
+	      else Errors.bad_application (SLF_LF.from_obj (LF_XLF.from_obj (XLF.OHead(h,l))))
+	    with Not_found -> Errors.not_bound (Position.dummy) x
+    end
   | XLF.OBox(t,p,(x,u)) ->
       let term = NLF.go p term in
       let s = x, obj sign term env u in
       XLFa.OBox(obj sign term env t, p, s) (* TODO subst!*)
-
-and head sign term env = function
-  | XLF.HVar x -> XLF.HVar x, E.find x env
-  (* TODO si pas trouvé, alors dans les Metas!!! *)
-  | XLF.HConst c ->
-      let a = match NLF.NLFSign.find c sign with
-	| NLF.NLF.ODecl a -> a
-	| NLF.NLF.FDecl _ -> assert false in (* bad kinding, checked in LF_XLF *)
-      let a = reify_fam a in
-      XLF.HConst c, a
-  (* | XLF.HApp t ->  *)
-  (*     let t = obj sign term env t in *)
-  (*     XLFa.HApp t, type_of t *)
 
 and args sign term env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
