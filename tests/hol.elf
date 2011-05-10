@@ -4,7 +4,7 @@ o : holtype.
 arr : holtype -> holtype -> holtype.
 
 obj : holtype -> type.
-0 : obj(i).
+O : obj(i).
 S : obj(arr i i).
 + : obj(arr i (arr i i)).
 * : obj(arr i (arr i i)).

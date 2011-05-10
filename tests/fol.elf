@@ -1,7 +1,7 @@
 i : type.
 o : type.
 
-0 : i.
+O : i.
 S : i -> i.
 + : i -> i -> i.
 * : i -> i -> i.
@@ -26,6 +26,6 @@ all-i : {F: i -> o} ({x : i} true (F x)) -> true(forall([x:i] F x)).
 some-e : {F : i -> o} {p : o} true(exist([x:i] F x)) -> ({x:i} true (F x) -> true p) -> true p.
 
 sub : {t u : i} {F : i -> o} true(eq t u) -> true(F t) -> true(F u).
-ind : {F : i -> o} true (F 0) -> ({x:i} true(F x) -> true(F (S x))) -> {x:i} true (F x).
+ind : {F : i -> o} true (F O) -> ({x:i} true(F x) -> true(F (S x))) -> {x:i} true (F x).
 
 % ...

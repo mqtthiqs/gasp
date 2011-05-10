@@ -35,7 +35,7 @@ tint : typ.
 
 %% Literals
 %%---------
-42 : int.
+quarante-deux : int.
 
 %% Identifier
 %%-----------
