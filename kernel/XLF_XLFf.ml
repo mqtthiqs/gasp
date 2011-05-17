@@ -35,4 +35,3 @@ let rec kind = function
 let entry kont nlfs = function 
     | XLF.ODecl a -> kont nlfs (XLFf.ODecl (fam a))
     | XLF.FDecl k -> kont nlfs (XLFf.FDecl (kind k))
-

@@ -11,21 +11,18 @@ let compile_sign =
   SLF_LF.sign 
     (LF_XLF.entry
        (XLF_XLFf.entry
-	  XLFf_NLF.entry (fun _ x -> x))) NLFSign.empty
-
-let reify_sign = XLFf_NLF.from_sign // XLF_XLFf.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
+	  (XLFf_NLF.entry (fun _ x -> x)))) NLFSign.empty
 
 let compile_term sign term =
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t
        | _ -> assert false) //
       LF_XLF.obj //
-      XLF_XLFf.obj sign term //
-      XLFf_NLF.obj term
+      XLF_XLFf.obj //
+      XLFf_NLF.obj sign term
 
 let reify_term t =
-  (XLFf_NLF.from_obj // XLF_XLFf.from_obj //
-     LF_XLF.from_obj // SLF_LF.from_obj) t
+  (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
 
 let init sign =
   let sign =  ("Bidon", SLF.Decl(Position.unknown_pos SLF.Type)) :: ("bidon", SLF.Decl(Position.unknown_pos (SLF.Ident"Bidon"))) :: sign in 			(* TODO temp *)

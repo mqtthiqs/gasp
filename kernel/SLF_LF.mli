@@ -7,4 +7,3 @@ val sign : (NLFSign.t -> LF.entry -> NLF.entry) ->
 val from_obj : LF.obj -> SLF.term
 val from_fam : LF.fam -> SLF.term
 val from_kind : LF.kind -> SLF.term
-val from_sign : LF.sign -> SLF.sign

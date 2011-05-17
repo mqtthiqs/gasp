@@ -5,7 +5,6 @@ val gen_status : unit -> int
 val gen_init : int -> unit
 
 val gen_variable : unit -> variable
-val gen_constant : unit -> constant
 
 val mk_variable : string -> variable
 val mk_constant : string -> constant

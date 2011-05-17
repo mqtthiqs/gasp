@@ -23,5 +23,4 @@ type entry =
   | FDecl of kind
   | ODecl of fam
 
-type sign = (constant * entry) list
 type env = (variable * fam) list

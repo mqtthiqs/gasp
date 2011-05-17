@@ -8,9 +8,9 @@ let rec obj l = function
   | LF.OConst c -> XLF.OHead(XLF.HConst c,l)
   | LF.OVar x -> XLF.OHead (XLF.HVar x,l)
   | LF.OApp(t,u) -> obj (obj [] u :: l) t
-  | LF.OLam(x,a,t) -> 
+  | LF.OLam(x,t) ->
       if l = [] then
-	XLF.OLam(variable_for x, fam [] a, obj [] t)
+	XLF.OLam(variable_for x, obj [] t)
       else 
 	(* XLF.OHead(XLF.HApp(XLF.OLam(variable_for x, fam [] a,obj [] t)), l) *)
 	failwith "redex"
@@ -54,8 +54,8 @@ and depends_fam x = function
   | XLF.FConst (c,l) -> depends_args x l
 and depends_args x l = List.exists (depends_obj x) l
 and depends_obj x = function
-  | XLF.OLam (y,a,t) when x=y -> depends_fam x a
-  | XLF.OLam (y,a,t) -> depends_fam x a || depends_obj x t
+  | XLF.OLam (y,t) when x=y -> false
+  | XLF.OLam (y,t) -> depends_obj x t
   | XLF.OHead (XLF.HVar y,l) -> if x=y then true else depends_args x l
   | XLF.OHead (XLF.HConst c,l) -> depends_args x l
   | XLF.OBox(t,p,u) -> depends_obj x t || depends_obj x t
@@ -77,7 +77,7 @@ and from_fam = function
   | XLF.FConst(c,l) -> from_fapp (LF.FConst c) l
 
 and from_obj = function
-  | XLF.OLam (x,a,t) -> LF.OLam (name_for_obj x t, from_fam a, from_obj t)
+  | XLF.OLam (x,t) -> LF.OLam (name_for_obj x t, from_obj t)
   | XLF.OHead (h,l) -> from_oapp (from_head h) l
   | XLF.OBox(t,p,u) -> LF.OBox(from_obj t, p, from_obj u)
 

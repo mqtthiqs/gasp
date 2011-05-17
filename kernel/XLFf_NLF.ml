@@ -12,15 +12,17 @@ let rec obj sign env repo : XLFf.obj -> NLF.obj = function
 
 and arg sign env repo a : XLFf.value -> NLF.subst * NLF.value = function
   | XLFf.VLam (x,t) ->
-    let b = assert false in
+    let b = assert false in		(* TODO *)
     NLFSubst.empty, NLF.VLam (x, b, obj sign (E.add x b env) repo t)
   | XLFf.VHead (XLF.HConst c) ->
-    match NLFSign.find c sign with
+    begin match NLFSign.find c sign with
       | NLF.FDecl k -> assert false
       | NLF.ODecl (NLF.FProd _) -> failwith (Name.of_constant c ^ " is not in η-long form")
       | NLF.ODecl (NLF.FHead (sigma, d, l)) ->
 	(* TODO verif a *)
 	sigma, NLF.VHead (XLF.HConst c, d, l)
+    end
+  | XLFf.VHead (XLF.HVar x) -> assert false
 
 and fam sign (env:NLF.fam E.t) repo : XLFf.fam -> NLF.fam = function
   | XLFf.FProd (x, a, b) ->
@@ -34,3 +36,9 @@ let rec kind sign (env: NLF.fam E.t) repo : XLFf.kind -> NLF.kind = function
   | XLFf.KProd (x,a,k) ->
     let a = fam sign env repo a in
     NLF.KProd (x, a, kind sign (E.add x a env) repo k)
+
+let obj sign repo = obj sign E.empty repo
+
+let entry kont nlfs = function 
+    | XLFf.ODecl a -> kont nlfs (NLF.ODecl (fam nlfs E.empty bidon a))
+    | XLFf.FDecl k -> kont nlfs (NLF.FDecl (kind nlfs E.empty bidon k))
