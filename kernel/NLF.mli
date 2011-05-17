@@ -1,18 +1,6 @@
 open Name
 
-module type MAP = sig
-  type t
-  type key
-  type value
-  val add : key -> value -> t -> t
-  val find : key -> t -> value
-  val fold : (key -> value -> 'a -> 'a) -> t -> 'a -> 'a
-  val is_empty : t -> bool
-  val empty : t
-end
-
 module rec NLF : sig
-  type subst = NLFSubst.t
 
   type kind =
     | KType
@@ -33,16 +21,18 @@ module rec NLF : sig
     | VHead of vhead * fconst * args
     | VLam of variable * fam * obj
 
-  type def =
+  and def =
     | DApp of vhead * args * fconst * args (* vhead bindé ds repo *)
     | DHead of vhead * fam		    (* vhead bindé ds env *)
+
+  and subst = def NLFSubst.t
 
   type entry =
     | FDecl of fconst * kind
     | ODecl of oconst * fam
 end
 
-and NLFSubst : (MAP with type key = variable and type value = NLF.def)
+and NLFSubst : (Map.S with type key = variable)
 and NLFSign : sig
   module FDecl : Map.S with type key = fconst
   module ODecl : Map.S with type key = oconst

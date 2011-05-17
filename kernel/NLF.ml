@@ -2,16 +2,7 @@ open Name
 
 include types of mli with
 
-module NLFSubst = struct
-  type key = variable
-  type value = NLF.def
-  type t = value Varmap.t
-  let add x e m = Varmap.add x e m
-  let find x m = Varmap.find x m
-  let fold f m acc = Varmap.fold f m acc
-  let is_empty t = Varmap.is_empty t
-  let empty = Varmap.empty
-end
+module NLFSubst = Varmap
 
 and module NLFSign = struct
   module FDecl = Fconstmap
