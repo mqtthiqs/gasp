@@ -6,7 +6,7 @@ type kind =
 
 and fam =
   | FProd of variable * fam * fam
-  | FConst of constant * args
+  | FConst of fconst * args
 
 and obj =
   | OLam of variable * obj
@@ -15,7 +15,7 @@ and obj =
 
 and ohead = 
   | HVar of variable
-  | HConst of constant
+  | HConst of oconst
 
 and args = obj list
 

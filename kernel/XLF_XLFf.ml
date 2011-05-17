@@ -31,7 +31,3 @@ and fam = function
 let rec kind = function
   | XLF.KType -> XLFf.KType
   | XLF.KProd (x, a, k) -> XLFf.KProd (x, fam a, kind k)
-
-let entry kont nlfs = function 
-    | XLF.ODecl a -> kont nlfs (XLFf.ODecl (fam a))
-    | XLF.FDecl k -> kont nlfs (XLFf.FDecl (kind k))

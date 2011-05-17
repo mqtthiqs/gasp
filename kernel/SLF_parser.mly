@@ -20,7 +20,7 @@ signature:
 | error { parse_error (Position.lex_join $startpos $endpos) "Syntax error." }
 
 declaration:
-  xs=ID+ COLON t=loc(term) DOT { List.map (fun x -> (x, Decl t)) xs }
+  xs=ID+ COLON t=loc(term) DOT { List.map (fun x -> (x, t)) xs }
 
 term1:
   t=loc(term2) RARROW u=loc(term1) { Arr(t,u) }

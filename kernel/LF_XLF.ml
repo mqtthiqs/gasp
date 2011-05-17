@@ -12,14 +12,12 @@ let rec obj l = function
       if l = [] then
 	XLF.OLam(variable_for x, obj [] t)
       else 
-	(* XLF.OHead(XLF.HApp(XLF.OLam(variable_for x, fam [] a,obj [] t)), l) *)
 	failwith "redex"
   | LF.OBox(t,p,u) ->
       if l = [] then
 	XLF.OBox(obj [] t, p, obj [] u)
       else
 	Errors.bad_application (SLF_LF.from_obj t)	(* Product application *)
-
 
 and fam l = function
   | LF.FConst c -> XLF.FConst(c,l)
@@ -33,10 +31,6 @@ and fam l = function
 let rec kind = function
   | LF.KType -> XLF.KType
   | LF.KProd(x,a,k) -> XLF.KProd(variable_for x, fam [] a, kind k)
-
-let entry kont nlfs = function
-  | LF.FDecl k -> kont nlfs (XLF.FDecl (kind k))
-  | LF.ODecl k -> kont nlfs (XLF.ODecl (fam [] k))
 
 let obj t = obj [] t
 let fam a = fam [] a
@@ -88,11 +82,4 @@ and from_head = function
 let rec from_kind = function
   | XLF.KType -> LF.KType
   | XLF.KProd(x,a,k) -> LF.KProd(name_for_kind x k, from_fam a, from_kind k)
-
-let rec from_sign = 
-  List.map 
-    (function
-       | x, XLF.FDecl k -> x, LF.FDecl (from_kind k)
-       | x, XLF.ODecl a -> x, LF.ODecl (from_fam a)
-    )
 

@@ -6,7 +6,7 @@ type kind =
 
 and fam =
   | FProd of variable * fam * fam
-  | FHead of subst * constant * args
+  | FHead of subst * fconst * args
 
 and obj =
   | Obj of subst * value

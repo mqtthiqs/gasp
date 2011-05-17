@@ -5,7 +5,7 @@ module E = Name.Varmap
 
 let rec obj sign env repo : XLFf.obj -> NLF.obj = function
   | XLFf.OBox (t,p,u) ->
-    let d = Obj.magic (obj sign env repo u) in (* TODO *)
+    let d = assert false in (* TODO *)
     let repo = go repo p d in
     obj sign env repo t
   | XLFf.Obj (sigma, v) -> assert false	(* TODO *)
@@ -15,10 +15,9 @@ and arg sign env repo a : XLFf.value -> NLF.subst * NLF.value = function
     let b = assert false in		(* TODO *)
     NLFSubst.empty, NLF.VLam (x, b, obj sign (E.add x b env) repo t)
   | XLFf.VHead (XLF.HConst c) ->
-    begin match NLFSign.find c sign with
-      | NLF.FDecl k -> assert false
-      | NLF.ODecl (NLF.FProd _) -> failwith (Name.of_constant c ^ " is not in η-long form")
-      | NLF.ODecl (NLF.FHead (sigma, d, l)) ->
+    begin match NLFSign.ODecl.find c (snd sign) with
+      | NLF.FProd _ -> failwith (Name.of_oconst c ^ " is not in η-long form")
+      | NLF.FHead (sigma, d, l) ->
 	(* TODO verif a *)
 	sigma, NLF.VHead (XLF.HConst c, d, l)
     end
@@ -38,7 +37,9 @@ let rec kind sign (env: NLF.fam E.t) repo : XLFf.kind -> NLF.kind = function
     NLF.KProd (x, a, kind sign (E.add x a env) repo k)
 
 let obj sign repo = obj sign E.empty repo
+let fam sign repo = fam sign E.empty repo
+let kind sign repo = kind sign E.empty repo
 
-let entry kont nlfs = function 
-    | XLFf.ODecl a -> kont nlfs (NLF.ODecl (fam nlfs E.empty bidon a))
-    | XLFf.FDecl k -> kont nlfs (NLF.FDecl (kind nlfs E.empty bidon k))
+(* let entry kont nlfs = function  *)
+(*     | XLFf.ODecl a -> kont nlfs (NLF.ODecl (fam nlfs E.empty bidon a)) *)
+(*     | XLFf.FDecl k -> kont nlfs (NLF.FDecl (kind nlfs E.empty bidon k)) *)

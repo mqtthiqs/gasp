@@ -20,7 +20,7 @@ module rec NLF : sig
 
   and fam =
     | FProd of variable * fam * fam
-    | FHead of subst * constant * args
+    | FHead of subst * fconst * args
 
   and obj =
     | Obj of subst * value
@@ -30,20 +30,26 @@ module rec NLF : sig
   and vhead = XLF.ohead
 
   and value =
-    | VHead of vhead * constant * args
+    | VHead of vhead * fconst * args
     | VLam of variable * fam * obj
 
   type def =
-    | DApp of vhead * args * constant * args (* vhead bindé ds repo *)
+    | DApp of vhead * args * fconst * args (* vhead bindé ds repo *)
     | DHead of vhead * fam		    (* vhead bindé ds env *)
 
   type entry =
-    | FDecl of kind
-    | ODecl of fam
+    | FDecl of fconst * kind
+    | ODecl of oconst * fam
 end
 
 and NLFSubst : (MAP with type key = variable and type value = NLF.def)
-and NLFSign : (MAP with type key = constant and type value = NLF.entry)
+and NLFSign : sig
+  module FDecl : Map.S with type key = fconst
+  module ODecl : Map.S with type key = oconst
+  type t = NLF.kind FDecl.t * NLF.fam ODecl.t
+  val fold : (NLF.entry -> 'a -> 'a) -> t -> 'a -> 'a
+  val empty : t
+end
 
 open Print
 
@@ -54,7 +60,6 @@ module Pp : sig
   val obj : obj printing_fun
   val fam : fam printing_fun
   val kind : kind printing_fun
-  val entry : entry printing_fun
 end
 
 val go : NLF.obj -> position -> NLF.def -> NLF.obj

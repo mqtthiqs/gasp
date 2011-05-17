@@ -12,10 +12,7 @@ type term' =
 
 and term = term' Position.located
 
-type entry =
-  | Decl of term
-
-type sign = (ident * entry) list
+type sign = (ident * term) list
 
 (* Comparison of terms modulo alpha- and eta-conversion *)
 val equals_term : term -> term -> bool

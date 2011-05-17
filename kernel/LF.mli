@@ -1,12 +1,12 @@
 open Name
 
 type fam =
-  | FConst of constant
+  | FConst of fconst
   | FProd of name * fam * fam
   | FApp of fam * obj
 
 and obj = 
-  | OConst of constant
+  | OConst of oconst
   | OVar of variable
   | OLam of name * obj
   | OApp of obj * obj

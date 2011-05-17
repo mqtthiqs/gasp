@@ -39,7 +39,7 @@ module Pp = struct
     
   let pp_sign pp fmt = function
     | [] -> ()
-    | (c, Decl t) :: tl -> fprintf fmt "@[%a@ :@ %a@].@.%a"
+    | (c, t) :: tl -> fprintf fmt "@[%a@ :@ %a@].@.%a"
 	ident c term t (pp (<=)) tl
 	  
   let sign fmt s = pr_paren pp_sign list_prec 100 (<=) fmt s
@@ -71,7 +71,7 @@ let rec equals_term subst t u =
 let rec equals_sign subst s s' = 
   match s, s' with
     | [], [] -> true
-    | (x, Decl t) :: s, (y, Decl u) :: s' ->
+    | (x, t) :: s, (y, u) :: s' ->
 	equals_term subst t u && equals_sign (Idmap.add x y subst) s s'
     | _ -> false
 

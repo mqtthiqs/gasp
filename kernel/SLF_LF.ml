@@ -54,38 +54,21 @@ fun sign t ->
 	    if Stringset.mem x env then LF.Obj(LF.OVar (mk_variable x))
 	    else 			(* TODO dans le repo!!! *)
 	      (* if it's in [sign] it's a constant*)
-	      try match NLFSign.find (mk_constant x) sign with
-		| NLF.FDecl _ -> LF.Fam (LF.FConst (mk_constant x))
-		| NLF.ODecl _ -> LF.Obj (LF.OConst (mk_constant x))
+	      try match NLFSign.FDecl.find (mk_fconst x) (fst sign) with
+		| _ -> LF.Fam (LF.FConst (mk_fconst x))
+	      with Not_found ->
+		try match NLFSign.ODecl.find (mk_oconst x) (snd sign) with
+		  | _ -> LF.Obj (LF.OConst (mk_oconst x))
 	      with Not_found ->
 		(* otherwise it might still be a (defined) variable looked up in XLFa *)
 		LF.Obj(LF.OVar (mk_variable x))
   in
   term Stringset.empty t
 
-let entry c kont nlfs =
-  function SLF.Decl t -> 
-    match term nlfs t with
-      | LF.Kind k -> 
-	  let e = kont nlfs (LF.FDecl k) in
-	  Util.if_debug (fun () -> Format.printf "%s :: @[%a@]@." c Pp.entry e);
-	  e
-      | LF.Fam a -> 
-	  let e = kont nlfs (LF.ODecl a) in
-	  Util.if_debug (fun () -> Format.printf "%s :: @[%a@]@." c Pp.entry e);
-	  e
-      | LF.Obj _ -> assert false	(* OK *)
-
-let rec sign kont nlfs s =
-    List.fold_left
-      (fun nlfs (c,t) -> 
-	 NLFSign.add (mk_constant c) (entry c kont nlfs t) nlfs
-      ) nlfs s
-
 (* Detyping: from LF to SLF *)
 
 let rec from_obj' = function
-  | LF.OConst c -> SLF.Ident (of_constant c)
+  | LF.OConst c -> SLF.Ident (of_oconst c)
   | LF.OVar x -> SLF.Ident (of_variable x)
   | LF.OLam (Anonymous, t) ->
       SLF.Lam ("_", from_obj t)
@@ -96,7 +79,7 @@ let rec from_obj' = function
 and from_obj t = P.with_pos P.dummy (from_obj' t)
 
 and from_fam' = function
-  | LF.FConst c -> SLF.Ident (of_constant c)
+  | LF.FConst c -> SLF.Ident (of_fconst c)
   | LF.FProd (Anonymous, a, b) -> SLF.Arr(from_fam a, from_fam b)
   | LF.FProd (Named x, a, b) -> SLF.Prod(of_variable x, from_fam a, from_fam b)
   | LF.FApp (a,t) -> SLF.App (from_fam a, from_obj t)
@@ -110,10 +93,3 @@ let rec from_kind' = function
 
 and from_kind (k:LF.kind) : SLF.term = 
   P.with_pos P.dummy (from_kind' k)
-
-let from_sign s =
-  List.map
-    (function
-       | (id, LF.FDecl k) -> (of_constant id, SLF.Decl(from_kind k))
-       | (id, LF.ODecl a) -> (of_constant id, SLF.Decl(from_fam a))
-    ) s
