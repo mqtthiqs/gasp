@@ -5,7 +5,7 @@
 %}
 
 %token EOF
-%token COLON TYPE DOT LARROW RARROW BIGRARROW
+%token COLON TYPE DOT LARROW RARROW BIGRARROW SLASH
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
 %token<int> INT
@@ -44,7 +44,7 @@ term3:
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
 | x=ID { Ident x }
-| LBRACE p=ID DOT i=INT BIGRARROW t=loc(term1) RBRACE u=loc(term1) { Box(t, Some (p,i), u) }
+| LBRACE p=ID DOT i=INT BIGRARROW t=loc(term1) SLASH u=loc(term1) RBRACE { Box(t, Some (p,i), u) }
 | TYPE { Type }
 
 term: x=term1 { x }
