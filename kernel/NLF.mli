@@ -30,7 +30,7 @@ module rec NLF : sig
   and vhead = XLF.ohead
 
   and value =
-    | VHead of vhead
+    | VHead of vhead * constant * args
     | VLam of variable * fam * obj
 
   type def = NLF.vhead * NLF.args * constant * NLF.args

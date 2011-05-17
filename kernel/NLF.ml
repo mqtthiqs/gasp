@@ -62,15 +62,15 @@ and module Pp = struct
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
     | H(XLF.HVar x) -> variable fmt x
     | H(XLF.HConst c) -> constant fmt c
-    | A a -> pr_list pr_comma (fun fmt (x,a) -> fprintf fmt "@[%a@ %a@]" variable x (pp (<=)) (V a)) fmt a
+    | A a -> pr_list pr_spc (fun fmt (x,a) -> fprintf fmt "@[%a@ %a@]" variable x (pp (<=)) (V a)) fmt a
     | B b -> NLFSubst.fold (fun x (h,a,c,b) () -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) constant c (pp (<=)) (A b)) b ()
     | S s -> NLFSign.fold
       (fun c e () ->
   	match e with
-  	  | NLF.ODecl a -> fprintf fmt "@[[%a@ :@ %a]@]@," constant c (pp (<=)) (F a)
-  	  | NLF.FDecl k -> fprintf fmt "@[[%a@ :@ %a]@]@," constant c (pp (<=)) (K k)
+  	  | NLF.ODecl a -> fprintf fmt "@[%a@ :@ %a@]@," constant c (pp (<=)) (F a)
+  	  | NLF.FDecl k -> fprintf fmt "@[%a@ :@ %a@]@," constant c (pp (<=)) (K k)
       ) s ()
-    | V(VHead h) -> pp (<=) fmt (H h)
+    | V(VHead (h,c,l)) -> fprintf fmt "@[%a@ :@ %a@ %a@]" (pp (<=)) (H h) constant c (pp (<=)) (A l)
     | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (O t)
 
   let sign fmt s = pr_paren pp ent_prec 100 (<=) fmt (S s)
@@ -89,7 +89,7 @@ let lift_def x = function
       NLF.FHead(NLFSubst.empty, c, fargs)
 
 let to_def = function
-  | NLF.Obj(subst, NLF.VHead(XLF.HVar x)) ->
+  | NLF.Obj(subst, NLF.VHead(XLF.HVar x, _, _)) ->
     NLFSubst.find x subst
   | _ -> assert false			(* TODO erreur *)
 
@@ -110,4 +110,4 @@ let bidon =
   let s = NLFSubst.add x
     (XLF.HConst(Name.mk_constant "bidon"), [], Name.mk_constant "Bidon", [])
     NLFSubst.empty in
-  NLF.Obj(s, NLF.VHead(XLF.HVar x))
+  NLF.Obj(s, NLF.VHead(XLF.HVar x, Name.mk_constant "Bidon", []))

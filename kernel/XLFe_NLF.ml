@@ -14,13 +14,13 @@ let rec obj term = function
     let sigma, m = args term m in
     let y = gen_variable() in
     let sigma = S.add y (XLF.HVar x, [], c, m) sigma in
-    NLF.Obj (sigma, NLF.VHead(XLF.HVar y))
+    NLF.Obj (sigma, NLF.VHead(XLF.HVar y, c, m))
   | XLFe.OHead (h,l,XLFe.FConst(c,m)) ->
     let sigma, l = args term l in
     let sigma, m = args (with_subst sigma term) m in
     let y = gen_variable() in
     let sigma = S.add y (h, l, c, m) sigma in
-    NLF.Obj(sigma, NLF.VHead(XLF.HVar y))
+    NLF.Obj(sigma, NLF.VHead(XLF.HVar y, c, m))
   | XLFe.OBox(t,p,u) ->
     let u = obj term u in
     let term = go term p (ignore u; assert false) in          (* TODO *)
@@ -28,21 +28,21 @@ let rec obj term = function
 
 and arg term (x,t) : S.t * (variable * NLF.value) = match t with
   | XLFe.OHead(h,l,XLFe.FConst(c,m)) ->
+    let sigma, m = args term m in
     if l = [] then
-      S.empty, (x, NLF.VHead h)		(* empty? et le type?? TODO *)
+      S.empty, (x, NLF.VHead (h, c, m))		(* empty? et le type?? TODO *)
     else
-      let sigma, fargs = args term m in
       let z = Name.gen_variable() in
-      let sigma, oargs = args (with_subst sigma term) l in
-      S.add z (h, oargs, c, fargs) sigma,
-      (x, NLF.VHead (XLF.HVar z))
+      let sigma, l = args (with_subst sigma term) l in
+      S.add z (h, l, c, m) sigma,
+      (x, NLF.VHead (XLF.HVar z, c, m))
   | XLFe.OLam (x,a,t) ->
     let t = obj term t in
     let a = fam term a in
     subst_of term, (x, NLF.VLam(x,a,t))
   | XLFe.OMeta(z,XLFe.FConst(c,m)) -> 
-      (* let sigma, fargs = args term m in *)
-      S.empty, (x, NLF.VHead(XLF.HVar z)) (* empty? et le type?? TODO *)
+      let sigma, m = args term m in
+      S.empty, (x, NLF.VHead(XLF.HVar z, c, m)) (* empty? et le type?? TODO *)
   | XLFe.OBox(t,p,u) ->
     let u = obj term u in
     let term = go term p (ignore u; assert false) in (* TODO *)
@@ -97,13 +97,15 @@ let rec from_obj sigma = function
 and from_val sigma = function
   | NLF.VLam(x, a, t) ->
     XLFe.OLam (x, from_fam sigma a, from_obj sigma t)
-  | NLF.VHead(XLF.HConst c) -> assert false
-  | NLF.VHead(XLF.HVar x) ->
-    try
-      let (h, l, c, m) = S.find x sigma in
-      XLFe.OHead(h, from_args sigma l, XLFe.FConst(c, from_args sigma m))
-    with Not_found ->
-      raise (failwith ("from_val: Not_found "^(Name.of_variable x)))
+  | NLF.VHead(h, c, m) ->
+    let m = from_args sigma m in
+    XLFe.OHead(h, [], XLFe.FConst(c, m))
+  (* | NLF.VHead(XLF.HVar x, _, _) -> *)
+  (*   try *)
+  (*     let (h, l, c, m) = S.find x sigma in *)
+  (*     XLFe.OHead(h, from_args sigma l, XLFe.FConst(c, from_args sigma m)) *)
+  (*   with Not_found -> *)
+  (*     raise (failwith ("from_val: Not_found "^(Name.of_variable x))) *)
 
 and from_args sigma args =
   List.map (fun x, v -> x, from_val sigma v) args

@@ -17,3 +17,4 @@ let rec pr_list sep pr fmt = function
 
 let pr_comma fmt () = fprintf fmt ","
 let pr_dot fmt () = fprintf fmt "."
+let pr_spc fmt () = fprintf fmt " "
