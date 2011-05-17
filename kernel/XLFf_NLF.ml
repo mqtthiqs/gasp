@@ -12,7 +12,7 @@ let rec obj sign env repo : XLFf.obj -> NLF.obj = function
 
 and arg sign env repo a : XLFf.value -> NLF.subst * NLF.value = function
   | XLFf.VLam (x,t) ->
-    let b = fam sign env repo b in
+    let b = assert false in
     NLFSubst.empty, NLF.VLam (x, b, obj sign (E.add x b env) repo t)
   | XLFf.VHead (XLF.HConst c) ->
     match NLFSign.find c sign with
