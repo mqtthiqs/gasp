@@ -16,12 +16,6 @@ type kind =
   | KType
   | KProd of name * fam * kind
 
-type entry =
-  | FDecl of kind
-  | ODecl of fam
-
-type env = (variable * fam) list
-
 type entity =
   | Kind of kind
   | Fam of fam

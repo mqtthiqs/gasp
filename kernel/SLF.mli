@@ -14,10 +14,6 @@ and term = term' Position.located
 
 type sign = (ident * term) list
 
-(* Comparison of terms modulo alpha- and eta-conversion *)
-val equals_term : term -> term -> bool
-val equals_sign : sign -> sign -> bool
-
 module Pp : sig
   val term : Format.formatter -> term -> unit
 end

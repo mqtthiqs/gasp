@@ -18,9 +18,3 @@ and ohead =
   | HConst of oconst
 
 and args = obj list
-
-type entry =
-  | FDecl of kind
-  | ODecl of fam
-
-type env = (variable * fam) list

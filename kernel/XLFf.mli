@@ -23,7 +23,3 @@ and value =
 and def = vhead * args
 
 and subst = (variable * def) list
-
-type entry =
-  | FDecl of kind
-  | ODecl of fam
