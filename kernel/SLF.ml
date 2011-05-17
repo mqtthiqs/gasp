@@ -27,8 +27,8 @@ module Pp = struct
 	(pp (<)) a (pp (<=)) b
     | Prod (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
 	ident x (pp (<=)) a (pp (<=)) b
-    | Lam (x,a,b) -> fprintf fmt "@[[%a@ :@ %a]@ %a@]" 
-	ident x (pp (<=)) a (pp (<=)) b
+    | Lam (x,b) -> fprintf fmt "@[[%a]]@ %a@]"
+	ident x (pp (<=)) b
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" 
 	(pp (<=)) t (pp (<)) u
     | Box (t,None,s) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) t (pp (<=)) s
@@ -57,14 +57,14 @@ let rec equals_term subst t u =
     | Prod(_,a,b), Arr(a',b') 
     | Arr(a,b), Prod (_,a',b') -> 
 	equals_term subst a a' && equals_term subst b b'
-    | Lam(x,a,b), Lam(x',a',b') ->
-	x=x' && equals_term subst a a' && equals_term (Idmap.add x x' subst) b b'
+    | Lam(x,b), Lam(x',b') ->
+	x=x' && equals_term (Idmap.add x x' subst) b b'
     | App(t,u), App(t',u') -> equals_term subst t t' && equals_term subst u u'
     | Ident x, Ident x' ->
 	(try x = Idmap.find x' subst
 	with Not_found -> false)
-    | _, Lam(x,_,{P.value=App(u, {P.value=Ident x'})}) (* Eta *)
-    | Lam(x,_,{P.value=App(u, {P.value=Ident x'})}), _ when x=x' ->
+    | _, Lam(x, {P.value=App(u, {P.value=Ident x'})}) (* Eta *)
+    | Lam(x, {P.value=App(u, {P.value=Ident x'})}), _ when x=x' ->
 	equals_term subst t u
     | _ -> false
 

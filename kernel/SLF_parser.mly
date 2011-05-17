@@ -38,11 +38,11 @@ term2:
 
 term3: 
   LPAREN t=term1 RPAREN {t}
-| LBRACKET xs=ID+ COLON t=loc(term1) RBRACKET u=loc(term1)
+| LBRACKET xs=ID+ RBRACKET u=loc(term1)
     { Position.value 
 	(List.fold_left 
 	   (fun acc x -> 
-	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
+	      Position.with_pos Position.dummy (Lam(x, acc))) u (List.rev xs)) }
 | x=ID { Ident x }
 | LBRACE p=ID DOT i=INT BIGRARROW t=loc(term1) SLASH u=loc(term1) RBRACE { Box(t, Some (p,i), u) }
 | TYPE { Type }

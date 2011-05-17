@@ -5,7 +5,7 @@ type term' =
   | Type
   | Prod of ident * term * term
   | Arr of term * term
-  | Lam of ident * term * term
+  | Lam of ident * term
   | App of term * term
   | Ident of ident
   | Box of term * (ident * int) option * term
