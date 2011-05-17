@@ -21,7 +21,6 @@ module Pp = struct
   let ident fmt x = fprintf fmt "@[%s@]" x
 
   let pp_term pp fmt t = 
-    let pp_subst : subst printing_fun = (fun fmt (x,t) -> fprintf fmt "@[(%a=%a)@]" ident x (pp (<=)) t) in
     match P.value t with
     | Ident x -> ident fmt x
     | Arr (a,b) -> fprintf fmt "@[%a@ ->@ %a@]"
@@ -32,8 +31,8 @@ module Pp = struct
 	ident x (pp (<=)) a (pp (<=)) b
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" 
 	(pp (<=)) t (pp (<)) u
-    | Box (t,None,s) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) t pp_subst s
-    | Box (t,Some(x,n),s) -> fprintf fmt "@[{%a.%d@ =>@ %a}%a@]" ident x n (pp (<=)) t pp_subst s
+    | Box (t,None,s) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) t (pp (<=)) s
+    | Box (t,Some(x,n),s) -> fprintf fmt "@[{%a.%d@ =>@ %a}%a@]" ident x n (pp (<=)) t (pp (<=)) s
     | Type -> fprintf fmt "@[type@]"
 	
   let term fmt t = pr_paren pp_term term_prec 100 (<=) fmt t

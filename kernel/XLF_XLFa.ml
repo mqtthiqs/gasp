@@ -37,10 +37,11 @@ let rec obj sign term env : XLF.obj -> XLFa.obj = function
 	      else Errors.bad_application (SLF_LF.from_obj (LF_XLF.from_obj (XLF.OHead(h,l))))
 	    with Not_found -> Errors.not_bound (Position.dummy) x
     end
-  | XLF.OBox(t,p,(x,u)) ->
-      let term = NLF.go p term in
-      let s = x, obj sign term env u in
-      XLFa.OBox(obj sign term env t, p, s) (* TODO subst!*)
+  | XLF.OBox(t,p,u) ->
+    let s = obj sign term env u in
+    let u = NLF.to_def (XLFe_NLF.obj term (XLFa_XLFe.obj s)) in
+    let term = NLF.go term p u in
+    XLFa.OBox(obj sign term env t, p, s) (* TODO subst!*)
 
 and args sign term env (l:XLF.args) l' (a:XLFa.fam) : XLFa.args * XLFa.fam = 
   match l,a with
@@ -100,7 +101,7 @@ let rec from_obj = function
   | XLFa.OLam(x,a,t) -> XLF.OLam(x, from_fam a, from_obj t)
   | XLFa.OHead(h,l,_) -> XLF.OHead(h, from_args l)
   | XLFa.OMeta (x,_) -> XLF.OHead(XLF.HVar x, [])
-  | XLFa.OBox(t,p,(x,u)) -> XLF.OBox(from_obj t, p, (x, from_obj u))
+  | XLFa.OBox(t,p,u) -> XLF.OBox(from_obj t, p, from_obj u)
 
 and from_args l = List.map (fun (_,t) -> from_obj t) l
 and from_fam = function

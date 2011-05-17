@@ -5,7 +5,7 @@
 %}
 
 %token EOF
-%token COLON TYPE DOT LARROW RARROW EQUALS BIGRARROW
+%token COLON TYPE DOT LARROW RARROW BIGRARROW
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
 %token<int> INT
@@ -21,9 +21,6 @@ signature:
 
 declaration:
   xs=ID+ COLON t=loc(term) DOT { List.map (fun x -> (x, Decl t)) xs }
-
-subst:
-  LPAREN x=ID EQUALS t=loc(term) RPAREN { x, t}
 
 term1:
   t=loc(term2) RARROW u=loc(term1) { Arr(t,u) }
@@ -47,7 +44,7 @@ term3:
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Lam(x, t, acc))) u (List.rev xs)) }
 | x=ID { Ident x }
-| LBRACE p=ID DOT i=INT BIGRARROW t=loc(term1) RBRACE s=subst { Box(t, Some (p,i), s) }
+| LBRACE p=ID DOT i=INT BIGRARROW t=loc(term1) RBRACE u=loc(term1) { Box(t, Some (p,i), u) }
 | TYPE { Type }
 
 term: x=term1 { x }

@@ -10,9 +10,7 @@ and obj =
   | OVar of variable
   | OLam of name * fam * obj
   | OApp of obj * obj
-  | OBox of obj * position * subst
-
-and subst = variable * obj
+  | OBox of obj * position * obj
 
 type kind =
   | KType

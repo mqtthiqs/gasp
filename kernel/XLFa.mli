@@ -12,7 +12,7 @@ and obj =
   | OLam of variable * fam * obj
   | OHead of ohead * args * fam
   | OMeta of variable * fam
-  | OBox of obj * position * (variable * obj)
+  | OBox of obj * position * obj
 
 and ohead = XLF.ohead
 

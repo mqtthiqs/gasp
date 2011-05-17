@@ -14,7 +14,7 @@ let rec obj = function
 	| XLFe.FHead h -> XLFe.OMeta (x, h)
 	| _ -> assert false		(* the type of a meta is always a head *)
       end
-  | XLFa.OBox(t,p,(x,u)) -> XLFe.OBox(obj t, p, (x, obj u))
+  | XLFa.OBox(t,p,u) -> XLFe.OBox(obj t, p, obj u)
 
 and args l = List.map (fun (x,t) -> x, obj t) l
 
@@ -37,7 +37,7 @@ let rec from_obj = function
   | XLFe.OLam(x,a,t) -> XLFa.OLam(x, from_fam a, from_obj t)
   | XLFe.OHead(h,l,a) -> XLFa.OHead(h, from_args l, from_fhead a)
   | XLFe.OMeta(x,a) -> XLFa.OMeta (x, from_fhead a)
-  | XLFe.OBox(t,p,(x,u)) -> XLFa.OBox(from_obj t, p, (x, from_obj u))
+  | XLFe.OBox(t,p,u) -> XLFa.OBox(from_obj t, p, from_obj u)
 
 and from_args l = List.map (fun (x,t) -> x, from_obj t) l
 

@@ -8,11 +8,9 @@ type term' =
   | Lam of ident * term * term
   | App of term * term
   | Ident of ident
-  | Box of term * (ident * int) option * subst
+  | Box of term * (ident * int) option * term
 
 and term = term' Position.located
-
-and subst = ident * term
 
 type entry =
   | Decl of term

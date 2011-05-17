@@ -11,13 +11,11 @@ and fam =
 and obj =
   | OLam of variable * fam * obj
   | OHead of ohead * args
-  | OBox of obj * position * subst
+  | OBox of obj * position * obj
 
 and ohead = 
   | HVar of variable
   | HConst of constant
-
-and subst = variable * obj
 
 and args = obj list
 
