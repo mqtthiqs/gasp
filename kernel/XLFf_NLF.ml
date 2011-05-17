@@ -23,12 +23,18 @@ and arg sign env repo a : XLFf.value -> NLF.subst * NLF.value = function
     end
   | XLFf.VHead (XLF.HVar x) -> assert false
 
-and fam sign (env:NLF.fam E.t) repo : XLFf.fam -> NLF.fam = function
+and args sign env repo sigma = assert false
+
+and fam sign env repo : XLFf.fam -> NLF.fam = function
   | XLFf.FProd (x, a, b) ->
     let a = fam sign env repo a in
     NLF.FProd (x, a, fam sign (E.add x a env) repo b)
   | XLFf.FHead (sigma, c, m) ->
-    assert false			(* TODO *)
+    let sigma = subst sign env repo sigma in
+    let m = args sign env repo m in
+    NLF.FHead (sigma, c, m)
+
+and subst sign env repo sigma = assert false
 
 let rec kind sign (env: NLF.fam E.t) repo : XLFf.kind -> NLF.kind = function
   | XLFf.KType -> NLF.KType
@@ -39,7 +45,3 @@ let rec kind sign (env: NLF.fam E.t) repo : XLFf.kind -> NLF.kind = function
 let obj sign repo = obj sign E.empty repo
 let fam sign repo = fam sign E.empty repo
 let kind sign repo = kind sign E.empty repo
-
-(* let entry kont nlfs = function  *)
-(*     | XLFf.ODecl a -> kont nlfs (NLF.ODecl (fam nlfs E.empty bidon a)) *)
-(*     | XLFf.FDecl k -> kont nlfs (NLF.FDecl (kind nlfs E.empty bidon k)) *)

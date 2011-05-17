@@ -41,15 +41,12 @@ and NLFSign : sig
   val empty : t
 end
 
-open Print
-
 module Pp : sig
-  open NLF
-  open Format
+  open Print
   val sign : NLFSign.t printing_fun
-  val obj : obj printing_fun
-  val fam : fam printing_fun
-  val kind : kind printing_fun
+  val obj : NLF.obj printing_fun
+  val fam : NLF.fam printing_fun
+  val kind : NLF.kind printing_fun
 end
 
 val go : NLF.obj -> position -> NLF.def -> NLF.obj

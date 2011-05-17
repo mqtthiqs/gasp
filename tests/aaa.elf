@@ -1,4 +1,5 @@
 A : type.
+a : A.
 P : A -> type.
 f : A -> A.
 a : A.
