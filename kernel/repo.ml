@@ -9,26 +9,22 @@ type t = {
 
 let compile_sign = 
   SLF_LF.sign 
-    (LF_XLF.entry 
-       (XLF_XLFa.entry
-	  (XLFa_XLFe.entry
-	     (XLFe_NLF.entry
-		(fun _ x -> x))))) NLFSign.empty
+    (LF_XLF.entry
+       (XLF_XLFf.entry
+	  XLFf_NLF.entry (fun _ x -> x))) NLFSign.empty
 
-let reify_sign = XLFe_NLF.from_sign // XLFa_XLFe.from_sign //
-  XLF_XLFa.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
+let reify_sign = XLFf_NLF.from_sign // XLF_XLFf.from_sign // LF_XLF.from_sign // SLF_LF.from_sign
 
 let compile_term sign term =
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t
        | _ -> assert false) //
       LF_XLF.obj //
-      XLF_XLFa.obj sign term //
-      XLFa_XLFe.obj //
-      XLFe_NLF.obj term		(* TODO correct? *)
+      XLF_XLFf.obj sign term //
+      XLFf_NLF.obj term
 
 let reify_term t =
-  (XLFe_NLF.from_obj // XLFa_XLFe.from_obj // XLF_XLFa.from_obj //
+  (XLFf_NLF.from_obj // XLF_XLFf.from_obj //
      LF_XLF.from_obj // SLF_LF.from_obj) t
 
 let init sign =
@@ -39,10 +35,11 @@ let init sign =
    term = bidon}				(* TODO *)
 
 let check repo =			(* TODO temp *)
-  LF_check.sign repo.sign;
-  let t = (XLFe_NLF.from_obj // XLFa_XLFe.from_obj //
-	     XLF_XLFa.from_obj // LF_XLF.from_obj) repo.term in
-  ignore(LF_check.obj repo.sign t)
+  (* LF_check.sign repo.sign; *)
+  (* let t = (XLFf_NLF.from_obj // XLF_XLFf.from_obj // *)
+  (* 	     LF_XLF.from_obj) repo.term in *)
+  (* ignore(LF_check.obj repo.sign t) *)
+  ()
 
 let commit repo term =
   let t = compile_term repo.sign repo.term term in

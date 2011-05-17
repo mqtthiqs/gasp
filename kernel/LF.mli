@@ -8,7 +8,7 @@ type fam =
 and obj = 
   | OConst of constant
   | OVar of variable
-  | OLam of name * fam * obj
+  | OLam of name * obj
   | OApp of obj * obj
   | OBox of obj * position * obj
 

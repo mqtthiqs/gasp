@@ -9,7 +9,7 @@ and fam =
   | FConst of constant * args
 
 and obj =
-  | OLam of variable * fam * obj
+  | OLam of variable * obj
   | OHead of ohead * args
   | OBox of obj * position * obj
 

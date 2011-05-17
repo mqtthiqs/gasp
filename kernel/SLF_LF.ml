@@ -28,15 +28,11 @@ fun sign t ->
 	      | LF.Fam _, _ -> Errors.not_a_kind_or_fam u
 	      | _ -> Errors.not_a_fam t
 	    end
-	| SLF.Lam(x,t,u) ->
-	    begin match term env t with
-	      | LF.Fam a ->
-		  begin match term (Stringset.add x env) u with
-		    | LF.Obj o -> LF.Obj(LF.OLam(Named (mk_variable x),a,o))
-		    | _ -> Errors.not_an_obj u
-		  end
-	      | _ -> Errors.not_a_fam t
-	    end
+	| SLF.Lam(x,u) ->
+	  begin match term (Stringset.add x env) u with
+	    | LF.Obj o -> LF.Obj(LF.OLam(Named (mk_variable x),o))
+	    | _ -> Errors.not_an_obj u
+	  end
 	| SLF.App(t,u) ->
 	    begin match term env t, term env u with
 	      | LF.Fam a, LF.Obj o -> LF.Fam(LF.FApp(a,o))
@@ -91,9 +87,9 @@ let rec sign kont nlfs s =
 let rec from_obj' = function
   | LF.OConst c -> SLF.Ident (of_constant c)
   | LF.OVar x -> SLF.Ident (of_variable x)
-  | LF.OLam (Anonymous, a, t) -> 
-      SLF.Lam ("_", from_fam a, from_obj t)
-  | LF.OLam (Named x, a, t) -> SLF.Lam (of_variable x, from_fam a, from_obj t)
+  | LF.OLam (Anonymous, t) ->
+      SLF.Lam ("_", from_obj t)
+  | LF.OLam (Named x, t) -> SLF.Lam (of_variable x, from_obj t)
   | LF.OApp (t,u) -> SLF.App (from_obj t, from_obj u)
   | LF.OBox (t,p,u) -> SLF.Box (from_obj t, Option.map (fun x,n -> of_variable x, n) p, from_obj u)
 

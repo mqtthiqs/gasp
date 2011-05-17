@@ -5,7 +5,17 @@ let rec list_map_prefix (f : 'b list -> 'a -> 'b) (p : 'b list) : 'a list -> 'b 
 | x :: xs -> 
     let x' = f p x in
     x' :: list_map_prefix f (x'::p) xs
-      
+
+(* fold_map : ('b -> 'a -> 'b * 'c) -> 'a list -> 'b -> 'b * 'c list *)
+let list_fold_map f init xs =
+  let accu, ys = List.fold_left
+    (fun (accu, ys) x ->
+      let accu, y = f accu x in
+      (accu, y :: ys)) (init, []) xs
+  in
+  accu, List.rev ys
+
+
 let buffer_of_file filename =
   let b = Buffer.create 16 in
   let ic = open_in filename in

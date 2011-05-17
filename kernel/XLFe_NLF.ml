@@ -97,15 +97,15 @@ let rec from_obj sigma = function
 and from_val sigma = function
   | NLF.VLam(x, a, t) ->
     XLFe.OLam (x, from_fam sigma a, from_obj sigma t)
-  | NLF.VHead(h, c, m) ->
+  | NLF.VHead(XLF.HConst c as h, d, m) ->
     let m = from_args sigma m in
-    XLFe.OHead(h, [], XLFe.FConst(c, m))
-  (* | NLF.VHead(XLF.HVar x, _, _) -> *)
-  (*   try *)
-  (*     let (h, l, c, m) = S.find x sigma in *)
-  (*     XLFe.OHead(h, from_args sigma l, XLFe.FConst(c, from_args sigma m)) *)
-  (*   with Not_found -> *)
-  (*     raise (failwith ("from_val: Not_found "^(Name.of_variable x))) *)
+    XLFe.OHead(h, [], XLFe.FConst(d, m))
+  | NLF.VHead(XLF.HVar x, _, _) ->
+    try
+      let (h, l, c, m) = S.find x sigma in
+      XLFe.OHead(h, from_args sigma l, XLFe.FConst(c, from_args sigma m))
+    with Not_found ->
+      raise (failwith ("from_val: Not_found "^(Name.of_variable x)))
 
 and from_args sigma args =
   List.map (fun x, v -> x, from_val sigma v) args

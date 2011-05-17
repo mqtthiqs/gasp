@@ -1,6 +1,6 @@
 open Name
 
-module type SET = sig
+module type MAP = sig
   type t
   type key
   type value
@@ -25,7 +25,7 @@ module rec NLF : sig
   and obj =
     | Obj of subst * value
 
-  and args = (variable * value) list
+  and args = value list
 
   and vhead = XLF.ohead
 
@@ -33,15 +33,17 @@ module rec NLF : sig
     | VHead of vhead * constant * args
     | VLam of variable * fam * obj
 
-  type def = NLF.vhead * NLF.args * constant * NLF.args
+  type def =
+    | DApp of vhead * args * constant * args (* vhead bindé ds repo *)
+    | DHead of vhead * fam		    (* vhead bindé ds env *)
 
   type entry =
     | FDecl of kind
     | ODecl of fam
 end
 
-and NLFSubst : (SET with type key = variable and type value = NLF.def)
-and NLFSign : (SET with type key = constant and type value = NLF.entry)
+and NLFSubst : (MAP with type key = variable and type value = NLF.def)
+and NLFSign : (MAP with type key = constant and type value = NLF.entry)
 
 open Print
 
