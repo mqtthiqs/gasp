@@ -12,42 +12,50 @@ module type SET = sig
 end
 
 module rec NLF : sig
-  type env = NLFEnv.t
   type subst = NLFSubst.t
-  type args = NLFArgs.t
 
-  type ohead = XLF.ohead
+  type kind =
+    | KType
+    | KProd of variable * fam * kind
 
-  type kind = 
-    | KType of env
-
-  and fam = 
-    | Fam of env * subst * constant * args
+  and fam =
+    | FProd of variable * fam * fam
+    | FHead of subst * constant * args
 
   and obj =
-    | Obj of env * subst * ohead * args * constant * args
-    | OMeta of env * subst * variable * constant * args
+    | Obj of subst * value
+
+  and args = (variable * value) list
+
+  and vhead = XLF.ohead
+
+  and value =
+    | VHead of vhead
+    | VLam of variable * fam * obj
+
+  type def = NLF.vhead * NLF.args * constant * NLF.args
 
   type entry =
-    | FDecl of NLF.kind
-    | ODecl of NLF.fam
+    | FDecl of kind
+    | ODecl of fam
 end
 
-and NLFEnv : (SET with type key = variable and type value = NLF.fam)
-and NLFSubst : (SET with type key = variable and type value = NLF.ohead * NLFArgs.t * constant * NLFArgs.t)
+and NLFSubst : (SET with type key = variable and type value = NLF.def)
 and NLFSign : (SET with type key = constant and type value = NLF.entry)
-and NLFArgs : (SET with type key = variable and type value = NLF.obj)
+
+open Print
 
 module Pp : sig
   open NLF
   open Format
-  val sign : formatter -> NLFSign.t -> unit
-  val obj : formatter -> obj -> unit
-  val fam : formatter -> fam -> unit
-  val kind : formatter -> kind -> unit
-  val entry : formatter -> entry -> unit
+  val sign : NLFSign.t printing_fun
+  val obj : obj printing_fun
+  val fam : fam printing_fun
+  val kind : kind printing_fun
+  val entry : entry printing_fun
 end
 
-val go : position -> NLF.obj -> NLF.obj
+val go : NLF.obj -> position -> NLF.def -> NLF.obj
 val lift_def : variable -> NLF.obj -> NLF.fam
+val to_def : NLF.obj -> NLF.def
 val bidon : NLF.obj

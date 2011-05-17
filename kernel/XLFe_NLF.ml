@@ -1,81 +1,71 @@
 open Name
 open NLF
 
-module E = NLFEnv
 module S = NLFSubst
-module A = NLFArgs
 
-let env_add x a = function
-  | NLF.Obj(e,s,h,l,c,m) -> NLF.Obj(E.add x a e,s,h,l,c,m)
-  | NLF.OMeta(e,s,d,c,m) -> NLF.OMeta(E.add x a e,s,d,c,m)
-let env_of = function
-  | NLF.Obj(e,s,_,_,_,_)
-  | NLF.OMeta(e,s,_,_,_) -> e
-let subst_of = function
-  | NLF.Obj(e,s,_,_,_,_)
-  | NLF.OMeta(e,s,_,_,_) -> s
-let with_subst s = function
-  | NLF.Obj(e,_,h,args,c,fargs) -> NLF.Obj(e,s,h,args,c,fargs)
-  | NLF.OMeta(e,_,x,c,fargs) -> NLF.OMeta(e,s,x,c,fargs)
-let with_env e = function
-  | NLF.Obj(_,s,h,args,c,fargs) -> NLF.Obj(e,s,h,args,c,fargs)
-  | NLF.OMeta(_,s,x,c,fargs) -> NLF.OMeta(e,s,x,c,fargs)
-let no_env = with_env E.empty
+let subst_of = function NLF.Obj(s,_) -> s
+let with_subst s = function NLF.Obj(_,r) -> NLF.Obj(s,r)
 
 let rec obj term = function
-  | XLFe.OLam (x,a,t) ->
-    let a = fam (no_env term) a in
-    obj (env_add x a term) t
-  | XLFe.OMeta (x,XLFe.FConst(c,m)) ->
-    let sigma, fargs = args (no_env term) m in
-    NLF.OMeta(env_of term, sigma, x, c, fargs)
+  | XLFe.OLam (x, a, t) ->
+    let a = fam term a in
+    NLF.Obj(S.empty, NLF.VLam(x, a, obj term t))
+  | XLFe.OMeta (x, XLFe.FConst(c,m)) ->
+    let sigma, m = args term m in
+    let y = gen_variable() in
+    let sigma = S.add y (XLF.HVar x, [], c, m) sigma in
+    NLF.Obj (sigma, NLF.VHead(XLF.HVar y))
   | XLFe.OHead (h,l,XLFe.FConst(c,m)) ->
-    let sigma, oargs = args (no_env term) l in
-    let sigma, fargs = args (with_subst sigma (no_env term)) m in
-    NLF.Obj(env_of term, sigma, h, oargs, c, fargs)
-  | XLFe.OBox(t,p,s) ->
-    let term = with_env (env_of term) (go p term) in
-    obj term t          (* TODO subst *)
+    let sigma, l = args term l in
+    let sigma, m = args (with_subst sigma term) m in
+    let y = gen_variable() in
+    let sigma = S.add y (h, l, c, m) sigma in
+    NLF.Obj(sigma, NLF.VHead(XLF.HVar y))
+  | XLFe.OBox(t,p,u) ->
+    let u = obj term u in
+    let term = go term p (ignore u; assert false) in          (* TODO *)
+    obj term t
 
-and arg term (x,t) : S.t * (variable * NLF.obj) = match t with
+and arg term (x,t) : S.t * (variable * NLF.value) = match t with
   | XLFe.OHead(h,l,XLFe.FConst(c,m)) ->
-      let sigma, fargs = args (no_env term) m in
-      if l = [] then
-        sigma, (x, NLF.Obj(E.empty, S.empty, h, A.empty, c, fargs))
-      else 
-        let z = Name.gen_variable() in
-	let sigma, oargs = args (with_subst sigma (no_env term)) l in
-	S.add z (h, oargs, c, fargs) sigma,
-	(x, NLF.OMeta(E.empty, S.empty, z, c, fargs)) (* TODO: S: include defs de fargs? *)
-  | XLFe.OLam _ ->
-      subst_of term, (x, obj term t)
+    if l = [] then
+      S.empty, (x, NLF.VHead h)		(* empty? et le type?? TODO *)
+    else
+      let sigma, fargs = args term m in
+      let z = Name.gen_variable() in
+      let sigma, oargs = args (with_subst sigma term) l in
+      S.add z (h, oargs, c, fargs) sigma,
+      (x, NLF.VHead (XLF.HVar z))
+  | XLFe.OLam (x,a,t) ->
+    let t = obj term t in
+    let a = fam term a in
+    subst_of term, (x, NLF.VLam(x,a,t))
   | XLFe.OMeta(z,XLFe.FConst(c,m)) -> 
-      let sigma, fargs = args (no_env term) m in
-      sigma, (x, NLF.OMeta(E.empty, S.empty, z, c, fargs))
-  | XLFe.OBox(t,p,s) ->
-    let term = with_env (env_of term) (go p term) in
+      (* let sigma, fargs = args term m in *)
+      S.empty, (x, NLF.VHead(XLF.HVar z)) (* empty? et le type?? TODO *)
+  | XLFe.OBox(t,p,u) ->
+    let u = obj term u in
+    let term = go term p (ignore u; assert false) in (* TODO *)
     arg term (x,t)    (* TODO subst *)
 
-and args term : XLFe.args -> S.t * A.t =  function
-  | [] -> subst_of term, A.empty
+and args term : XLFe.args -> S.t * NLF.args =  function
+  | [] -> subst_of term, []
   | e :: l -> 
       let sigma, (x,t) = arg term e in
-      let sigma, l = args (with_subst sigma (no_env term)) l in
-      sigma, A.add x t l
+      let sigma, l = args (with_subst sigma term) l in
+      sigma, (x, t) :: l
 
 and fam term = function
   | XLFe.FProd (x,a,b) ->
-    let a = fam (no_env term) a in
-    fam (env_add x a term) b
+    NLF.FProd(x, fam term a, fam term b)
   | XLFe.FHead(XLFe.FConst(c,l)) ->
-      let sigma, fargs = args (no_env term) l in
-      NLF.Fam(env_of term, sigma, c, fargs)
+      let sigma, fargs = args term l in
+      NLF.FHead(sigma, c, fargs)
 
 let rec kind term = function
   | XLFe.KProd(x, a, k) ->
-    let a = fam (no_env term) a in
-    kind (env_add x a term) k
-  | XLFe.KType -> NLF.KType (env_of term)
+    NLF.KProd(x, fam term a, kind term k)
+  | XLFe.KType -> NLF.KType
 
 let entry kont nlfs = function 
     | XLFe.ODecl a -> kont nlfs (NLF.ODecl (fam bidon a))
@@ -87,30 +77,47 @@ let s_merge s1 s2 =
   S.fold S.add s1 s2
 
 let rec from_obj sigma = function
-  | NLF.Obj(env, sigma', h, args, c, fargs) ->
+  | NLF.Obj(sigma', v) ->
     let sigma = s_merge sigma sigma' in
-    E.fold (fun x a t -> XLFe.OLam(x, from_fam sigma a, t)) env
-      (XLFe.OHead(h, from_args sigma args, XLFe.FConst(c, from_args sigma fargs)))
-  | NLF.OMeta(env, sigma', x, c, fargs) as t ->
-    let sigma = s_merge sigma sigma' in
-    let h, oa, c, fa =
-      try S.find x sigma
-      with Not_found ->
-	Format.printf "%a not found in %a@." Name.Pp.variable x Pp.obj (with_subst sigma t);
-	Error.global_error "definition not found" "" in
-    E.fold (fun x a t -> XLFe.OLam(x, from_fam sigma a, t)) env
-      (XLFe.OHead(h, from_args sigma oa, XLFe.FConst(c, from_args sigma fa)))
+    from_val sigma v
+
+    (* E.fold (fun x a t -> XLFe.OLam(x, from_fam sigma a, t)) env *)
+    (*   (XLFe.OHead(h, from_args sigma args, XLFe.FConst(c, from_args sigma fargs))) *)
+
+  (* | NLF.OMeta(env, sigma', x, c, fargs) as t -> *)
+  (*   let sigma = s_merge sigma sigma' in *)
+  (*   let h, oa, c, fa = *)
+  (*     try S.find x sigma *)
+  (*     with Not_found -> *)
+  (* 	Format.printf "%a not found in %a@." Name.Pp.variable x Pp.obj (with_subst sigma t); *)
+  (* 	Error.global_error "definition not found" "" in *)
+  (*   E.fold (fun x a t -> XLFe.OLam(x, from_fam sigma a, t)) env *)
+  (*     (XLFe.OHead(h, from_args sigma oa, XLFe.FConst(c, from_args sigma fa))) *)
+
+and from_val sigma = function
+  | NLF.VLam(x, a, t) ->
+    XLFe.OLam (x, from_fam sigma a, from_obj sigma t)
+  | NLF.VHead(XLF.HConst c) -> assert false
+  | NLF.VHead(XLF.HVar x) ->
+    try
+      let (h, l, c, m) = S.find x sigma in
+      XLFe.OHead(h, from_args sigma l, XLFe.FConst(c, from_args sigma m))
+    with Not_found ->
+      raise (failwith ("from_val: Not_found "^(Name.of_variable x)))
 
 and from_args sigma args =
-  A.fold (fun x t l -> (x, from_obj sigma t) :: l) args []
+  List.map (fun x, v -> x, from_val sigma v) args
 
-and from_fam sigma (NLF.Fam(env,sigma',c,fargs)) =
-  let sigma = s_merge sigma sigma' in
-  let l = from_args sigma fargs in
-  E.fold (fun x a b -> XLFe.FProd(x, from_fam sigma a, b)) env (XLFe.FHead(XLFe.FConst(c,l)))
+and from_fam sigma = function
+  | NLF.FProd(x, a, b) -> XLFe.FProd(x, from_fam sigma a, from_fam sigma b)
+  | NLF.FHead(sigma', c, l) ->
+    let sigma = s_merge sigma sigma' in
+    let l = from_args sigma l in
+    XLFe.FHead(XLFe.FConst(c,l))
 
-let rec from_kind (NLF.KType env) = 
-  E.fold (fun x a k ->  XLFe.KProd(x, from_fam S.empty a, k)) env XLFe.KType
+let rec from_kind = function
+  | NLF.KProd(x, a, b) -> XLFe.KProd(x, from_fam S.empty a, from_kind b)
+  | NLF.KType -> XLFe.KType
 
 let from_obj = from_obj S.empty
 let from_fam = from_fam S.empty
