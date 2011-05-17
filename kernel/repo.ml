@@ -7,8 +7,8 @@ type t = {
   varno : int
 }
 
-let rec compile_sign (s:SLF.sign) : NLFSign.t = List.fold_right
-  (fun (x,t) (fsign,osign as sign) -> match SLF_LF.term sign t with
+let rec compile_sign (s:SLF.sign) : NLFSign.t = List.fold_left
+  (fun (fsign,osign as sign) (x,t) -> match SLF_LF.term sign t with
     | LF.Kind k ->
       let k = XLFf_NLF.kind sign bidon (XLF_XLFf.kind (LF_XLF.kind k)) in
       NLFSign.FDecl.add (Name.mk_fconst x) k fsign, osign
@@ -16,7 +16,7 @@ let rec compile_sign (s:SLF.sign) : NLFSign.t = List.fold_right
       let a = XLFf_NLF.fam sign bidon (XLF_XLFf.fam (LF_XLF.fam a)) in
       fsign, NLFSign.ODecl.add (Name.mk_oconst x) a osign
     | LF.Obj t -> failwith ("obj in signature: "^x)
-  ) s NLFSign.empty
+  ) NLFSign.empty s
 
 let compile_term sign term =
     (fun x -> match SLF_LF.term sign x with
