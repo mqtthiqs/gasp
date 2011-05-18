@@ -7,13 +7,17 @@ type t = {
   varno : int
 }
 
-let rec compile_sign (s:SLF.sign) : NLFSign.t = List.fold_left
+let rec compile_sign s : NLFSign.t = List.fold_left
   (fun (fsign,osign as sign) (x,t) -> match SLF_LF.term sign t with
     | LF.Kind k ->
-      let k = XLFf_NLF.kind sign bidon (XLF_XLFf.kind (LF_XLF.kind k)) in
+      let k = XLF_XLFf.kind (LF_XLF.kind k) in
+      Format.printf "\"%s\" :: %a@." x XLFf.Pp.kind k;
+      let _, k = XLFf_NLF.kind sign bidon k in
       NLFSign.FDecl.add (Name.mk_fconst x) k fsign, osign
     | LF.Fam a ->
-      let a = XLFf_NLF.fam sign bidon (XLF_XLFf.fam (LF_XLF.fam a)) in
+      let a = XLF_XLFf.fam (LF_XLF.fam a) in
+      Format.printf "%a" XLFf.Pp.fam a;
+      let _, a = XLFf_NLF.fam sign bidon a in
       fsign, NLFSign.ODecl.add (Name.mk_oconst x) a osign
     | LF.Obj t -> failwith ("obj in signature: "^x)
   ) NLFSign.empty s
@@ -30,7 +34,7 @@ let reify_term t =
   (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
 
 let init sign =
-  let sign = ("Bidon", Position.unknown_pos SLF.Type) :: ("bidon", Position.unknown_pos (SLF.Ident"Bidon")) :: sign in 			(* TODO temp *)
+  let sign = (* ("Bidon", Position.unknown_pos SLF.Type) :: ("bidon", Position.unknown_pos (SLF.Ident"Bidon")) :: *) sign in 			(* TODO temp *)
   let sign = compile_sign sign in
   {sign = sign;
    varno = Name.gen_status();
