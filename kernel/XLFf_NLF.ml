@@ -20,7 +20,8 @@ let rec obj sign env repo : XLFf.obj -> NLF.obj = function
     let d = assert false in (* TODO *)
     let repo = go repo p d in
     obj sign env repo t
-  | XLFf.Obj (sigma, v) -> assert false	(* TODO *)
+  | XLFf.Obj (sigma, v) ->
+    let repo = subst sign env repo sigma in
 
 and arg sign env repo : XLFf.value * NLF.fam -> NLF.subst * NLF.value = function
   | XLFf.VLam (x,t), NLF.FProd (y,a,b) ->
@@ -61,13 +62,13 @@ and fam sign env repo : XLFf.fam -> NLF.obj * NLF.fam = function
     let m = fargs sign env repo (m, k) in
     repo, NLF.FHead (subst_of repo, c, m)
 
-and subst sign env repo sigma =
+and subst sign env repo : XLFf.subst -> NLF.obj =
   List.fold_left begin
     fun repo (x, (h, l)) ->
       let a = ohead sign env repo h in
       let l, c, m = oargs sign env repo [] (l, a) in
       add_subst x (NLF.DApp(h, l, c, m)) repo
-  end repo sigma
+  end repo
 
 let rec kind sign (env: NLF.fam E.t) repo : XLFf.kind -> NLF.obj * NLF.kind = function
   | XLFf.KType -> repo, NLF.KType

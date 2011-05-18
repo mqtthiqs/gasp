@@ -30,3 +30,11 @@ module Pp : sig
   val fam : fam printing_fun
   val kind : kind printing_fun
 end
+
+module Check : sig
+  open NLF
+  (* val obj : NLF.obj -> obj -> unit *)
+  (* val arg : NLF.obj -> value -> NLF.fam -> unit *)
+  (* val fam : NLF.obj -> fam -> unit *)
+  (* val kind : NLF.obj -> kind -> unit *)
+end
