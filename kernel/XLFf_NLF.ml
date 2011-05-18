@@ -1,81 +1,92 @@
+open Name
 open XLFf
 open NLF
 
 module E = Name.Varmap
 module S = NLFSubst
 
-let subst_of (NLF.Obj(sigma, _)) = sigma
-let add_subst x d (NLF.Obj(sigma, v)) = NLF.Obj (S.add x d sigma, v)
+type eent =
+  | EDecl of NLF.fam
+  | EDef of NLF.def
 
-let rec ohead sign env repo : XLFf.ohead -> NLF.fam = function
+let rec hsubst_fam x v a b : NLF.fam = assert false
+let rec hsubst_kind x v a b : NLF.kind = assert false
+
+let rec ohead sign env repo : ohead -> NLF.fam = function
   | XLF.HConst c -> NLFSign.ODecl.find c (snd sign)
   | XLF.HVar x ->
-    try E.find x env
+    try match E.find x env with
+      | EDecl a -> a
+      | EDef (NLF.DHead(h,a)) -> a
+      | EDef (NLF.DApp(_,_,c,m)) -> NLF.FHead(S.empty, c, m)
     with Not_found ->
       try lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
 
-let rec obj sign env repo : XLFf.obj -> NLF.obj = function
-  | XLFf.OBox (t,p,u) ->
-    let d = assert false in (* TODO *)
-    let repo = go repo p d in
-    obj sign env repo t
-  | XLFf.Obj (sigma, v) ->
-    let repo = subst sign env repo sigma in
+let rec fam sign env repo : fam -> NLF.fam = function
+  | FProd(x, a, b) ->
+    let a = fam sign env repo a in
+    let b = fam sign (E.add x (EDecl a) env) repo b in
+    NLF.FProd(x, a, b)
 
-and arg sign env repo : XLFf.value * NLF.fam -> NLF.subst * NLF.value = function
-  | XLFf.VLam (x,t), NLF.FProd (y,a,b) ->
-    assert (x=y);
-    NLFSubst.empty, NLF.VLam (x, b, obj sign (E.add x b env) repo t)
-  | XLFf.VHead h, NLF.FHead (sigma, c, m) -> (* TODO *)
-    begin match ohead sign env repo h with
-      | NLF.FProd _ -> failwith ("not eta-long normal form")
-      | NLF.FHead(sigma, c, m) ->
-	(* TODO verif a *)
-	sigma, NLF.VHead (h, c, m)
-    end
-  | _ -> failwith ("not eta-long 2")
-
-and oargs sign env repo l : XLFf.args * NLF.fam -> NLF.args * Name.fconst * NLF.args = function
-  | v :: m, NLF.FProd (x, a, b) ->
-    let sigma, v = arg sign env repo (v, a) in
-    oargs sign env repo (v :: l) (m, a)
-  | [], NLF.FHead (sigma, c, m) ->
-    l, c, m
-  | _ -> failwith "oargs"
-
-and fargs sign env repo : XLFf.args * NLF.kind -> NLF.args = function
-  | v :: m, NLF.KProd (x, a, k) ->
-    let sigma, v = arg sign env repo (v, a) in
-    v :: fargs sign env repo (m, k)	(* TODO sigma? *)
-  | [], NLF.KType -> []
-  | _ -> failwith "fargs"
-
-and fam sign env repo : XLFf.fam -> NLF.obj * NLF.fam = function
-  | XLFf.FProd (x, a, b) ->
-    let repo, a = fam sign env repo a in
-    let repo, b = fam sign (E.add x a env) repo b in
-    repo, NLF.FProd (x, a, b)
-  | XLFf.FHead (sigma, c, m) ->
-    let repo = subst sign env repo sigma in
+  | FHead (sigma, c, m) ->
     let k = NLFSign.FDecl.find c (fst sign) in
-    let m = fargs sign env repo (m, k) in
-    repo, NLF.FHead (subst_of repo, c, m)
+    let env, sigma = subst sign env repo sigma in
+    let m = fargs sign env repo sigma (m, k) in
+    NLF.FHead (sigma, c, m)
 
-and subst sign env repo : XLFf.subst -> NLF.obj =
-  List.fold_left begin
-    fun repo (x, (h, l)) ->
+and subst sign env repo : subst -> eent E.t * NLF.def S.t =
+  List.fold_left
+    begin fun (env, sigma) (x, (h,l)) ->
       let a = ohead sign env repo h in
-      let l, c, m = oargs sign env repo [] (l, a) in
-      add_subst x (NLF.DApp(h, l, c, m)) repo
-  end repo
+      let l, (c,m) = args sign env repo sigma (l,a) in
+      E.add x (EDef(NLF.DApp(h,l,c,m))) env, S.add x (NLF.DApp(h,l,c,m)) sigma
+    end (env, S.empty)
 
-let rec kind sign (env: NLF.fam E.t) repo : XLFf.kind -> NLF.obj * NLF.kind = function
-  | XLFf.KType -> repo, NLF.KType
-  | XLFf.KProd (x,a,k) ->
-    let repo, a = fam sign env repo a in
-    let repo, k = kind sign (E.add x a env) repo k in
-    repo, NLF.KProd (x, a, k)
+and args sign env repo sigma : args * NLF.fam -> NLF.args * (fconst * NLF.args) = function
+  | v :: l, NLF.FProd (x, a, b) ->
+    let v = value sign env repo sigma (v, a) in
+    let l, (c, m) = args sign env repo sigma (l, hsubst_fam x v a b) in
+    v :: l, (c, m)
+  | [], NLF.FHead (sigma',h,l) ->
+    [], (h,l)
+  | _ -> failwith ("args: not applicable")
+
+and fargs sign env repo sigma : args * NLF.kind -> NLF.args = function
+  | v :: l, NLF.KProd (x, a, k) ->
+    let v = value sign env repo sigma (v, a) in
+    v :: fargs sign env repo sigma (l, hsubst_kind x v a k)
+  | [], NLF.KType -> []
+  | _ -> failwith ("fargs: not applicable")
+
+and obj sign env repo : obj * NLF.fam -> NLF.obj = function
+  | Obj(sigma, v), a ->
+    let env, sigma = subst sign env repo sigma in
+    let v = value sign env repo S.empty (v, a) in
+    NLF.Obj (sigma, v)
+  | OBox(t,p,u), a -> assert false
+
+and value sign env repo sigma : value * NLF.fam -> NLF.value = function
+  | VLam (x,t), NLF.FProd (y, a, b) ->
+    assert (x=y);
+    let t = obj sign (E.add x (EDecl a) env) repo (t, b) in
+    NLF.VLam (x, a, t)
+
+  | VHead h, NLF.FHead (sigma, c, m) ->
+    begin match ohead sign env repo h with
+      | NLF.FProd _ -> failwith ("Fct au lieu de valeur")
+      | NLF.FHead (sigma', c', m') -> assert false
+    end
+  | VLam _, NLF.FHead _ -> failwith ("Lam attend prod")
+  | VHead _, NLF.FProd _ -> failwith ("Pas en forme eta-longue")
+
+let rec kind sign env repo : kind -> NLF.kind = function
+  | KProd(x, a, k) ->
+    let a = fam sign env repo a in
+    let k = kind sign (E.add x (EDecl a) env) repo k in
+    NLF.KProd(x, a, k)
+  | KType -> NLF.KType
+
 
 let obj sign repo = obj sign E.empty repo
 let fam sign repo = fam sign E.empty repo

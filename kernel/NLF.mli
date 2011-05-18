@@ -53,3 +53,4 @@ val go : NLF.obj -> position -> NLF.def -> NLF.obj
 val lift_def : variable -> NLF.obj -> NLF.fam
 val to_def : NLF.obj -> NLF.def
 val bidon : NLF.obj
+val bidon_type : NLF.fam

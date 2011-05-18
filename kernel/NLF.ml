@@ -94,9 +94,10 @@ let go term p u = match term, p with
 	    NLF.Obj(NLFSubst.add x u s, v)
 	  | NLF.VHead _ -> assert false	(* TODO error *)
 
-let bidon =
+let bidon, bidon_type =
   let x = Name.gen_variable() in
   let s = NLFSubst.add x
     (NLF.DApp (XLF.HConst(Name.mk_oconst "bidon"), [], Name.mk_fconst "Bidon", []))
     NLFSubst.empty in
-  NLF.Obj(s, NLF.VHead(XLF.HVar x, Name.mk_fconst "Bidon", []))
+  NLF.Obj(s, NLF.VHead(XLF.HVar x, Name.mk_fconst "Bidon", [])),
+  NLF.FHead(NLFSubst.empty, Name.mk_fconst "Bidon", [])
