@@ -14,12 +14,19 @@ and obj =
 
 and args = value list
 
-and vhead = XLF.ohead
+and ohead = XLF.ohead
 
 and value =
-  | VHead of vhead
+  | VHead of ohead
   | VLam of variable * obj
 
-and def = vhead * args
+and def = ohead * args
 
 and subst = (variable * def) list
+
+module Pp : sig
+  open Print
+  val obj : obj printing_fun
+  val fam : fam printing_fun
+  val kind : kind printing_fun
+end

@@ -23,7 +23,7 @@ and module Pp = struct
     | K of kind
     | F of fam
     | O of obj
-    | H of vhead
+    | H of ohead
     | B of subst
     | A of args
     | V of value

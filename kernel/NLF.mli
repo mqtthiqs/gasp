@@ -15,15 +15,15 @@ module rec NLF : sig
 
   and args = value list
 
-  and vhead = XLF.ohead
+  and ohead = XLF.ohead
 
   and value =
-    | VHead of vhead * fconst * args
+    | VHead of ohead * fconst * args
     | VLam of variable * fam * obj
 
   and def =
-    | DApp of vhead * args * fconst * args (* vhead bindé ds repo *)
-    | DHead of vhead * fam		    (* vhead bindé ds env *)
+    | DApp of ohead * args * fconst * args (* ohead bindé ds repo *)
+    | DHead of ohead * fam		    (* ohead bindé ds env *)
 
   and subst = def NLFSubst.t
 
