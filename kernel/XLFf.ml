@@ -58,8 +58,9 @@ and module Check = struct
   module E = Name.Varmap
   module S = NLFSubst
 
-  let compare x y  = assert false
-  let rec hereditary_subst x v a b = assert false
+  let compare x y : unit = assert false
+  let rec hsubst_fam x v a b : NLF.fam = assert false
+  let rec hsubst_kind x v a b : NLF.kind = assert false
 
   let rec ohead sign env repo : ohead -> NLF.fam = function
     | XLF.HConst c -> NLFSign.ODecl.find c (snd sign)
@@ -94,34 +95,43 @@ and module Check = struct
 
   and args sign env repo sigma : args * NLF.fam -> NLF.args * (fconst * NLF.args) = function
     | v :: l, NLF.FProd (x, a, b) ->
-      arg sign env repo sigma (v, a);
-      args sign env repo sigma (l, hereditary_subst x v a b)
+      let v = arg sign env repo sigma  (v, a) in
+      let l, (c, m) = args sign env repo sigma (l, hsubst_fam x v a b) in
+      v :: l, (c, m)
     | [], NLF.FHead (sigma',h,l) ->
-      assert false, (h,l)
+      [], (h,l)
     | _ -> failwith ("args: not applicable")
 
   and fargs sign env repo sigma : args * NLF.kind -> NLF.args = function
-    | v :: l, NLF.KProd (x, a, b) ->
+    | v :: l, NLF.KProd (x, a, k) ->
       let v = arg sign env repo sigma (v, a) in
-      fargs sign env repo sigma (l, hereditary_subst x v a b)
-    | [], NLF.KType -> assert false
+      v :: fargs sign env repo sigma (l, hsubst_kind x v a k)
+    | [], NLF.KType -> []
     | _ -> failwith ("fargs: not applicable")
 
-  and obj sign env repo : obj -> NLF.fam = function
+  and obj sign env repo : obj -> NLF.obj * NLF.fam = function
     | Obj(sigma, v) ->
       let env, sigma = subst sign env repo sigma in
-      value sign env repo v
+      let v, a = value sign env repo v in
+      NLF.Obj (sigma, v), a
     | OBox(t,p,u) -> assert false
 
-  and value sign env repo : value -> NLF.fam = function
-    | VHead h -> ohead sign env repo h
-    | VLam (x,t) -> obj sign env repo t
+  and value sign env repo : value -> NLF.value * NLF.fam = function
+    | VHead h ->
+      begin match ohead sign env repo h with
+	| NLF.FHead(sigma, c, m) as a -> NLF.VHead (h, c, m), a
+	| NLF.FProd _ -> failwith "not eta?"
+      end
+    | VLam (x, t) ->
+      let t, a = obj sign env repo t in
+      NLF.VLam (x, t), a
 
-  and arg sign env repo sigma : value * NLF.fam -> unit = function
+  and arg sign env repo sigma : value * NLF.fam -> NLF.value = function
     | VLam (x,t), NLF.FProd (y, a, b) ->
       assert (x=y);
       let b' = obj sign (E.add x (EDecl a) env) repo t in
-      compare b b'
+      compare b b';
+
     | VHead h, NLF.FHead (sigma, c, m) ->
       begin match ohead sign env repo h with
 	  | NLF.FProd _ -> failwith ("Fct au lieu de valeur")
