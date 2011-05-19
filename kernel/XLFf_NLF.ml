@@ -32,41 +32,41 @@ let rec fam sign repo env : fam -> NLF.fam = function
   | FHead (sigma, c, m) ->
     let k = NLFSign.FDecl.find c (fst sign) in
     let env, sigma = subst sign repo env sigma in
-    let m = fargs sign repo env sigma (m, k) in
+    let m = fargs sign repo env (m, k) in
     NLF.FHead (sigma, c, m)
 
 and subst sign repo env : subst -> eent E.t * NLF.def S.t =
   List.fold_left
     begin fun (env, sigma) (x, (h,l)) ->
       let a = ohead sign repo env h in
-      let l, (c,m) = args sign repo env sigma (l,a) in
+      let l, (c,m) = args sign repo env (l,a) in
       E.add x (EDef(NLF.DApp(h,l,c,m))) env, S.add x (NLF.DApp(h,l,c,m)) sigma
     end (env, S.empty)
 
-and args sign repo env sigma : args * NLF.fam -> NLF.args * (fconst * NLF.args) = function
+and args sign repo env : args * NLF.fam -> NLF.args * (fconst * NLF.args) = function
   | v :: l, NLF.FProd (x, a, b) ->
-    let v = value sign repo env sigma (v, a) in
-    let l, (c, m) = args sign repo env sigma (l, hsubst_fam x v a b) in
+    let v = value sign repo env (v, a) in
+    let l, (c, m) = args sign repo env (l, hsubst_fam x v a b) in
     v :: l, (c, m)
   | [], NLF.FHead (sigma',h,l) ->
     [], (h,l)
   | _ -> failwith ("args: not applicable")
 
-and fargs sign repo env sigma : args * NLF.kind -> NLF.args = function
+and fargs sign repo env : args * NLF.kind -> NLF.args = function
   | v :: l, NLF.KProd (x, a, k) ->
-    let v = value sign repo env sigma (v, a) in
-    v :: fargs sign repo env sigma (l, hsubst_kind x v a k)
+    let v = value sign repo env (v, a) in
+    v :: fargs sign repo env (l, hsubst_kind x v a k)
   | [], NLF.KType -> []
   | _ -> failwith ("fargs: not applicable")
 
 and obj sign repo env : obj * NLF.fam -> NLF.obj = function
   | Obj(sigma, v), a ->
     let env, sigma = subst sign repo env sigma in
-    let v = value sign repo env S.empty (v, a) in
+    let v = value sign repo env (v, a) in
     NLF.Obj (sigma, v)
   | OBox(t,p,u), a -> assert false
 
-and value sign repo env sigma : value * NLF.fam -> NLF.value = function
+and value sign repo env : value * NLF.fam -> NLF.value = function
   | VLam (x,t), NLF.FProd (y, a, b) ->
     assert (x=y);
     let t = obj sign repo (E.add x (EDecl a) env) (t, b) in
@@ -75,7 +75,10 @@ and value sign repo env sigma : value * NLF.fam -> NLF.value = function
   | VHead h, NLF.FHead (sigma, c, m) ->
     begin match ohead sign repo env h with
       | NLF.FProd _ -> failwith ("Fct au lieu de valeur")
-      | NLF.FHead (sigma', c', m') -> assert false
+      | NLF.FHead (sigma', c', m') ->
+	if c <> c' then failwith ("Not convertible: "^Name.of_fconst c^" <-> "^Name.of_fconst c');
+	equals_args sign repo env (sigma, m) (sigma', m');
+	NLF.VHead (h, c, m)		(* TODO sigma??? *)
     end
   | VLam _, NLF.FHead _ -> failwith ("Lam attend prod")
   | VHead _, NLF.FProd _ -> failwith ("Pas en forme eta-longue")
