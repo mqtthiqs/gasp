@@ -1,9 +1,8 @@
 
 let rec name_obj sigma h l =
-  let sigma, l = args [] l in
+  let sigma, l = args sigma l in
   let x = Name.gen_variable () in
-  let sigma = (x, (h,l)) :: sigma in
-  sigma, XLFf.VHead (XLF.HVar x)
+  (x, (h,l)) :: sigma, XLFf.VHead (XLF.HVar x)
 
 and obj : XLF.obj -> XLFf.obj = function
   | XLF.OLam (x, t) -> XLFf.Obj ([], XLFf.VLam(x, obj t))

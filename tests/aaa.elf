@@ -1,6 +1,6 @@
 A : type.
 a : A.
-P : A -> type.
+P : A -> A -> type.
 f : A -> A.
 a : A.
-p : P (f a).
+p : P (f a) (f a).
