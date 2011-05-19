@@ -34,7 +34,7 @@ and module Pp = struct
 
   module S = NLFSubst
 
- let pp pp : entity printing_fun = assert false
+ let pp pp : entity printing_fun =
     let pr_fhead fmt (c, fargs) : unit =
       if fargs = [] then fconst fmt c else
     	fprintf fmt "@[%a@ %a@]" fconst c (pp (<=)) (A fargs) in
@@ -50,10 +50,10 @@ and module Pp = struct
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
     | H(XLF.HVar x) -> variable fmt x
     | H(XLF.HConst c) -> oconst fmt c
-    | A a -> pr_list pr_spc (fun fmt a -> fprintf fmt "@[%a@]" (pp (<=)) (V a)) fmt a
+    | A a -> pr_list pr_spc (fun fmt a -> fprintf fmt "@[%a@]" (pp (<)) (V a)) fmt a
     | B b -> NLFSubst.fold (fun x d () -> match d with
-	| DApp (h,a,c,b) -> fprintf fmt "@[[%a@ =@ %a@ %a@ :@ %a@ %a]@]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c (pp (<=)) (A b)
-	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a@]" (pp (<=)) (H h) (pp (<=)) (F a)
+	| DApp (h,a,c,b) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c (pp (<=)) (A b)
+	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) (pp (<=)) (F a)
     ) b ()
     | S s -> NLFSign.fold
       (fun e () ->

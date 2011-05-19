@@ -11,13 +11,13 @@ let rec compile_sign s : NLFSign.t = List.fold_left
   (fun (fsign,osign as sign) (x,t) -> match SLF_LF.term sign t with
     | LF.Kind k ->
       let k = XLF_XLFf.kind (LF_XLF.kind k) in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x XLFf.Pp.kind k);
       let k = XLFf_NLF.kind sign bidon k in
+      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x Pp.kind k);
       NLFSign.FDecl.add (Name.mk_fconst x) k fsign, osign
     | LF.Fam a ->
       let a = XLF_XLFf.fam (LF_XLF.fam a) in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x XLFf.Pp.fam a);
       let a = XLFf_NLF.fam sign bidon a in
+      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x Pp.fam a);
       fsign, NLFSign.ODecl.add (Name.mk_oconst x) a osign
     | LF.Obj t -> failwith ("obj in signature: "^x)
   ) NLFSign.empty s

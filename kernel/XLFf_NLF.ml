@@ -9,8 +9,25 @@ type eent =
   | EDecl of NLF.fam
   | EDef of NLF.def
 
-let rec hsubst_fam x v a b : NLF.fam = assert false
-let rec hsubst_kind x v a b : NLF.kind = assert false
+let rec hsubst_fam x v a b : NLF.fam = b (* TODO *)
+let rec hsubst_kind x v a k : NLF.kind = k (* TODO *)
+
+let rec equals_args sign repo env (sigma, m) (sigma', m') = match m, m' with
+  | v :: m, v' :: m' ->
+    equals_val sign repo env (sigma, v) (sigma', v');
+    equals_args sign repo env (sigma, m) (sigma', m')
+  | [], [] -> ()
+  | _ -> failwith ("Not convertible")
+
+and equals_val sign repo env (sigma, v) (sigma', v') = match v, v' with
+  | NLF.VHead (h,_,_), NLF.VHead (h',_,_) ->
+    (* assert (h=h') 			(\* TODO *\) *)
+    ()
+  | NLF.VLam (x, _, t), NLF.VLam (x', _, t') ->
+    (* assert (x=x');			(\* TODO *\) *)
+    (* assert (t=t') *)
+()
+  | _ -> failwith ("Not convertible")
 
 let rec ohead sign repo env : ohead -> NLF.fam = function
   | XLF.HConst c -> NLFSign.ODecl.find c (snd sign)
