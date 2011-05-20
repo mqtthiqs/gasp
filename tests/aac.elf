@@ -1,0 +1,10 @@
+A B : type.
+a b : A.
+g : A -> B.
+
+P : B -> type.
+f : {x : A} P (g x).
+
+Q : P (g a) -> P (g b) -> type.
+
+q : Q (f a) (f b).
