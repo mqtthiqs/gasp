@@ -17,7 +17,7 @@ let rec obj l = function
       if l = [] then
 	XLF.OBox(obj [] t, p, obj [] u)
       else
-	Errors.bad_application (SLF_LF.from_obj t)	(* Product application *)
+	Errors.bad_application (SLF_LF.from_obj t)	(* Box application *)
 
 and fam l = function
   | LF.FConst c -> XLF.FConst(c,l)

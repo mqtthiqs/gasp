@@ -26,7 +26,7 @@ and equals_val sign repo env (sigma, v) (sigma', v') = match v, v' with
   | NLF.VLam (x, _, t), NLF.VLam (x', _, t') ->
     (* assert (x=x');			(\* TODO *\) *)
     (* assert (t=t') *)
-()
+    ()
   | _ -> failwith ("Not convertible")
 
 let rec ohead sign repo env : ohead -> NLF.fam = function
@@ -85,7 +85,7 @@ and obj sign repo env : obj * NLF.fam -> NLF.obj = function
 
 and value sign repo env : value * NLF.fam -> NLF.value = function
   | VLam (x,t), NLF.FProd (y, a, b) ->
-    assert (x=y);
+    (* assert (x=y); *)
     let t = obj sign repo (E.add x (EDecl a) env) (t, b) in
     NLF.VLam (x, a, t)
 
@@ -95,7 +95,7 @@ and value sign repo env : value * NLF.fam -> NLF.value = function
       | NLF.FHead (sigma', c', m') ->
 	if c <> c' then failwith ("Not convertible: "^Name.of_fconst c^" <-> "^Name.of_fconst c');
 	equals_args sign repo env (sigma, m) (sigma', m');
-	NLF.VHead (h, c, m)		(* TODO sigma??? *)
+	NLF.VHead (h, c, m)
     end
   | VLam _, NLF.FHead _ -> failwith ("Lam attend prod")
   | VHead _, NLF.FProd _ -> failwith ("Pas en forme eta-longue")
@@ -106,7 +106,6 @@ let rec kind sign repo env : kind -> NLF.kind = function
     let k = kind sign repo (E.add x (EDecl a) env) k in
     NLF.KProd(x, a, k)
   | KType -> NLF.KType
-
 
 let obj sign repo = obj sign repo E.empty
 let fam sign repo = fam sign repo E.empty
