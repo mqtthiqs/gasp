@@ -20,14 +20,11 @@ and module Pp = struct
   open NLF
 
   type entity = 
-    | K of kind
-    | F of fam
     | O of obj
     | H of ohead
     | B of subst
     | A of args
     | V of value
-    | S of NLFSign.t
 
   let ent_prec = function
       _ -> 10
@@ -39,41 +36,25 @@ and module Pp = struct
       if fargs = [] then fconst fmt c else
     	fprintf fmt "@[%a@ %a@]" fconst c (pp (<=)) (A fargs) in
     fun fmt (e:entity) -> match e with
-    | K(KType) -> fprintf fmt "@[type@]"
-    | K(KProd(x,a,k)) ->
-      fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (K k)
-    | F(FHead(s,c,fargs)) when S.is_empty s -> fprintf fmt "@[%a@]" pr_fhead (c, fargs)
-    | F(FHead(s,c,fargs)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) pr_fhead (c, fargs)
-    | F(FProd(x,a,b)) ->
-      fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
     | O(Obj(s, v)) when S.is_empty s -> pp (<=) fmt (V v)
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
     | H(XLF.HVar x) -> variable fmt x
     | H(XLF.HConst c) -> oconst fmt c
     | A a -> pr_list pr_spc (fun fmt a -> fprintf fmt "@[%a@]" (pp (<)) (V a)) fmt a
     | B b -> NLFSubst.fold (fun x d () -> match d with
-	| DApp (h,a,c,b) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c (pp (<=)) (A b)
-	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) (pp (<=)) (F a)
+	| DApp (h,a,c,b) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj b))
+	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a)))
     ) b ()
-    | S s -> NLFSign.fold
-      (fun e () ->
-    	match e with
-    	  | NLF.ODecl (c,a) -> fprintf fmt "@[%a@ :@ %a@]@," oconst c (pp (<=)) (F a)
-    	  | NLF.FDecl (c,k) -> fprintf fmt "@[%a@ :@ %a@]@," fconst c (pp (<=)) (K k)
-      ) s ()
-    | V(VHead (h,c,l)) -> fprintf fmt "@[%a@ :@ %a@ %a@]" (pp (<=)) (H h) fconst c (pp (<=)) (A l)
-    | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (O t)
+    | V(VHead (h,c,l)) -> fprintf fmt "@[%a@ :@ %a@ %a@]" (pp (<=)) (H h) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj l))
+    | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a))) (pp (<=)) (O t)
 
-  let sign fmt s = pr_paren pp ent_prec 100 (<=) fmt (S s)
   let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
-  let fam fmt s = pr_paren pp ent_prec 100 (<=) fmt (F s)
-  let kind fmt s = pr_paren pp ent_prec 100 (<=) fmt (K s)
 end
 
 let lift_def x = function
   | NLF.Obj(subst, _) ->
       match NLFSubst.find x subst with
-	| NLF.DApp (_, _, c, fargs) -> NLF.FHead(NLFSubst.empty, c, fargs)
+	| NLF.DApp (_, _, c, fargs) -> XLF.FConst(c, fargs)
 	| NLF.DHead (_, a) -> a
 
 let to_def = function
@@ -100,4 +81,4 @@ let bidon, bidon_type =
     (NLF.DApp (XLF.HConst(Name.mk_oconst "bidon"), [], Name.mk_fconst "Bidon", []))
     NLFSubst.empty in
   NLF.Obj(s, NLF.VHead(XLF.HVar x, Name.mk_fconst "Bidon", [])),
-  NLF.FHead(NLFSubst.empty, Name.mk_fconst "Bidon", [])
+  XLF.FConst(Name.mk_fconst "Bidon", [])

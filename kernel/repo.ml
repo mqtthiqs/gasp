@@ -2,25 +2,23 @@ open Util
 open NLF
 
 type t = {
-  sign : NLFSign.t;
+  sign : XLF.Sign.t;
   term : NLF.obj;
   varno : int
 }
 
-let rec compile_sign s : NLFSign.t = List.fold_left
+let rec compile_sign s : XLF.Sign.t = List.fold_left
   (fun (fsign,osign as sign) (x,t) -> match SLF_LF.term sign t with
     | LF.Kind k ->
-      let k = XLF_XLFf.kind (LF_XLF.kind k) in
-      let k = XLFf_NLF.kind sign bidon k in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x Pp.kind k);
-      NLFSign.FDecl.add (Name.mk_fconst x) k fsign, osign
+      let k = LF_XLF.kind k in
+      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x SLF.Pp.term (SLF_LF.from_kind (LF_XLF.from_kind k)));
+      Name.Fconstmap.add (Name.mk_fconst x) k fsign, osign
     | LF.Fam a ->
-      let a = XLF_XLFf.fam (LF_XLF.fam a) in
-      let a = XLFf_NLF.fam sign bidon a in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x Pp.fam a);
-      fsign, NLFSign.ODecl.add (Name.mk_oconst x) a osign
+      let a = LF_XLF.fam a in
+      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x SLF.Pp.term (SLF_LF.from_fam (LF_XLF.from_fam a)));
+      fsign, Name.Oconstmap.add (Name.mk_oconst x) a osign
     | LF.Obj t -> failwith ("obj in signature: "^x)
-  ) NLFSign.empty s
+  ) XLF.Sign.empty s
 
 let compile_term sign term =
     (fun x -> match SLF_LF.term sign x with
@@ -32,6 +30,12 @@ let compile_term sign term =
 
 let reify_term t =
   (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
+
+let reify_sign s =
+  XLF.Sign.fold (fun entry acc -> match entry with
+    | XLF.FDecl (c, k) -> (Name.of_fconst c, SLF_LF.from_kind (LF_XLF.from_kind k)) :: acc
+    | XLF.ODecl (c, a) -> (Name.of_oconst c, SLF_LF.from_fam (LF_XLF.from_fam a)) :: acc
+  ) s []
 
 let init sign =
   let sign = ("Bidon", Position.unknown_pos SLF.Type) :: ("bidon", Position.unknown_pos (SLF.Ident"Bidon")) :: sign in 			(* TODO temp *)
@@ -53,7 +57,7 @@ let commit repo term =
 
 let show repo = 
   Format.printf " signature:@.";
-  Pp.sign Format.std_formatter repo.sign;
+  SLF.Pp.sign Format.std_formatter (reify_sign repo.sign);
   Format.printf " term:@.";
   Format.printf "@[%a@]@." Pp.obj repo.term
 

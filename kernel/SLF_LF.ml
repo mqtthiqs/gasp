@@ -6,7 +6,7 @@ module P = Position
 
 (* Typing: from SLF to LF *)
 
-let term : NLFSign.t -> SLF.term -> LF.entity =
+let term : XLF.Sign.t -> SLF.term -> LF.entity =
 fun sign t ->
   let rec term env {P.value=t; P.position=pos} =
       match t with
@@ -54,10 +54,10 @@ fun sign t ->
 	    if Stringset.mem x env then LF.Obj(LF.OVar (mk_variable x))
 	    else 			(* TODO dans le repo!!! *)
 	      (* if it's in [sign] it's a constant*)
-	      try match NLFSign.FDecl.find (mk_fconst x) (fst sign) with
+	      try match XLF.Sign.FDecl.find (mk_fconst x) (fst sign) with
 		| _ -> LF.Fam (LF.FConst (mk_fconst x))
 	      with Not_found ->
-		try match NLFSign.ODecl.find (mk_oconst x) (snd sign) with
+		try match XLF.Sign.ODecl.find (mk_oconst x) (snd sign) with
 		  | _ -> LF.Obj (LF.OConst (mk_oconst x))
 	      with Not_found ->
 		(* otherwise it might still be a (defined) variable looked up in XLFa *)
