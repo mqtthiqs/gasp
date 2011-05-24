@@ -1,9 +1,7 @@
 open Name
-open XLFf
-open NLF
 
 module E = Name.Varmap
-module S = NLFSubst
+module S = Name.Varmap
 
 type eent =
   | EDecl of NLF.fam
@@ -29,7 +27,7 @@ and equals_val sign repo env = function
   (*   () *)
   | _ -> failwith ("Not convertible")
 
-let rec ohead sign repo env : ohead -> NLF.fam = function
+let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
   | XLF.HConst c -> Oconstmap.find c (snd sign)
   | XLF.HVar x ->
     try match E.find x env with
@@ -37,10 +35,10 @@ let rec ohead sign repo env : ohead -> NLF.fam = function
       | EDef (NLF.DHead(h,a)) -> a
       | EDef (NLF.DApp(_,_,c,m)) -> XLF.FConst(c, m)
     with Not_found ->
-      try lift_def x repo
+      try NLF.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
 
-and subst sign repo env : subst -> eent E.t * NLF.def S.t =
+and subst sign repo env : XLFf.subst -> eent E.t * NLF.def S.t =
   List.fold_left
     begin fun (env, sigma) (x, (h,l)) ->
       let a = ohead sign repo env h in
@@ -48,29 +46,29 @@ and subst sign repo env : subst -> eent E.t * NLF.def S.t =
       E.add x (EDef(NLF.DApp(h,l,c,m))) env, S.add x (NLF.DApp(h,l,c,m)) sigma
     end (env, S.empty)
 
-and args sign repo env : args * NLF.fam -> NLF.args * (fconst * XLF.args) = function
+and args sign repo env : XLFf.args * NLF.fam -> NLF.args * (fconst * XLF.args) = function
   | v :: l, XLF.FProd (x, a, b) ->
     let v = value sign repo env (v, a) in
     let l, (c, m) = args sign repo env (l, hsubst_fam x v a b) in
-    v :: l, (c, m)
+    Varmap.add x v l, (c, m)
   | [], XLF.FConst (h,l) ->
-    [], (h,l)
+    Varmap.empty, (h,l)
   | _ -> failwith ("args: not applicable")
 
-and obj sign repo env : obj * NLF.fam -> NLF.obj = function
-  | Obj(sigma, v), a ->
+and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
+  | XLFf.Obj(sigma, v), a ->
     let env, sigma = subst sign repo env sigma in
     let v = value sign repo env (v, a) in
     NLF.Obj (sigma, v)
-  | OBox(t,p,u), a -> assert false
+  | XLFf.OBox(t,p,u), a -> assert false
 
-and value sign repo env : value * NLF.fam -> NLF.value = function
-  | VLam (x,t), XLF.FProd (y, a, b) ->
+and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
+  | XLFf.VLam (x,t), XLF.FProd (y, a, b) ->
     (* assert (x=y); *)
     let t = obj sign repo (E.add x (EDecl a) env) (t, b) in
     NLF.VLam (x, a, t)
 
-  | VHead h, XLF.FConst (c, m) ->
+  | XLFf.VHead h, XLF.FConst (c, m) ->
     begin match ohead sign repo env h with
       | XLF.FProd _ -> failwith ("Fct au lieu de valeur")
       | XLF.FConst (c', m') ->
@@ -78,7 +76,7 @@ and value sign repo env : value * NLF.fam -> NLF.value = function
 	equals_args sign repo env (m, m');
 	NLF.VHead (h, c, m)
     end
-  | VLam _, XLF.FConst _ -> failwith ("Lam attend prod")
-  | VHead _, XLF.FProd _ -> failwith ("Pas en forme eta-longue")
+  | XLFf.VLam _, XLF.FConst _ -> failwith ("Lam attend prod")
+  | XLFf.VHead _, XLF.FProd _ -> failwith ("Pas en forme eta-longue")
 
 let obj sign repo = obj sign repo E.empty
