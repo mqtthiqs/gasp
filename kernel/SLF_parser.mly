@@ -8,7 +8,6 @@
 %token COLON TYPE DOT LARROW RARROW BIGRARROW SLASH
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
-%token<int> INT
 
 %start<SLF.sign> signature
 %start<SLF.term> terml
@@ -44,7 +43,7 @@ term3:
 	   (fun acc x -> 
 	      Position.with_pos Position.dummy (Lam(x, acc))) u (List.rev xs)) }
 | x=ID { Ident x }
-| LBRACE p=ID DOT i=INT BIGRARROW t=loc(term1) SLASH u=loc(term1) RBRACE { Box(t, Some (p,i), u) }
+| LBRACE p=ID DOT i=ID BIGRARROW t=loc(term1) SLASH u=loc(term1) RBRACE { Box(t, Some (p,i), u) }
 | TYPE { Type }
 
 term: x=term1 { x }

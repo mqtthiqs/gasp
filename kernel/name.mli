@@ -18,7 +18,7 @@ type name =
   | Named of variable
   | Anonymous
 
-type position = (variable * int) option
+type position = (variable * variable) option
 
 val variable_for : name -> variable
 

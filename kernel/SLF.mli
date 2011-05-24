@@ -8,7 +8,7 @@ type term' =
   | Lam of ident * term
   | App of term * term
   | Ident of ident
-  | Box of term * (ident * int) option * term
+  | Box of term * (ident * ident) option * term
 
 and term = term' Position.located
 
