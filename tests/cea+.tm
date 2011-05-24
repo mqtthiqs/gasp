@@ -1,1 +1,1 @@
-a ([x:D] b (c x)) (c d)
+a ([x] b (c x)) (c d)
