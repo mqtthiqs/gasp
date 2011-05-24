@@ -1,1 +1,1 @@
-lam [x:tm] lam [y:tm] app x (app (app x y) y)
+lam [x] lam [y] app x (app (app x y) y)

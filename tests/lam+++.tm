@@ -1,1 +1,1 @@
-lam [x:tm] x
+lam [x] x

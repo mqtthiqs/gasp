@@ -1,2 +1,1 @@
-lam [x:tm] {v2 => lam [y:tm] {v2 => $23}}
-
+lam [x] {v2 => lam [y] {v2 => $23}}
