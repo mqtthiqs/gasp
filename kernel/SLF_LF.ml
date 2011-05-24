@@ -1,6 +1,5 @@
 open Util
 open Name
-open NLF
 
 module P = Position
 
@@ -51,17 +50,15 @@ fun sign t ->
 	  end
 	| SLF.Ident x ->
 	    (* if it's in [env] it's a (declared) variable *)
-	    if Stringset.mem x env then LF.Obj(LF.OVar (mk_variable x))
-	    else 			(* TODO dans le repo!!! *)
-	      (* if it's in [sign] it's a constant*)
-	      try match XLF.Sign.FDecl.find (mk_fconst x) (fst sign) with
-		| _ -> LF.Fam (LF.FConst (mk_fconst x))
-	      with Not_found ->
-		try match XLF.Sign.ODecl.find (mk_oconst x) (snd sign) with
-		  | _ -> LF.Obj (LF.OConst (mk_oconst x))
-	      with Not_found ->
-		(* otherwise it might still be a (defined) variable looked up in XLFa *)
-		LF.Obj(LF.OVar (mk_variable x))
+	    if Stringset.mem x env
+	    then LF.Obj(LF.OVar (mk_variable x))
+	    (* if it's in [sign] it's a constant*)
+	    else if Fconstmap.mem (mk_fconst x) (fst sign)
+	    then LF.Fam (LF.FConst (mk_fconst x))
+	    else if Oconstmap.mem (mk_oconst x) (snd sign)
+	    then LF.Obj (LF.OConst (mk_oconst x))
+	    (* otherwise it might still be a (defined) variable looked up in XLFa *)
+	    else LF.Obj(LF.OVar (mk_variable x))
   in
   term Stringset.empty t
 
