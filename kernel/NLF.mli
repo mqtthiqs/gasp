@@ -28,5 +28,3 @@ val go : obj -> position -> value
 val bind : variable -> def -> obj -> obj
 val lift_def : variable -> obj -> fam
 val to_def : obj -> def
-val bidon : obj
-val bidon_type : fam

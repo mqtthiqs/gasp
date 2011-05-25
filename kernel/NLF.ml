@@ -56,10 +56,3 @@ let go term p = match term, p with
 
 let bind x d = function
   | Obj (s, v) -> Obj (Varmap.add x d s, v)
-let bidon, bidon_type =
-  let x = Name.gen_variable() in
-  let s = Varmap.add x
-    (DApp (XLF.HConst(Name.mk_oconst "bidon"), Varmap.empty, Name.mk_fconst "Bidon", []))
-    Varmap.empty in
-  Obj(s, VHead(XLF.HVar x, Name.mk_fconst "Bidon", [])),
-  XLF.FConst(Name.mk_fconst "Bidon", [])

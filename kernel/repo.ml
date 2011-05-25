@@ -1,6 +1,18 @@
 open Util
 open NLF
 
+module Constants = struct
+  open Name
+
+  let commit_const = mk_fconst Settings.commit_const
+  let commit_type = XLF.FConst(commit_const, [])
+  let version_const = mk_fconst Settings.version_const
+  let version_type = XLF.FConst(version_const, [])
+  let version_o_const = mk_oconst Settings.version_o_const
+  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(XLF.HConst(version_o_const), version_const, []))
+  let version_s = XLF.OHead(XLF.HConst(mk_oconst Settings.version_s_const), [])
+end
+
 type t = {
   sign : XLF.Sign.t;
   term : NLF.obj;
@@ -26,7 +38,9 @@ let compile_term sign term =
        | _ -> assert false) //
       LF_XLF.obj //
       XLF_XLFf.obj //
-      (fun t -> XLFf_NLF.obj sign term (t, bidon_type))
+      (fun t ->
+	Util.if_debug (fun () -> Format.printf "%a@." XLFf.Pp.obj t);
+	XLFf_NLF.obj sign term (t, Constants.commit_type))
 
 let reify_term t =
   (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
@@ -38,11 +52,10 @@ let reify_sign s =
   ) s []
 
 let init sign =
-  let sign = ("Bidon", Position.unknown_pos SLF.Type) :: ("bidon", Position.unknown_pos (SLF.Ident"Bidon")) :: sign in 			(* TODO temp *)
   let sign = compile_sign sign in
   {sign = sign;
    varno = Name.gen_status();
-   term = bidon}				(* TODO *)
+   term = Constants.version_o}
 
 let check repo =			(* TODO temp *)
   (* LF_check.sign repo.sign; *)
