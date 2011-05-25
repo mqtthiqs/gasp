@@ -25,7 +25,7 @@ module Pp = struct
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
     | H(XLF.HVar x) -> variable fmt x
     | H(XLF.HConst c) -> oconst fmt c
-    | A a -> pr_list pr_spc (fun fmt (x, a) -> fprintf fmt "@[%a=%a@]" variable x (pp (<)) (V a)) fmt a
+    | A a -> pr_list pr_spc (fun fmt (_, a) -> fprintf fmt "@[%a@]" (pp (<)) (V a)) fmt a
     | B b -> Varmap.fold (fun x d () -> match d with
 	| DApp (h,a,c,b) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj b))
 	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a)))
@@ -50,9 +50,10 @@ let to_def = function
 let go term p = match term, p with
   | Obj(_, t), None -> t                (* TODO que faire de _? *)
   | Obj(s, _), Some (x, n) ->
-    match Varmap.find x s with
+    try match Varmap.find x s with
       | DHead (h, a) -> failwith "position is not an application"
       | DApp (h, l, a, m) -> snd (List.nth l n)
+    with Not_found -> failwith ("go: variable not found "^(of_variable x))
 
 let bind x d = function
   | Obj (s, v) -> Obj (Varmap.add x d s, v)
