@@ -47,19 +47,15 @@ let to_def = function
     Varmap.find x subst
   | _ -> assert false			(* TODO erreur *)
 
-let go term p u = match term, p with
-  | Obj(_, VLam (x, a, Obj(s, v))), None -> (* TODO que faire de _? *)
-    Obj(Varmap.add x u s, v)
-  | Obj(_, VHead _), None -> assert false (* TODO erreur *)
+let go term p = match term, p with
+  | Obj(_, t), None -> t                (* TODO que faire de _? *)
   | Obj(s, _), Some (x, n) ->
     match Varmap.find x s with
-      | DHead (h, a) -> assert false (* TODO erreur *)
-      | DApp (h, l, a, m) ->
-	match Varmap.find n l with
-	  | VLam (x, a, Obj(s, v)) ->
-	    Obj(Varmap.add x u s, v)
-	  | VHead _ -> assert false	(* TODO error *)
+      | DHead (h, a) -> failwith "position is not an application"
+      | DApp (h, l, a, m) -> snd (List.nth l n)
 
+let bind x d = function
+  | Obj (s, v) -> Obj (Varmap.add x d s, v)
 let bidon, bidon_type =
   let x = Name.gen_variable() in
   let s = Varmap.add x

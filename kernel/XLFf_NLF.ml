@@ -50,9 +50,9 @@ and args sign repo env : XLFf.args * NLF.fam -> NLF.args * (fconst * XLF.args) =
   | v :: l, XLF.FProd (x, a, b) ->
     let v = value sign repo env (v, a) in
     let l, (c, m) = args sign repo env (l, hsubst_fam x v a b) in
-    Varmap.add x v l, (c, m)
+    (x, v) :: l, (c, m)
   | [], XLF.FConst (h,l) ->
-    Varmap.empty, (h,l)
+    [], (h,l)
   | _ -> failwith ("args: not applicable")
 
 and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
@@ -60,7 +60,15 @@ and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
     let env, sigma = subst sign repo env sigma in
     let v = value sign repo env (v, a) in
     NLF.Obj (sigma, v)
-  | XLFf.OBox(t,p,u), a -> assert false
+  | XLFf.OBox(t,p,u), a ->
+    match NLF.go repo p with
+      | NLF.VLam (x, b, repo) ->
+	let d = match obj sign repo env (u, b) with
+	  | NLF.Obj (sigma, NLF.VHead (h, a, m)) -> NLF.DHead(h, XLF.FConst (a, m))
+	  | NLF.Obj (sigma, NLF.VLam _) -> failwith "No lambdas in box argument" in
+	obj sign (NLF.bind x d repo) env (t, a)
+
+      | _ -> failwith "Position is not a lambda"
 
 and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
   | XLFf.VLam (x,t), XLF.FProd (y, a, b) ->

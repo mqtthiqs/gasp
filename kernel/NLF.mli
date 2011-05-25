@@ -24,7 +24,8 @@ module Pp : sig
   val obj : obj printing_fun
 end
 
-val go : obj -> position -> def -> obj
+val go : obj -> position -> value
+val bind : variable -> def -> obj -> obj
 val lift_def : variable -> obj -> fam
 val to_def : obj -> def
 val bidon : obj
