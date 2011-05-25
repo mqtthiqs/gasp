@@ -9,7 +9,7 @@ and obj : XLF.obj -> XLFf.obj = function
   | XLF.OBox (t, p, u) -> XLFf.OBox (obj t, p, obj u)
   | XLF.OHead (h,l) ->
     let sigma, v = name_obj [] h l in
-    XLFf.Obj (sigma, v)
+    XLFf.Obj (List.rev sigma, v)
 
 and arg sigma : XLF.obj -> XLFf.subst * XLFf.value = function
   | XLF.OLam (x, t) -> sigma, XLFf.VLam(x, obj t)
