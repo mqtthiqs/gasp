@@ -32,7 +32,7 @@ module Pp = struct
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" 
 	(pp (<=)) t (pp (<)) u
     | Box (t,None,s) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) t (pp (<=)) s
-    | Box (t,Some(x,n),s) -> fprintf fmt "@[{%a.%a@ =>@ %a}%a@]" ident x ident n (pp (<=)) t (pp (<=)) s
+    | Box (t,Some(x,n),s) -> fprintf fmt "@[{%a.%d@ =>@ %a}%a@]" ident x n (pp (<=)) t (pp (<=)) s
     | Type -> fprintf fmt "@[type@]"
 	
   let term fmt t = pr_paren pp_term term_prec 100 (<=) fmt t

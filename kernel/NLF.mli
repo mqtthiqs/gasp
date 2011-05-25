@@ -5,7 +5,7 @@ type fam = XLF.fam
 and obj =
   | Obj of subst * value
 
-and args = value Varmap.t
+and args = (variable * value) list
 
 and ohead = XLF.ohead
 
