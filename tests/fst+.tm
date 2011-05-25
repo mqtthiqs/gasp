@@ -1,1 +1,3 @@
-f (f (g a (f b)))
+commit (
+  f (f (g a (f b)))
+)

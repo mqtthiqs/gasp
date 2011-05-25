@@ -31,3 +31,7 @@ of-lam : {t : tm -> tm} {A B : ty}
 	  ({x : tm} of x A -> of (t x) B) ->
 	  %---------------------------------
 	  of (lam ([x] t x)) (arr A B).
+
+
+
+commit : tm -> Commit.
