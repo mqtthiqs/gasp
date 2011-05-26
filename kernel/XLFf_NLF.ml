@@ -46,7 +46,7 @@ and subst sign (NLF.Obj(sigma, _) as repo) env : XLFf.subst -> eent E.t * NLF.de
       E.add x (EDef(NLF.DAtom(h,l,(c,m)))) env, S.add x (NLF.DAtom(h,l,(c,m))) sigma
     end (env, sigma)
 
-and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fhead = function
+and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fatom = function
   | v :: l, XLF.FProd (x, a, b) ->
     let v = value sign repo env (v, a) in
     let l, (c, m) = args sign repo env (l, hsubst_fam x v a b) in

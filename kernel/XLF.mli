@@ -4,9 +4,11 @@ type kind =
   | KType
   | KProd of variable * fam * kind
 
+and fatom = fconst * args
+
 and fam =
   | FProd of variable * fam * fam
-  | FAtom of fconst * args
+  | FAtom of fatom
 
 and obj =
   | OLam of variable * obj
