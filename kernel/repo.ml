@@ -9,7 +9,7 @@ module Constants = struct
   let version_const = mk_fconst Settings.version_const
   let version_type = XLF.FConst(version_const, [])
   let version_o_const = mk_oconst Settings.version_o_const
-  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(XLF.HConst(version_o_const), version_const, []))
+  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(XLF.HConst(version_o_const), (version_const, [])))
   let version_s = XLF.OHead(XLF.HConst(mk_oconst Settings.version_s_const), [])
 end
 

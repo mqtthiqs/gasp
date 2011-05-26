@@ -15,7 +15,7 @@ let rec equals_args sign repo env = function
     equals_val sign repo env (v, v');
     equals_args sign repo env (m, m')
   | [], [] -> ()
-  | _ -> failwith ("Not convertible")
+  | _ -> failwith ("Not convertible 1")
 
 and equals_val sign repo env = function
   (* | NLF.VHead (h,_,_), NLF.VHead (h',_,_) -> *)
@@ -25,7 +25,7 @@ and equals_val sign repo env = function
   (*   (\* assert (x=x');			(\\* TODO *\\) *\) *)
   (*   (\* assert (t=t') *\) *)
   (*   () *)
-  | _ -> failwith ("Not convertible")
+  | _ -> failwith ("Not convertible 2")
 
 let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
   | XLF.HConst c -> Oconstmap.find c (snd sign)
@@ -33,7 +33,7 @@ let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
     try match E.find x env with
       | EDecl a -> a
       | EDef (NLF.DHead(h,a)) -> a
-      | EDef (NLF.DApp(_,_,c,m)) -> XLF.FConst(c, m)
+      | EDef (NLF.DApp(_,_,(c,m))) -> XLF.FConst(c, m)
     with Not_found ->
       try NLF.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
@@ -43,7 +43,7 @@ and subst sign (NLF.Obj(sigma, _) as repo) env : XLFf.subst -> eent E.t * NLF.de
     begin fun (env, sigma) (x, (h,l)) ->
       let a = ohead sign repo env h in
       let l, (c,m) = args sign repo env (l,a) in
-      E.add x (EDef(NLF.DApp(h,l,c,m))) env, S.add x (NLF.DApp(h,l,c,m)) sigma
+      E.add x (EDef(NLF.DApp(h,l,(c,m)))) env, S.add x (NLF.DApp(h,l,(c,m))) sigma
     end (env, sigma)
 
 and args sign repo env : XLFf.args * NLF.fam -> NLF.args * (fconst * XLF.args) = function
@@ -64,7 +64,7 @@ and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
     match NLF.go repo p with
       | NLF.VLam (x, b, repo) ->
 	let d = match obj sign repo env (u, b) with
-	  | NLF.Obj (sigma, NLF.VHead (h, a, m)) -> NLF.DHead(h, XLF.FConst (a, m))
+	  | NLF.Obj (sigma, NLF.VHead (h, (a, m))) -> NLF.DHead(h, XLF.FConst (a, m))
 	  | NLF.Obj (sigma, NLF.VLam _) -> failwith "No lambdas in box argument" in
 	obj sign (NLF.bind x d repo) env (t, a)
 
@@ -82,7 +82,7 @@ and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
       | XLF.FConst (c', m') ->
 	if c <> c' then failwith ("Not convertible: "^Name.of_fconst c^" <-> "^Name.of_fconst c');
 	equals_args sign repo env (m, m');
-	NLF.VHead (h, c, m)
+	NLF.VHead (h, (c, m))
     end
   | XLFf.VLam _, XLF.FConst _ -> failwith ("Lam attend prod")
   | XLFf.VHead _, XLF.FProd _ -> failwith ("Pas en forme eta-longue")

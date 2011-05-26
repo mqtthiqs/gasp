@@ -2,6 +2,8 @@ open Name
 
 type fam = XLF.fam
 
+type fhead = fconst * XLF.args
+
 and obj =
   | Obj of subst * value
 
@@ -10,11 +12,11 @@ and args = (variable * value) list
 and ohead = XLF.ohead
 
 and value =
-  | VHead of ohead * fconst * XLF.args
+  | VHead of ohead * fhead
   | VLam of variable * fam * obj
 
 and def =
-  | DApp of ohead * args * fconst * XLF.args (* ohead bindé ds repo *)
+  | DApp of ohead * args * fhead (* ohead bindé ds repo *)
   | DHead of ohead * fam		    (* ohead bindé ds env *)
 
 and subst = def Varmap.t

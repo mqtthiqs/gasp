@@ -27,10 +27,10 @@ module Pp = struct
     | H(XLF.HConst c) -> oconst fmt c
     | A a -> pr_list pr_spc (fun fmt (_, a) -> fprintf fmt "@[%a@]" (pp (<)) (V a)) fmt a
     | B b -> Varmap.fold (fun x d () -> match d with
-	| DApp (h,a,c,b) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj b))
+	| DApp (h,a,(c,b)) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj b))
 	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a)))
     ) b ()
-    | V(VHead (h,c,l)) -> fprintf fmt "@[%a@ :@ %a@ %a@]" (pp (<=)) (H h) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj l))
+    | V(VHead (h,(c,l))) -> fprintf fmt "@[%a@ :@ %a@ %a@]" (pp (<=)) (H h) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj l))
     | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a))) (pp (<=)) (O t)
 
   let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
@@ -39,11 +39,11 @@ end
 let lift_def x = function
   | Obj(subst, _) ->
       match Varmap.find x subst with
-	| DApp (_, _, c, fargs) -> XLF.FConst(c, fargs)
+	| DApp (_, _, (c, fargs)) -> XLF.FConst(c, fargs)
 	| DHead (_, a) -> a
 
 let to_def = function
-  | Obj(subst, VHead(XLF.HVar x, _, _)) ->
+  | Obj(subst, VHead(XLF.HVar x, (_, _))) ->
     Varmap.find x subst
   | _ -> assert false			(* TODO erreur *)
 
@@ -52,7 +52,7 @@ let go term p = match term, p with
   | Obj(s, _), Some (x, n) ->
     try match Varmap.find x s with
       | DHead (h, a) -> failwith "position is not an application"
-      | DApp (h, l, a, m) -> snd (List.nth l n)
+      | DApp (h, l, (a, m)) -> snd (List.nth l n)
     with Not_found -> failwith ("go: variable not found "^(of_variable x))
 
 let bind x d = function
