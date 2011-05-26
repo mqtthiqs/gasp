@@ -38,13 +38,13 @@ let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
       try NLF.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
 
-and subst sign repo env : XLFf.subst -> eent E.t * NLF.def S.t =
+and subst sign (NLF.Obj(sigma, _) as repo) env : XLFf.subst -> eent E.t * NLF.def S.t =
   List.fold_left
     begin fun (env, sigma) (x, (h,l)) ->
       let a = ohead sign repo env h in
       let l, (c,m) = args sign repo env (l,a) in
       E.add x (EDef(NLF.DApp(h,l,c,m))) env, S.add x (NLF.DApp(h,l,c,m)) sigma
-    end (env, S.empty)
+    end (env, sigma)
 
 and args sign repo env : XLFf.args * NLF.fam -> NLF.args * (fconst * XLF.args) = function
   | v :: l, XLF.FProd (x, a, b) ->
