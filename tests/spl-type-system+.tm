@@ -1,3 +1,5 @@
+commit (
+
 %tc_joinprog emptyenv (bindval (bind (_ x _*) tint))
 %(joinenv emptyenv (bindval (bind (_ x _*) tint)))
 %(joinenv (bindval (bind (_ y _*) tint))
@@ -10,7 +12,7 @@
 % (tc_valdecl emptyenv (_ x _*) tint (eint 42) (tc_eint emptyenv 42)))
 % (subenv_evidence (joinenv emptyenv (bindval (bind (_ x _*) tint)))
 %(joinenv emptyenv
- (bindval (bind (_ x _*) tint))
+ (bindval (bind (_ x _*) tint) emptyenv)
 %)
 %)
 % (tc_joinprog (joinenv emptyenv (bindval (bind (_ x _*) tint)))
@@ -33,3 +35,5 @@
 %   (joinenv (joinenv emptyenv (bindval (bind (_ x _*) tint)))
 %    (bindval (bind (_ y _*) tint)))))
 
+
+)
