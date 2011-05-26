@@ -6,11 +6,11 @@ type kind =
 
 and fam =
   | FProd of variable * fam * fam
-  | FConst of fconst * args
+  | FAtom of fconst * args
 
 and obj =
   | OLam of variable * obj
-  | OHead of ohead * args
+  | OAtom of ohead * args
   | OBox of obj * position * obj
 
 and ohead = 

@@ -7,14 +7,14 @@ let rec name_obj sigma h l =
 and obj : XLF.obj -> XLFf.obj = function
   | XLF.OLam (x, t) -> XLFf.Obj ([], XLFf.VLam(x, obj t))
   | XLF.OBox (t, p, u) -> XLFf.OBox (obj t, p, obj u)
-  | XLF.OHead (h,l) ->
+  | XLF.OAtom (h,l) ->
     let sigma, v = name_obj [] h l in
     XLFf.Obj (List.rev sigma, v)
 
 and arg sigma : XLF.obj -> XLFf.subst * XLFf.value = function
   | XLF.OLam (x, t) -> sigma, XLFf.VLam(x, obj t)
-  | XLF.OHead (h, []) -> sigma, XLFf.VHead h
-  | XLF.OHead (h, l) -> name_obj sigma h l
+  | XLF.OAtom (h, []) -> sigma, XLFf.VHead h
+  | XLF.OAtom (h, l) -> name_obj sigma h l
   | XLF.OBox _ -> failwith "box en arg"
 
 and args sigma : XLF.args -> XLFf.subst * XLFf.args =
@@ -23,9 +23,9 @@ and args sigma : XLF.args -> XLFf.subst * XLFf.args =
 and fam = function
   | XLF.FProd (x, a, b) ->
     XLFf.FProd (x, fam a, fam b)
-  | XLF.FConst(c,l) ->
+  | XLF.FAtom(c,l) ->
     let sigma, l = args [] l in
-    XLFf.FHead (sigma, c, l)
+    XLFf.FAtom (sigma, c, l)
 
 let rec kind = function
   | XLF.KType -> XLFf.KType

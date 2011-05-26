@@ -16,7 +16,7 @@ and value =
   | VLam of variable * fam * obj
 
 and def =
-  | DApp of ohead * args * fhead (* ohead bindé ds repo *)
+  | DAtom of ohead * args * fhead (* ohead bindé ds repo *)
   | DHead of ohead * fam		    (* ohead bindé ds env *)
 
 and subst = def Varmap.t
