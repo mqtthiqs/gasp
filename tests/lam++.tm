@@ -1,2 +1,1 @@
-lam [x:tm] {v2 => lam [y:tm] {v2 => $23}}
-
+commit (lam [x] {v21.0 => lam [y] {v20.0 => v19 / y} / x})

@@ -1,1 +1,3 @@
-a ([x:D] b (c x)) (c d)
+commit (
+  a ([x] b (c x)) (c d)
+)

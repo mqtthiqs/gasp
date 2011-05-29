@@ -15,5 +15,8 @@ and term = term' Position.located
 type sign = (ident * term) list
 
 module Pp : sig
-  val term : Format.formatter -> term -> unit
+  open Print
+  val term : term printing_fun
+  val args : term list printing_fun
+  val sign : sign printing_fun
 end

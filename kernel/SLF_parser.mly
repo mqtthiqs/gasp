@@ -45,6 +45,7 @@ term3:
 	      Position.with_pos Position.dummy (Lam(x, acc))) u (List.rev xs)) }
 | x=ID { Ident x }
 | LBRACE p=ID DOT i=INT BIGRARROW t=loc(term1) SLASH u=loc(term1) RBRACE { Box(t, Some (p,i), u) }
+| LBRACE t=loc(term1) SLASH u=loc(term1) RBRACE { Box(t, None, u) }
 | TYPE { Type }
 
 term: x=term1 { x }

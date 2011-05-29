@@ -51,6 +51,5 @@ let _ = dispatch begin function
        flag ["ocaml"; "pp"; "use_camlp4"] & S[A"camlp4o"; A"-I"; A"+camlp4"; A"q_MLast.cmo"; A"pa_extend.cmo"];
        flag ["file:kernel/gasp.byte"] & S[A"-I"; A"+camlp4"; A"camlp4.cma"];
        flag ["file:front-end/spl/spltc.byte"] & S[A"-I"; A"+camlp4"; A"camlp4.cma"];
-       non_dependency "kernel/NLF.ml" "NLF"
    | _ -> ()
 end

@@ -20,10 +20,10 @@ true : o -> type.
 
 raa : {p : o} true(not(not p)) -> true p.
 imp-i : {p q : o} (true p -> true q) -> true (imp p q).
-all-e : {F : i -> o} {x : i} true(forall([x:i] F x)) -> true(F x).
-all-i : {F: i -> o} ({x : i} true (F x)) -> true(forall([x:i] F x)).
+all-e : {F : i -> o} {x : i} true(forall [x] F x) -> true(F x).
+all-i : {F: i -> o} ({x : i} true (F x)) -> true(forall [x] F x).
 
-some-e : {F : i -> o} {p : o} true(exist([x:i] F x)) -> ({x:i} true (F x) -> true p) -> true p.
+some-e : {F : i -> o} {p : o} true(exist [x] F x) -> ({x:i} true (F x) -> true p) -> true p.
 
 sub : {t u : i} {F : i -> o} true(eq t u) -> true(F t) -> true(F u).
 ind : {F : i -> o} true (F O) -> ({x:i} true(F x) -> true(F (S x))) -> {x:i} true (F x).

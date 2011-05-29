@@ -97,8 +97,4 @@ tc_eint :
   { E : tenv } { x : int } 
   tc_expression E (eint x) tint.
 
-
-
-
-
-
+commit : tenv -> Commit.

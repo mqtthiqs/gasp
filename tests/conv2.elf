@@ -2,6 +2,6 @@ o : type.
 P : {m : o -> o -> o} type.
 p : {f : o -> o -> o} P f.
 
-Q : {n : P ([x y:o] x)} type.
+Q : {n : P ([x y] x)} type.
 
-c : Q (p ([x y:o] x)).
+c : Q (p ([x y] x)).

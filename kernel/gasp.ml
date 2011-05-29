@@ -9,15 +9,16 @@ let usage_msg =
     (Filename.basename Sys.executable_name)
 
 let parse_args = function
-  | ["init"; sign_file]  -> 
-      let sign = Parsers.parse_sign sign_file in
-      let repo = Repo.init sign in
-      Repo.save repo
+  | ["init"; sign_file]  ->
+    let init_sign = Parsers.parse_sign !Settings.init_file in
+    let sign = Parsers.parse_sign sign_file in
+    let repo = Repo.init (init_sign @ sign) in
+    Repo.save repo
 
   | ["commit"; term_file] ->
-      let term = Parsers.parse_term term_file in
-      let repo = Repo.commit (Repo.load ()) term in
-      Repo.save repo
+    let term = Parsers.parse_term term_file in
+    let repo = Repo.commit (Repo.load ()) term in
+    Repo.save repo
 
   | ["checkout"] -> Repo.checkout (Repo.load())
   | ["show"] -> Repo.show (Repo.load ())

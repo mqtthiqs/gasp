@@ -1,5 +1,3 @@
-open NLF
-
 val obj : LF.obj -> XLF.obj
 val fam : LF.fam -> XLF.fam
 val kind : LF.kind -> XLF.kind
