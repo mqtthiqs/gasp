@@ -51,7 +51,7 @@ opt: $(OTARGET)
 byte: $(BTARGET)
 
 %:
-	@ $(OCAMLBUILD) kernel/$@
+	@ $(OCAMLBUILD) $@
 
 byte-debug:
 	$(OCAMLBUILD) -tag debug kernel/$(BTARGET)

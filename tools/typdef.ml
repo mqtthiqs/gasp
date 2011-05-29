@@ -1,90 +1,160 @@
-#load "pa_extend.cmo";;
-#load "q_MLast.cmo";;
-#load "pa_macro.cmo";;
+module Id = struct
+  let name = "pa_typof"
+  let version = "1.0"
+end
 
-open MLast
-open Pcaml
+open Camlp4
 
-let rec list_last = function
-  | [] -> raise (Invalid_argument "list_last")
-  | [x] -> x
-  | x :: xs -> list_last xs
+module Make (Syntax : Sig.Camlp4Syntax) = struct
 
-let rec string_of_list sep f = function
-  | [] -> ""
-  | [a] -> f a
-  | a :: b :: tl -> f a ^ sep ^ f b ^ string_of_list sep f tl
+  open Sig
+  include Syntax
 
-let rec with_constr_td_assoc path : with_constr list -> type_decl = function
-  | [] -> raise Not_found
-  | WcTyp(loc, p, tv, b, t) :: wcs -> 
-      if path=p then {tdNam=loc, list_last p; tdPrm=tv; tdPrv=b; tdDef=t; tdCon=[]}
-      else with_constr_td_assoc path wcs
-  | WcMod(loc, p, me) :: wcs -> with_constr_td_assoc path wcs
+  exception Unimplemented
 
-let rec with_constr_mod_assoc path : with_constr list -> module_expr = function
-  | [] -> raise Not_found
-  | WcTyp _ :: wcs -> with_constr_mod_assoc path wcs
-  | WcMod(loc, p, me) :: wcs ->
-      if path=p then me
-      else with_constr_mod_assoc path wcs
-	
-let subst_tds path sigma : type_decl list -> type_decl list =
-  List.map
-    (fun td ->
-       try with_constr_td_assoc (List.rev (snd td.tdNam :: path)) sigma
-       with Not_found -> td
-    )
+  module Ident = struct
+    type t = Ast.ident
+    let rec compare x y = match x,y with
+      | <:ident< $lid:i1$ >>, <:ident< $lid:i2$ >>
+      | <:ident< $anti:i1$ >>, <:ident< $anti:i2$ >>
+      | <:ident< $uid:i1$ >>, <:ident< $uid:i2$ >> ->
+	Printf.eprintf "compare %s <> %s\n" i1 i2;
+	String.compare i1 i2
+      | <:ident< $a1$ . $b1$ >>, <:ident< $a2$ . $b2$ >>
+      | <:ident< $a1$ $b1$ >>, <:ident< $a2$ $b2$ >> ->
+	(* compare a1 a2 * compare b1 b2 *)
+	assert false
+      | <:ident< $list:i1$ >>, <:ident< $list:i2$ >> ->
+	(* compare i1 i2 *)
+	assert false
+  end
 
-let rec subst_mts path sigma r
-    : (string * module_type) list -> (string * module_expr) list =
-  List.map
-    (fun (x,mt) -> 
-       let me = 
-	 try with_constr_mod_assoc (x::path) sigma 
-	 with Not_found -> types (x::path) sigma mt in
-       x, if r then MeTyc(Ploc.dummy, me, mt) else me
-    )
+  module Sigma = struct
+    module Identmap = Map.Make(Ident)
+    type t = Ast.ctyp Identmap.t * Ast.ident Identmap.t
+    let add_typ x t (tymap, modmap) = Identmap.add x t tymap, modmap
+    let add_mod x t (tymap, modmap) = tymap, Identmap.add x t modmap
+    let find_typ x (tymap, modmap) = Identmap.find x tymap
+    let find_mod x (tymap, modmap) = Identmap.find x modmap
+    let empty = Identmap.empty, Identmap.empty
+    let cardinal (tymap, modmap) = Identmap.fold (fun _ _ n -> n + 1) tymap 
+      (Identmap.fold (fun _ _ n -> n + 1) modmap 0)
+  end
 
-and types path sigma : module_type -> module_expr = function
-  | MtSig(loc, items) -> 
-      let l = List.fold_right
-	(fun si acc ->
-	   match si with
-	     | SgOpn(loc, os) -> StOpn(loc, os) :: acc
-	     | SgTyp(loc, tds) -> 
-		 StTyp(loc, subst_tds path sigma tds) :: acc
-	     | SgMod(loc, r, mts) ->
- 		 (try StMod(loc, r, subst_mts path sigma r mts) :: acc
- 		  with Invalid_argument _ -> acc)
- 	     | SgMty(loc, n, mt) -> StMty(loc, n, mt) :: acc
-	     | SgExc(loc, n, ts) -> StExc(loc, n, ts, []) :: acc
-	     | _ -> acc
-	) items [] in
-      MeStr(loc, l)
-  | MtWit(_, mt, wcs) -> types path (wcs @ sigma) mt
-  | MtFun (loc,argn, argt, mt) -> MeFun(loc, argn, argt, types path sigma mt)
-  | MtAcc _
-  | MtApp _
-  | MtLid _
-  | MtQuo _
-  | _ -> failwith ("Module "^string_of_list "." (fun x -> x) path^" is not a signature")
+  let rec add_with_constr sigma = function
+    | <:with_constr< $w1$ and $w2$ >> ->
+      add_with_constr (add_with_constr sigma w2) w1
+    (* TODO: as in (see below): need to find a solution for general type parameters *)
+    | <:with_constr< type $id:id$ '$_$ = $td$ >>
+    | <:with_constr< type $id:id$ '$_$ '$_$ = $td$ >>
+    | <:with_constr< type $id:id$ '$_$ '$_$ '$_$ = $td$ >>
+    | <:with_constr< type $id:id$ '$_$ '$_$ '$_$ '$_$ = $td$ >>
+    | <:with_constr< type $id:id$ '$_$ '$_$ '$_$ '$_$ '$_$ = $td$ >>
+    | <:with_constr< type $id:id$ = $td$ >> ->
+      Sigma.add_typ id td sigma
 
-EXTEND
-module_type:
-  [[ LIDENT "mli" -> 
-       try
-	 let nmli = (Filename.chop_extension
-		       (!Pcaml.input_file))^".mli" in
-	 if nmli = !Pcaml.input_file then <:module_type<sig end>> else
-	   let (mli,_) = !Pcaml.parse_interf (Stream.of_channel (open_in (nmli))) in
-	   MtSig(Ploc.dummy, List.map fst mli)
-       with Sys_error _ -> <:module_type<sig end>>
-   ]];
+    | <:with_constr@loc< type $_$ = $_$ >> -> raise (Loc.Exc_located (loc, Unimplemented)) (* TODO *)
 
-module_expr:
-  [[ LIDENT "types"; "of"; e = module_type -> 
-       types [] [] e
-  ]];
-END
+    | <:with_constr< module $id1$ = $id2$ >> ->
+      Sigma.add_mod id1 id2 sigma
+    | <:with_constr< >> -> sigma
+    | <:with_constr@loc< $anti:_$ >> -> raise (Loc.Exc_located (loc, Unimplemented))
 
+  let rec rewrite_sig_item path sigma : Ast.sig_item -> Ast.str_item = function
+    | <:sig_item@loc< $s1$ ; $s2$ >> ->
+      <:str_item@loc< $rewrite_sig_item path sigma s1$; $rewrite_sig_item path sigma s2$ >>
+    | <:sig_item@loc< open $os$ >> -> <:str_item@loc< open $os$ >>
+    | <:sig_item@loc< module $id$ : $mt$>> ->
+      begin
+	try <:str_item@loc< module $id$ = $id:Sigma.find_mod (path id) sigma$ >>
+        with Not_found ->
+	  let path y = <:ident@here< $path id$.$lid:y$ >> in
+	  <:str_item@loc< module $id$ = $rewrite_modtype path sigma mt$ >>
+      end
+    | <:sig_item@loc< type $lid:id$ = $typ:t$ >> ->
+      Printf.eprintf "#### on cherche %s\n" id;
+      begin 
+	try <:str_item@loc< type $lid:id$ = $Sigma.find_typ (path id) sigma$ >>
+        with Not_found -> 
+	  Printf.eprintf "#### pas trouvé\n";	  
+	  <:str_item@loc< type $lid:id$ = $t$ >>
+      end
+
+    (* TODO: find a remedy for that: we need to repeat type declarations with 
+       1, 2, 3... parameters since there is no quotations for the n case *)
+    | <:sig_item@loc< type $lid:id$ $p$ = $t$ >> ->
+      Printf.eprintf "#### on cherche %s\n" id;
+      begin
+    	try <:str_item@loc< type $lid:id$ $p$ = $Sigma.find_typ (path id) sigma$ >>
+        with Not_found -> 
+	  Printf.eprintf "#### pas trouvé\n";
+	  <:str_item@loc< type $lid:id$ $p$ = $t$ >>
+      end
+    | <:sig_item@loc< type $lid:id$ $p$ $q$ = $t$ >> ->
+      begin
+    	try <:str_item@loc< type $lid:id$ $p$ $q$ = $Sigma.find_typ (path id) sigma$ >>
+        with Not_found -> <:str_item@loc< type $lid:id$ $p$ $q$ = $t$ >>
+      end
+    | <:sig_item@loc< type $lid:id$ $p$ $q$ $r$ = $t$ >> ->
+      begin
+    	try <:str_item@loc< type $lid:id$ $p$ $q$ $r$ = $Sigma.find_typ (path id) sigma$ >>
+        with Not_found -> <:str_item@loc< type $lid:id$ $p$ $q$ $r$ = $t$ >>
+      end
+    (* end of TODO *)
+
+    | <:sig_item@loc< type $_$ >> -> raise (Loc.Exc_located (loc, Unimplemented)) (* TODO *)
+    | <:sig_item@loc< module type $id$ = $mt$ >> -> <:str_item@loc< module type $id$ = $mt$ >>
+    | <:sig_item@loc< exception $ts$ >> -> <:str_item@loc< exception $ts$ >>
+    | <:sig_item@loc< include $mt$ >> -> 
+      <:str_item@loc< include $rewrite_modtype path sigma mt$ >>
+
+    | <:sig_item@loc< module rec $_$ >>
+    | <:sig_item@loc< class $_$ >>
+    | <:sig_item@loc< $anti:_$ >>
+    | <:sig_item@loc< external $_$ : $_$ = $_$ >>
+    | <:sig_item@loc< class type $_$ >> -> raise (Loc.Exc_located (loc, Unimplemented))
+
+    | <:sig_item@loc< # $_$ >>
+    | <:sig_item@loc< # $_$ $_$ >>
+    | <:sig_item@loc< >>
+    | <:sig_item@loc< value $_$ : $_$ >> -> <:str_item@loc< >>
+
+  and rewrite_modtype path sigma : Ast.module_type -> Ast.module_expr = function
+    | <:module_type@loc< sig $si$ end >> ->
+      <:module_expr@loc< struct $rewrite_sig_item path sigma si$ end>>
+    | <:module_type@loc< $mt$ with $wc$ >> ->
+      let sigma = add_with_constr sigma wc in
+      Printf.eprintf "sigma contient %d bindings \n" (Sigma.cardinal sigma);
+      rewrite_modtype path (sigma) mt
+    | <:module_type@loc< functor ($argn$ : $argt$) -> $mt$ >> ->
+      <:module_expr@loc< functor ($argn$ : $argt$) -> $rewrite_modtype path sigma mt$ >>
+    | <:module_type@loc< $id:id$ >> -> 
+      raise (Loc.Exc_located (loc, Unimplemented))
+    | <:module_type@loc< >> -> assert false
+    | _ -> raise (Loc.Exc_located (Loc.ghost, Unimplemented)) (* TODO complete *)
+
+  EXTEND Gram
+    module_type:
+    [[ LIDENT "mli" ->
+      try
+	let nmli = (Filename.chop_extension (!Camlp4_config.current_input_file))^".mli" in
+	if nmli = !Camlp4_config.current_input_file then <:module_type<sig end>> else
+	  let mli = Syntax.parse_interf (Loc.mk nmli) (Stream.of_channel (open_in (nmli))) in
+	  <:module_type<sig $mli$ end>>
+      with Sys_error _ -> <:module_type<sig end>>
+    ]];
+
+    module_expr:
+      [[ LIDENT "types"; "of"; e = module_type ->
+      rewrite_modtype (fun x -> <:ident< $lid:x$ >>) Sigma.empty e
+      ]];
+  END;;
+
+    ErrorHandler.register
+    (fun ppf -> function 
+      | Unimplemented ->
+        Format.fprintf ppf "%s: translation unimplemented for that kind of sig_item" Id.name
+      | exn -> raise exn)
+end
+
+let module M = Register.OCamlSyntaxExtension(Id)(Make) in ()
