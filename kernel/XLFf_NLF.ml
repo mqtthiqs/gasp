@@ -31,13 +31,13 @@ and equals_obj sign repo env = function
     () 					(* TODO (?????) *)
   | _ -> failwith ("Not convertible 2")
 
-let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
-  | XLF.HConst c -> Varmap.empty, Oconstmap.find c (snd sign)
+let rec ohead sign repo env : XLFf.ohead -> NLF.args * NLF.fam = function
+  | XLF.HConst c -> [], Oconstmap.find c (snd sign)
   | XLF.HVar x ->
     try match E.find x env with
-      | EDecl a -> a
-      | EDef (NLF.DHead(h,a)) -> a
-      | EDef (NLF.DAtom(_,_,(b,(c,m)))) -> b, XLF.FAtom(c, m)
+      | EDecl a -> [], a		(* TODO *)
+      | EDef (NLF.DHead(h,a)) -> [], a
+      | EDef (NLF.DAtom(_,l,fa)) -> l, NLF.FAtom fa
     with Not_found ->
       try NLF.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
@@ -45,18 +45,18 @@ let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
 and subst sign (NLF.Obj(sigma, _) as repo) env : XLFf.subst -> eent E.t * NLF.def S.t =
   List.fold_left
     begin fun (env, sigma) (x, (h,l)) ->
-      let a = ohead sign repo env h in
-      let l, (c,m) = args sign repo env (l,a) in
-      E.add x (EDef(NLF.DAtom(h,l,(c,m)))) env, S.add x (NLF.DAtom(h,l,(c,m))) sigma
+      let (s, a) = ohead sign repo env h in
+      let l, fa = args sign repo env (l, (s, a)) in
+      E.add x (EDef(NLF.DAtom(h,l,fa))) env, S.add x (NLF.DAtom(h,l,fa)) sigma
     end (env, sigma)
 
-and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fatom = function
-  | v :: l, (s, XLF.FProd (x, a, b)) ->
-    let v = value sign repo env (v, (s, a)) in
-    let l, (c, m) = args sign repo env (l, (Varmap.add x v s, b)) in
-    (x, v) :: l, (c, m)
-  | [], (s, XLF.FAtom (c,l)) ->
-    [], (s, (c,l))
+and args sign repo env : XLFf.args * (value Varmap.t * NLF.fam) -> NLF.args * NLF.fatom = function
+  | v :: l, (e, NLF.FProd (x, a, b)) ->
+    let v = value sign repo env (v, (e, a)) in
+    let l, fa = args sign repo env (l, (Varmap.add x v e, b)) in
+    v :: l, fa
+  | [], (e, NLF.FAtom (e', s, c, l)) ->
+    [], (e, s, c, l)
   | _ -> failwith ("args: not applicable")
 
 and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function

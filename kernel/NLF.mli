@@ -1,12 +1,15 @@
 open Name
 
-type fam = value Varmap.t * XLF.fam
-and fatom = value Varmap.t * XLF.fatom
+type fam =
+  | FAtom of fatom
+  | FProd of variable * fam * fam
+
+and fatom = value Varmap.t * subst * fconst * args
 
 and obj =
   | Obj of subst * value
 
-and args = (variable * value) list
+and args = value list
 
 and ohead = XLF.ohead
 
@@ -20,6 +23,10 @@ and def =
 
 and subst = def Varmap.t
 
+type kind =
+  | KProd of variable * fam * kind
+  | KType
+
 module Pp : sig
   open Print
   val obj : obj printing_fun
@@ -27,5 +34,4 @@ end
 
 val go : obj -> position -> value
 val bind : variable -> def -> obj -> obj
-val lift_def : variable -> obj -> fam
-val to_def : obj -> def
+val lift_def : variable -> obj -> args * fam
