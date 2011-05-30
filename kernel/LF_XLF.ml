@@ -5,8 +5,8 @@ module P = Position
 (* From LF to XLF: sequent-style annotated applications *)
 
 let rec obj l = function
-  | LF.OConst c -> XLF.OHead(XLF.HConst c,l)
-  | LF.OVar x -> XLF.OHead (XLF.HVar x,l)
+  | LF.OConst c -> XLF.OAtom (XLF.HConst c, l)
+  | LF.OVar x -> XLF.OAtom (XLF.HVar x, l)
   | LF.OApp(t,u) -> obj (obj [] u :: l) t
   | LF.OLam(x,t) ->
       if l = [] then
@@ -20,7 +20,7 @@ let rec obj l = function
 	Errors.bad_application (SLF_LF.from_obj t)	(* Box application *)
 
 and fam l = function
-  | LF.FConst c -> XLF.FConst(c,l)
+  | LF.FConst c -> XLF.FAtom(c,l)
   | LF.FProd(x,b,c) as a -> 
       if l = [] then 
 	XLF.FProd(variable_for x, fam [] b, fam [] c)
@@ -45,13 +45,13 @@ let rec depends_kind x = function
 and depends_fam x = function
   | XLF.FProd (y,a,b) when x=y -> false
   | XLF.FProd (y,a,b) -> depends_fam x a || depends_fam x b
-  | XLF.FConst (c,l) -> depends_args x l
+  | XLF.FAtom (c,l) -> depends_args x l
 and depends_args x l = List.exists (depends_obj x) l
 and depends_obj x = function
   | XLF.OLam (y,t) when x=y -> false
   | XLF.OLam (y,t) -> depends_obj x t
-  | XLF.OHead (XLF.HVar y,l) -> if x=y then true else depends_args x l
-  | XLF.OHead (XLF.HConst c,l) -> depends_args x l
+  | XLF.OAtom (XLF.HVar y,l) -> if x=y then true else depends_args x l
+  | XLF.OAtom (XLF.HConst c,l) -> depends_args x l
   | XLF.OBox(t,p,u) -> depends_obj x t || depends_obj x t
 
 let name_for_obj x t = if depends_obj x t then Named x else Anonymous
@@ -68,11 +68,11 @@ and from_oapp f = function
 
 and from_fam = function
   | XLF.FProd(x,a,b) -> LF.FProd(name_for_fam x b, from_fam a, from_fam b)
-  | XLF.FConst(c,l) -> from_fapp (LF.FConst c) l
+  | XLF.FAtom(c,l) -> from_fapp (LF.FConst c) l
 
 and from_obj = function
   | XLF.OLam (x,t) -> LF.OLam (name_for_obj x t, from_obj t)
-  | XLF.OHead (h,l) -> from_oapp (from_head h) l
+  | XLF.OAtom (h,l) -> from_oapp (from_head h) l
   | XLF.OBox(t,p,u) -> LF.OBox(from_obj t, p, from_obj u)
 
 and from_head = function

@@ -1,23 +1,31 @@
 open Name
 
-type fam = XLF.fam
+type fam =
+  | FAtom of fatom
+  | FProd of variable * fam * fam
+
+and fatom = value Varmap.t * subst * fconst * args
 
 and obj =
   | Obj of subst * value
 
-and args = (variable * value) list
+and args = value list
 
 and ohead = XLF.ohead
 
 and value =
-  | VHead of ohead * fconst * XLF.args
+  | VHead of ohead * fatom
   | VLam of variable * fam * obj
 
 and def =
-  | DApp of ohead * args * fconst * XLF.args (* ohead bindé ds repo *)
+  | DAtom of ohead * args * fatom           (* ohead bindé ds repo *)
   | DHead of ohead * fam		    (* ohead bindé ds env *)
 
 and subst = def Varmap.t
+
+type kind =
+  | KProd of variable * fam * kind
+  | KType
 
 module Pp : sig
   open Print
@@ -26,5 +34,4 @@ end
 
 val go : obj -> position -> value
 val bind : variable -> def -> obj -> obj
-val lift_def : variable -> obj -> fam
-val to_def : obj -> def
+val lift_def : variable -> obj -> args * fam

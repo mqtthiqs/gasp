@@ -29,3 +29,6 @@ sub : {t u : i} {F : i -> o} true(eq t u) -> true(F t) -> true(F u).
 ind : {F : i -> o} true (F O) -> ({x:i} true(F x) -> true(F (S x))) -> {x:i} true (F x).
 
 % ...
+
+
+commit : {A : o} true A -> Commit.

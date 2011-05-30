@@ -25,8 +25,8 @@ module Pp = struct
     | K(KType) -> fprintf fmt "@[type@]"
     | K(KProd(x,a,k)) ->
       fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (K k)
-    | F(FHead(s,c,l)) when s = [] -> fprintf fmt "@[%a@]" pr_fhead (c, l)
-    | F(FHead(s,c,l)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) pr_fhead (c, l)
+    | F(FAtom(s,c,l)) when s = [] -> fprintf fmt "@[%a@]" pr_fhead (c, l)
+    | F(FAtom(s,c,l)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) pr_fhead (c, l)
     | F(FProd(x,a,b)) ->
       fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
     | O(Obj(s, v)) when s = [] -> pp (<=) fmt (V v)

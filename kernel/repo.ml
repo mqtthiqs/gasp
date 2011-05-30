@@ -5,12 +5,12 @@ module Constants = struct
   open Name
 
   let commit_const = mk_fconst Settings.commit_const
-  let commit_type = XLF.FConst(commit_const, [])
+  let commit_type = XLF.FAtom(commit_const, [])
   let version_const = mk_fconst Settings.version_const
-  let version_type = XLF.FConst(version_const, [])
+  let version_type = XLF.FAtom(version_const, [])
   let version_o_const = mk_oconst Settings.version_o_const
-  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(XLF.HConst(version_o_const), version_const, []))
-  let version_s = XLF.OHead(XLF.HConst(mk_oconst Settings.version_s_const), [])
+  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(XLF.HConst(version_o_const), (Varmap.empty, (version_const, []))))
+  let version_s = XLF.OAtom(XLF.HConst(mk_oconst Settings.version_s_const), [])
 end
 
 type t = {
@@ -32,7 +32,7 @@ let rec compile_sign s : XLF.Sign.t = List.fold_left
     | LF.Obj t -> failwith ("obj in signature: "^x)
   ) XLF.Sign.empty s
 
-let compile_term sign term =
+let compile_term sign repo =
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t
        | _ -> assert false) //
@@ -40,7 +40,7 @@ let compile_term sign term =
       XLF_XLFf.obj //
       (fun t ->
 	Util.if_debug (fun () -> Format.printf "%a@." XLFf.Pp.obj t);
-	XLFf_NLF.obj sign term (t, Constants.commit_type))
+	XLFf_NLF.obj sign repo (t, Constants.commit_type))
 
 let reify_term t =
   (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
