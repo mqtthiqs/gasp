@@ -27,11 +27,11 @@ module Pp = struct
     | H(XLF.HConst c) -> oconst fmt c
     | A a -> pr_list pr_spc (fun fmt (_, a) -> fprintf fmt "@[%a@]" (pp (<)) (V a)) fmt a
     | B b -> Varmap.fold (fun x d () -> match d with
-	| DAtom (h,a,(c,b)) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj b))
-	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a)))
+	| DAtom (h,a,(_,(c,b))) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A a) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj b))
+	| DHead (h,(_,a)) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a)))
     ) b ()
-    | V(VHead (h,(c,l))) -> fprintf fmt "@[%a@ :@ %a@ %a@]" (pp (<=)) (H h) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj l))
-    | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a))) (pp (<=)) (O t)
+    | V(VHead (h,(_,(c,l)))) -> fprintf fmt "@[%a@ :@ %a@ %a@]" (pp (<=)) (H h) fconst c SLF.Pp.args (List.map SLF_LF.from_obj (List.map LF_XLF.from_obj l))
+    | V(VLam (x,(_,a),t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x SLF.Pp.term ((SLF_LF.from_fam (LF_XLF.from_fam a))) (pp (<=)) (O t)
 
   let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
 end
@@ -39,7 +39,7 @@ end
 let lift_def x = function
   | Obj(subst, _) ->
       match Varmap.find x subst with
-	| DAtom (_, _, (c, fargs)) -> XLF.FAtom(c, fargs)
+	| DAtom (_, _, (b, (c, m))) -> b, XLF.FAtom(c, m)
 	| DHead (_, a) -> a
 
 let to_def = function

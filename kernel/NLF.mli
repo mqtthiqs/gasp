@@ -1,8 +1,7 @@
 open Name
 
-type fam = XLF.fam
-
-type fatom = XLF.fatom
+type fam = value Varmap.t * XLF.fam
+and fatom = value Varmap.t * XLF.fatom
 
 and obj =
   | Obj of subst * value
