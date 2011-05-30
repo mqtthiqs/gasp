@@ -3,8 +3,9 @@ a b : A.
 g : A -> B.
 
 P : B -> type.
+R : P (g a) -> P (g b) -> type.
 f : {x : A} P (g x).
 
-Q : P (g a) -> P (g b) -> type.
+r : {H1 : P (g a)} {H2 : P (g b)} R H1 H2.
 
-q : Q (f a) (f b).
+commit : {x : P (g a)} {y : (P (g b))} R x y -> Commit.
