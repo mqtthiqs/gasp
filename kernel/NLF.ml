@@ -36,16 +36,30 @@ module Pp = struct
     | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (O t)
     | F(FProd(x,a,b)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
     | F(FAtom fa) -> fprintf fmt "@[%a@]" (pp (<=)) (FA fa)
-    | FA(v,s,c,l) -> fprintf fmt "@[%a@ ⊢@ %a@ %a@]" (pp (<=)) (B s) fconst c (pp (<=)) (A l) (* TODO *)
+    | FA(s,c,l) -> fprintf fmt "@[%a@ ⊢@ %a@ %a@]" (pp (<=)) (B s) fconst c (pp (<=)) (A l) (* TODO *)
 
   let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
+  let fam fmt a = assert false
+  let kind fmt k = assert false
+end
+
+and module Sign = struct
+
+  open Name
+
+  type t = kind Name.Fconstmap.t * fam Name.Oconstmap.t
+
+  let fold f (fc,oc) acc = Fconstmap.fold (fun x k acc -> f (FDecl (x,k)) acc) fc
+    (Oconstmap.fold (fun x a acc -> f (ODecl(x,a)) acc) oc acc)
+  let empty = Fconstmap.empty, Oconstmap.empty
+
 end
 
 let lift_def x = function
   | Obj(subst, _) ->
       match Varmap.find x subst with
-	| DAtom (_, l, fa) -> l, FAtom fa
-	| DHead (_, a) -> [], a
+	| DAtom (_, _, fa) -> FAtom fa
+	| DHead (_, a) -> a
 
 let go term p = match term, p with
   | Obj(_, t), None -> t                (* TODO que faire de _? *)

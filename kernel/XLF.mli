@@ -20,7 +20,3 @@ and ohead =
   | HConst of oconst
 
 and args = obj list
-
-type entry =
-  | FDecl of fconst * kind
-  | ODecl of oconst * fam
