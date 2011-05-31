@@ -44,12 +44,5 @@ let _ = dispatch begin function
        end (find_syntaxes ());
        flag ["ocaml"; "pkg_threads"; "compile"] (S[A "-thread"]);
        flag ["ocaml"; "pkg_threads"; "link"] (S[A "-thread"]);
-       flag ["ocaml"; "need_td"; "compile"] & S[A"-pp"; Quote(S[A"camlp4o"; P"tools/typdef.cmo"])];
-       flag ["ocaml"; "need_td"; "ocamldep"] & S[A"-pp"; Quote(S[A"camlp4o"; P"tools/typdef.cmo"])];
-       dep ["ocaml"; "need_td"; "compile"] & ["tools/typdef.cmo"];
-       dep ["ocaml"; "need_td"; "ocamldep"] & ["tools/typdef.cmo"];
-       flag ["ocaml"; "pp"; "use_camlp4"] & S[A"camlp4o"; A"-I"; A"+camlp4"; A"q_MLast.cmo"; A"pa_extend.cmo"];
-       flag ["file:kernel/gasp.byte"] & S[A"-I"; A"+camlp4"; A"camlp4.cma"];
-       flag ["file:front-end/spl/spltc.byte"] & S[A"-I"; A"+camlp4"; A"camlp4.cma"];
    | _ -> ()
 end
