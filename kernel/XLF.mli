@@ -20,13 +20,3 @@ and ohead =
   | HConst of oconst
 
 and args = obj list
-
-type entry =
-  | FDecl of fconst * kind
-  | ODecl of oconst * fam
-
-module Sign : sig
-  type t = kind Name.Fconstmap.t * fam Name.Oconstmap.t
-  val fold : (entry -> 'a -> 'a) -> t -> 'a -> 'a
-  val empty : t
-end

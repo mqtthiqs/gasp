@@ -4,7 +4,7 @@ type fam =
   | FAtom of fatom
   | FProd of variable * fam * fam
 
-and fatom = value Varmap.t * subst * fconst * args
+and fatom = subst * fconst * args
 
 and obj =
   | Obj of subst * value
@@ -27,11 +27,23 @@ type kind =
   | KProd of variable * fam * kind
   | KType
 
+type entry =
+  | FDecl of fconst * kind
+  | ODecl of oconst * fam
+
 module Pp : sig
   open Print
   val obj : obj printing_fun
+  val fam : fam printing_fun
+  val kind : kind printing_fun
+end
+
+module Sign : sig
+  type t = kind Name.Fconstmap.t * fam Name.Oconstmap.t
+  val fold : (entry -> 'a -> 'a) -> t -> 'a -> 'a
+  val empty : t
 end
 
 val go : obj -> position -> value
 val bind : variable -> def -> obj -> obj
-val lift_def : variable -> obj -> args * fam
+val lift_def : variable -> obj -> fam
