@@ -63,8 +63,15 @@ and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fatom = function
     let v = value sign repo env (v, a) in
     let l, p = args sign repo env (l, b) in (* TODO subst (x/a) b *)
     v :: l, p
-  | [], NLF.FAtom p ->
-    [], p
+  | [], NLF.FAtom p -> [], p
+  | _ -> failwith ("args: not applicable")
+
+and fargs sign repo env : XLFf.args * NLF.kind -> NLF.args = function
+  | v :: l, NLF.KProd (x, a, k) ->
+    let v = value sign repo env (v, a) in
+    let l = fargs sign repo env (l, k) in (* TODO subst (x/a) k *)
+    v :: l
+  | [], NLF.KType -> []
   | _ -> failwith ("args: not applicable")
 
 and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
@@ -97,7 +104,24 @@ and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
   | XLFf.VLam _, NLF.FAtom _ -> failwith ("Lam attend prod")
   | XLFf.VHead _, NLF.FProd _ -> failwith ("Pas en forme eta-longue")
 
-let obj sign repo (t, a) = obj sign repo E.empty (t, a)
+let rec fam sign repo env = function
+  | XLFf.FAtom (s, c, l) ->
+    let s = subst sign repo env s in
+    let k = Fconstmap.find c (fst sign) in
+    let l = fargs sign repo env (l, k) in
+    NLF.FAtom (s, c, l)
+  | XLFf.FProd (x, a, b) ->
+    let a = fam sign repo env a in
+    let b = fam sign repo (E.add x a env) b in
+    NLF.FProd (x, a, b)
 
-let fam sign repo a = assert false
-let kind sign repo k = assert false
+let rec kind sign repo env = function
+  | XLFf.KProd (x, a, k) ->
+    let a = fam sign repo env a in
+    let k = kind sign repo (E.add x a env) k in
+    NLF.KProd (x, a, k)
+  | XLFf.KType -> NLF.KType
+
+let obj sign repo (t, a) = obj sign repo E.empty (t, a)
+let fam sign repo a = fam sign repo E.empty a
+let kind sign repo k = kind sign repo E.empty k
