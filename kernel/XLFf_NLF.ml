@@ -1,7 +1,29 @@
 open Name
+open NLF
 
 module E = Name.Varmap
 module S = Name.Varmap
+
+module NLF_Utils = struct
+
+  let lift_def x = function
+    | Obj(subst, _) ->
+      match Varmap.find x subst with
+	| DAtom (_, _, fa) -> FAtom fa
+	| DHead (_, a) -> a
+
+  let go term p = match term, p with
+    | Obj(_, t), None -> t                (* TODO que faire de _? *)
+    | Obj(s, _), Some (x, n) ->
+      try match Varmap.find x s with
+	| DHead (h, a) -> failwith "position is not an application"
+	| DAtom (h, l, _) -> List.nth l n
+      with Not_found -> failwith ("go: variable not found "^(of_variable x))
+
+  let bind x d = function
+    | Obj (s, v) -> Obj (Varmap.add x d s, v)
+
+end
 
 let rec equals_fatom sign repo env = function
   | (s, c, m), (s', c', m') ->
@@ -25,7 +47,7 @@ let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
   | XLF.HVar x ->
     try E.find x env
     with Not_found ->
-      try NLF.lift_def x repo
+      try NLF_Utils.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
 
 and subst sign (NLF.Obj(sigma, _) as repo) env : XLFf.subst -> NLF.subst =
@@ -51,12 +73,12 @@ and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
     let v = value sign repo env (v, a) in
     NLF.Obj (sigma, v)
   | XLFf.OBox(t,p,u), a ->
-    match NLF.go repo p with
+    match NLF_Utils.go repo p with
       | NLF.VLam (x, b, repo) ->
 	let d = match obj sign repo env (u, b) with
 	  | NLF.Obj (sigma, NLF.VHead (h, p)) -> NLF.DHead(h, NLF.FAtom p) (* TODO sigma *)
 	  | NLF.Obj (sigma, NLF.VLam _) -> failwith "No lambdas in box argument" in
-	obj sign (NLF.bind x d repo) env (t, a)
+	obj sign (NLF_Utils.bind x d repo) env (t, a)
       | _ -> failwith "Position is not a lambda"
 
 and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function

@@ -1,27 +1,24 @@
-include module of mli using
+open Format
+open Print
+open Name.Pp
+open XLFf
+type entity = 
+  | K of kind
+  | F of fam
+  | O of obj
+  | H of ohead
+  | B of subst
+  | A of args
+  | V of value
 
-module Pp = struct
-  open Format
-  open Print
-  open Name.Pp
+let ent_prec = function
+_ -> 10
 
-  type entity = 
-    | K of kind
-    | F of fam
-    | O of obj
-    | H of ohead
-    | B of subst
-    | A of args
-    | V of value
-
-  let ent_prec = function
-      _ -> 10
-
- let pp pp : entity printing_fun =
-    let pr_fhead fmt (c, l) : unit =
-      if l = [] then fconst fmt c else
-    	fprintf fmt "@[%a@ %a@]" fconst c (pp (<=)) (A l) in
-    fun fmt (e:entity) -> match e with
+let pp pp : entity printing_fun =
+  let pr_fhead fmt (c, l) : unit =
+    if l = [] then fconst fmt c else
+      fprintf fmt "@[%a@ %a@]" fconst c (pp (<=)) (A l) in
+  fun fmt (e:entity) -> match e with
     | K(KType) -> fprintf fmt "@[type@]"
     | K(KProd(x,a,k)) ->
       fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (K k)
@@ -42,7 +39,6 @@ module Pp = struct
     | V(VHead h) -> fprintf fmt "@[%a@]" (pp (<=)) (H h)
     | V(VLam (x,t)) -> fprintf fmt "@[λ%a.@ %a@]" variable x (pp (<=)) (O t)
 
-  let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
-  let fam fmt s = pr_paren pp ent_prec 100 (<=) fmt (F s)
-  let kind fmt s = pr_paren pp ent_prec 100 (<=) fmt (K s)
-end
+let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
+let fam fmt s = pr_paren pp ent_prec 100 (<=) fmt (F s)
+let kind fmt s = pr_paren pp ent_prec 100 (<=) fmt (K s)

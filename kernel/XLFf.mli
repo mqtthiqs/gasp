@@ -23,10 +23,3 @@ and value =
 and def = ohead * args
 
 and subst = (variable * def) list
-
-module Pp : sig
-  open Print
-  val obj : obj printing_fun
-  val fam : fam printing_fun
-  val kind : kind printing_fun
-end

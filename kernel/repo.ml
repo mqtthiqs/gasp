@@ -1,5 +1,4 @@
 open Util
-open NLF
 
 module Constants = struct
   open Name
@@ -14,25 +13,25 @@ module Constants = struct
 end
 
 type t = {
-  sign : NLF.Sign.t;
+  sign : NLF_Sign.t;
   term : NLF.obj;
   varno : int
 }
 
-let rec compile_sign s : NLF.Sign.t = List.fold_left
+let rec compile_sign s : NLF_Sign.t = List.fold_left
   (fun (fsign,osign as sign) (x,t) -> match SLF_LF.term sign t with
     | LF.Kind k ->
       let k = LF_XLF.kind k in
       let k = XLFf_NLF.kind (assert false) (assert false) (XLF_XLFf.kind k) in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x NLF.Pp.kind k);
+      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x NLF_Pp.kind k);
       Name.Fconstmap.add (Name.mk_fconst x) k fsign, osign
     | LF.Fam a ->
       let a = LF_XLF.fam a in
       let a = XLFf_NLF.fam (assert false) (assert false) (XLF_XLFf.fam a) in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x NLF.Pp.fam a);
+      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x NLF_Pp.fam a);
       fsign, Name.Oconstmap.add (Name.mk_oconst x) a osign
     | LF.Obj t -> failwith ("obj in signature: "^x)
-  ) NLF.Sign.empty s
+  ) NLF_Sign.empty s
 
 let compile_term sign repo =
     (fun x -> match SLF_LF.term sign x with
@@ -41,14 +40,14 @@ let compile_term sign repo =
       LF_XLF.obj //
       XLF_XLFf.obj //
       (fun t ->
-	Util.if_debug (fun () -> Format.printf "%a@." XLFf.Pp.obj t);
+	Util.if_debug (fun () -> Format.printf "%a@." XLFf_Pp.obj t);
 	XLFf_NLF.obj sign repo (t, Constants.commit_type))
 
 let reify_term t =
   (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
 
 let reify_sign s =
-  NLF.Sign.fold (fun entry acc -> match entry with
+  NLF_Sign.fold (fun entry acc -> match entry with
     | NLF.FDecl (c, k) -> (Name.of_fconst c, SLF_LF.from_kind (LF_XLF.from_kind (NLF_XLF.kind k))) :: acc
     | NLF.ODecl (c, a) -> (Name.of_oconst c, SLF_LF.from_fam (LF_XLF.from_fam (NLF_XLF.fam a))) :: acc
   ) s []
@@ -72,12 +71,12 @@ let commit repo term =
 
 let show repo = 
   Format.printf " signature:@.";
-  SLF.Pp.sign Format.std_formatter (reify_sign repo.sign);
+  SLF_Pp.sign Format.std_formatter (reify_sign repo.sign);
   Format.printf " term:@.";
-  Format.printf "@[%a@]@." Pp.obj repo.term
+  Format.printf "@[%a@]@." NLF_Pp.obj repo.term
 
 let checkout repo =
-  Format.printf "@[%a@]@." SLF.Pp.term (reify_term repo.term)
+  Format.printf "@[%a@]@." SLF_Pp.term (reify_term repo.term)
 
 let load () = 
   let ch = open_in_bin !Settings.repo in

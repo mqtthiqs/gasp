@@ -1,5 +1,7 @@
 open Format
 open Print
+open SLF
+
 module P = Position
 
 let term_prec a = match P.value a with

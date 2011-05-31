@@ -30,20 +30,3 @@ type kind =
 type entry =
   | FDecl of fconst * kind
   | ODecl of oconst * fam
-
-module Pp : sig
-  open Print
-  val obj : obj printing_fun
-  val fam : fam printing_fun
-  val kind : kind printing_fun
-end
-
-module Sign : sig
-  type t = kind Name.Fconstmap.t * fam Name.Oconstmap.t
-  val fold : (entry -> 'a -> 'a) -> t -> 'a -> 'a
-  val empty : t
-end
-
-val go : obj -> position -> value
-val bind : variable -> def -> obj -> obj
-val lift_def : variable -> obj -> fam

@@ -5,7 +5,7 @@ module P = Position
 
 (* Typing: from SLF to LF *)
 
-let term : NLF.Sign.t -> SLF.term -> LF.entity =
+let term : NLF_Sign.t -> SLF.term -> LF.entity =
 fun sign t ->
   let rec term env {P.value=t; P.position=pos} =
       match t with
