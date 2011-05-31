@@ -23,13 +23,17 @@ let rec compile_sign s : NLF_Sign.t = List.fold_left
   (fun (fsign,osign as sign) (x,t) -> match SLF_LF.term sign t with
     | LF.Kind k ->
       let k = LF_XLF.kind k in
-      let k = XLFf_NLF.kind sign Constants.version_o (XLF_XLFf.kind k) in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x NLF_Pp.kind k);
+      let k = XLF_XLFf.kind k in
+      Util.if_debug (fun () -> Format.printf "@[F %s :: %a@]@." x XLFf_Pp.kind k);
+      let k = XLFf_NLF.kind sign Constants.version_o k in
+      Util.if_debug (fun () -> Format.printf "@[N %s :: %a@]@." x NLF_Pp.kind k);
       Name.Fconstmap.add (Name.mk_fconst x) k fsign, osign
     | LF.Fam a ->
       let a = LF_XLF.fam a in
-      let a = XLFf_NLF.fam sign Constants.version_o (XLF_XLFf.fam a) in
-      Util.if_debug (fun () -> Format.printf "@[%s :: %a@]@." x NLF_Pp.fam a);
+      let a = XLF_XLFf.fam a in
+      Util.if_debug (fun () -> Format.printf "@[F %s :: %a@]@." x XLFf_Pp.fam a);
+      let a = XLFf_NLF.fam sign Constants.version_o a in
+      Util.if_debug (fun () -> Format.printf "@[N %s :: %a@]@." x NLF_Pp.fam a);
       fsign, Name.Oconstmap.add (Name.mk_oconst x) a osign
     | LF.Obj t -> failwith ("obj in signature: "^x)
   ) NLF_Sign.empty s

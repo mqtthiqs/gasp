@@ -9,8 +9,9 @@ type entity =
   | B of subst
   | A of args
   | V of value
-  | FA of fatom
+  | P of fatom
   | F of fam
+  | K of kind
 
 let ent_prec = function
 _ -> 10
@@ -24,16 +25,20 @@ let pp pp : entity printing_fun =
     | H(XLF.HVar x) -> variable fmt x
     | H(XLF.HConst c) -> oconst fmt c
     | A a -> pr_list pr_spc (fun fmt a -> fprintf fmt "@[%a@]" (pp (<)) (V a)) fmt a
-    | B b -> Name.Varmap.fold (fun x d () -> match d with
-	| DAtom (h,l,fa) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A l) (pp (<=)) (FA fa)
+    | B b -> S.fold (fun x d () -> match d with
+	| DAtom (h,l,fa) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A l) (pp (<=)) (P fa)
 	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) (pp (<=)) (F a)
     ) b ()
-    | V(VHead (h,fa)) -> fprintf fmt "@[%a@ :@ %a@]" (pp (<=)) (H h) (pp (<=)) (FA fa)
+    | V(VHead (h,fa)) -> fprintf fmt "@[%a@ :@ %a@]" (pp (<=)) (H h) (pp (<=)) (P fa)
     | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (O t)
     | F(FProd(x,a,b)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
-    | F(FAtom fa) -> fprintf fmt "@[%a@]" (pp (<=)) (FA fa)
-    | FA(s,c,l) -> fprintf fmt "@[%a@ ⊢@ %a@ %a@]" (pp (<=)) (B s) fconst c (pp (<=)) (A l) (* TODO *)
+    | F(FAtom fa) -> fprintf fmt "@[%a@]" (pp (<=)) (P fa)
+    | P(s,c,l) when S.is_empty s -> fprintf fmt "@[%a@ %a@]" fconst c (pp (<=)) (A l)
+    | P(s,c,l) -> fprintf fmt "@[%a@ ⊢@ %a@ %a@]" (pp (<=)) (B s) fconst c (pp (<=)) (A l)
+    | K(KType) -> fprintf fmt "@[type@]"
+    | K(KProd(x,a,k)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (K k)
+
 
 let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
-let fam fmt a = assert false
-let kind fmt k = assert false
+let fam fmt a = pr_paren pp ent_prec 100 (<=) fmt (F a)
+let kind fmt k = pr_paren pp ent_prec 100 (<=) fmt (K k)
