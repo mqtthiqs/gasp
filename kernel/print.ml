@@ -1,6 +1,13 @@
 open Format
 
-include types of mli
+type level = int
+
+type level_rel = level -> level -> bool
+
+type 'a level_printing_fun = level_rel -> formatter -> 'a -> unit
+type 'a printing_fun = formatter -> 'a -> unit
+
+type 'a precedence = 'a -> level
 
 let surround fmt f x = fprintf fmt "(@[%a@])" f x
 

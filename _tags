@@ -1,7 +1,6 @@
-<tools/typdef.ml> : use_camlp4
-<kernel/*> : use_unix, pkg_menhirLib, use_str, need_td
+<kernel/*> : use_unix, pkg_menhirLib
 <*>: use_unix, use_menhir
-<front-end/spl/*> : use_unix, pkg_menhirLib, use_str, need_td
+<front-end/spl/*> : use_unix, pkg_menhirLib, use_str
 <kernel> : include
 <front-end/spl> : include
 <front-end/pprint> : include

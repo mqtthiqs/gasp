@@ -1,12 +1,17 @@
 open Lexing
 
-type post = {
+type t = {
   start_p : Lexing.position;
   end_p   : Lexing.position
 }
 
-include types of mli with
-  type t = post
+type position = t
+
+type 'a located =
+    {
+      value    : 'a;
+      position : t;
+    }
 
 let value { value = v } =
   v

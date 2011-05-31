@@ -1,11 +1,16 @@
-include types of mli with
+type variable = string
+type fconst = string
+type oconst = string
+module Varmap = Map.Make(struct type t = variable let compare = Pervasives.compare end)
+module Fconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end)
+module Oconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end)
 
-type variable = string and
-type fconst = string and
-type oconst = string and
-module Varmap = Map.Make(struct type t = variable let compare = Pervasives.compare end) and
-module Fconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end) and
-module Oconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end) and
+type name =
+  | Named of variable
+  | Anonymous
+
+type position = (variable * int) option
+
 module Pp = struct
   open Format
   let variable fmt x = fprintf fmt "%s" x

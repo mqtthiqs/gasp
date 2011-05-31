@@ -1,4 +1,4 @@
-include types of mli with
+include module of mli using
 
 module Pp = struct
   open Format

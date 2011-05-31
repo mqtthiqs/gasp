@@ -1,4 +1,4 @@
-include types of mli
+exception Error of Position.t list * string
 
 let exit_flag = ref true
 
