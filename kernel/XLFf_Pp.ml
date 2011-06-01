@@ -38,7 +38,7 @@ let pp pp : entity printing_fun =
 	fprintf fmt "@[[%a@ =@ %a@ %a]@]@," variable x (pp (<=)) (H h) (pp (<=)) (A l)
       end () b
     | V(VHead h) -> fprintf fmt "@[%a@]" (pp (<=)) (H h)
-    | V(VLam (x,t)) -> fprintf fmt "@[λ%a.@ %a@]" variable x (pp (<=)) (O t)
+    | V(VLam (x,t)) -> fprintf fmt "@[[%a]@ %a@]" variable x (pp (<=)) (O t)
 
 let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
 let fam fmt s = pr_paren pp ent_prec 100 (<=) fmt (F s)

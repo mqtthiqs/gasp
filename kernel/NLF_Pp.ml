@@ -30,7 +30,7 @@ let pp pp : entity printing_fun =
 	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) (pp (<=)) (F a)
     ) b ()
     | V(VHead (h,fa)) -> fprintf fmt "@[%a@ :@ %a@]" (pp (<=)) (H h) (pp (<=)) (P fa)
-    | V(VLam (x,a,t)) -> fprintf fmt "@[λ%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (O t)
+    | V(VLam (x,a,t)) -> fprintf fmt "@[[%a]@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (O t)
     | F(FProd(x,a,b)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
     | F(FAtom fa) -> fprintf fmt "@[%a@]" (pp (<=)) (P fa)
     | P(s,c,l) when S.is_empty s -> fprintf fmt "@[%a@ %a@]" fconst c (pp (<=)) (A l)
