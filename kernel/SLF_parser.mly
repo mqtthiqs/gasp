@@ -38,7 +38,7 @@ term2:
 
 term3: 
   LPAREN t=term1 RPAREN {t}
-| LBRACKET xs=ID+ RBRACKET u=loc(term1)
+| LBRACKET xs=ID+ RBRACKET u=loc(term2)
     { Position.value 
 	(List.fold_left 
 	   (fun acc x -> 
