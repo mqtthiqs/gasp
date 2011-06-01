@@ -51,12 +51,12 @@ let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
       with Not_found -> failwith ("not_found "^Name.of_variable x)
 
 and subst sign (NLF.Obj(sigma, _) as repo) env : XLFf.subst -> NLF.subst =
-  List.fold_left
-    begin fun sigma (x, (h,l)) ->
+  fun s -> List.fold_right
+    begin fun (x, (h,l)) sigma ->
       let a = ohead sign repo env h in
       let l, p = args sign repo env (l, a) in
       S.add x (NLF.DAtom(h,l,p)) sigma
-    end sigma
+    end s sigma
 
 and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fatom = function
   | v :: l, NLF.FProd (x, a, b) ->
