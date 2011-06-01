@@ -5,14 +5,14 @@ let rec obj env sigma : NLF.obj -> XLF.obj = function
     value env (Varmap.fold Varmap.add sigma' sigma) v
 
 and value env sigma : NLF.value -> XLF.obj = function
-  | NLF.VHead (XLF.HVar x, _) ->
+  | NLF.VHead (Var x, _) ->
     begin
       try def env sigma (Varmap.find x sigma)
       with Not_found ->
-	if Varmap.mem x env then XLF.OAtom (XLF.HVar x, [])
+	if Varmap.mem x env then XLF.OAtom (Var x, [])
 	else failwith ("checkout: not_found "^of_variable x)
     end
-  | NLF.VHead (XLF.HConst c, _) -> XLF.OAtom (XLF.HConst c, [])
+  | NLF.VHead (Cst c, _) -> XLF.OAtom (Cst c, [])
   | NLF.VLam (x, _, t) ->
     XLF.OLam (x, obj (Varmap.add x () env) sigma t)
 

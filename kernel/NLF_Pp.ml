@@ -1,11 +1,12 @@
 open Format
 open Print
+open Name
 open Name.Pp
 open NLF
 
 type entity = 
   | O of obj
-  | H of ohead
+  | H of head
   | B of subst
   | A of args
   | V of value
@@ -22,8 +23,8 @@ let pp pp : entity printing_fun =
   fun fmt (e:entity) -> match e with
     | O(Obj(s, v)) when S.is_empty s -> pp (<=) fmt (V v)
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
-    | H(XLF.HVar x) -> variable fmt x
-    | H(XLF.HConst c) -> oconst fmt c
+    | H(Var x) -> variable fmt x
+    | H(Cst c) -> oconst fmt c
     | A a -> pr_list pr_spc (fun fmt a -> fprintf fmt "@[%a@]" (pp (<)) (V a)) fmt a
     | B b -> S.fold (fun x d () -> match d with
 	| DAtom (h,l,fa) -> fprintf fmt "@[%a@ =@ %a@ %a@ :@ %a, @]@," variable x (pp (<=)) (H h) (pp (<=)) (A l) (pp (<=)) (P fa)

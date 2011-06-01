@@ -8,8 +8,8 @@ module Constants = struct
   let version_const = mk_fconst Settings.version_const
   let version_type = XLF.FAtom(version_const, [])
   let version_o_const = mk_oconst Settings.version_o_const
-  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(XLF.HConst(version_o_const), (Varmap.empty, version_const, [])))
-  let version_s = XLF.OAtom(XLF.HConst(mk_oconst Settings.version_s_const), [])
+  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(Cst(version_o_const), (Varmap.empty, version_const, [])))
+  let version_s = XLF.OAtom(Cst(mk_oconst Settings.version_s_const), [])
 
 end
 

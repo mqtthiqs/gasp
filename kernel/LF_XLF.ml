@@ -5,8 +5,8 @@ module P = Position
 (* From LF to XLF: sequent-style annotated applications *)
 
 let rec obj l = function
-  | LF.OConst c -> XLF.OAtom (XLF.HConst c, l)
-  | LF.OVar x -> XLF.OAtom (XLF.HVar x, l)
+  | LF.OConst c -> XLF.OAtom (Cst c, l)
+  | LF.OVar x -> XLF.OAtom (Var x, l)
   | LF.OApp(t,u) -> obj (obj [] u :: l) t
   | LF.OLam(x,t) ->
       if l = [] then
@@ -50,8 +50,8 @@ and depends_args x l = List.exists (depends_obj x) l
 and depends_obj x = function
   | XLF.OLam (y,t) when x=y -> false
   | XLF.OLam (y,t) -> depends_obj x t
-  | XLF.OAtom (XLF.HVar y,l) -> if x=y then true else depends_args x l
-  | XLF.OAtom (XLF.HConst c,l) -> depends_args x l
+  | XLF.OAtom (Var y,l) -> if x=y then true else depends_args x l
+  | XLF.OAtom (Cst c,l) -> depends_args x l
   | XLF.OBox(t,p,u) -> depends_obj x t || depends_obj x t
 
 let name_for_obj x t = if depends_obj x t then Named x else Anonymous
@@ -76,8 +76,8 @@ and from_obj = function
   | XLF.OBox(t,p,u) -> LF.OBox(from_obj t, p, from_obj u)
 
 and from_head = function
-  | XLF.HVar x -> LF.OVar x
-  | XLF.HConst c ->LF.OConst c
+  | Var x -> LF.OVar x
+  | Cst c ->LF.OConst c
 
 let rec from_kind = function
   | XLF.KType -> LF.KType

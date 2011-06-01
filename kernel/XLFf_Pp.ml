@@ -1,12 +1,14 @@
 open Format
 open Print
+open Name
 open Name.Pp
 open XLFf
+
 type entity = 
   | K of kind
   | F of fam
   | O of obj
-  | H of ohead
+  | H of head
   | B of subst
   | A of args
   | V of value
@@ -30,8 +32,8 @@ let pp pp : entity printing_fun =
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
     | O(OBox (t,None,u)) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) (O t) (pp (<=)) (O u)
     | O(OBox (t,Some(x,n),u)) -> fprintf fmt "@[{%a.%d@ =>@ %a}%a@]" variable x n (pp (<=)) (O t) (pp (<=)) (O u)
-    | H(XLF.HVar x) -> variable fmt x
-    | H(XLF.HConst c) -> oconst fmt c
+    | H(Var x) -> variable fmt x
+    | H(Cst c) -> oconst fmt c
     | A a -> pr_list pr_spc (fun fmt a -> fprintf fmt "@[%a@]" (pp (<=)) (V a)) fmt a
     | B b -> List.fold_left
       begin fun () (x, (h,l)) ->

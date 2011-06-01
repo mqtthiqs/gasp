@@ -14,12 +14,10 @@ and obj =
 
 and args = value list
 
-and ohead = XLF.ohead
-
 and value =
-  | VHead of ohead
+  | VHead of head
   | VLam of variable * obj
 
-and def = ohead * args
+and def = head * args
 
 and subst = (variable * def) list

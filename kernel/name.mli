@@ -18,6 +18,10 @@ type name =
   | Named of variable
   | Anonymous
 
+type head =
+  | Var of variable
+  | Cst of oconst
+
 type position = (variable * int) option
 
 val variable_for : name -> variable

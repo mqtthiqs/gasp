@@ -11,15 +11,13 @@ and obj =
 
 and args = value list
 
-and ohead = XLF.ohead
-
 and value =
-  | VHead of ohead * fatom
+  | VHead of head * fatom
   | VLam of variable * fam * obj
 
 and def =
-  | DAtom of ohead * args * fatom           (* ohead bindé ds repo *)
-  | DHead of ohead * fam		    (* ohead bindé ds env *)
+  | DAtom of head * args * fatom           (* head bindé ds repo *)
+  | DHead of head * fam		    (* head bindé ds env *)
 
 and subst = def Varmap.t
 

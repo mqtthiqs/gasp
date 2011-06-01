@@ -26,10 +26,10 @@ end
 
 module Refresh = struct
 
-  let ohead y z = function
-    | XLF.HConst c -> XLF.HConst c
-    | XLF.HVar x when x=y -> XLF.HVar z
-    | XLF.HVar x -> XLF.HVar x
+  let head y z = function
+    | Cst c -> Cst c
+    | Var x when x=y -> Var z
+    | Var x -> Var x
 
   let rec fam y z = function
     | NLF.FProd (x, a, b) when x=y -> NLF.FProd (x, fam y z a, b)
@@ -43,15 +43,15 @@ module Refresh = struct
   and value y z = function
     | NLF.VLam (x, a, t) when x=y -> NLF.VLam (x, fam y z a, t)
     | NLF.VLam (x, a, t) -> NLF.VLam (x, fam y z a, obj y z t)
-    | NLF.VHead (h, p) -> NLF.VHead (ohead y z h, fatom y z p)
+    | NLF.VHead (h, p) -> NLF.VHead (head y z h, fatom y z p)
 
   and obj y z = function
     | NLF.Obj (s, v) -> NLF.Obj (subst y z s, value y z v)
 
   and subst y z s = Varmap.map
     (function
-	| NLF.DAtom (h, l, p) -> NLF.DAtom (ohead y z h, List.map (value y z) l, fatom y z p)
-	| NLF.DHead (h, a) -> NLF.DHead (ohead y z h, fam y z a)
+	| NLF.DAtom (h, l, p) -> NLF.DAtom (head y z h, List.map (value y z) l, fatom y z p)
+	| NLF.DHead (h, a) -> NLF.DHead (head y z h, fam y z a)
     ) s
 
   let rec kind y z = function
@@ -81,18 +81,18 @@ module HSubst = struct
       let y = Name.gen_variable () in
       let t = Refresh.obj x y t in
       NLF.VLam (y, fam z v a, obj z v t)
-    | NLF.VHead (XLF.HConst c, p) -> NLF.VHead (XLF.HConst c, fatom z v p)
-    | NLF.VHead (XLF.HVar x, _) when x = z -> v
-    | NLF.VHead (XLF.HVar x, p) -> NLF.VHead (XLF.HVar x, fatom z v p)
+    | NLF.VHead (Cst c, p) -> NLF.VHead (Cst c, fatom z v p)
+    | NLF.VHead (Var x, _) when x = z -> v
+    | NLF.VHead (Var x, p) -> NLF.VHead (Var x, fatom z v p)
 
   and subst z v s = Varmap.map (function
     | NLF.DHead (h, a) -> assert false
     | NLF.DAtom (h, l, p) ->
       let p = fatom z v p in
       match h with
-	| XLF.HConst x -> NLF.DAtom(h, List.map (value z v) l, p)
-	| XLF.HVar x when x <> z -> NLF.DAtom(h, List.map (value z v) l, p)
-	| XLF.HVar x ->
+	| Cst x -> NLF.DAtom(h, List.map (value z v) l, p)
+	| Var x when x <> z -> NLF.DAtom(h, List.map (value z v) l, p)
+	| Var x ->
 	  args z v (v, l)
   ) s (* TODO verifier que Yann avait raison: il faut rafraichir les noms dans les s *)
 
@@ -143,9 +143,9 @@ module Equals = struct
 
 end
 
-let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
-  | XLF.HConst c -> Oconstmap.find c (snd sign)
-  | XLF.HVar x ->
+let rec head sign repo env : head -> NLF.fam = function
+  | Cst c -> Oconstmap.find c (snd sign)
+  | Var x ->
     try E.find x env
     with Not_found ->
       try NLF_Utils.lift_def x repo
@@ -156,7 +156,7 @@ and subst sign (NLF.Obj(sigma, v)) env : XLFf.subst -> NLF.subst =
     List.fold_right
     begin fun (x, (h,l)) sigma ->
       let repo = NLF.Obj(sigma, v) in
-      let a = ohead sign repo env h in
+      let a = head sign repo env h in
       let l, p = args sign repo env (l, a) in
       S.add x (NLF.DAtom(h,l,p)) sigma
     end s sigma
@@ -199,7 +199,7 @@ and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
     NLF.VLam (x, a, t)
 
   | XLFf.VHead h, NLF.FAtom p ->
-    begin match ohead sign repo env h with
+    begin match head sign repo env h with
       | NLF.FProd _ -> failwith ("Fct au lieu de valeur")
       | NLF.FAtom p' ->
 	Equals.fatom sign repo env (p, p');
