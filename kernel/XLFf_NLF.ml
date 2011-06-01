@@ -50,8 +50,9 @@ let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
       try NLF_Utils.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
 
-and subst sign (NLF.Obj(sigma, _) as repo) env : XLFf.subst -> NLF.subst =
-  fun s -> List.fold_right
+and subst sign (NLF.Obj(sigma, v) as repo) env : XLFf.subst -> NLF.subst =
+  fun s ->
+    List.fold_right
     begin fun (x, (h,l)) sigma ->
       let a = ohead sign repo env h in
       let l, p = args sign repo env (l, a) in
@@ -77,6 +78,7 @@ and fargs sign repo env : XLFf.args * NLF.kind -> NLF.args = function
 and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
   | XLFf.Obj(sigma, v), a ->
     let sigma = subst sign repo env sigma in
+    let repo = match repo with Obj(_,v) -> Obj(sigma,v) in
     let v = value sign repo env (v, a) in
     NLF.Obj (sigma, v)
   | XLFf.OBox(t,p,u), a ->
@@ -107,6 +109,7 @@ and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
 let rec fam sign repo env = function
   | XLFf.FAtom (s, c, l) ->
     let s = subst sign repo env s in
+    let repo = match repo with Obj(_,v) -> Obj(s,v) in
     let k = Fconstmap.find c (fst sign) in
     let l = fargs sign repo env (l, k) in
     NLF.FAtom (s, c, l)
