@@ -50,10 +50,11 @@ let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
       try NLF_Utils.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
 
-and subst sign (NLF.Obj(sigma, v) as repo) env : XLFf.subst -> NLF.subst =
+and subst sign (NLF.Obj(sigma, v)) env : XLFf.subst -> NLF.subst =
   fun s ->
     List.fold_right
     begin fun (x, (h,l)) sigma ->
+      let repo = NLF.Obj(sigma, v) in
       let a = ohead sign repo env h in
       let l, p = args sign repo env (l, a) in
       S.add x (NLF.DAtom(h,l,p)) sigma
