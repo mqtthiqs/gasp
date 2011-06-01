@@ -3,11 +3,9 @@ A : type.
 a : A -> A.
 
 P : (A -> A) -> type.
-Q : P a -> type.
+Q : P [x] a x -> type.
 
-p : {x : A -> A} P x.
+p : {f : A -> A} P [x] f x.
 
-c : Q (p a).
-d : Q (p ([x] a x)).			% why does it pass LF_check?
-					% because Q is eta-expanded
-					% on-the-fly.
+c : Q (p [x] a x).
+d : Q (p [x] a x).
