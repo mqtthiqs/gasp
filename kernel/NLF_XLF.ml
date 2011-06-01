@@ -25,12 +25,15 @@ and args env sigma l =
     fun l v -> value env sigma v :: l
   end [] l
 
-let rec fam env sigma = function
-  | NLF.FAtom (v, c, m) -> (* XLF.FAtom(c, args env (Varmap.fold Varmap.add s sigma) m) *)assert false
-  | NLF.FProd (x, a, b) -> XLF.FProd(x, fam env sigma a, fam env sigma b)
+let rec fam env = function
+  | NLF.FAtom (s, c, m) -> XLF.FAtom(c, args env s m)
+  | NLF.FProd (x, a, b) -> XLF.FProd(x, fam env a, fam (Varmap.add x () env) b)
 
-let rec kind env sigma k = assert false
+let rec kind env = function
+  | NLF.KType -> XLF.KType
+  | NLF.KProd (x, a, k) -> XLF.KProd(x, fam env a, kind (Varmap.add x () env) k)
+
 
 let obj t = obj Varmap.empty Varmap.empty t
-let fam a = fam Varmap.empty Varmap.empty a
-let kind k = kind Varmap.empty Varmap.empty k
+let fam a = fam Varmap.empty a
+let kind k = kind Varmap.empty k
