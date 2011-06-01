@@ -1,5 +1,4 @@
 open Name
-open NLF
 
 module E = Name.Varmap
 module S = Name.Varmap
@@ -7,40 +6,142 @@ module S = Name.Varmap
 module NLF_Utils = struct
 
   let lift_def x = function
-    | Obj(subst, _) ->
+    | NLF.Obj(subst, _) ->
       match Varmap.find x subst with
-	| DAtom (_, _, fa) -> FAtom fa
-	| DHead (_, a) -> a
+	| NLF.DAtom (_, _, fa) -> NLF.FAtom fa
+	| NLF.DHead (_, a) -> a
 
   let go term p = match term, p with
-    | Obj(_, t), None -> t                (* TODO que faire de _? *)
-    | Obj(s, _), Some (x, n) ->
+    | NLF.Obj(_, t), None -> t                (* TODO que faire de _? *)
+    | NLF.Obj(s, _), Some (x, n) ->
       try match Varmap.find x s with
-	| DHead (h, a) -> failwith "position is not an application"
-	| DAtom (h, l, _) -> List.nth l n
+	| NLF.DHead (h, a) -> failwith "position is not an application"
+	| NLF.DAtom (h, l, _) -> List.nth l n
       with Not_found -> failwith ("go: variable not found "^(of_variable x))
 
   let bind x d = function
-    | Obj (s, v) -> Obj (Varmap.add x d s, v)
+    | NLF.Obj (s, v) -> NLF.Obj (Varmap.add x d s, v)
 
 end
 
-let rec equals_fatom sign repo env = function
-  | (s, c, m), (s', c', m') ->
-    if c <> c'				(* TODO s <> s'? *)
-    then failwith ("Not convertible: "^Name.of_fconst c^" <-> "^Name.of_fconst c')
-    else equals_args sign repo env (m, m')
+module Refresh = struct
 
-and equals_args sign repo env : _ -> unit = function
-  | t :: m, t' :: m' ->
-    equals_value sign repo env (t, t');
-    equals_args sign repo env (m, m')
-  | [], [] -> ()
-  | _ -> failwith ("Not convertible 1")
+  let ohead y z = function
+    | XLF.HConst c -> XLF.HConst c
+    | XLF.HVar x when x=y -> XLF.HVar z
+    | XLF.HVar x -> XLF.HVar x
 
-and equals_value sign repo env = function
-  | _ ->
-    ()				(* TODO *)
+  let rec fam y z = function
+    | NLF.FProd (x, a, b) when x=y -> NLF.FProd (x, fam y z a, b)
+    | NLF.FProd (x, a, b) -> NLF.FProd (x, fam y z a, fam y z b)
+    | NLF.FAtom p -> NLF.FAtom (fatom y z p)
+
+  and fatom y z (s, c, l) =
+    if Varmap.mem y s then (s, c, l) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
+      subst y z s, c, List.map (value y z) l
+
+  and value y z = function
+    | NLF.VLam (x, a, t) when x=y -> NLF.VLam (x, fam y z a, t)
+    | NLF.VLam (x, a, t) -> NLF.VLam (x, fam y z a, obj y z t)
+    | NLF.VHead (h, p) -> NLF.VHead (ohead y z h, fatom y z p)
+
+  and obj y z = function
+    | NLF.Obj (s, v) -> NLF.Obj (subst y z s, value y z v)
+
+  and subst y z s = Varmap.map
+    (function
+	| NLF.DAtom (h, l, p) -> NLF.DAtom (ohead y z h, List.map (value y z) l, fatom y z p)
+	| NLF.DHead (h, a) -> NLF.DHead (ohead y z h, fam y z a)
+    ) s
+
+  let rec kind y z = function
+    | NLF.KProd (x, a, k) when x=y -> NLF.KProd (x, fam y z a, k)
+    | NLF.KProd (x, a, k) -> NLF.KProd (x, fam y z a, kind y z k)
+    | NLF.KType -> NLF.KType
+
+end
+
+module HSubst = struct
+
+  let rec fam z c = function
+    | NLF.FProd (x, a, b) when x = z -> NLF.FProd (x, fam z c a, b)
+    | NLF.FProd (x, a, b) ->
+      let y = Name.gen_variable () in
+      let b = Refresh.fam x y b in
+      NLF.FProd (y, fam z c a, fam z c b)
+    | NLF.FAtom p -> NLF.FAtom (fatom z c p)
+
+  and fatom z v (s, c, l) =
+    if Varmap.mem z s then (s, c, l) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
+      (subst z v s, c, List.map (value z v) l)
+
+  and value z v = function
+    | NLF.VLam (x, a, t) when x = z -> NLF.VLam (x, fam z v a, t)
+    | NLF.VLam (x, a, t) ->
+      let y = Name.gen_variable () in
+      let t = Refresh.obj x y t in
+      NLF.VLam (y, fam z v a, obj z v t)
+    | NLF.VHead (XLF.HConst c, p) -> NLF.VHead (XLF.HConst c, fatom z v p)
+    | NLF.VHead (XLF.HVar x, _) when x = z -> v
+    | NLF.VHead (XLF.HVar x, p) -> NLF.VHead (XLF.HVar x, fatom z v p)
+
+  and subst z v s = Varmap.map (function
+    | NLF.DHead (h, a) -> assert false
+    | NLF.DAtom (h, l, p) ->
+      let p = fatom z v p in
+      match h with
+	| XLF.HConst x -> NLF.DAtom(h, List.map (value z v) l, p)
+	| XLF.HVar x when x <> z -> NLF.DAtom(h, List.map (value z v) l, p)
+	| XLF.HVar x ->
+	  args z v (v, l)
+  ) s (* TODO verifier que Yann avait raison: il faut rafraichir les noms dans les s *)
+
+  and args z v = function
+    | NLF.VHead (h, p), [] ->
+      assert false
+    | NLF.VLam(x, a, t), w :: l ->
+      let y = Name.gen_variable () in
+      let t = Refresh.obj x y t in
+      let w = value z v w in
+      ignore (obj y w t); assert false
+    | _ -> assert false 		(* OK, checked by typing *)
+
+  and obj z w = function
+    | NLF.Obj (s, v) ->
+      if Varmap.mem z s then NLF.Obj(s, v) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
+	NLF.Obj (subst z w s, value z w v)
+
+
+  let rec kind z v = function
+    | NLF.KProd (x, a, k) when x = z -> NLF.KProd (x, fam z v a, k)
+    | NLF.KProd (x, a, k) ->
+      let y = Name.gen_variable () in
+      let k = Refresh.kind x y k in
+      NLF.KProd (y, fam z v a, kind z v k)
+    | NLF.KType -> NLF.KType
+
+end
+
+module Equals = struct
+
+  let rec fatom sign repo env = function
+    | (s, c, m), (s', c', m') ->
+      if c <> c'				(* TODO s <> s'? *)
+      then failwith ("Not convertible: "^Name.of_fconst c^" <-> "^Name.of_fconst c')
+      else args sign repo env (m, m')
+
+  and args sign repo env : _ -> unit = function
+    | t :: m, t' :: m' ->
+      value sign repo env (t, t');
+      args sign repo env (m, m')
+    | [], [] -> ()
+    | _ -> failwith ("Not convertible 1")
+
+  and value sign repo env = function
+    | _ ->
+      ()				(* TODO *)
+
+end
 
 let rec ohead sign repo env : XLFf.ohead -> NLF.fam = function
   | XLF.HConst c -> Oconstmap.find c (snd sign)
@@ -63,7 +164,7 @@ and subst sign (NLF.Obj(sigma, v)) env : XLFf.subst -> NLF.subst =
 and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fatom = function
   | v :: l, NLF.FProd (x, a, b) ->
     let v = value sign repo env (v, a) in
-    let l, p = args sign repo env (l, b) in (* TODO subst (x/a) b *)
+    let l, p = args sign repo env (l, (HSubst.fam x v b)) in
     v :: l, p
   | [], NLF.FAtom p -> [], p
   | _ -> failwith ("args: not applicable")
@@ -71,7 +172,7 @@ and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fatom = function
 and fargs sign repo env : XLFf.args * NLF.kind -> NLF.args = function
   | v :: l, NLF.KProd (x, a, k) ->
     let v = value sign repo env (v, a) in
-    let l = fargs sign repo env (l, k) in (* TODO subst (x/a) k *)
+    let l = fargs sign repo env (l, (HSubst.kind x v k)) in
     v :: l
   | [], NLF.KType -> []
   | _ -> failwith ("args: not applicable")
@@ -79,7 +180,7 @@ and fargs sign repo env : XLFf.args * NLF.kind -> NLF.args = function
 and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
   | XLFf.Obj(sigma, v), a ->
     let sigma = subst sign repo env sigma in
-    let repo = match repo with Obj(_,v) -> Obj(sigma,v) in
+    let repo = match repo with NLF.Obj(_,v) -> NLF.Obj(sigma,v) in
     let v = value sign repo env (v, a) in
     NLF.Obj (sigma, v)
   | XLFf.OBox(t,p,u), a ->
@@ -92,8 +193,8 @@ and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
       | _ -> failwith "Position is not a lambda"
 
 and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
-  | XLFf.VLam (x,t), NLF.FProd (y, a, b) -> (* TODO x and y *)
-    (* assert (x=y); *)
+  | XLFf.VLam (x,t), NLF.FProd (y, a, b) ->
+    let b = Refresh.fam y x b in
     let t = obj sign repo (E.add x a env) (t, b) in
     NLF.VLam (x, a, t)
 
@@ -101,7 +202,7 @@ and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
     begin match ohead sign repo env h with
       | NLF.FProd _ -> failwith ("Fct au lieu de valeur")
       | NLF.FAtom p' ->
-	equals_fatom sign repo env (p, p');
+	Equals.fatom sign repo env (p, p');
 	NLF.VHead (h, p)		(* or p' *)
     end
   | XLFf.VLam _, NLF.FAtom _ -> failwith ("Lam attend prod")
@@ -110,7 +211,7 @@ and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
 let rec fam sign repo env = function
   | XLFf.FAtom (s, c, l) ->
     let s = subst sign repo env s in
-    let repo = match repo with Obj(_,v) -> Obj(s,v) in
+    let repo = match repo with NLF.Obj(_,v) -> NLF.Obj(s,v) in
     let k = Fconstmap.find c (fst sign) in
     let l = fargs sign repo env (l, k) in
     NLF.FAtom (s, c, l)
