@@ -28,7 +28,8 @@ let pp pp : entity printing_fun =
       fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
     | O(Obj(s, v)) when s = [] -> pp (<=) fmt (V v)
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
-    | O(OBox(t,p,u)) -> assert false
+    | O(OBox (t,None,u)) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) (O t) (pp (<=)) (O u)
+    | O(OBox (t,Some(x,n),u)) -> fprintf fmt "@[{%a.%d@ =>@ %a}%a@]" variable x n (pp (<=)) (O t) (pp (<=)) (O u)
     | H(XLF.HVar x) -> variable fmt x
     | H(XLF.HConst c) -> oconst fmt c
     | A a -> pr_list pr_spc (fun fmt a -> fprintf fmt "@[%a@]" (pp (<=)) (V a)) fmt a
@@ -42,3 +43,4 @@ let pp pp : entity printing_fun =
 let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
 let fam fmt s = pr_paren pp ent_prec 100 (<=) fmt (F s)
 let kind fmt s = pr_paren pp ent_prec 100 (<=) fmt (K s)
+let subst fmt k = pr_paren pp ent_prec 100 (<=) fmt (B k)

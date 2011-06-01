@@ -42,3 +42,4 @@ let pp pp : entity printing_fun =
 let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
 let fam fmt a = pr_paren pp ent_prec 100 (<=) fmt (F a)
 let kind fmt k = pr_paren pp ent_prec 100 (<=) fmt (K k)
+let subst fmt k = pr_paren pp ent_prec 100 (<=) fmt (B k)
