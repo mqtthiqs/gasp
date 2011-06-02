@@ -2,6 +2,8 @@ open Name
 
 module M = Name.Varmap
 
+let eq_var x y = equals_name x (Some y)
+
 module NLF_Utils = struct
 
   let lift_def x = function
@@ -25,13 +27,17 @@ end
 
 module Refresh = struct
 
+  let refresh f x y a = match x with
+    | None -> a
+    | Some x -> f x y a
+
   let head y z = function
     | Cst c -> Cst c
     | Var x when x=y -> Var z
     | Var x -> Var x
 
-  let rec fam y z = function
-    | NLF.FProd (x, a, b) when x=y -> NLF.FProd (x, fam y z a, b)
+  let rec fam (y:variable) (z:variable) = function
+    | NLF.FProd (x, a, b) when eq_var x y -> NLF.FProd (x, fam y z a, b)
     | NLF.FProd (x, a, b) -> NLF.FProd (x, fam y z a, fam y z b)
     | NLF.FAtom p -> NLF.FAtom (fatom y z p)
 
@@ -40,7 +46,7 @@ module Refresh = struct
       subst y z s, c, List.map (value y z) l
 
   and value y z = function
-    | NLF.VLam (x, a, t) when x=y -> NLF.VLam (x, fam y z a, t)
+    | NLF.VLam (x, a, t) when eq_var x y -> NLF.VLam (x, fam y z a, t)
     | NLF.VLam (x, a, t) -> NLF.VLam (x, fam y z a, obj y z t)
     | NLF.VHead (h, p) -> NLF.VHead (head y z h, fatom y z p)
 
@@ -54,7 +60,7 @@ module Refresh = struct
     ) s
 
   let rec kind y z = function
-    | NLF.KProd (x, a, k) when x=y -> NLF.KProd (x, fam y z a, k)
+    | NLF.KProd (x, a, k) when eq_var x y -> NLF.KProd (x, fam y z a, k)
     | NLF.KProd (x, a, k) -> NLF.KProd (x, fam y z a, kind y z k)
     | NLF.KType -> NLF.KType
 
@@ -63,11 +69,12 @@ end
 module HSubst = struct
 
   let rec fam z v = function
-    | NLF.FProd (x, a, b) when x = z -> NLF.FProd (x, fam z v a, b)
-    | NLF.FProd (x, a, b) ->
+    | NLF.FProd (x, a, b) when eq_var x z -> NLF.FProd (x, fam z v a, b)
+    | NLF.FProd (Some x, a, b) ->
       let y = Name.gen_variable () in
       let b = Refresh.fam x y b in
-      NLF.FProd (y, fam z v a, fam z v b)
+      NLF.FProd (Some y, fam z v a, fam z v b)
+    | NLF.FProd (None, a, b) -> NLF.FProd (None, fam z v a, fam z v b)
     | NLF.FAtom p -> NLF.FAtom (fatom z v p)
 
   and fatom z v (s, c, l) =
@@ -75,11 +82,12 @@ module HSubst = struct
       (subst z v s, c, List.map (value z v) l)
 
   and value z v = function
-    | NLF.VLam (x, a, t) when x = z -> NLF.VLam (x, fam z v a, t)
-    | NLF.VLam (x, a, t) ->
+    | NLF.VLam (x, a, t) when eq_var x z -> NLF.VLam (x, fam z v a, t)
+    | NLF.VLam (None, a, t) -> NLF.VLam(None, fam z v a, obj z v t)
+    | NLF.VLam (Some x, a, t) ->
       let y = Name.gen_variable () in
       let t = Refresh.obj x y t in
-      NLF.VLam (y, fam z v a, obj z v t)
+      NLF.VLam (Some y, fam z v a, obj z v t)
     | NLF.VHead (Cst c, p) -> NLF.VHead (Cst c, fatom z v p)
     | NLF.VHead (Var x, _) when x = z -> v
     | NLF.VHead (Var x, p) -> NLF.VHead (Var x, fatom z v p)
@@ -105,10 +113,16 @@ module HSubst = struct
 
   and args sigma y = function
     | NLF.VHead (h, p), [] -> M.add y (NLF.DHead (h,NLF.FAtom p)) sigma
-    | NLF.VLam(x, a, t), w :: l ->
-      let y = Name.gen_variable () in
-      let t = Refresh.obj x y t in
+    | NLF.VLam (None, _, t), w :: l ->
       begin match obj y w t with
+	| NLF.Obj (sigma', v) ->
+	  let sigma = M.fold M.add sigma sigma' in
+	  args sigma y (v, l)
+      end
+    | NLF.VLam(Some x, _, t), w :: l ->
+      let z = Name.gen_variable () in
+      let t = Refresh.obj x z t in
+      begin match obj z w t with
 	| NLF.Obj (sigma', v) ->
 	  let sigma = M.fold M.add sigma sigma' in
 	  args sigma y (v, l)
@@ -121,13 +135,22 @@ module HSubst = struct
 	NLF.Obj (subst z w s, value z w v)
 
   let rec kind z v = function
-    | NLF.KProd (x, a, k) when x = z -> NLF.KProd (x, fam z v a, k)
-    | NLF.KProd (x, a, k) ->
+    | NLF.KProd (x, a, k) when eq_var x z -> NLF.KProd (x, fam z v a, k)
+    | NLF.KProd (Some x, a, k) ->
       let y = Name.gen_variable () in
       let k = Refresh.kind x y k in
-      NLF.KProd (y, fam z v a, kind z v k)
+      NLF.KProd (Some y, fam z v a, kind z v k)
+    | NLF.KProd (None, a, k) ->
+      NLF.KProd (None, fam z v a, kind z v k)
     | NLF.KType -> NLF.KType
 
+  let hsubst f x v a = match x with
+    | None -> a
+    | Some x -> f x v a
+
+  let fam = hsubst fam
+  let kind = hsubst kind
+  let obj = hsubst obj
 end
 
 module Equals = struct
@@ -193,7 +216,7 @@ and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
     NLF.Obj (sigma, v)
   | XLFf.OBox(t,p,u), a ->
     match NLF_Utils.go repo p with
-      | NLF.VLam (x, b, repo) ->
+      | NLF.VLam (Some x, b, repo) ->
 	let d = match obj sign repo env (u, b) with
 	  | NLF.Obj (sigma, NLF.VHead (h, p)) -> NLF.DHead(h, NLF.FAtom p) (* TODO sigma *)
 	  | NLF.Obj (sigma, NLF.VLam _) -> failwith "No lambdas in box argument" in
@@ -202,8 +225,11 @@ and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
 
 and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
   | XLFf.VLam (x,t), NLF.FProd (y, a, b) ->
-    let b = Refresh.fam y x b in
-    let t = obj sign repo (M.add x a env) (t, b) in
+    let b = match x, y with
+      | Some x, Some y -> Refresh.fam y x b
+      | _ -> b in
+    let t = obj sign repo (match x with
+      | Some x -> M.add x a env | None -> env) (t, b) in
     NLF.VLam (x, a, t)
 
   | XLFf.VHead h, NLF.FAtom p ->
@@ -225,13 +251,15 @@ let rec fam sign repo env = function
     NLF.FAtom (s, c, l)
   | XLFf.FProd (x, a, b) ->
     let a = fam sign repo env a in
-    let b = fam sign repo (M.add x a env) b in
+    let b = fam sign repo (match x with
+      | Some x -> M.add x a env | None -> env) b in
     NLF.FProd (x, a, b)
 
 let rec kind sign repo env = function
   | XLFf.KProd (x, a, k) ->
     let a = fam sign repo env a in
-    let k = kind sign repo (M.add x a env) k in
+    let k = kind sign repo (match x with
+      | Some x -> M.add x a env | None -> env) k in
     NLF.KProd (x, a, k)
   | XLFf.KType -> NLF.KType
 

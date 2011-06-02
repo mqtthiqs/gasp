@@ -2,16 +2,16 @@ open Name
 
 type kind =
   | KType
-  | KProd of variable * fam * kind
+  | KProd of name * fam * kind
 
 and fatom = fconst * args
 
 and fam =
-  | FProd of variable * fam * fam
+  | FProd of name * fam * fam
   | FAtom of fatom
 
 and obj =
-  | OLam of variable * obj
+  | OLam of name * obj
   | OAtom of head * args
   | OBox of obj * position * obj
 

@@ -5,9 +5,11 @@ module Varmap = Map.Make(struct type t = variable let compare = Pervasives.compa
 module Fconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end)
 module Oconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end)
 
-type name =
-  | Named of variable
-  | Anonymous
+type name = variable option
+
+let equals_name x y = match x, y with
+  | Some x, Some y -> x=y
+  | _ -> false
 
 type head =
   | Var of variable
@@ -18,6 +20,10 @@ type position = (variable * int) option
 module Pp = struct
   open Format
   let variable fmt x = fprintf fmt "%s" x
+  let name fmt = function
+    | None -> fprintf fmt "_"
+    | Some x -> variable fmt x
+
   let fconst fmt x = fprintf fmt "%s" x
   let oconst fmt x = fprintf fmt "%s" x
 end
@@ -37,7 +43,3 @@ let mk_oconst s = s
 let of_variable s = s
 let of_fconst s = s
 let of_oconst s = s
-
-let variable_for = function
-  | Named x -> x
-  | Anonymous -> gen_variable()

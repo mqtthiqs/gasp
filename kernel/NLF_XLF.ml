@@ -13,8 +13,10 @@ and value env sigma : NLF.value -> XLF.obj = function
 	else failwith ("checkout: not_found "^of_variable x)
     end
   | NLF.VHead (Cst c, _) -> XLF.OAtom (Cst c, [])
-  | NLF.VLam (x, _, t) ->
-    XLF.OLam (x, obj (Varmap.add x () env) sigma t)
+  | NLF.VLam (Some x, _, t) ->
+    XLF.OLam (Some x, obj (Varmap.add x () env) sigma t)
+  | NLF.VLam (None, _, t) ->
+    XLF.OLam (None, obj env sigma t)
 
 and def env sigma : NLF.def -> XLF.obj = function
   | NLF.DAtom (h, l, _) -> XLF.OAtom (h, args env sigma l)
@@ -27,11 +29,13 @@ and args env sigma l =
 
 let rec fam env = function
   | NLF.FAtom (s, c, m) -> XLF.FAtom(c, args env s m)
-  | NLF.FProd (x, a, b) -> XLF.FProd(x, fam env a, fam (Varmap.add x () env) b)
+  | NLF.FProd (Some x, a, b) -> XLF.FProd(Some x, fam env a, fam (Varmap.add x () env) b)
+  | NLF.FProd (None, a, b) -> XLF.FProd(None, fam env a, fam env b)
 
 let rec kind env = function
   | NLF.KType -> XLF.KType
-  | NLF.KProd (x, a, k) -> XLF.KProd(x, fam env a, kind (Varmap.add x () env) k)
+  | NLF.KProd (Some x, a, k) -> XLF.KProd(Some x, fam env a, kind (Varmap.add x () env) k)
+  | NLF.KProd (None, a, k) -> XLF.KProd(None, fam env a, kind env k)
 
 
 let obj t = obj Varmap.empty Varmap.empty t

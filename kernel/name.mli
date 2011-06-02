@@ -14,17 +14,14 @@ val of_variable : variable -> string
 val of_fconst : fconst -> string
 val of_oconst : oconst -> string
 
-type name =
-  | Named of variable
-  | Anonymous
+type name = variable option
+val equals_name : name -> name -> bool
 
 type head =
   | Var of variable
   | Cst of oconst
 
 type position = (variable * int) option
-
-val variable_for : name -> variable
 
 module Varmap : Map.S with type key = variable
 module Fconstmap : Map.S with type key = fconst
@@ -33,6 +30,7 @@ module Oconstmap : Map.S with type key = oconst
 module Pp : sig
   open Print
   val variable : variable printing_fun
+  val name : name printing_fun
   val fconst : fconst printing_fun
   val oconst : oconst printing_fun
 end

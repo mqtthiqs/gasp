@@ -47,6 +47,7 @@ rule main = parse
   | "<-"                                  { LARROW  }
   | "=>"                                  { BIGRARROW  }
   | "/"                                   { SLASH }
+  | "_"                                   { UNDERSCORE }
   | integer+                              { INT (int_of_string (lexeme lexbuf)) }
   | identifier                            { let id = lexeme lexbuf in
                                             try is_keyword id 

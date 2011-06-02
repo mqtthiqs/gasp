@@ -40,17 +40,17 @@ quarante-deux : int.
 %% Identifier
 %%-----------
 a b c d e f g h i j k l m n o p q r s t u v w x y z : char.
-_  : char -> identifier -> identifier.
-_* : identifier.
+-  : char -> identifier -> identifier.
+-* : identifier.
 
 %
 % Type system
 %
 
 tenv : type.
-tc_expression  : tenv -> expression -> typ -> type.
-tc_program     : tenv -> program -> tenv -> type.
-tc_declaration : tenv -> declaration -> tenv -> type.
+tc-expression  : tenv -> expression -> typ -> type.
+tc-program     : tenv -> program -> tenv -> type.
+tc-declaration : tenv -> declaration -> tenv -> type.
 
 %% Typing environment
 %%-------------------
@@ -61,40 +61,40 @@ bindval  : binding -> tenv -> tenv.
 %% Judgments over typing environments
 %%-----------------------------------
 subenv : tenv -> tenv -> type.
-subenv_evidence : {E1 : tenv } { E2 : tenv } subenv E1 E2.
+subenv-evidence : {E1 : tenv } { E2 : tenv } subenv E1 E2.
 
 %% Equivalence modulo associativity
 %%---------------------------------
 equiv : tenv -> program -> tenv -> program -> type.
-equiv_evidence :
+equiv-evidence :
   { E1 : tenv } { P1 : program } { E2 : tenv } { P2 : program }
   equiv E1 P1 E2 P2.
 
 %% Typing rules
 %%-------------
-tc_declprog :
-  { E1 : tenv } { d : declaration } { E2 : tenv } { H : tc_declaration E1 d E2 }
-  tc_program E1 (declprog d) E2.
+tc-declprog :
+  { E1 : tenv } { d : declaration } { E2 : tenv } { H : tc-declaration E1 d E2 }
+  tc-program E1 (declprog d) E2.
 
-tc_emptyprog :
+tc-emptyprog :
   { E : tenv } 
-  tc_program E emptyprog E.
+  tc-program E emptyprog E.
 
-tc_joinprog :
+tc-joinprog :
   { E : tenv } { E1 : tenv } { E' : tenv } { E2 : tenv }
   { P1 : program } { P2 : program }
-  { H1 : tc_program E P1 E1 }
+  { H1 : tc-program E P1 E1 }
   { H2 : subenv E' (joinenv E E1) }
-  { H3 : tc_program E' P2 E2 }
-  tc_program E (joinprog P1 P2) (joinenv E1 E2).
+  { H3 : tc-program E' P2 E2 }
+  tc-program E (joinprog P1 P2) (joinenv E1 E2).
 
-tc_valdecl :
+tc-valdecl :
   { E : tenv } { x : identifier } { ty : typ } { e : expression } 
-  { H : tc_expression E e ty } 
-  tc_declaration E (valdecl (bind x ty) e) (bindval (bind x ty) E).
+  { H : tc-expression E e ty } 
+  tc-declaration E (valdecl (bind x ty) e) (bindval (bind x ty) E).
 
-tc_eint :
+tc-eint :
   { E : tenv } { x : int } 
-  tc_expression E (eint x) tint.
+  tc-expression E (eint x) tint.
 
 commit : tenv -> Commit.

@@ -5,7 +5,7 @@
 %}
 
 %token EOF
-%token COLON TYPE DOT LARROW RARROW BIGRARROW SLASH
+%token COLON TYPE DOT LARROW RARROW BIGRARROW SLASH UNDERSCORE
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token<string> ID
 %token<int> INT
@@ -21,6 +21,10 @@ signature:
 
 declaration:
   xs=ID+ COLON t=loc(term) DOT { List.map (fun x -> (x, t)) xs }
+
+name:
+  id=ID { Some id }
+| UNDERSCORE { None }
 
 term1:
   t=loc(term2) RARROW u=loc(term1) { Arr(t,u) }
@@ -38,7 +42,7 @@ term2:
 
 term3: 
   LPAREN t=term1 RPAREN {t}
-| LBRACKET xs=ID+ RBRACKET u=loc(term2)
+| LBRACKET xs=name+ RBRACKET u=loc(term2)
     { Position.value 
 	(List.fold_left 
 	   (fun acc x -> 

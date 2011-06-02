@@ -2,10 +2,10 @@ open Name
 
 type kind =
   | KType
-  | KProd of variable * fam * kind
+  | KProd of name * fam * kind
 
 and fam =
-  | FProd of variable * fam * fam
+  | FProd of name * fam * fam
   | FAtom of subst * fconst * args
 
 and obj =
@@ -16,7 +16,7 @@ and args = value list
 
 and value =
   | VHead of head
-  | VLam of variable * obj
+  | VLam of name * obj
 
 and def = head * args
 

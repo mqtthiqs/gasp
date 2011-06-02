@@ -31,13 +31,15 @@ let pp pp : entity printing_fun =
 	| DHead (h,a) -> fprintf fmt "@[%a@ :@ %a, @]" (pp (<=)) (H h) (pp (<=)) (F a)
     ) b ()
     | V(VHead (h,fa)) -> fprintf fmt "@[%a@ :@ %a@]" (pp (<=)) (H h) (pp (<=)) (P fa)
-    | V(VLam (x,a,t)) -> fprintf fmt "@[[%a]@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (O t)
-    | F(FProd(x,a,b)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
+    | V(VLam (x,a,t)) -> fprintf fmt "@[[%a]@ :@ %a.@ %a@]" name x (pp (<=)) (F a) (pp (<=)) (O t)
+    | F(FProd(Some x,a,b)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
+    | F(FProd(None,a,b)) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<=)) (F a) (pp (<=)) (F b)
     | F(FAtom fa) -> fprintf fmt "@[%a@]" (pp (<=)) (P fa)
     | P(s,c,l) when S.is_empty s -> fprintf fmt "@[%a@ %a@]" fconst c (pp (<=)) (A l)
     | P(s,c,l) -> fprintf fmt "@[%a@ ⊢@ %a@ %a@]" (pp (<=)) (B s) fconst c (pp (<=)) (A l)
     | K(KType) -> fprintf fmt "@[type@]"
-    | K(KProd(x,a,k)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (K k)
+    | K(KProd(Some x,a,k)) -> fprintf fmt "@[Π%a@ :@ %a.@ %a@]" variable x (pp (<=)) (F a) (pp (<=)) (K k)
+    | K(KProd(None,a,k)) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<=)) (F a) (pp (<=)) (K k)
 
 
 let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)

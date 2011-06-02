@@ -25,8 +25,8 @@ let pp_term pp fmt t =
       (pp (<)) a (pp (<=)) b
     | Prod (x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
       ident x (pp (<=)) a (pp (<=)) b
-    | Lam (x,b) -> fprintf fmt "@[[%a]@] %a@]"
-      ident x (pp (<=)) b
+    | Lam (x,b) -> fprintf fmt "@[[%s]@] %a@]"
+      (match x with Some x -> x | None -> "_") (pp (<=)) b
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" 
       (pp (<=)) t (pp (<)) u
     | Box (t,None,s) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) t (pp (<=)) s

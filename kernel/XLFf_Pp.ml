@@ -23,11 +23,11 @@ let pp pp : entity printing_fun =
   fun fmt (e:entity) -> match e with
     | K(KType) -> fprintf fmt "@[type@]"
     | K(KProd(x,a,k)) ->
-      fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (K k)
+      fprintf fmt "@[Π%a@ :@ %a. %a@]" name x (pp (<=)) (F a) (pp (<=)) (K k)
     | F(FAtom(s,c,l)) when s = [] -> fprintf fmt "@[%a@]" pr_fhead (c, l)
     | F(FAtom(s,c,l)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) pr_fhead (c, l)
     | F(FProd(x,a,b)) ->
-      fprintf fmt "@[Π%a@ :@ %a. %a@]" variable x (pp (<=)) (F a) (pp (<=)) (F b)
+      fprintf fmt "@[Π%a@ :@ %a. %a@]" name x (pp (<=)) (F a) (pp (<=)) (F b)
     | O(Obj(s, v)) when s = [] -> pp (<=) fmt (V v)
     | O(Obj(s, v)) -> fprintf fmt "@[%a@ ⊢@ %a@]" (pp (<=)) (B s) (pp (<=)) (V v)
     | O(OBox (t,None,u)) -> fprintf fmt "@[{%a}%a@]" (pp (<=)) (O t) (pp (<=)) (O u)
@@ -40,7 +40,7 @@ let pp pp : entity printing_fun =
 	fprintf fmt "@[[%a@ =@ %a@ %a]@]@," variable x (pp (<=)) (H h) (pp (<=)) (A l)
       end () b
     | V(VHead h) -> fprintf fmt "@[%a@]" (pp (<=)) (H h)
-    | V(VLam (x,t)) -> fprintf fmt "@[[%a]@ %a@]" variable x (pp (<=)) (O t)
+    | V(VLam (x,t)) -> fprintf fmt "@[[%a]@ %a@]" name x (pp (<=)) (O t)
 
 let obj fmt s = pr_paren pp ent_prec 100 (<=) fmt (O s)
 let fam fmt s = pr_paren pp ent_prec 100 (<=) fmt (F s)

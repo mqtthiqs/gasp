@@ -1,1 +1,1 @@
-commit (g v10 (g v12 (f v12)))
+commit (g v6 (g v4 (f v4)))

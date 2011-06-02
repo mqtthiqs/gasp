@@ -2,7 +2,7 @@ open Name
 
 type fam =
   | FAtom of fatom
-  | FProd of variable * fam * fam
+  | FProd of name * fam * fam
 
 and fatom = subst * fconst * args
 
@@ -13,7 +13,7 @@ and args = value list
 
 and value =
   | VHead of head * fatom
-  | VLam of variable * fam * obj
+  | VLam of name * fam * obj
 
 and def =
   | DAtom of head * args * fatom           (* head bindé ds repo *)
@@ -22,7 +22,7 @@ and def =
 and subst = def Varmap.t
 
 type kind =
-  | KProd of variable * fam * kind
+  | KProd of name * fam * kind
   | KType
 
 type entry =
