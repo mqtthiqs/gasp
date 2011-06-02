@@ -1,26 +1,25 @@
 open Name
 
-module E = Name.Varmap
-module S = Name.Varmap
+module M = Name.Varmap
 
 module NLF_Utils = struct
 
   let lift_def x = function
     | NLF.Obj(subst, _) ->
-      match Varmap.find x subst with
+      match M.find x subst with
 	| NLF.DAtom (_, _, fa) -> NLF.FAtom fa
 	| NLF.DHead (_, a) -> a
 
   let go term p = match term, p with
     | NLF.Obj(_, t), None -> t                (* TODO que faire de _? *)
     | NLF.Obj(s, _), Some (x, n) ->
-      try match Varmap.find x s with
+      try match M.find x s with
 	| NLF.DHead (h, a) -> failwith "position is not an application"
 	| NLF.DAtom (h, l, _) -> List.nth l n
       with Not_found -> failwith ("go: variable not found "^(of_variable x))
 
   let bind x d = function
-    | NLF.Obj (s, v) -> NLF.Obj (Varmap.add x d s, v)
+    | NLF.Obj (s, v) -> NLF.Obj (M.add x d s, v)
 
 end
 
@@ -37,7 +36,7 @@ module Refresh = struct
     | NLF.FAtom p -> NLF.FAtom (fatom y z p)
 
   and fatom y z (s, c, l) =
-    if Varmap.mem y s then (s, c, l) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
+    if M.mem y s then (s, c, l) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
       subst y z s, c, List.map (value y z) l
 
   and value y z = function
@@ -48,7 +47,7 @@ module Refresh = struct
   and obj y z = function
     | NLF.Obj (s, v) -> NLF.Obj (subst y z s, value y z v)
 
-  and subst y z s = Varmap.map
+  and subst y z s = M.map
     (function
 	| NLF.DAtom (h, l, p) -> NLF.DAtom (head y z h, List.map (value y z) l, fatom y z p)
 	| NLF.DHead (h, a) -> NLF.DHead (head y z h, fam y z a)
@@ -63,16 +62,16 @@ end
 
 module HSubst = struct
 
-  let rec fam z c = function
-    | NLF.FProd (x, a, b) when x = z -> NLF.FProd (x, fam z c a, b)
+  let rec fam z v = function
+    | NLF.FProd (x, a, b) when x = z -> NLF.FProd (x, fam z v a, b)
     | NLF.FProd (x, a, b) ->
       let y = Name.gen_variable () in
       let b = Refresh.fam x y b in
-      NLF.FProd (y, fam z c a, fam z c b)
-    | NLF.FAtom p -> NLF.FAtom (fatom z c p)
+      NLF.FProd (y, fam z v a, fam z v b)
+    | NLF.FAtom p -> NLF.FAtom (fatom z v p)
 
   and fatom z v (s, c, l) =
-    if Varmap.mem z s then (s, c, l) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
+    if M.mem z s then (s, c, l) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
       (subst z v s, c, List.map (value z v) l)
 
   and value z v = function
@@ -85,32 +84,41 @@ module HSubst = struct
     | NLF.VHead (Var x, _) when x = z -> v
     | NLF.VHead (Var x, p) -> NLF.VHead (Var x, fatom z v p)
 
-  and subst z v s = Varmap.map (function
-    | NLF.DHead (h, a) -> assert false
-    | NLF.DAtom (h, l, p) ->
-      let p = fatom z v p in
-      match h with
-	| Cst x -> NLF.DAtom(h, List.map (value z v) l, p)
-	| Var x when x <> z -> NLF.DAtom(h, List.map (value z v) l, p)
-	| Var x ->
-	  args z v (v, l)
-  ) s (* TODO verifier que Yann avait raison: il faut rafraichir les noms dans les s *)
+  and subst z v s = M.fold
+    begin fun y d sigma -> match d with
+      | NLF.DHead (h, a) ->
+	let d = NLF.DHead (h, a) in
+	M.add y d sigma
+      | NLF.DAtom (h, l, p) ->
+	let p = fatom z v p in
+	match h with
+	  | Cst x ->
+	    let d = NLF.DAtom(h, List.map (value z v) l, p) in
+	    M.add y d sigma
+	  | Var x when x <> z ->
+	    let d = NLF.DAtom(h, List.map (value z v) l, p) in
+	    M.add y d sigma
+	  | Var x ->
+	    let l = List.map (value z v) l in
+	    args sigma y (v, l)
+    end s M.empty (* TODO verifier que Yann avait raison: il faut rafraichir les noms dans les s *)
 
-  and args z v = function
-    | NLF.VHead (h, p), [] ->
-      assert false
+  and args sigma y = function
+    | NLF.VHead (h, p), [] -> M.add y (NLF.DHead (h,NLF.FAtom p)) sigma
     | NLF.VLam(x, a, t), w :: l ->
       let y = Name.gen_variable () in
       let t = Refresh.obj x y t in
-      let w = value z v w in
-      ignore (obj y w t); assert false
+      begin match obj y w t with
+	| NLF.Obj (sigma', v) ->
+	  let sigma = M.fold M.add sigma sigma' in
+	  args sigma y (v, l)
+      end
     | _ -> assert false 		(* OK, checked by typing *)
 
   and obj z w = function
     | NLF.Obj (s, v) ->
-      if Varmap.mem z s then NLF.Obj(s, v) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
+      if M.mem z s then NLF.Obj(s, v) else (* TODO est-ce nécessaire puisque y et Vars(z) st disjoints?? *)
 	NLF.Obj (subst z w s, value z w v)
-
 
   let rec kind z v = function
     | NLF.KProd (x, a, k) when x = z -> NLF.KProd (x, fam z v a, k)
@@ -146,7 +154,7 @@ end
 let rec head sign repo env : head -> NLF.fam = function
   | Cst c -> Oconstmap.find c (snd sign)
   | Var x ->
-    try E.find x env
+    try M.find x env
     with Not_found ->
       try NLF_Utils.lift_def x repo
       with Not_found -> failwith ("not_found "^Name.of_variable x)
@@ -158,7 +166,7 @@ and subst sign (NLF.Obj(sigma, v)) env : XLFf.subst -> NLF.subst =
       let repo = NLF.Obj(sigma, v) in
       let a = head sign repo env h in
       let l, p = args sign repo env (l, a) in
-      S.add x (NLF.DAtom(h,l,p)) sigma
+      M.add x (NLF.DAtom(h,l,p)) sigma
     end s sigma
 
 and args sign repo env : XLFf.args * NLF.fam -> NLF.args * NLF.fatom = function
@@ -195,7 +203,7 @@ and obj sign repo env : XLFf.obj * NLF.fam -> NLF.obj = function
 and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
   | XLFf.VLam (x,t), NLF.FProd (y, a, b) ->
     let b = Refresh.fam y x b in
-    let t = obj sign repo (E.add x a env) (t, b) in
+    let t = obj sign repo (M.add x a env) (t, b) in
     NLF.VLam (x, a, t)
 
   | XLFf.VHead h, NLF.FAtom p ->
@@ -217,16 +225,16 @@ let rec fam sign repo env = function
     NLF.FAtom (s, c, l)
   | XLFf.FProd (x, a, b) ->
     let a = fam sign repo env a in
-    let b = fam sign repo (E.add x a env) b in
+    let b = fam sign repo (M.add x a env) b in
     NLF.FProd (x, a, b)
 
 let rec kind sign repo env = function
   | XLFf.KProd (x, a, k) ->
     let a = fam sign repo env a in
-    let k = kind sign repo (E.add x a env) k in
+    let k = kind sign repo (M.add x a env) k in
     NLF.KProd (x, a, k)
   | XLFf.KType -> NLF.KType
 
-let obj sign repo (t, a) = obj sign repo E.empty (t, a)
-let fam sign repo a = fam sign repo E.empty a
-let kind sign repo k = kind sign repo E.empty k
+let obj sign repo (t, a) = obj sign repo M.empty (t, a)
+let fam sign repo a = fam sign repo M.empty a
+let kind sign repo k = kind sign repo M.empty k
