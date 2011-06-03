@@ -64,11 +64,12 @@ let init sign =
    term = Constants.version_o}
 
 let check repo =			(* TODO temp *)
-  (* LF_check.sign repo.sign; *)
-  (* let t = (XLFf_NLF.from_obj // XLF_XLFf.from_obj // *)
-  (* 	     LF_XLF.from_obj) repo.term in *)
-  (* ignore(LF_check.obj repo.sign t) *)
-  ()
+  let s = reify_sign repo.sign in
+  Format.printf "%a@." SLF_Pp.sign s;
+  let s = compile_sign s in
+  let t = reify_term repo.term in
+  ignore (compile_term s Constants.version_o t)
+
 
 let commit repo term =
   let old_head = match repo.term with
