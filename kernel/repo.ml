@@ -20,21 +20,21 @@ type t = {
 }
 
 let rec compile_sign s : NLF_Sign.t = List.fold_left
-  (fun (fsign,osign as sign) (x,t) -> match SLF_LF.term sign t with
+  (fun sign (x,t) -> match SLF_LF.term sign t with
     | LF.Kind k ->
       let k = LF_XLF.kind k in
       let k = XLF_XLFf.kind k in
       Util.if_debug (fun () -> Format.printf "@[F %s :: %a@]@." x XLFf_Pp.kind k);
       let k = XLFf_NLF.kind sign Constants.version_o k in
       Util.if_debug (fun () -> Format.printf "@[N %s :: %a@]@." x NLF_Pp.kind k);
-      Name.Fconstmap.add (Name.mk_fconst x) k fsign, osign
+      NLF_Sign.add_fconst (Name.mk_fconst x) k sign
     | LF.Fam a ->
       let a = LF_XLF.fam a in
       let a = XLF_XLFf.fam a in
       Util.if_debug (fun () -> Format.printf "@[F %s :: %a@]@." x XLFf_Pp.fam a);
       let a = XLFf_NLF.fam sign Constants.version_o a in
       Util.if_debug (fun () -> Format.printf "@[N %s :: %a@]@." x NLF_Pp.fam a);
-      fsign, Name.Oconstmap.add (Name.mk_oconst x) a osign
+      NLF_Sign.add_oconst (Name.mk_oconst x) a sign
     | LF.Obj t -> failwith ("obj in signature: "^x)
   ) NLF_Sign.empty s
 
@@ -53,8 +53,8 @@ let reify_term t =
 
 let reify_sign s =
   NLF_Sign.fold (fun entry acc -> match entry with
-    | NLF.FDecl (c, k) -> (Name.of_fconst c, SLF_LF.from_kind (LF_XLF.from_kind (NLF_XLF.kind k))) :: acc
-    | NLF.ODecl (c, a) -> (Name.of_oconst c, SLF_LF.from_fam (LF_XLF.from_fam (NLF_XLF.fam a))) :: acc
+    | NLF_Sign.FDecl (c, k) -> (Name.of_fconst c, SLF_LF.from_kind (LF_XLF.from_kind (NLF_XLF.kind k))) :: acc
+    | NLF_Sign.ODecl (c, a) -> (Name.of_oconst c, SLF_LF.from_fam (LF_XLF.from_fam (NLF_XLF.fam a))) :: acc
   ) s []
 
 let init sign =

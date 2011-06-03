@@ -24,7 +24,3 @@ and subst = def Varmap.t
 type kind =
   | KProd of name * fam * kind
   | KType
-
-type entry =
-  | FDecl of fconst * kind
-  | ODecl of oconst * fam

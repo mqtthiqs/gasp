@@ -175,7 +175,7 @@ module Equals = struct
 end
 
 let rec head sign repo env : head -> NLF.fam = function
-  | Cst c -> Oconstmap.find c (snd sign)
+  | Cst c -> NLF_Sign.find_oconst c sign
   | Var x ->
     try M.find x env
     with Not_found ->
@@ -246,7 +246,7 @@ let rec fam sign repo env = function
   | XLFf.FAtom (s, c, l) ->
     let s = subst sign repo env s in
     let repo = match repo with NLF.Obj(_,v) -> NLF.Obj(s,v) in
-    let k = Fconstmap.find c (fst sign) in
+    let k = NLF_Sign.find_fconst c sign in
     let l = fargs sign repo env (l, k) in
     NLF.FAtom (s, c, l)
   | XLFf.FProd (x, a, b) ->

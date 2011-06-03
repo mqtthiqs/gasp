@@ -58,9 +58,9 @@ fun sign t ->
 	    if Stringset.mem x env
 	    then LF.Obj(LF.OVar (mk_variable x))
 	    (* if it's in [sign] it's a constant*)
-	    else if Fconstmap.mem (mk_fconst x) (fst sign)
+	    else if NLF_Sign.mem_fconst (mk_fconst x) sign
 	    then LF.Fam (LF.FConst (mk_fconst x))
-	    else if Oconstmap.mem (mk_oconst x) (snd sign)
+	    else if NLF_Sign.mem_oconst (mk_oconst x) sign
 	    then LF.Obj (LF.OConst (mk_oconst x))
 	    (* otherwise it might still be a (defined) variable looked up in XLFa *)
 	    else LF.Obj(LF.OVar (mk_variable x))
