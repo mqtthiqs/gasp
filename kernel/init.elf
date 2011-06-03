@@ -2,4 +2,4 @@ Commit : type.
 
 Version : type.
 version_o : Version.
-version_s : Version -> Commit -> Version.
+version_s : Commit -> Version -> Version.

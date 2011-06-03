@@ -6,10 +6,10 @@ module Constants = struct
   let commit_const = mk_fconst Settings.commit_const
   let commit_type = NLF.FAtom(Varmap.empty, commit_const, [])
   let version_const = mk_fconst Settings.version_const
-  let version_type = XLF.FAtom(version_const, [])
+  let version_type = Varmap.empty, version_const, []
   let version_o_const = mk_oconst Settings.version_o_const
   let version_o = NLF.Obj(Varmap.empty, NLF.VHead(Cst(version_o_const), (Varmap.empty, version_const, [])))
-  let version_s = XLF.OAtom(Cst(mk_oconst Settings.version_s_const), [])
+  let version_s v c = NLF.DAtom(Cst(mk_oconst Settings.version_s_const), [c; v], version_type)
 
 end
 
@@ -71,8 +71,17 @@ let check repo =			(* TODO temp *)
   ()
 
 let commit repo term =
-  let t = compile_term repo.sign repo.term term in
-  {repo with term = t; varno = Name.gen_status()}
+  let old_head = match repo.term with
+    | NLF.Obj(_, (NLF.VHead(h, p) as v)) -> v
+    | _ -> assert false in              (* because expected type was an atom, not a product *)
+  let new_term = compile_term repo.sign repo.term term in
+  let new_term = match new_term with
+    | NLF.Obj(sigma, (NLF.VHead(h, p) as new_head)) ->
+      let x = Name.gen_variable () in
+      let d = Constants.version_s old_head new_head in
+      NLF.Obj(Name.Varmap.add x d sigma, NLF.VHead(Name.Var x, Constants.version_type))
+    | _ -> assert false in		(* because expected type was an atom, not a product *)
+  {repo with term = new_term; varno = Name.gen_status()}
 
 let show repo = 
   Format.printf " signature:@.";
