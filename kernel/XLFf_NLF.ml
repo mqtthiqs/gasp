@@ -242,7 +242,7 @@ and value sign repo env : XLFf.value * NLF.fam -> NLF.value = function
   | XLFf.VLam _, NLF.FAtom _ -> failwith ("Lam attend prod")
   | XLFf.VHead _, NLF.FProd _ -> failwith ("Pas en forme eta-longue")
 
-let rec fam sign repo env = function
+let rec fam sign repo env : XLFf.fam -> NLF.fam = function
   | XLFf.FAtom (s, c, l) ->
     let s = subst sign repo env s in
     let repo = match repo with NLF.Obj(_,v) -> NLF.Obj(s,v) in
@@ -255,7 +255,7 @@ let rec fam sign repo env = function
       | Some x -> M.add x a env | None -> env) b in
     NLF.FProd (x, a, b)
 
-let rec kind sign repo env = function
+let rec kind sign repo env : XLFf.kind -> NLF.kind = function
   | XLFf.KProd (x, a, k) ->
     let a = fam sign repo env a in
     let k = kind sign repo (match x with

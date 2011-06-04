@@ -9,7 +9,7 @@ module Constants = struct
   let version_type = Varmap.empty, version_const, []
   let version_o_const = mk_oconst Settings.version_o_const
   let version_o = NLF.Obj(Varmap.empty, NLF.VHead(Cst(version_o_const), (Varmap.empty, version_const, [])))
-  let version_s v c = NLF.DAtom(Cst(mk_oconst Settings.version_s_const), [c; v], version_type)
+  let version_s c v = NLF.DAtom(Cst(mk_oconst Settings.version_s_const), [c; v], version_type)
 
 end
 
@@ -79,7 +79,7 @@ let commit repo term =
   let new_term = match new_term with
     | NLF.Obj(sigma, (NLF.VHead(h, p) as new_head)) ->
       let x = Name.gen_variable () in
-      let d = Constants.version_s old_head new_head in
+      let d = Constants.version_s new_head old_head in
       NLF.Obj(Name.Varmap.add x d sigma, NLF.VHead(Name.Var x, Constants.version_type))
     | _ -> assert false in		(* because expected type was an atom, not a product *)
   {repo with term = new_term; varno = Name.gen_status()}
