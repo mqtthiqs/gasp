@@ -118,10 +118,11 @@
 
 % Term operations
 \newcommand\subst[3]{{#1}\{{#2}/{#3}\}}
+\newcommand\hsubst[3]{{#1}\llbracket{#2}/{#3}\rrbracket}
 \newcommand\repl[3]{\subst{#1}{#2}{#3}}
 \newcommand\conv[2]{{#1}\equiv{#2}}
 
-\newcommand\ibox[4]{[#1]_{#2}^{\subst{}{#3}{#4}}}
+\newcommand\ibox[3]{[#1]_{#2}^{#3}}
 
 % Languages
 \newcommand\lang[1]{\text{\rm\textsf{#1}}}
@@ -191,10 +192,10 @@
 \newcommand\jlfA[3]{\jlangA{\LF}{#1}{#2}{#3}}
 \newcommand\jlfK[2]{\jlangK{\LF}{#1}{#2}}
 
-\newcommand\jxlft[3]{\inXLF\jlangt{\XLF}{#1}{#2}{#3}}
-\newcommand\jxlfA[3]{\inXLF\jlangA{\XLF}{#1}{#2}{#3}}
-\newcommand\jxlfK[2]{\inXLF\jlangK{\XLF}{#1}{#2}}
-\newcommand\jxlfa[4]{\inXLF\jlangt{\XLF}{\pair{#1}{#2}}{#3}{#4}}
+\newcommand\jxlft[3]{\inXLF\jlangt{}{#1}{#2}{#3}}
+\newcommand\jxlfA[3]{\inXLF\jlangA{}{#1}{#2}{#3}}
+\newcommand\jxlfK[2]{\inXLF\jlangK{}{#1}{#2}}
+\newcommand\jxlfa[4]{\inXLF\jlangt{}{\pair{#1}{#2}}{#3}{#4}}
 \newcommand\jxlfh\jxlft
 
 \newcommand\jnlft{\jlangt{}}
@@ -246,6 +247,16 @@
 \newcommand\jnormh\jnormt
 \newcommand\jnormA\jnorm
 \newcommand\jnormK\jnorm
+
+\newcommand\jann[4]{\jtranse{\pair{\inXLFa{#1}}{\inXLFa{#2}}}{\inXLF{#3}}{\inXLFa{#4}}}
+\newcommand\jannK\jann
+\newcommand\jannA\jann
+\newcommand\jannt[5]{\jann{#1}{#2}{\typ{#3}{#4}}{#5}}
+\newcommand\jannh\jann
+\newcommand\jannl[6]{\jann{#1}{\pair{#2}{#3}}{#4}{\typ{#5}{#6}}}
+\newcommand\jannv[5]{\jann{#1}{#2}{\typ{#3}{#4}}{#5}}
+\newcommand\janns\jann
+\newcommand\jannsi[2]{\jtranse{}{#1}{#2}}
 
 % Simple judgements with no environments (NLF)
 \newcommand\jwf[1]{{#1}\ \mathsf{wf}}
