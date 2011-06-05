@@ -97,6 +97,20 @@ Today, we use:
   \end{examples}
 \end{frame}
 
+\begin{frame}{Incrementality in programming {\it \&} proof languages}
+  \vspace{0.5em}
+  \begin{center}
+    \only<1>{\includegraphics[width=0.85\textwidth]{images/coqide00.png}}%
+    \only<2>{\includegraphics[width=0.85\textwidth]{images/coqide0.png}}%
+    \only<3>{\includegraphics[width=0.85\textwidth]{images/coqide.png}}%
+    \only<4>{\includegraphics[width=0.85\textwidth]{images/coqide2.png}}%
+    \only<5>{\includegraphics[width=0.85\textwidth]{images/coqide4.png}}%
+    \only<6>{\includegraphics[width=0.85\textwidth]{images/coqide5.png}}%
+    \only<7>{\includegraphics[width=0.85\textwidth]{images/coqide6.png}}%
+    \only<8>{\includegraphics[width=0.85\textwidth]{images/coqide7.png}}%
+  \end{center}
+\end{frame}
+
 \begin{frame}{In an ideal world\ldots}
   \begin{itemize}
   \item Edition should be incrementally communicated to the tool
@@ -526,7 +540,7 @@ and infer env t =
 
 \begin{frame}{\gray{A} logical framework \gray{for incremental type-checking}}
   \begin{onlyenv}<-2>
-    LF \cit{Harper et al. 1992} (a.k.a. $\lambda\Pi$) provides a {\bf
+    \textbf{Inspiration 1:} LF \cit{Harper et al. 1992} (a.k.a. $\lambda\Pi$) provides a {\bf
       meta-logic} to represent and validate syntax, rules and proofs
     of an \textbf{object language}, by means of a typed
     $\lambda$-calculus.
@@ -610,10 +624,11 @@ and infer env t =
         $$
     \begin{block}{Remarks}
       \begin{itemize}
-      \item the {spine-form}, \alert{canonical} flavor ($\beta$ and
-        $\eta$-long normal)
+      \item the {spine-form}, \alert{canonical} flavor ($\beta$-normal
+        $\eta$-long, no \textsc{Conv})
       \item substitution is \alert{hereditary} (\emph{i.e.}
-        cut-admissibility / big-step reduction)
+        cut-admissibility / big-step)
+      \item No incrementality $\To$ proof-steps naming, annotations
       \end{itemize}
     \end{block}
   \end{onlyenv}
@@ -630,10 +645,8 @@ and infer env t =
       \mathsf{nat}\ \mathsf{nat}\ (\ulam x x)\ (\ulam {y z} z) $
     \end{block}
     \pause
-    \begin{block}{Monadic Normal Form (\textsf{MNF})}
-      Program transformation, IR for FP compilers
-
-      \textbf{Goal:} sequentialize all computations by naming them
+    \begin{block}{Monadic Normal Form}
+      \textbf{Inspiration 2:} Goal: sequentialize all computations by naming them
       (\textsf{let}s)
       \[
       \inXLF
@@ -648,17 +661,22 @@ and infer env t =
         \mval &\gequal \mv \gor \ulam\mv\mo
       \end{array}
       \]
-      \begin{examples}
-        \begin{itemize}
-        \item $\inXLFa \lapp f {\lapp g {\lsing x}} \quad\notin\quad
-          \mathsf{MNF}$
-        \item $\ulam x \lapp f {\lsing{\lapp g {\lcons{\ulam y
-                  y}{\lsing x}}}} \quad\Longrightarrow\quad
-          \ret{(\ulam x \letb a {{\lapp g {\lcons{\ulam y y}{\lsing
-                    x}}}} \lapp f {\lsing a})} $
-        \end{itemize}
-      \end{examples}
+      % \begin{examples}
+      %   \begin{itemize}
+      %   \item $\inXLFa \lapp f {\lapp g {\lsing x}} \quad\notin\quad
+      %     \mathsf{MNF}$
+      %   \item $\ulam x \lapp f {\lsing{\lapp g {\lcons{\ulam y
+      %             y}{\lsing x}}}} \quad\Longrightarrow\quad
+      %     \ret{(\ulam x \letb a {{\lapp g {\lcons{\ulam y y}{\lsing
+      %               x}}}} \lapp f {\lsing a})} $
+      %   \end{itemize}
+      % \end{examples}
     \end{block}
+    \begin{enumerate}
+    \item[\itplus] names application spines
+    \item[\itminus] to sequentialize (we don't care about order)
+    \item[\itminus] computations (we don't have)
+    \end{enumerate}
   \end{onlyenv}
   \begin{onlyenv}<3->
     \begin{block}{Positionality inefficiency}
