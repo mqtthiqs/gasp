@@ -727,7 +727,7 @@ and infer env t =
   \end{align*}
   \pause\pause\pause
  \begin{definition}
-    $$ (\cdot)^* \quad:\quad \text{LF} \to \text{monadic LF} $$
+    $$ \fflatten\cdot \quad:\quad \text{LF} \to \text{monadic LF} $$
     One-pass, direct style version of \cit{Danvy 2003}
  \end{definition}
 \end{frame}
@@ -766,10 +766,6 @@ and infer env t =
     \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
       \ebinddecl\msi\mcf\mk }
   \end{align*}
-\end{frame}
-
-\begin{frame}{Annotations: types $\to$ term sharing}
-  % TODO
 \end{frame}
 
 \begin{frame}{The delta language}
@@ -891,12 +887,22 @@ and infer env t =
 \end{frame}
 
 \begin{frame}{Properties of the translation}
-  \begin{definition}
-    Let $$\freify\cdot \quad:\quad \text{amLF} \to \text{LF}$$ be the back-translation
+  Work in progress\ldots
+  \begin{theorem}[Soundness]
+    if $\jxlft\me\mo\mf$ then $\jannsi{\fflatten\me}\me$ and $\jannA{(\sapply\snil\_)}\me{\fflatten\mf}\mf$ and
+    $\jannt{(\sapply\snil\_)}\me{\fflatten\mo}\mf\mo$
+  \end{theorem}
+  \begin{definition}[Checkout]
+    Let $\fcheckout\cdot$ be the back-translation
     function of a repository into an LF term.
   \end{definition}
-  \begin{theorem}
-    Coucou
+  \begin{theorem}[Completeness]
+    if $\jannt{(\sapply\snil\_)}\me{\fflatten\mo}\mf\mo$ then $\jxlft{\fcheckout\me}{\fcheckout\mo}{\fcheckout\mf}$
+  \end{theorem}
+  \begin{theorem}[Substitution]
+    If $\jannt\mr\me\mmo\mmf{(\sapply\ms{\mmv:\mmf})}$ and
+    $\jxlft{\econs{\fcheckout\me}{x:\mmf}{\fcheckout\mme}}\mo\mf$ then
+    $\jannt{(\sapply\ms{\mmv:\mmf})}{\me{\repl\mme\mv\mmv}}{\repl\mo\mv\mmv}{\repl\mmf\mv\mmv}\mmr$
   \end{theorem}
 \end{frame}
 

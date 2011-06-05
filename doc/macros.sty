@@ -257,7 +257,7 @@
 \newcommand\jannl[6]{\jann{#1}{\pair{#2}{#3}}{#4}{\typ{#5}{#6}}}
 \newcommand\jannv[5]{\jann{#1}{#2}{\typ{#3}{\inXLFa{#4}}}{#5}}
 \newcommand\janns\jann
-\newcommand\jannsi[2]{\jtranse{}{#1}{#2}}
+\newcommand\jannsi[2]{\jtranse{}{\inXLF{#1}}{\inXLFa{#2}}}
 
 % Simple judgements with no environments (NLF)
 \newcommand\jwf[1]{{#1}\ \mathsf{wf}}
@@ -269,5 +269,6 @@
 \newcommand\fexpand[1]{\llbracket{\inXLFa{#1}}\rrbracket}
 \newcommand\jexpand[2]{\fexpand{\inXLFa{#1}}&={\inXLFe{#2}}}
 
-\newcommand\freify[1]{\function{reify}{#1}}
 \newcommand\fred[4]{{\mathsf{red}}^{#1}_{#2}({#3},{#4})}
+\newcommand\fflatten[1]{{#1}^*}
+\newcommand\fcheckout[1]{{\inXLFa{#1}}^-}
