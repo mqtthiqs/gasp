@@ -46,6 +46,8 @@
   {<>}{{$\neq$}}1 {'a}{{$\alpha$}}1 {'b}{{$\beta$}}1 {'c}{{$\gamma$}}1
 }
 
+\newcommand\sz[1]{\hsubst{#1}\mmmv\mval}
+
 \begin{document}
 
 \frame\titlepage
@@ -673,15 +675,15 @@ and infer env t =
       \end{array}
       \pause
       \quad\Longrightarrow\quad
-      \left(
+      \sapply{\left(
         \begin{array}{l}
           x=\ldots \\
           y=\ldots \\
           z=\ldots \\
           \vdots
         \end{array}
-      \right)
-      \vdash \lapp\mval\ma
+      \right)}
+      {\lapp\mval\ma}
       \]
     \end{block}
     \pause
@@ -693,7 +695,7 @@ and infer env t =
         \begin{align*}
           \mo &\gequal \ret\mval \gor \alt<4>
           {\letb\mv{\lapp\mval\ma}\mo \gor \lapp\mval\ma}
-          {\alert{\ms\vdash\lapp\mval\ma}} \\
+          {\alert{\sapply\ms{\lapp\mval\ma}}} \\
           \ma &\gequal \lnil \gor \lcons\mval\ma \\
           \mval &\gequal \mv \gor \ulam\mv\mo
           \alt<4>{}{\\
@@ -713,9 +715,9 @@ and infer env t =
   \inXLF
   \begin{align*}
     \mk &\gequal \prd\mv\mf\mk \gor \type \\
-    \mf &\gequal \prd\mv\mf\mf \gor \ms\vdash\lapp\mcf\ma \\
+    \mf &\gequal \prd\mv\mf\mf \gor \sapply\ms{\lapp\mcf\ma} \\
     \mo &\gequal \alt<-1>{\ret\mval\gor}{\alt<-2>{\alert{\ret\mval
-          \gor}}{}} \ms\vdash\alt<-1>{\lapp\mval\ma}{\alt<-2>{\alert{\lapp\mval\ma}}{\mval}} \\
+          \gor}}{}} \sapply\ms{\alt<-1>{\lapp\mval\ma}{\alt<-2>{\alert{\lapp\mval\ma}}{\mval}}} \\
     \mh &\gequal \mv \gor \mco \\
     \ma &\gequal \lnil \gor \lcons\mval\ma \\
     \mval &\gequal \mco \gor \mv \gor \ulam\mv\mo \\
@@ -724,9 +726,10 @@ and infer env t =
       \ebinddecl\msi\mcf\mk }
   \end{align*}
   \pause\pause\pause
-  \begin{block}{Note on the translation LF $\to$ Monadic LF}
+ \begin{definition}
+    $$ (\cdot)^* \quad:\quad \text{LF} \to \text{monadic LF} $$
     One-pass, direct style version of \cit{Danvy 2003}
-  \end{block}
+ \end{definition}
 \end{frame}
 
 \subsection{Typing by annotating}
@@ -750,16 +753,23 @@ and infer env t =
   \alt<-2>\inXLF\inXLFa
   \begin{align*}
     \mk &\gequal \prd\mv\mf\mk \gor \type \\
-    \mf &\gequal \prd\mv\mf\mf \gor \ms\vdash\lapp\mcf\ma \\
-    \alt<2>\mo{\alert\mr} &\gequal \ms\vdash\typ\mval{\alert{\lapp\mcf\ma}} \\
+    \mf &\gequal \prd\mv\mf\mf \gor \sapply\ms{\lapp\mcf\ma} \\
+    \alt<2>\mo{\alert\mr} &\gequal
+    \sapply\ms{\typ\mval{\alert{\lapp\mcf\ma}}} &&
+      \uncover<4->{\text{$\longleftarrow$ $\ms$ DAG, binds in $\mval$ and
+          $\ma$}} \\
     \mh &\gequal \mv \gor \mcf \\
     \ma &\gequal \lnil \gor \lcons\mval\ma \\
     \mval &\gequal \mco \gor \mv \gor \lam\mv{\alert\mf}{\alt<2>\mo{\alert\mr}} \\
-    \ms\ &\ :\ \mv\mapsto{\laapp\mh\ma{\alert{\lapp\mcf\ma}}} \\
+    \ms\ &\ :\ \mv\mapsto{\laapp\mh\ma{\alert{\lapp\mcf\ma}}} &&
+      \uncover<5->{\text{$\longleftarrow$ named implementation}} \\
     \msi &\gequal { \enil \gor \ebinddecl\msi\mco\mf \gor
       \ebinddecl\msi\mcf\mk }
   \end{align*}
-  \pause
+\end{frame}
+
+\begin{frame}{Annotations: types $\to$ term sharing}
+  % TODO
 \end{frame}
 
 \begin{frame}{The delta language}
@@ -806,41 +816,88 @@ and infer env t =
   \end{block}
 \end{frame}
 
-\begin{frame}{Typing by annotating}
-  
-\end{frame}
-
 \subsection{The typing/committing process}
 
 \subsubsection{What does it do?}
 
-\begin{frame}{\textsf{Commit} (WIP)}
+\begin{frame}{The typing/committing process}
   \inXLF
-  {\Large \[ \jindex{\msi^-}{\pair{\mr^-}{\enil^-}}{\typ{\mo^-}{\mf^+}} \To{\mr^+} \]}
+  {\Large
+  \[
+  \jannt\mr\me\mo\mf\mo
+  \]}
   \begin{block}{What does it do?}
     \begin{itemize}
-    \item type-checks $\mo$ \emph{wrt.} $\mr$ (in $O(\mo)$)
-    \item puts $\mo$ in non-pos. \textsf{MNF}
-    \item annotate with type
-    \item with the adapted rules for variable \& box:
-      \small
-      \begin{mathpar}
-        \infer[Var]{
-          \elookdef\me\mv\mf \and \text{or} \and \elookdecl\ms\mv\mf
-        }{
-          \jindex\msi{\pair{(\ms\vdash\_:\_)}\me}{\typ\mv\mf}\To(\ms\vdash\mv:\mf)
-        }
-
-        \infer[Box]{
-          \ms(\mv).i = \lam\mmv\mmf{(\mms\vdash H'')} \\
-          (\ms\vdash H),\me\vdash \mmo:\mmf \To (\mmms\vdash H') \\
-          (\mms\cup\mmms[\mmv=H']\vdash H''),\me\vdash\mo:\mf\To\mr
-        }{
-          (\ms\vdash H),\me\vdash \ibox\mo{\mv.i}\mmo : \mf \To\mr
-        }
-      \end{mathpar}
+    \item puts $\mo$ in non-pos. \textsf{MNF} ($O(\mo)$)
+    \item type-checks $\mo$ \emph{wrt.} $\inXLFa\mr$ and
+    \item returns $\inXLFa\mo$ \emph{i.e.} $\inXLF\mo$ annotated with types ($O(\mo)$)
     \end{itemize}
   \end{block}
+\end{frame}
+
+\begin{frame}{Typing by annotating}
+  \textbf{partial translation} : monadic LF $\to$ annotated monadic LF
+  \inXLFa
+  \Large
+  \begin{overlayarea}\textwidth{10em}
+    \only<+>{
+      $$
+      \infer[VLam]{ \jannt\mr{\ebinddecl\me\mv\mf}\mo\mmf\mo }{
+        \jannv\mr\me{\ulam\mv\mo}{\prd\mv\mf\mmf}{\lam\mv\mf\mo} }
+      $$
+    }
+    \only<+>{
+      $$
+      \infer[HVar]{ \elookdecl\me\mv\mf \and\text{or}\and
+        \elookdecl\ms\mv\mf }{ \jannh{(\sapply\ms\mval)}\me\mv\mf }
+      $$
+    }
+    \only<+>{
+      $$
+      \infer[LCons]{ \jannv\mr\me\mval\mf\mval \and
+        \jannl\mr\me{\hsubst\mmf\mv\mval}\ma\ma{\lapp\mcf\ma} }{
+        \jannl\mr\me{\prd\mv\mf\mmf}{\lcons\mval\ma}{\lcons\mval\ma}{\lapp\mcf\ma}
+      }
+      $$
+    } \only<+>{
+      $$
+      \infer[OBox]{ \mr|_p = \lam\mv\mmf\mmr \and
+        \jannt\mr\me\mmo\mmf{(\sapply\ms{\typ\mh{\lapp\mcf\ma}})}
+        \\
+        \jannt{\mmr\cup\scons\ms\mv{\typ\mh{\lapp\mcf\ma}}}\me\mo\mf\mo }{
+        \jannt\mr\me{\ibox\mo p\mmo}\mf\mo }
+      $$
+    }
+    \normalsize
+    \only<+>{
+      \begin{align*}
+        \sz{(\prd\mv\mf\mmf)} &= \prd\mv{\sz\mf}{\sz\mmf} \\
+        \sz{(\sapply\ms{\lapp\mcf\ma})} &=
+        \sapply{\sz\ms}{\lapp\mcf{\sz\ma}} \\[1em]
+        \sz{(\scons\ms\mmv{\lapp\mv\ma:\lapp\mcf\mma})} &=
+        \scons{(\sz\ms)}\mmv{\lapp\mv{\sz\ma}:\lapp\mcf{\sz\mma}} \\
+        \sz{(\scons\ms\mmv{\lapp\mmmv\ma:\lapp\mcf\mma})} &=
+        \fred\mmv\ms\mval\ma \\[1em]
+        \fred\mmv\ms{\mh:\lapp\mcf\ma}\lnil &=
+        \scons\ms\mmv{\mh:\lapp\mcf\ma} \\
+        \fred\mmv\ms{\lam\mv\mf\mo}{(\lcons\mval\ma)} &=
+        \fred\mmv{\ms\cup\mms}\mmval\ma
+        \qquad\text{if}\quad
+        \hsubst\mo\mv\mval = (\sapply\mms\mmval) \\
+        &\vdots
+      \end{align*}
+    }
+  \end{overlayarea}
+\end{frame}
+
+\begin{frame}{Properties of the translation}
+  \begin{definition}
+    Let $$\freify\cdot \quad:\quad \text{amLF} \to \text{LF}$$ be the back-translation
+    function of a repository into an LF term.
+  \end{definition}
+  \begin{theorem}
+    Coucou
+  \end{theorem}
 \end{frame}
 
 \subsubsection{Example}
@@ -853,17 +910,24 @@ and infer env t =
     c &: D\to C                 & d &: D
   \end{align*}
   \underline{Terms}
+  \small
   \begin{align*}
-    t_1\quad&=\quad
-    \lapp a {\lcons{\lam x D \lapp b {\lapp c x}}{\lapp c d}} \\
-    \mr_1\quad&=\quad
-    \sent v {\lapp c d : C} \vdash \lapp a {\lcons{\lam x D
-        \sent w {\lapp c x : C}\vdash \lapp b w : B}{v}} : A \\
-    t_2 \quad&=\quad
-    \lapp a {\lam y D {\ibox {\lapp{b'} w} 1 x y}} \\
-    \mr_2\quad&=\quad
-    \sent v {\lapp c d : C} \vdash \\ &\qquad\qquad \lapp a {\lcons{\lam y D
-        \sent x y \sent w {\lapp c x : C}\vdash \lapp {b'} w : B}{v}} : A
+    t_1\ &=\quad
+    \lapp a {\lcons{\ulam x \lapp b {\lapp c x}}{\lapp c d}} \\
+    \mr_1\ &=\quad
+    \sent v {\lapp c d : C} \\
+    &\ \qquad\sent u {\lapp a {\lcons{\lam x D
+          \sent w {\lapp c x : C}\sent {w'} {\lapp b w : B}\vdash w' :
+          B}{v}} : A} \\
+    &\ \qquad\qquad\vdash u : A\\
+    t_2 \ &=\quad
+    \lapp a {\ulam y {\ibox {\lapp{b'} w} 1 x y}} \\
+    \mr_2\ &=\quad
+    \sent v {\lapp c d : C} \\
+    &\ \qquad\sent u {\lapp a {\lcons{\lam y D
+          \sent x y \sent w {\lapp c x : C} \sent {w'} {\lapp b w : B}\vdash w' :
+          B}{v}} : A} \\
+    &\qquad\qquad \vdash u : A
   \end{align*}
 \end{frame}
 
@@ -883,7 +947,7 @@ and infer env t =
   \begin{block}{Commit $t$}
     \vspace{-1em}
     \[ \text{if} \qquad
-    \mr = \ms\vdash v : \mathsf{Version} \qquad\text{and}\qquad
+    \mr = \sapply\ms{v : \mathsf{Version}} \qquad\text{and}\qquad
     \mr,\enil\vdash_\msi t : \lapp{\mathsf{is}}{\lcons p
       {\mathsf{unit}}}\To(\mms\vdash k)
     \]
@@ -896,7 +960,7 @@ and infer env t =
 
 \begin{frame}{Further work}
   \begin{itemize}
-  \item implementation \& metatheory of \textsf{Commit}
+  \item metatheory of annotated monadic LF
   \item from terms to derivations (\textsf{ti})
   \item \textsf{diff} on terms
   \item mimick other operations from VCS (\textsf{Merge})

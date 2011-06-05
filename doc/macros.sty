@@ -115,6 +115,7 @@
 \newcommand\slook[2]{{#1}({#2})}
 \newcommand\snolook[2]{\slook{#1}{#2}\neq}
 \newcommand\slookdef\elookdef
+\newcommand\sapply[2]{{#1}\vdash{#2}}
 
 % Term operations
 \newcommand\subst[3]{{#1}\{{#2}/{#3}\}}
@@ -251,10 +252,10 @@
 \newcommand\jann[4]{\jtranse{\pair{\inXLFa{#1}}{\inXLFa{#2}}}{\inXLF{#3}}{\inXLFa{#4}}}
 \newcommand\jannK\jann
 \newcommand\jannA\jann
-\newcommand\jannt[5]{\jann{#1}{#2}{\typ{#3}{#4}}{#5}}
+\newcommand\jannt[5]{\jann{#1}{#2}{\typ{#3}{\inXLFa{#4}}}{#5}}
 \newcommand\jannh\jann
 \newcommand\jannl[6]{\jann{#1}{\pair{#2}{#3}}{#4}{\typ{#5}{#6}}}
-\newcommand\jannv[5]{\jann{#1}{#2}{\typ{#3}{#4}}{#5}}
+\newcommand\jannv[5]{\jann{#1}{#2}{\typ{#3}{\inXLFa{#4}}}{#5}}
 \newcommand\janns\jann
 \newcommand\jannsi[2]{\jtranse{}{#1}{#2}}
 
@@ -269,3 +270,4 @@
 \newcommand\jexpand[2]{\fexpand{\inXLFa{#1}}&={\inXLFe{#2}}}
 
 \newcommand\freify[1]{\function{reify}{#1}}
+\newcommand\fred[4]{{\mathsf{red}}^{#1}_{#2}({#3},{#4})}
