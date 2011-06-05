@@ -886,24 +886,25 @@ and infer env t =
   \end{overlayarea}
 \end{frame}
 
-\begin{frame}{Properties of the translation}
-  Work in progress\ldots
-  \begin{theorem}[Soundness]
+\begin{frame}{Properties of the translation (work in progress)}
+  \begin{conjecture}[Soundness]
     if $\jxlft\me\mo\mf$ then $\jannsi{\fflatten\me}\me$ and $\jannA{(\sapply\snil\_)}\me{\fflatten\mf}\mf$ and
     $\jannt{(\sapply\snil\_)}\me{\fflatten\mo}\mf\mo$
-  \end{theorem}
+  \end{conjecture}
   \begin{definition}[Checkout]
     Let $\fcheckout\cdot$ be the back-translation
     function of a repository into an LF term.
   \end{definition}
-  \begin{theorem}[Completeness]
+  \begin{conjecture}[Completeness]
     if $\jannt{(\sapply\snil\_)}\me{\fflatten\mo}\mf\mo$ then $\jxlft{\fcheckout\me}{\fcheckout\mo}{\fcheckout\mf}$
-  \end{theorem}
-  \begin{theorem}[Substitution]
-    If $\jannt\mr\me\mmo\mmf{(\sapply\ms{\mmv:\mmf})}$ and
-    $\jxlft{\econs{\fcheckout\me}{x:\mmf}{\fcheckout\mme}}\mo\mf$ then
-    $\jannt{(\sapply\ms{\mmv:\mmf})}{\me{\repl\mme\mv\mmv}}{\repl\mo\mv\mmv}{\repl\mmf\mv\mmv}\mmr$
-  \end{theorem}
+  \end{conjecture}
+  \begin{conjecture}[Substitution]
+    If $\jannt\mr\me\mmo\mmf{(\sapply\ms{\mv:\mmf})}$
+    and $\jxlft{\econs{\fcheckout\me}{x:\fcheckout\mmf}{\fcheckout\mme}}\mo{\fcheckout\mf}$
+    with $n$ rules then
+    $\jannt{(\sapply\ms{\mv:\mmf})}{\me\mme}\mo\mf\mmr$ with $n$
+    rules
+  \end{conjecture}
 \end{frame}
 
 \subsubsection{Example}
