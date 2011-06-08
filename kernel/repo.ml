@@ -6,10 +6,11 @@ module Constants = struct
   let commit_const = mk_fconst Settings.commit_const
   let commit_type = NLF.FAtom(Varmap.empty, commit_const, [])
   let version_const = mk_fconst Settings.version_const
-  let version_type = Varmap.empty, version_const, []
+  let version_fatom = Varmap.empty, version_const, []
+  let version_type = NLF.FAtom version_fatom
   let version_o_const = mk_oconst Settings.version_o_const
-  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(Cst(version_o_const), (Varmap.empty, version_const, [])))
-  let version_s c v = NLF.DAtom(Cst(mk_oconst Settings.version_s_const), [c; v], version_type)
+  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(Cst(version_o_const), version_fatom))
+  let version_s c v = NLF.DAtom(Cst(mk_oconst Settings.version_s_const), [c; v], version_fatom)
 
 end
 
@@ -38,7 +39,7 @@ let rec compile_sign s : NLF_Sign.t = List.fold_left
     | LF.Obj t -> failwith ("obj in signature: "^x)
   ) NLF_Sign.empty s
 
-let compile_term sign repo =
+let compile_term sign repo a =
     (fun x -> match SLF_LF.term sign x with
        | LF.Obj t -> t
        | _ -> assert false) //
@@ -46,7 +47,7 @@ let compile_term sign repo =
       XLF_XLFf.obj //
       (fun t ->
 	Util.if_debug (fun () -> Format.printf "%a@." XLFf_Pp.obj t);
-	XLFf_NLF.obj sign repo (t, Constants.commit_type))
+	XLFf_NLF.obj sign repo (t, a))
 
 let reify_term t =
   (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
@@ -68,19 +69,19 @@ let check repo =			(* TODO temp *)
   Format.printf "%a@." SLF_Pp.sign s;
   let s = compile_sign s in
   let t = reify_term repo.term in
-  ignore (compile_term s Constants.version_o t)
-
+  Name.gen_init 0;
+  ignore (compile_term s Constants.version_o Constants.version_type t)
 
 let commit repo term =
   let old_head = match repo.term with
     | NLF.Obj(_, (NLF.VHead(h, p) as v)) -> v
     | _ -> assert false in              (* because expected type was an atom, not a product *)
-  let new_term = compile_term repo.sign repo.term term in
+  let new_term = compile_term repo.sign repo.term Constants.commit_type term in
   let new_term = match new_term with
     | NLF.Obj(sigma, (NLF.VHead(h, p) as new_head)) ->
       let x = Name.gen_variable () in
       let d = Constants.version_s new_head old_head in
-      NLF.Obj(Name.Varmap.add x d sigma, NLF.VHead(Name.Var x, Constants.version_type))
+      NLF.Obj(Name.Varmap.add x d sigma, NLF.VHead(Name.Var x, Constants.version_fatom))
     | _ -> assert false in		(* because expected type was an atom, not a product *)
   {repo with term = new_term; varno = Name.gen_status()}
 
