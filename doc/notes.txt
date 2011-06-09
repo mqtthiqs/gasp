@@ -1,6 +1,110 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun  9, 2011 12:21 PM
+
+D'une manière générale, cette question de nommer explicitement les
+lambdas, apparaissant en position non fonctionnelle, est peut-être
+une fausse question.
+
+En fait, tous les lambdas sont déjà nommés dans NLF : ils sont nommés
+par une position. En quoi un nom "plat" serait-il plus efficace? Si 
+on néglige l'indirection induite par l'extraction d'un argument d'un
+terme applicatif alors je ne vois plus d'intérêt à cette question.
+
+Thu Jun  9, 2011 12:10 PM
+
+Matthias m'a réexpliqué le rôle des têtes. Voici ce que j'ai compris.
+
+Les têtes servent à implémenter le "checkout", c'est-à-dire l'opération
+de réification d'un terme XLF extrait du dépot. Il est donc très important
+de particulariser la tête pour retrouver la structure des lambda-termes. 
+Jusque là, pas d'arguments en défaveur de ma modification.
+
+Là où ça se complique, c'est que les σ ne lient actuellement que des 
+termes applicatifs et non des lambdas. De cette facon, on a une garantie
+syntaxique que les termes NLF sont en forme canonique. Si on veut étendre
+la syntaxe des σ en maintenant cette contrainte, il faut introduire un
+espace de nom différents pour lier les fonctions et les termes applicatifs. 
+Ceci implique aussi éventuellement des modifications de la syntaxe des valeurs
+(mais à y réfléchir un peu, pas forcément). 
+
+Ce qui est sûr, c'est que ce que je proposais ne simplifie pas la syntaxe
+des positions : on doit avoir deux constructeurs différents pour atteindre
+une abstraction en fonction de l'endroit où elle se trouve : à toplevel ou 
+comme argument d'un terme applicatif. 
+
+En résumé donc, la suppression des têtes de la syntaxe serait superficielle
+car on obtiendrait une syntaxe équivalente, mais moins pratique que celle
+que nous avons maintenant (on rajouterait des indirections non nécessaires
+en nommant les lambdas.).
+
+Thu Jun  9, 2011  8:26 AM
+
+Retour sur la discussion technique avec Matthias sur le système pour le typage
+incrémental. Matthias est arrivé avec deux problèmes : 
+
+(i)  Le système accumulait abusivement les définitions du contexte à l'intérieur 
+     des sous-composantes. Cela semblait stupide car l'interprétation des sous-
+     composantes du termes NLF se fait toujours sous les définitions de son
+     contexte, pourquoi les répéter?
+
+(ii) L'instanciation des boîtes duplique le contenu des lambda-abstractions 
+     qu'elles dénotent. C'est dommage : on pourrait imaginer de laisser les
+     boîtes dans NLF pour éviter cette duplication-là. 
+
+Lors de notre discussion, nous avons, je pense, réglé le point (i) mais
+pas le point (ii). 
+
+La confusion qui régnait dans l'ancien système semblait venir d'une mauvaise
+implémentation de l'importation du dépot R initial dans le nouveau dépot R'
+produit par le commit. Matthias implémentait cela via une sorte de "fold" 
+accumulant de façon systématique le contenu de R dans R'. Cela partait
+de la constatation que les méta-variables utilisées dans le terme XLF doivent
+être embarquées dans le nouveau dépot. D'ailleurs, n'ayant pas bien pris 
+conscience de cela, ma première proposition de solution à ce problème a
+été une sorte de "map" de "t" vers "R'" oubliant totalement le précédent
+dépot "R". 
+
+La solution au problème (i) a consisté en une prise de conscience que
+la méthode "fold" n'était pas très économe car elle ferme de façon
+top-down tous les sous-composantes à l'aide de la totalité des
+définitions de leurs contextes! Une méthode économe consiste à ne
+fermer les sous-composantes qu'en des points bien précis correspondant
+à des ouvertures de scope instanciés, i.e. au niveau de la traduction
+des boîtes de XLF. 
+
+Il est alors apparu qu'il n'existait en vérité qu'une uniqu ensemble Γ
+de déclarations/définitions pendant la traduction qui est peuplé des objets
+importés de l'ancien répo et des instanciations faites par les boîtes. 
+Ainsi, dès que l'on se déplace dans l'ancien dépot, on importe toute ce 
+qu'il y a dans son scope et on ne garde que la tête qui va permettre des
+navigations ultérieures dans un nouveau scope interne si la tête est un
+lambda. 
+
+Les jugements de l'ancien système étaient de la forme :
+
+           R, Γ ⊢ t : A ⇝ u
+  
+Nous les avons changés en 
+
+     	   Γ, v ⊢ t : A ⇝ u
+
+Plus j'y pense et plus je pense que la notion de tête n'est peut-être
+pas très pertinente dans les termes de NLF et introduisent une
+irrégularité pas vraiment justifié, il faut que j'en parle avec Matthias. 
+
+Pourquoi ne pas passer de "t ::= σ ⊢ v" à "t ::= σ" où la valeur "v" a
+été inclue dans "σ" à l'aide d'un nom frais? Éventuellement, on
+rajouterait à ce nom une marque spéciale pour se souvenir que c'était
+l'appel terminal du terme XLF de façon à pouvoir implémenter le
+checkout. J'ai l'impression que l'on simplifierait alors le jugement
+et la définition des positions "p".
+
+Par ailleurs, je pense que le système serait plus élégant si on résolvait
+le point (ii). 
+
+
 Tue Jan 25 18:51:48 CET 2011
 
 
