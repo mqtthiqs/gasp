@@ -1,6 +1,30 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun  9, 2011  3:16 PM
+
+
+
+Une critique éventuelle sur notre approche : si il s'agit d'avoir
+une syntaxe pour implémenter du partage, le lambda calcul suffit.
+En effet, un beta-redex implémente du partage. Effectivement, 
+nous avons un langage de "let"s, et on pourrait se demander si 
+les remplacer par des beta-redexes (non dangereux) ne seraient pas
+équivalents tout en se passant d'introduire une nouvelle syntaxe.
+
+
+L'argument ici est l'efficacité des accès : on veut mettre à 
+plat donc une imbrication de beta-redexes ne nous sied guère.
+
+
+Pourquoi alors ne pas travailler dans λbar? Parce que de toute façon,
+dans la machine abstraite, on veut faire une différence entre 
+les let et les vrais rédexes qui calculent pour optimiser le
+test de conversion : on veut s'arrêter sur deux variables égales
+syntaxiquement sans comparer leur définition. (Je ne suis pas trop
+sûr pour ce dernier point.)
+
+
 Thu Jun  9, 2011  1:42 PM
 
 
