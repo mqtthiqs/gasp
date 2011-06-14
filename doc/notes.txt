@@ -1,6 +1,29 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Tue Jun 14, 2011  5:52 PM
+
+
+Une journée bonus avec Matthias. Je lui ai présenté le système actuel
+avec une syntaxe un peu plus lâche et des choix de design un peu
+différents. Il n'est pas convaincu qu'une généralisation de l'ancien
+système (moralement, NLF avec des boîtes) ne ferait pas l'affaire. 
+C'est une question à creuser. 
+
+
+Une remarque importante, c'est qu'il existe peut-être deux formes
+d'application : l'application symbolique, inerte, qui créé de la
+donnée et l'application qui code une expansion de définition. Dans
+la nouvelle syntaxe, les deux sont confondues, c'est peut-être 
+dommage.
+
+
+Une autre question à creuser (exercice!) : trouver un exemple
+d'utilisation qui justifie la généralisation de la paramétrisation
+des boîtes à l'ordre supérieur. 
+
+
+
 Thu Jun  9, 2011  3:16 PM
 
 
