@@ -1,6 +1,29 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Wed Jun 15, 2011  1:21 PM
+
+
+J'étais étonné qu'il n'existe pas de LF avec définitions. Après une
+discussion avec Jeff, le doute est levé : 
+
+
+Algorithms for Equality and Unification in the Presence of Notational
+Definitions -- Pfenning and Schurmann
+
+
+Ils ont une notion de "strictness" pour forcer les arguments
+fonctionnels des définitions à n'apparaître qu'en position d'argument
+(qu'ils appellent rigides). Ma notion de typage semble contenir cette
+notion (et être un tout petit peu plus générale). 
+
+
+Ces explications viennent de Jeff. Je vais lire le papier pour
+m'assurer que ce qu'il m'a raconté correspond à ce qui est écrit dans
+ce papier.
+
+
+
 Wed Jun 15, 2011 10:23 AM
 
 
