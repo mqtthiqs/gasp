@@ -1,6 +1,57 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Wed Jun 15, 2011 10:23 AM
+
+
+
+J'essaie de préciser l'assertion "notre structure de donnée est
+efficace en temps et en espace". 
+
+Pour l'efficacité en espace, il faut argumenter autour de la notion
+de partage. Si je prends un terme de canonical LF, alors il existe
+toujours un terme plus petit dans notre système qui
+le dénote modulo une expansion des lets. 
+
+
+
+Pour l'efficacité en temps, on peut avancer deux points: les
+opérations sur la structure de données sont efficaces et le commit
+fait "au mieux". Pour le premier point, la syntaxe parle d'elle-même 
+(choix de lambda-bar pour faire des applications par bloc,
+des lets à plat (i.e. des records) pour avoir un accès aléatoire à
+une abbréviation, le maintien du partage à travers
+la réduction quand c'est possible, etc). 
+
+
+
+Le second point est plus subtil. On avait l'idée approximative que la
+complexité du commit, c'est-à-dire de la vérification du bon typage
+d'un delta, devait être proportionnel à la taille de ce delta. Si on
+l'observe précisément, cette idée est une cause perdue : les tests de
+conversion peuvent demander des tests d'égalité proportionnels à la
+taille du dépot. Est-ce à dire que l'incrémentalité est un illusion?
+En fait, non : on reste proportionnel à la taille de la dérivation de
+typage du delta, c'est-à-dire proportionnel à la taille de la
+dérivation de typage du terme LF obtenu par expansion des
+abbréviations moins la taille des dérivations partagées. Les tests de
+conversion issus de la partie partagée sont bien partagés. Par contre,
+les tests de conversion introduit par le delta ne le sont pas et
+peuvent être assez gros, mais on ne peut rien y faire. 
+
+
+
+Maintenant, supposons que nous laissions de véritables rédexes, et non
+de simples utilisations d'abbréviations, dans le dépôt. Cela signifie
+que des calculs qui n'ont rien à voir avec le "delta" sont laissés en
+suspens dans le dépôt, peuvent être référencés à travers le partage,
+et, surtout, dupliqués pendant les tests de conversion apparaissant
+pendant la vérification du "delta". Le temps nécessaire à la réduction
+de ces rédexs seraient alors proportionnels à la taille du dépôt et
+aux nombres de rédex dupliqués (un nombre potentiellement exponentiel
+si je ne dis pas de bêtise).
+
+
 Tue Jun 14, 2011  5:52 PM
 
 
