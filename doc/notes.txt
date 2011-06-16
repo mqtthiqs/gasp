@@ -1,6 +1,88 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun 16, 2011  1:32 PM
+
+
+
+Quelques notes supplémentaires sur la notion d'abbréviations que
+j'essaie d'introduire et formaliser pour réaliser le partage. 
+
+
+
+D'abord, je dois préciser ce que j'entends par "une abbréviation 
+bien typée ne doit pas introduire de nouveaux rédexes". Évidemment,
+en toute rigueur, c'est une assertion inexacte :
+
+  def f x = x
+  def g x = (f x, f x)
+  g 0
+
+
+  
+n'est pas rejetée par mon système de type alors que concrètement, si
+on déplie la dernière application, on obtient : 
+
+
+
+  def f x = x
+  def g x = (f x, f x)
+  (f 0, f 0)
+
+
+  
+donc, en toute rigueur, il y a un redex de plus.
+
+
+
+Ce que j'entends par "non introduction de nouveaux redexes", c'est
+qu'il n'y a pas de nouvelles lambda-abstractions de créées par les
+expansions des définitions. Dans le cadre général, i.e. dans une
+chaîne de réductions standard du lambda-calcul simplement typé, il y a
+un nombre de nouvelles lambda-abstractions qui doit être
+proportionnel à la longueur de la chaîne.
+
+
+
+En particulier, cette propriété de bon typage des abbréviations me
+permet de calculer *statiquement* le nombre d'expansion de définitions
+(i.e. de beta-reduction) à effectuer pour déplier toutes les
+définitions et obtenir la forme beta-normale de LF correspondante.
+
+
+
+(Remarque: Cette quantité est d'ailleurs probablement une bonne mesure
+du partage réalisée par cette représentation particulière de la forme
+normale. Cette mesure pourrait être utilisée pour aider à quantifier
+l'incrémentalité du vérificateur de types.)
+
+
+
+Si j'autorise des utilisations d'abbréviations potentiellement
+dangereuse comme dans l'exemple suivant :
+
+
+
+   def mul   = λn.λf.λx. f (n f x)
+   def exp   = λm.λn. n (mult m) 1
+   def three = λf.λx. f (f (f x))
+   exp three three
+
+
+   
+alors, sauf erreur de ma part, on ne peut plus calculer
+automatiquement et statiquement le nombre d'étapes pour obtenir la
+forme beta-normal du programme en LF.
+
+
+
+Cette discussion est importante car nous sommes en train de concevoir
+une structure de donnée. Si on veut argumenter sur l'efficacité des
+opérations (d'accès) sur cette structure, alors il faut donner une
+quantification précise du coût de ces opérations. 
+
+
+
 Wed Jun 15, 2011  1:21 PM
 
 
