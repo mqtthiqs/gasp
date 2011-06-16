@@ -1,6 +1,106 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun 16, 2011  2:45 PM
+
+
+
+Une autre remarque, cette fois-ci pour tirer partie au maximum de
+la notion d'abbréviation dans la conversion (et dans une unification
+potentielle), on pourrait enrichir le typage des abbréviations par
+une notion d'*injectivité*. Cette idée est mentionnée dans le papier
+de Pfenning référencé plus bas. J'en avais eu l'idée il y a quelques
+temps dans mes premières formulations du système de types pour 
+les abbréviations.
+
+
+
+Une abbréviation F est injective ssi F X = F Y <<=> X = Y. Dans 
+un langage où F peut calculer, il faut faire une analyse de 
+strictness pour s'assurer que F ne jette pas son argument. 
+
+
+
+L'intérêt d'une telle notion est d'améliorer drastiquement le test de
+conversion en ne se sentant pas obligé de dérouler les définitions
+tout en restant complet. Dans notre cas, cette propriété est garantie
+car les corps des lambda-abstractions ne représentent qu'une forme
+normale (avec partage, certes, mais dans laquelle plus aucun calcul en
+suspens ne peut transformer la forme du résultat en fonction de la
+valeur des arguments). On peut donc éviter de dérouler les
+abbréviations pendant le test de conversion, chouette. Mieux, on
+pourrait marquer les arguments par "utilisé" ou "non utilisé" alors on
+serait complets en ne testant que l'égalité des arguments utilisés.
+
+
+
+Une telle annotation des identificateurs introduits pour les
+définitions serait utile en Coq. J'en ai parlé à Hugo qui s'est montré
+très intéressé car actuellement le traitement de la delta-expansion
+dans Coq est très naïve. (En gros, on expanse beaucoup trop souvent
+les définitions pendant l'unification ou la conversion.) J'en ai aussi
+profité pour parler à Hugo de l'utilisation de l'anti-unification pour
+résoudre les problèmes d'inférence de la clause de retour de certains
+pattern-matching dépendants. On en reparlera lors d'un GT sur l'unification
+dans Coq.
+
+
+
+Pour terminer sur cette remarque, notons évidemment que l'on doit toujours
+dérouler les définitions quand on est dans le cas F X = G Y. Cependant,
+si on maintient un partage "maximal" dans le dépôt pour s'assurer que 
+
+
+
+      F x = t /\ G y = t' /\ t =_\alpha t' => F = G
+
+
+      
+alors on devrait déjà se limiter à des expansions d'abbréviations "utiles". 
+
+
+
+On peut aller encore un peu plus loin en théorie. Si on a dans le dépôt : 
+
+      F x y = k x y 
+      G x y = k y x
+
+
+      
+alors on peut remplacer toutes les occurrences de 'G x y' par 'F y x'
+et oublier la définition de G. La fonction de canonisation ici revient
+à réordonner les variables dans l'ordre dans lequel elles apparaissent
+dans le corps de l'abbréviation (pour un certain parcours de
+l'AST). Après application de cette fonction de normalisation, la règle
+précédente s'applique car les abbréviations sont alors
+alpha-equivalentes. On peut même exiger, sans perte de généralité, que
+les abbréviations définies par l'utilisateur soient normalisées (on peut
+fournir une fonction de normalisation dans l'API à l'aide smart-constructeurs
+qui laissent des annotations sur les identificateurs des abbréviations pour
+savoir dans quel ordre les applications doivent être formées de façon
+interne, sans que le programmeur ne s'en rende compte).
+
+
+
+Encore un autre cas, plus tordu : 
+
+     F x = (y = x, z = k x x |- y)
+     G x = (z = k x x |- z)
+
+
+     
+sont clairement équivalents ...
+
+
+
+Existe-t-il une définition de partage maximal (sans utiliser de
+généralisation) justifiant le traitement des abbréviations comme
+des constantes de constructeurs? (i.e. justifiant la seconde partie
+de la règle 'F x =?= G y -> ⊥' si F <<> G). 
+
+
+
+
 Thu Jun 16, 2011  1:32 PM
 
 
