@@ -1,6 +1,45 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun 16, 2011  3:29 PM
+
+
+Quelles sont les applications rencontrées lors du test de conversion? 
+
+
+       F X =?= T
+
+
+Hypothèse : 
+F et X sont des noms pour des abbréviations bien typées.
+
+
+Deux cas principaux :
+
+- "F X" est bien typée. 
+  Cela signifie qu'on est dans un des trois sous-cas suivants :
+  1. X est une donnée, F est une abbréviation avec un trou pour y 
+     brancher une donnée. On est vraiment dans le cas premier ordre.
+
+  2. X est une constante fonctionnelle (un constructeur), l'argument
+     de "F" est potentiellement utilisée en position fonctionnelle,
+     mais ce n'est pas grave. 
+     On peut raisonner comme au premier ordre, ce n'est pas grave.
+
+  3. X est une lambda-abstraction mais F promet de ne l'utiliser 
+     qu'en position d'argument.
+     On peut encore raisonner comme au premier ordre. Il n'y a 
+     toujours pas de calcul ici. C'est une donnée avec des lieurs.
+
+
+- "F X" est mal typée.
+  Cela signifie que X est une lambda-abstraction et que F peut l'utiliser
+  en position fonctionnelle. Il faut faire la réduction. 
+  On va réduire tant que ce terme est mal typé (par appel récursif au 
+  test de conversion). 
+
+
+
 Thu Jun 16, 2011  2:45 PM
 
 
