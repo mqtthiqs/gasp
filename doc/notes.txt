@@ -1,6 +1,101 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun 16, 2011  4:49 PM
+
+
+Je viens de remarquer que, dans notre cadre, il n'est pas vraiment
+malin, du point de vue du partage du moins, d'imposer des applications
+maximales des constructeurs de données. Voici un exemple de forme
+beta-normale de LF :
+
+
+k (f a b) (f a c)
+
+
+où k et f sont des constructeurs d'arité 2. 
+
+
+Si on a le droit de "couper" les applications n-aires, un bon partage,
+économe en espace, est :
+
+
+X = f a
+Y = X b
+Z = X c
+V = k Y Z
+
+
+Ce choix me semble meilleur que cela imposé par une application n-aire
+totale : 
+
+
+F X = f a X
+Y = F b
+Z = F c
+V = k Y Z
+
+
+parce que si "f" était d'arité N alors F contiendrait une application de 
+taille N alors que l'information essentielle de F est la partie "f a".
+
+
+On pourrait argumenter pour un retour à une application unaire, mais dans
+ce cas là, on nomme vraiment tout et on est alors trop gourmand en espace :
+
+
+X = f a
+Y = X b
+Z = X c
+V = k Y
+W = V Z
+
+
+Comment maintenant réinjecter les formes eta-long dans ce contexte? Si on 
+reprend notre potentiel choix de répresentation (applications n-aires mais 
+on autorise les applications partielles) alors :
+
+
+X = f a
+Y = X b
+Z = X c
+V = k Y Z
+
+
+On voit qu'on peut être assez naïf lorsque l'on est face à des
+problèmes de conversion. En effet, si je suis par exemple face au
+problème suivant :
+
+
+X b = f a b
+
+La règle actuelle interroge l'environnement pour connaître la forme
+eta-long de tête de X. On obtient : 
+
+Γ (X) = λ x. f a x
+
+Comme on obtient une lambda-abstraction, le système va se mettre en
+mode "réduction" et rajouter un binding [x -> b] dans l'environnement
+puis poursuivre avec le problème "f a x = f a b", ce qui réussira. 
+
+Dans ce cas précis, le système de type des abbréviations sait que "X" est
+une donnée : la mise en forme eta-long et la substitution semble un peu
+overkill. On pourrait ici se contenter de consommer les arguments
+les plus à droites (les deux "b"s ici) et de partir en récursion à gauche
+avec le problème "X = f a". 
+
+
+Dans tous les cas, remarquons que la mise en forme eta-long de tête des
+
+abbréviations préserve le bon typage des abbréviations.
+
+
+Ces dernières remarques sont, il me semble, de l'ordre de l'optimisation
+du test de conversion. On va les ignorer pour le moment mais je garde 
+ces notes pour mémoire.
+
+
+
 Thu Jun 16, 2011  4:20 PM
 
 
