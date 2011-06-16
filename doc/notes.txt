@@ -1,6 +1,25 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun 16, 2011  5:17 PM
+
+
+Notons que l'application binaire n'est pas réaliste en pratique pour
+implémenter une application n-aire. Un noeud n-aire se réprésente
+beaucoup efficacement par un vecteur et l'unification d'un noeud
+réprésentant une application n-aire se faire en temps constant alors
+que, avec une application unaire, l'unification est proportionnelle
+à l'arité.
+
+
+Habituellement, ce genre d'argument ne tient pas car on peut supposer
+que l'arité des constructeurs est bornée. Cependant, dans notre cas,
+ce n'est pas vrai : l'ensemble des abbréviations est voué à grossir
+et donc leur arité n'est pas bornée.
+
+
+
+
 Thu Jun 16, 2011  4:49 PM
 
 
