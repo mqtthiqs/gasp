@@ -1,6 +1,237 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jun 23, 2011  2:18 PM
+
+
+Un peu de remise en contexte. 
+
+
+Les motivations pour faire le typage incrémentalement sont claires. Je
+ne reviens pas dessus. J'essaie de donner une description rigoureuse
+du cheminement qui mène à notre approche. On se place dans le lambda
+calcul simplement typé à la Church.
+
+
+Dans le STLC, supposons que l'on ait un ensemble de dérivations D_i :
+
+
+         …
+   ————————————–
+    ∅ ⊢ t_i : τ_i 
+
+
+et que l'on se donne un nouveau terme t.
+
+    
+Un première formulation informelle du problème du typage incrémental
+est :
+
+
+"Construire une dérivation de typage pour `∅ ⊢ t : τ' 
+en réutilisant les dérivations D_i /le plus possible/."
+
+
+J'essaie maintenant de préciser cette formulation. Je suppose
+que je n'ai qu'une seule dérivation D parmi les D_i pour
+simplifier la présentation.
+
+
+** Que signifie l'expression "réutiliser une dérivation le plus possible"? **
+
+
+a. Les différentes formes de réutilisation/partage.
+
+
+Supposons un typeur "standard" pour le STLC. C'est une 
+fonction récursive qui descend dans le terme "t" en maintenant
+un environnement courant. En fonction de la forme de "t", 
+la fonction choisit une règle du système de type pour réduire
+la construction de la dérivation de "t" à la construction
+des dérivations pour les hypothèses de cette règle correctement
+instanciée. C'est en ce point qu'un programmeur fonctionnel 
+pourrait appliquer la méthode de mémoisation pour chercher 
+dans son ensemble de dérivations déjà connues celles 
+correspondantes aux nouveaux problèmes produits. Avec 
+cette stratégie, "réutiliser une dérivation" signifie
+"réutiliser une sous-dérivation entière".
+
+
+Un exemple qui marche :
+——————————————————————–
+t1 = λ(x : int). x + x
+t2 = λ(x : int). (x + x) + x
+
+
+Un exemple qui pourrait marcher :
+——————————————————————–—————————–
+t1 = λ(x : int). x + x
+t2 = λ(y : int). y + y
+
+
+(En canonisant la représentation des termes avec lieurs.)
+
+
+Un exemple qui pourrait marcher avec beaucoup de travail :
+————————————————————————————————————————————————————————––
+t1 = λ(x : int). x + x
+t2 = λ(x : int). λ (y : int). x + x
+
+
+Ce deuxième exemple échoue car le sous-problème produit est :
+
+
+   (x : int); (y : int) ⊢ (x + x) : int
+
+qui n'est pas exactement celui connu. C'est rageant car la règle
+de weakening est admissible. Une solution adhoc? 
+
+
+(On suppose ici que l'environnement est explicité et que l'on ne travaille
+ pas dans HOAS. En effet, pour le STLC en HOAS, il n'y a pas d'environnement
+ de typage et donc les problèmes de weakening sont pris automatiquement.
+ compte. On pourrait trouver un autre exemple pour lequel HOAS est aussi
+ en défaut, mais il faut mieux commencer par quelque chose de simple.)
+
+ 
+Un autre exemple qui fonctionnerait difficilement
+——————————————————————————————————————–——————————
+t1 = λ(x : int). x + x
+t2 = λ(x : int). 0 + x
+
+
+Cet exemple échoue d'une façon encore plus claire. Cependant, on
+pourrait utiliser deux règles admissibles du STLC, la substitutivité
+et la généralisation, pour argumenter la validation de la
+réutilisation de la sous-dérivation de D :
+
+
+	 (x : int) ⊢ x + x : int <<——— vient de D
+         ————————————————————————————————————–——– [ Généralisation ]
+            (x : int); (y : int) ⊢ y + x : int
+            —————————————————————————————————– [ Substitutivité ]
+  	    (x : int) ⊢ 0 + x : int
+
+	    
+Un exemple qui fonctionne mais n'est pas efficace :
+——————————————————————————————————————————————————–
+t1 = (... ((u1 u2) u3) ... uN )
+t2 = (... ((v  u2) u3) ... uN )
+
+
+Le typeur (mémoisé) va descendre N fois à gauche le long des
+applications et reconstruire une dérivation filaire de taille N. Si N
+est grand - et on le suppose potentiellement très grand - on a
+perdu. On aimerait réutiliser la dérivation de t1 dans son ensemble
+sauf là où on trouve la sous-dérivation de "u1", sans avoir
+reconstruire ce qui est réutilisé, ou même seulement un objet
+proportionnel à la profondeur de ce qui est réutilisé. En d'autres
+termes, on veut pouvoir se donner une représentation en espace
+constant, un nom, pour n'importe quel contexte de dérivation.
+
+
+Un exemple de réutilisation en toute généralité :
+————————————————————————————————————————————————–
+t1 = (+ (+ a (+ b c)) d)
+t2 = (+ (+ (+ a b) c) d)
+
+
+Ici, on aimerait réutiliser à la fois la dérivation pour le contexte
+(+ ... d) et les sous-dérivations de a, b, et c. La seule chose
+qui change ici, c'est l'arrangement de ces trois dérivations. Pour être
+plus précis, la dérivation de t1 est de la forme :
+
+            b     c
+            ———————
+    a       (+ b c)
+    ———————————————
+     (+ a (+ b c))              d
+     —————————————————————————————
+         (+ (+ a (+ b c)) d)
+
+tandis que celle de t2 est : 
+
+     a    b
+     ——————*
+     (+ a b)    c
+     ————————————–*
+     (+ (+ a b) c)              d
+     —————————————————————————————
+           (+ (+ (+ a b) c) d
+
+
+Le partage que l'on a envie d'avoir ici est indiqué avec des *.
+
+	 
+(Cela répond à la question de Matthias sur l'intérêt des abbréviations
+ paramétrées par des fonctions : ici, on veut abstraire par rapport à 
+ la partie étoilée. Cela signifie, en gros, que le partage idéal, en
+ espace et en temps, est de la forme :
+
+      D = λG. app (G a b c) d
+      Delta_t1 = λ x y z. app (app x y) z
+      Delta_t2 = λ x y z. app x (app y z)
+      Derivation_t1 = D Delta_t1
+      Derivation_t2 = D Delta_t2
+)
+
+      
+Dans notre cas, nous disons donc :
+
+
+- que "réutiliser une dérivation" signifie "extraire n'importe quel
+fragment de cette dérivation et s'en servir pour construire une
+nouvelle dérivation" ;
+
+
+- qu'un fragment d'une dérivation D est une sous-dérivation de D dont
+certains sous-arbres ont été éventuellement abstraits ;
+
+
+- que l'on peut instancier un fragment de dérivation et le "brancher"
+  comme hypothèse d'une règle ou encore l'utiliser comme argument d'un
+  autre fragment de dérivation, instancier ou non.
+
+  
+b. Réutiliser "efficacement" une dérivation
+
+  
+Un langage de "définitions d'ordre supérieur" semble approprié pour
+exprimer la réutilisation via le partage. On a ainsi une
+représentation *efficace en espace*. Est-ce une réprésentation 
+efficace en temps?
+
+
+En d'autres termes, est-ce que la vérification d'un terme représenté à
+l'aide de partages tire elle-même partie de ce partage pour ne
+vérifier que la partie "nouvelle", et ce d'une façon efficace?
+
+
+Cette propriété est difficile à formaliser. Je propose la définition
+(expérimentale) suivante:
+
+
+Soit "d" un dépôt et "u" un delta. 
+On définit le "commit" comme suit : commit d u ≡ (old = d in [ u ]_old)
+
+
+Soient T1, le terme LF issu de l'expansion d'un terme d1 et D1 la
+dérivation de typage de T1 dans LF.  Soient T2 un terme de LF, D2 sa
+dérivation de typage dans LF.
+
+
+Supposons un oracle capable de trouver le meilleur partage entre D1 et
+D2, alors il existe un "u" tel que:
+
+
+(i)  l'expansion de "commit d1 u" est T2 ;
+
+
+(ii) et la vérification de "commit d1 u" correspond à la construction
+de la partie de D2 qui n'est pas partagée.
+
+
+
 Thu Jun 16, 2011  5:17 PM
 
 
