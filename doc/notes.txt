@@ -1,6 +1,48 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Fri Jun 24, 2011  4:00 PM
+
+
+La syntaxe que je propose permet de représenter des termes plats du
+spine calcul avec des définitions dans le même esprit que ce que fait
+Pfenning dans le papier cité dans une note précédente. Les différences
+principales sont :
+
+
+- Dans Pfenning, les définitions sont fixées une fois pour toute 
+  dans la signature. Dans notre cas, les définitions font parties
+  des termes donc évoluent au fur et à mesure des commits.
+  (Ceci n'est certainement qu'une différence superficielle.)
+
+  
+- Pfenning cherche à caractériser certaines définitions à l'aide d'un
+  critère syntaxique pour s'assurer qu'elles sont injectives.  Dans
+  notre cas, nous voulons nous assurer que *toutes* les définitions
+  sont injectives de façon à garantir que le test de conversion
+  mettant en jeu une partie partagée des deux côtés sera fait sans
+  dérouler de définitions, i.e. :
+
+  
+  h (l) ≡ h (l') ⇒ l ≡ l'
+
+  
+  quelque soit "h".
+
+  
+  Nous pouvons trouver un tel critère (via du typage) car nous ne
+  souhaitons représenter uniquement les formes canoniques du spine
+  calcul, en introduisant du partage.
+
+  
+  On peut envoyer toute forme canonique du spine calcul vers un terme
+  bien typé de notre langage (avec plus ou moins de
+  partage). Réciproquement, un procédure d'expansion descendante des
+  définitions produit une forme beta-normal du spine calcul (mais pas
+  eta-long).
+
+
+
 Thu Jun 23, 2011  2:18 PM
 
 
