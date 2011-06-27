@@ -1,0 +1,111 @@
+\begin{figure}
+
+\begin{center}
+\begin{math}
+\begin{array}{rclr}
+&&&\bnfcomment{\bf Terms}\\
+\term 
+
+&::=& 
+\tapp{\head}{\listof\head} 
+& \bnfcomment{Application}
+\\
+
+&|&
+\tlam{\binding}{\term}
+& \bnfcomment{Abstraction}
+\\
+
+&|&
+\tdef{\listof{\adef}}{\term}
+& \bnfcomment{Local definitions}
+\\
+
+&|&
+\topen{\term}{\var}
+& \bnfcomment{Open}
+\\
+\\
+&&&\bnfcomment{\bf Types}\\
+\type
+
+&::=& 
+\typrod{\binding}{\type}
+& \bnfcomment{Dependent product}
+\\
+
+&|& 
+\tyapp{\tyconstant}{\listof\head}
+& \bnfcomment{Type application}
+\\
+
+&|& 
+\tydef{\listof\adef}{\type}
+& \bnfcomment{Local definitions}
+\\
+
+
+&|& 
+\tyopen{\type}{\var}
+& \bnfcomment{Open}
+\\
+\\
+&&&\bnfcomment{\bf Kinds}\\
+\kind
+
+&::=&
+\ktype
+& \bnfcomment{Type}
+\\
+
+&|&
+\kprod{\binding}{\kind}
+& \bnfcomment{Dependent kind}
+\\
+\\
+
+&&&\bnfcomment{\bf Heads}\\
+\head
+
+&::=& 
+\constant
+& \bnfcomment{Constant}
+\\
+&|& 
+\var
+& \bnfcomment{Variable}
+\\
+\\
+&&&\bnfcomment{\bf Promisses}\\
+\promisse 
+
+&::=&
+\pused
+& \bnfcomment{Used}
+\\
+
+&|&
+\punused
+& \bnfcomment{Unused}
+\\
+\\
+\adef 
+&::=& 
+\xadef{\var}{\term}{\type} 
+& \bnfcomment{\bf Definitions}
+\\
+\\
+\binding
+&::=& \bind{\var}{\promisse}{\type}
+& \bnfcomment{\bf Bindings}
+\\
+\\
+
+
+\end{array}
+\end{math}
+\end{center}
+
+\caption{The {\system} representational language (Syntax).}
+\label{ref:syntax-s2}
+\end{figure}

@@ -1,3 +1,51 @@
 % Shortcuts
-
+%%%%%%%%%%%
 \newcommand\system{$S^2$}
+
+% Layout
+%%%%%%%%
+\newcommand\bnfcomment[1]{\qquad\textsl{#1}}
+\newcommand\kw[1]{\textbf{#1}}
+\newcommand\listof[1]{\vec{#1}}
+
+% Syntax
+%%%%%%%%
+
+% Meta-variables
+\newcommand\term{t}
+\newcommand\head{h}
+\newcommand\spine{l}
+\newcommand\adef{d}
+\newcommand\binding{b}
+\newcommand\var{x}
+\newcommand\type{A}
+\newcommand\promisse{p}
+\newcommand\constant{c}
+\newcommand\tyconstant{a}
+\newcommand\kind{K}
+
+% Term construction
+\newcommand\tapp[2]{#1\,(#2)}
+\newcommand\tlam[2]{\lambda #1. #2}
+\newcommand\tdef[2]{#1 \,\kw{in}\, #2}
+\newcommand\topen[2]{[ #1 ]_{#2}}
+
+% Definition construction
+\newcommand\xadef[3]{[#1 = #2 : #3]}
+
+% Binding construction
+\newcommand\bind[3]{[#1 \stackrel{#2}{:} #3]}
+
+% Type construction
+\newcommand\typrod[2]{\pi #1. #2}
+\newcommand\tyapp[2]{#1\,(#2)}
+\newcommand\tyopen[2]{\topen{#1}{#2}}
+\newcommand\tydef[2]{\tdef{#1}{#2}}
+
+% Kind construction
+\newcommand\ktype{\star}
+\newcommand\kprod[2]{\typrod{#1}{#2}}
+
+% Promisse construction
+\newcommand\pused{\top}
+\newcommand\punused{\bot}
