@@ -1,0 +1,110 @@
+\begin{figure}
+\boxed{
+\tcterm{\tyenv}{\term}{\type}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\tcterm{\tenvcons{\tyenv}{\binding}}{\term}{\type}
+}{
+\tcterm{\tyenv}{\tlam{\binding}{\term}}{\typrod{\binding}{\type}}
+}
+
+\infer{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\
+\tcterm{\tyenv\listof\adef}{\term}{\type}
+}{
+\tcterm{\tyenv}{\topen{\term}{\var}}{\tyopen{\type}{\var}}
+}
+\\
+\infer{
+\tcdefs{\tyenv}{\listof\adef} \\\\
+\tcterm{\tenvcons{\tyenv}{\listof\adef}}{\term}{\type}
+}{
+\tcterm{\tyenv}{\tdef{\listof\adef}{\term}}{\tydef{\listof\adef}\type}
+}
+
+\infer{
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\listof\head}{\type}
+}{
+\tcterm{\tyenv}{\tapp{\head}{\listof\head}}{\type}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\tcspine{\tyenv}{\type}{\listof\head}{\type}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\equaltype{\tyenv}{\type}{\tenvlookuptype{\tyenv}{\head}} \\\\
+\tcspine{\tenvdef{\tyenv}{\var}{\head}{\type}}
+        {\typebis}
+        {\listof\head}
+        {\typebis'}
+}{
+\tcspine{\tyenv}
+        {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
+        {\head\listof\head}
+        {\typebis'}
+}
+
+\infer{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\\\
+\tcspine{\tenvcons{\tyenv}{\listof\adef}}
+        {\type}
+        {\listof\head}
+        {\typebis}
+}{
+\tcspine{\tyenv}
+        {\topen{\type}{\var}}
+        {\listof\head}
+        {\tydef{\listof\adef}\typebis}
+}
+
+\infer{
+\tcspine{\tyenv\listof\adef}
+        {\type}
+        {\listof\head}
+        {\typebis}
+}{
+\tcspine{\tyenv}
+        {\tydef{\listof\adef}{\type}}
+        {\listof\head}
+        {\tydef{\listof\adef}{\typebis}}
+}
+
+\infer{
+}{
+\tcspine{\tyenv}
+        {\type}
+        {\emptylist}
+        {\type}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\tcdefs{\tyenv}{\listof\adef}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+}{
+\tcdefs{\tyenv}{\emptylist}
+}
+
+\infer{
+\tcterm{\tyenv}{\term}{\typebis} \\
+\equaltype{\tyenv}{\type}{\typebis} \\
+\tcdefs{\tyenv\xadef{\var}{\term}{\type}}{\listof\adef}
+}{
+\tcdefs{\tyenv}{\xadef{\var}{\term}{\type}\listof\adef}
+}
+\end{mathpar}
+\end{center}
+
+% Kind? Signature? Environment?
+\caption{Type checking algorithm.}
+\end{figure}

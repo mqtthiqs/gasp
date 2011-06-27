@@ -4,14 +4,6 @@
 \usepackage{mathpartir}
 \usepackage{macros}
 
-% The following \documentclass options may be useful:
-%
-% 10pt          To set in 10-point type instead of 9-point.
-% 11pt          To set in 11-point type instead of 9-point.
-% authoryear    To obtain author/year citation style instead of numeric.
-
-\usepackage{amsmath}
-
 \begin{document}
 
 \conferenceinfo{POPL '12}{January 25-27 2012, Philadelphia, USA.} 
@@ -81,17 +73,42 @@ keyword1, keyword2
 
 \subsection{Well-shared pretyped terms}
 
-\input{wellshared}
-
 \subsubsection{A simply typed system for well-shared terms}
+\input{wellshared}
 
 \subsubsection{From Spine Form LF to {\system}, and back}
 
-\subsection{Commit as a typing algorithm}
+% FIXME: Ici, dire que toute forme beta-normale bien typée du Spine Calcul
+% FIXME: se traduit vers un objet de notre system bien formé pour les
+% FIXME: règles précédentes. 
+% FIXME: Donner la procedure?
 
-\subsubsection{Typed repository, and its operations}
+% FIXME: Réciproquement, la variante de l'expansion où l'on fait une béta-
+% FIXME: réduction après chaque expansion produit une forme canonique.
 
-\subsubsection{Sharing preserving type equality decision}
+% FIXME: En d'autres termes, ce langage capture les formes beta-normales
+% FIXME: du SC modulo du partage. On fait une distinction entre ``calcul''
+% FIXME: et ``partage'' : on ne peut pas calculer statiquement le nombre
+% FIXME: de beta-reduction à effectuer pour obtenir la forme normale d'un
+% FIXME: calcul tandis que l'on peut le faire en présence de partage. 
+% FIXME: Cette quantité est sans doute une bonne mesure du partage.
+
+\subsection{Commit as a type checking algorithm}
+
+% FIXME: Indiquer quelque part qu'en pratique, on infere les annotations
+% FIXME: de type des definitions mais qu'on les suppose donnees ici pour
+% FIXME: simplifier la presentation. 
+
+\subsubsection{Typed repositories, and their operations}
+
+\paragraph{checkout}
+
+\paragraph{commit}
+\input{commit}
+
+\paragraph{reshare}
+
+\subsubsection{Sharing-preserving type equality algorithm}
 
 \subsection{Safe incremental type checking using {\system}}
 
@@ -102,7 +119,9 @@ keyword1, keyword2
 % Application
 \section{Application to simply typed $\lambda$-calculus}
 
-\section{Related Work}
+\section{Related work}
+
+\section{Future work}
 
 \section{Conclusion}
 

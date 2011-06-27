@@ -1,5 +1,6 @@
 \RequirePackage{stmaryrd}
 \RequirePackage{amssymb}
+\RequirePackage{amsmath}
 
 % Shortcuts
 %%%%%%%%%%%
@@ -34,7 +35,7 @@
 % Term construction
 \newcommand\tapp[2]{#1\,(#2)}
 \newcommand\tlam[2]{\lambda #1. #2}
-\newcommand\tdef[2]{#1 \,\kw{in}\, #2}
+\newcommand\tdef[2]{#1 \;\kw{in}\; #2}
 \newcommand\topen[2]{[ #1 ]_{#2}}
 
 % Misc
@@ -89,6 +90,7 @@
 % Constructions
 \newcommand\tenvempty{\bullet}
 \newcommand\tenvlookup[2]{#1[#2]}
+\newcommand\tenvlookuptype[2]{#1(#2)}
 \newcommand\tenvcons[2]{#1 \, #2}
 \newcommand\tenvbind[4]{\tenvcons{#1}{\bind{#2}{#3}{#4}}}
 \newcommand\tenvdef[4]{\tenvcons{#1}{\xadef{#2}{#3}{#4}}}
@@ -118,3 +120,13 @@
 \newcommand\wellsharedkindspine[3]{#1 ; #2 \vdash_{s} #3}
 \newcommand\subpretype[2]{#1 \,\trianglelefteq\, #2}
 
+% Type checking
+%%%%%%%%%%%%%%%
+
+% Judgements
+\newcommand\tcterm[3]{#1 \vdash #2 \Uparrow #3}
+\newcommand\tcdefs[2]{#1 \vdash #2}
+\newcommand\tcspine[4]{#1 ; #2 \vdash #3 \Uparrow #4}
+\newcommand\equalterm[4]{#1 \vdash #2 \equiv #3 : #4}
+\newcommand\whnf[6]{#1 \vdash #2 : #3 \,\triangleleft\, #4 \Downarrow \tdef{#5}{#6}}
+\newcommand\equaltype[3]{#1 \vdash #2 \equiv #3}
