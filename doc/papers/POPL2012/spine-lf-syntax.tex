@@ -1,0 +1,55 @@
+\begin{figure}
+\begin{center}
+\begin{math}
+\begin{array}{rclr}
+&&&\bnfcomment{\bf Objects}\\
+\slfterm
+
+&::=& 
+\tapp{\head}{\listof\slfterm} 
+& \bnfcomment{Head application}
+\\
+&|& 
+\tapp{\slfterm}{\listof\slfterm} 
+& \bnfcomment{Application}
+\\
+
+&|&
+\tlam{\slfbind{\var}{\slftype}}{\slfterm}
+& \bnfcomment{Abstraction}
+\\
+\\
+&&&\bnfcomment{\bf Types}\\
+\slftype
+
+&::=&
+\typrod{\slfbind{\var}{\slftype}}{\slftype}
+& \bnfcomment{Dependent product}
+\\
+
+&|&
+\tyapp{\tyconstant}{\listof\slfterm}
+& \bnfcomment{Type construction}
+\\
+\\
+&&&\bnfcomment{\bf Kinds}\\
+\slfkind
+
+&::=&
+\ktype
+& \bnfcomment{Type}
+\\
+
+&|&
+\kprod{\binding}{\slfkind}
+& \bnfcomment{Dependent kind}
+\\
+\\
+
+% FIXME: Signature?
+\end{array}
+\end{math}
+\end{center}
+\caption{Spine calculus (Syntax).}
+\label{fig:syntax-s2}
+\end{figure}
