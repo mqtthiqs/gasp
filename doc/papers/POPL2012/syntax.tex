@@ -100,6 +100,23 @@
 & \bnfcomment{\bf Bindings}
 \\
 \\
+&&&\bnfcomment{\bf Environments}\\
+\tyenv 
+
+&::=&
+\tenvempty
+& \bnfcomment{Empty environment}
+\\
+
+&|&
+\tenvcons{\tyenv}{\binding}
+& \bnfcomment{Bind}
+\\
+&|&
+\tenvcons{\tyenv}{\adef}
+& \bnfcomment{Define}
+\\
+
 % FIXME: Signature?
 \end{array}
 \end{math}

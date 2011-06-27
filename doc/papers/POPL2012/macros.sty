@@ -1,3 +1,5 @@
+\RequirePackage{stmaryrd}
+
 % Shortcuts
 %%%%%%%%%%%
 \newcommand\system{$S^2$}
@@ -5,20 +7,25 @@
 % Layout
 %%%%%%%%
 \newcommand\bnfcomment[1]{\qquad\textsl{#1}}
+\newcommand\defcomment[1]{\textsl{#1}}
 \newcommand\kw[1]{\textbf{#1}}
 \newcommand\listof[1]{\vec{#1}}
+\newcommand\emptylist{\bullet}
+\newcommand\boxedtitle{\fbox{#1}}
 
 % Our system Syntax
 %%%%%%%%%%%%%%%%%%%
 
 % Meta-variables
 \newcommand\term{t}
+\newcommand\termbis{u}
 \newcommand\head{h}
 \newcommand\spine{l}
 \newcommand\adef{d}
 \newcommand\binding{b}
 \newcommand\var{x}
 \newcommand\type{A}
+\newcommand\typebis{B}
 \newcommand\promisse{p}
 \newcommand\constant{c}
 \newcommand\tyconstant{a}
@@ -30,8 +37,11 @@
 \newcommand\tdef[2]{#1 \,\kw{in}\, #2}
 \newcommand\topen[2]{[ #1 ]_{#2}}
 
+% Misc
+\newcommand\oftype[2]{#1 : #2}
+
 % Definition construction
-\newcommand\xadef[3]{[#1 = #2 : #3]}
+\newcommand\xadef[3]{[#1 = \oftype{#2}{#3}]}
 
 % Binding construction
 \newcommand\bind[3]{[#1 \stackrel{#2}{:} #3]}
@@ -54,10 +64,31 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 % Metavariables
-
 \newcommand\slfterm{s}
 \newcommand\slftype{T}
 \newcommand\slfkind{S}
-
+% Constructions
 \newcommand\slfbind[2]{(#1 : #2)}
+
+% Opening
+%%%%%%%%%
+\newcommand\openscope[3]{#1 \vdash #2 \Uparrow #3}
+\newcommand\openscopespine[5]{#1 ; #2 \vdash #3 \,\triangleleft\, #4 \Uparrow #5}
+
+% Expansion
+%%%%%%%%%%%
+\newcommand\interpret[2]{\llbracket #1 \rrbracket_{#2}}
+
+% Environments
+%%%%%%%%%%%%%%
+
+% Metavariables
+\newcommand\tyenv{\Gamma}
+% Constructions
+\newcommand\tenvempty{\bullet}
+\newcommand\tenvlookup[2]{#1[#2]}
+\newcommand\tenvcons[2]{#1,\, #2}
+\newcommand\tenvbind[4]{\tenvcons{#1}{\bind{#2}{#3}{#4}}}
+\newcommand\tenvdef[4]{\tenvcons{#1}{\xadef{#2}{#3}{#4}}}
+
 

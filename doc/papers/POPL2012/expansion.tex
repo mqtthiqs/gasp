@@ -1,0 +1,68 @@
+\begin{figure}
+\begin{center}
+\begin{math}
+\begin{array}{rclr}
+
+\interpret{\tapp{\head}{\listof\head}}{\tyenv}
+&=& 
+\tapp
+    {\interpret{\head}{\tyenv}}
+    {\interpret{\listof\head}{\tyenv}} 
+\\
+\interpret
+    {\tlam{\bind{\var}{\promisse}{\type}}{\term}}
+    {\tyenv}
+&=&
+\tlam{\slfbind{\var}{\interpret{\type}{\tyenv}}}
+     {\interpret{\term}{\tenvbind{\tyenv}{\var}{\promisse}{\type}}}
+\\
+\interpret
+    {\tdef{\listof\adef}{\term}}
+    {\tyenv}
+&=&
+\interpret{\term}{\tenvcons\tyenv{\listof\adef}}
+\\
+\interpret{\topen{\term}{\var}}{\tyenv}
+&=&
+\interpret{\term}{\tenvcons\tyenv{\listof\adef}}
+&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
+\\
+\interpret{\constant}{\tyenv} 
+&=&
+\constant
+\\
+\interpret{\var}{\tyenv} 
+&=&
+\interpret{\term}{\tyenv}
+& \defcomment{where } \tenvlookup{\tyenv}{x} = (\oftype{\term}{\type})
+\\
+\interpret{\typrod{\bind{\var}{\promisse}{\type}}{\typebis}}{\tyenv}
+&=&
+\typrod{\slfbind{\var}{\interpret{\type}{\tyenv}}}
+     {\interpret{\typebis}{\tenvbind{\tyenv}{\var}{\promisse}{\type}}}
+\\
+\interpret{\tyapp{\tyconstant}{\listof\head}}
+          {\tyenv}
+&=&
+\tyapp
+    {\tyconstant}
+    {\interpret{\listof\head}{\tyenv}} 
+\\
+\interpret
+    {\tydef{\listof\adef}{\type}}
+    {\tyenv}
+&=&
+\interpret{\type}{\tenvcons\tyenv{\listof\adef}}
+\\
+\interpret{\tyopen{\type}{\var}}{\tyenv}
+&=&
+\interpret{\type}{\tenvcons\tyenv{\listof\adef}}
+&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
+\\
+% FIXME: Manque le cas des \listof.
+\end{array}
+\end{math}
+\end{center}
+\caption{Expansion.}
+\label{fig:expansion}
+\end{figure}
