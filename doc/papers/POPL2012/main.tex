@@ -2,7 +2,6 @@
 
 \usepackage{whizzy}
 \usepackage{mathpartir}
-\usepackage{stmaryrd}
 \usepackage{macros}
 
 % The following \documentclass options may be useful:
@@ -68,13 +67,21 @@ keyword1, keyword2
 
 \subsubsection{Interpretation by expansion}
 
+\paragraph{Spine calculus}
 \input{spine-lf-syntax}
 
+\paragraph{Importing shared definitions in scope}
 \input{openscope}
 
+\paragraph{Expansion of {\system} objects into spine calculus objects}
 \input{expansion}
 
+% FIXME: tout ceci n'a de sens que si openscope termine. 
+% FIXME: ceci est garanti, en particulier, par le systeme de type qui suit. 
+
 \subsection{Well-shared pretyped terms}
+
+\input{wellshared}
 
 \subsubsection{A simply typed system for well-shared terms}
 

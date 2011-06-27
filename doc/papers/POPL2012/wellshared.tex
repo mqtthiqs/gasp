@@ -1,0 +1,196 @@
+\begin{figure}
+\boxed{
+\wellsharedterm{\tyenv}{\term}{\pretype}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\wellsharedhead{\tyenv}{\head}{\pused}{\pretype_1}\\\\
+\wellsharedspine{\tyenv}{\pretype_1}{\listof\head}{\pretype_2}
+}{
+\wellsharedterm{\tyenv}{\tapp{\head}{\listof\head}}{\pretype_2}
+}
+
+\infer
+{
+\wellsharedterm{\tenvbind\tyenv{\var}{\promisse}{\type}}
+               {\term}
+               {\pretype}
+}{
+\wellsharedterm{\tyenv}
+               {\tlam{\bind{\var}{\promisse}{\type}}{\term}}
+               {\ptarrow{\erase{\type}}{\promisse}{\pretype}}
+}
+
+\infer{
+\wellsharedadefs{\tyenv}{\listof\head} \\\\
+\wellsharedterm{\tenvcons{\tyenv}{\listof\head}}{\term}{\sigma}
+}{
+\wellsharedterm{\tyenv}{\tdef{\listof\head}{\term}}{\sigma}
+}
+
+\infer{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\head}\\\\
+\wellsharedterm{\tenvcons{\tyenv}{\listof\head}}{\term}{\sigma}
+}{
+\wellsharedterm{\tyenv}{\topen{\term}{\var}}{\sigma}
+}
+\end{mathpar}
+\end{center}
+
+
+\boxed{
+\wellsharedhead{\tyenv}{\head}{\promisse}{\pretype}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\tenvlookup{\tyenv}{\var} = \bind{\var}{\promisse}{\type}
+}{
+\wellsharedhead{\tyenv}{\var}{\promisse}{\erase{\type}}
+}
+
+%
+% J'ai l'impression que l'on peut sans risque affirmer
+% qu'une définition est toujours utilisable. En effet,
+% si on avait un alias de la forme :
+%       fun (x :_unused A). (y = x) in y
+% alors la définition [y = x] serait mal typée.
+% Cela briserait l'invariant que les environnements 
+% ne contiennent que des définitions bien typées par
+% ce système. 
+\infer{
+\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\type})
+}{
+\wellsharedhead{\tyenv}{\var}{\pused}{\erase{\type}}
+}
+
+\infer{
+}{
+\wellsharedhead{\tyenv}{\constant}{\pused}{\erase{\type}}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\wellsharedspine{\tyenv}{\pretype}{\listof\head}{\pretype}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+}{
+\wellsharedspine{\tyenv}{\pretype}{\emptylist}{\pretype}
+}
+
+\infer{
+\wellsharedhead{\tyenv}{\head}{\promisse_2}{\pretype_1'} \\\\
+\promisse_1 \leq \promisse_2 \\
+\subpretype{\pretype_1'}{\pretype_1}
+}{
+\wellsharedspine{\tyenv}{\ptarrow{\pretype_1}{\promisse_1}{\pretype_2}}
+                {\head\listof\head}
+                {\pretype_3}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\wellsharedadefs{\tyenv}{\listof\adef}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+}{
+\wellsharedadefs{\tyenv}{\emptylist}
+}
+
+\infer{
+\wellsharedterm{\tyenv}{\term}{\erase{\type}}\\
+\wellsharedadefs{\tenvdef{\tyenv}{\var}{\type}{\term}}{\listof\adef}
+}{
+\wellsharedadefs{\tyenv}{\xadef{\var}{\type}{\term}\listof\adef}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\wellsharedtype{\tyenv}{\type}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\wellsharedtype{\tenvcons\tyenv\binding}{\type}
+}{
+\wellsharedtype{\tyenv}{\typrod{\binding}{\type}}
+}
+
+\infer{
+\wellsharedadefs{\tyenv}{\listof\adef} \\\\
+\wellsharedtype{\tenvcons{\tyenv}{\listof\adef}}{\type}
+}{
+\wellsharedtype{\tyenv}{\tydef{\listof\adef}{\type}}
+}
+
+\infer{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\head}\\\\
+\wellsharedtype{\tenvcons\tyenv{\listof\head}}{\type}
+}{
+\wellsharedtype{\tyenv}{\tyopen{\type}{\var}}
+}
+
+\infer{
+% \signature\tyconstant = \kind
+\wellsharedkindspine{\tyenv}{\erase\kind}{\listof\head}
+}{
+\wellsharedtype{\tyenv}{\tyapp{\tyconstant}{\listof\head}}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\wellsharedkindspine{\tyenv}{\prekind}{\listof\adef}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\wellsharedhead{\tyenv}{\head}{\promisse_2}{\pretype'} \\\\
+\promisse_1 \leq \promisse_2 \\
+\subpretype{\pretype_1'}{\pretype_1}
+}{
+\wellsharedkindspine{\tyenv}
+                    {\pkarrow{\pretype}{\promisse_1}{\prekind}}
+                    {\head\listof\head}
+}
+
+\infer{
+}{
+\wellsharedkindspine{\tyenv}{\pkconst}{\emptylist}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\subpretype{\pretype}{\pretype}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+}{
+\subpretype{\ptconst}{\ptconst}
+}
+
+\infer{
+\promisse \leq \promisse' \\
+\subpretype{\pretype_1'}{\pretype_1} \\
+\subpretype{\pretype_2}{\pretype_2'} \\
+}{
+\subpretype{\ptarrow{\pretype_1}{\promisse}{\pretype_2}} 
+           {\ptarrow{\pretype_1'}{\promisse'}{\pretype_2'}}
+}
+% FIXME: Rajouter transitivite et reflexivite?
+\end{mathpar}
+\end{center}
+
+\caption{Well-formed sharing.}
+\label{fig:well-shared}
+\end{figure}
