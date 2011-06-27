@@ -1,0 +1,149 @@
+\begin{figure}
+\boxed{
+\equalterm{\tyenv}{\term}{\term}{\type}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\whnf{\tyenv}{\term}{\type}{\emptylist}{\listof\adef}{\term'}\\\\
+\whnf{\tyenv}{\termbis}{\type}{\emptylist}{{\listof\adef}'}{\termbis'}\\\\
+\equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\listof\adef}}{{\listof\adef}'}}
+              {\term'}
+              {\termbis'}
+              {\type}
+}{
+\equalterm{\tyenv}{\term}{\termbis}{\type}
+}
+\end{mathpar}
+\end{center}
+
+\boxed{
+\equalwhnfterm{\tyenv}{\term}{\term}{\type}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+\equalspine{\tyenv}{\listof\head}{{\listof\head}'}
+}{
+\equalwhnfterm{\tyenv}{\tapp{\head}{\listof\head}}{\tapp{\head}{{\listof\head}'}}
+              {\type}
+}
+
+\infer{
+% FIXME: Probleme de notation ici.
+\whnf{\tyenv}
+     {\tenvlookup{\tyenv}{\var}}{\type}{\listof\head}
+     {\listof\adef}{\term'}\\\\
+\whnf{\tyenv}
+     {\tenvlookup{\tyenv}{\var'}}{\type}
+     {{\listof\head}'}{{\listof\adef}'}{\termbis'}\\\\
+\equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\listof\adef}}{{\listof\adef}'}}
+              {\term'}
+              {\termbis'}
+              {\type}
+}{
+\equalwhnfterm{\tyenv}
+              {\tapp{\var}{\listof\head}}
+              {\tapp{\var'}{{\listof\head}'}}
+              {\type}
+}
+
+\infer{
+\equalwhnfterm{\tenvbind{\tyenv}{\var}{\promise}{\type}}
+              {\term}
+              {\tapp{\head}{\concat{\listof\head}{\var}}}
+              {\type}
+}{
+\equalwhnfterm{\tyenv}
+              {\tlam{\bind{\var}{\promise}{\type}}{\term}}
+              {\tapp{\head}{\listof\head}}
+              {\typrod{\bind{\var}{\promise}{\type}}\type}
+}
+
+\infer{
+\equalwhnfterm{\tenvbind{\tyenv}{\var}{\promise}{\type}}
+              {\term}
+              {\termbis}
+              {\type}
+}{
+\equalwhnfterm{\tyenv}
+              {\tlam{\bind{\var}{\promise}{\type}}{\term}}
+              {\tlam{\bind{\var}{\promise}{\type}}{\termbis}}
+              {\typrod{\bind{\var}{\promise}{\type}}\type}
+}
+
+% FIXME: Manque les cas ``type = \tyopen{}{}'' et ``type = \tydef{}{}''. 
+% FIXME: Manque aussi quelque cas symetrique ... 
+% FIXME: On omet?
+\end{mathpar}
+\end{center}
+
+\boxed{
+\equaltype{\tyenv}{\type}{\type}
+}
+\begin{center}
+\begin{mathpar}
+% FIXME: Il faut argumenter ici que le choix arbitraire de \promise est correct. 
+\infer{
+\equaltype{\tyenv}{\type}{\type'} \\
+\equaltype{\tenvbind{\tyenv}{\var}{\promise}{\type}}
+          {\typebis}
+          {\typebis'}
+}{
+\equaltype{\tyenv}
+          {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
+          {\typrod{\bind{\var}{\promise'}{\type'}}{\typebis'}}
+}
+
+\infer{
+\equalspine{\tyenv}{\listof\head}{{\listof\head}'}
+}{
+\equaltype{\tyenv}
+          {\tyapp{\tyconstant}{\listof\head}}
+          {\tyapp{\tyconstant}{{\listof\head}'}}
+          {}
+}
+% FIXME: Manque les cas ``type = \tyopen{}{}'' et ``type = \tydef{}{}''. 
+% FIXME: Manque aussi quelque cas symetrique ... 
+% FIXME: On omet?
+\end{mathpar}
+\end{center}
+
+\boxed{
+\equalspine{\tyenv}{\listof\head}{\listof\head}
+}
+\begin{center}
+\begin{mathpar}
+\infer{
+}{
+\equalspine{\tyenv}{\emptylist}{\emptylist}
+}
+
+\infer{
+\equalspine{\tyenv}
+           {{\listof\head}}
+           {{\listof\head}'}
+}{
+\equalspine{\tyenv}
+           {\head{\listof\head}}
+           {\head{\listof\head}'}
+}
+
+\infer{
+\tenvlookup{\tyenv}{\var} = \oftype{\term}{\type} \\
+\tenvlookup{\tyenv}{\var'} = \oftype{\termbis}{\typebis} \\\\
+\equaltype{\tyenv}{\type}{\typebis} \\
+\equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
+           {{\listof\head}}
+           {{\listof\head}'}
+}{
+\equalspine{\tyenv}
+           {\var{\listof\head}}
+           {\var'{\listof\head}'}
+}
+\end{mathpar}
+\end{center}
+
+% FIXME: Kind equality? 
+\caption{Decision procedure for equality. (Some obvious cases are omitted.)}
+\end{figure}
