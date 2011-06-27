@@ -28,8 +28,8 @@
                {\listof\head}
                {\listof\adef}
 }{
-\openscopespine{\tyenv}{\typrod{\bind{\var}{\promisse}{\type}}{\typebis}}
-               {\tlam{\bind{\var}{\promisse}{\type}}{\term}}
+\openscopespine{\tyenv}{\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
+               {\tlam{\bind{\var}{\promise}{\type}}{\term}}
                {\head\listof\head}
                {\xadef{\var}{\head}{\type}\listof\adef}
 }
@@ -79,7 +79,7 @@
 }
 
 \infer{
-\tenvlookup{\tyenv}{\var} = \bind{\var}{\promisse}{\type}
+\tenvlookup{\tyenv}{\var} = \bind{\var}{\promise}{\type}
 }{
 \openscopespine{\tyenv}{\type}
                {\tapp{\var}{\listof\head}}

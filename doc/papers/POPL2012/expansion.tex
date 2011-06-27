@@ -10,11 +10,11 @@
     {\interpret{\listof\head}{\tyenv}} 
 \\
 \interpret
-    {\tlam{\bind{\var}{\promisse}{\type}}{\term}}
+    {\tlam{\bind{\var}{\promise}{\type}}{\term}}
     {\tyenv}
 &=&
 \tlam{\slfbind{\var}{\interpret{\type}{\tyenv}}}
-     {\interpret{\term}{\tenvbind{\tyenv}{\var}{\promisse}{\type}}}
+     {\interpret{\term}{\tenvbind{\tyenv}{\var}{\promise}{\type}}}
 \\
 \interpret
     {\tdef{\listof\adef}{\term}}
@@ -24,8 +24,8 @@
 \\
 \interpret{\topen{\term}{\var}}{\tyenv}
 &=&
-\interpret{\term}{\tenvcons\tyenv{\listof\adef}}
-&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
+\interpret{\term}{\tenvcons\tyenv{\listof\adef}} \\
+&&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
 \\
 \interpret{\constant}{\tyenv} 
 &=&
@@ -33,13 +33,13 @@
 \\
 \interpret{\var}{\tyenv} 
 &=&
-\interpret{\term}{\tyenv}
-& \defcomment{where } \tenvlookup{\tyenv}{x} = (\oftype{\term}{\type})
+\interpret{\term}{\tyenv} \\
+&& \defcomment{where } \tenvlookup{\tyenv}{x} = (\oftype{\term}{\type})
 \\
-\interpret{\typrod{\bind{\var}{\promisse}{\type}}{\typebis}}{\tyenv}
+\interpret{\typrod{\bind{\var}{\promise}{\type}}{\typebis}}{\tyenv}
 &=&
 \typrod{\slfbind{\var}{\interpret{\type}{\tyenv}}}
-     {\interpret{\typebis}{\tenvbind{\tyenv}{\var}{\promisse}{\type}}}
+     {\interpret{\typebis}{\tenvbind{\tyenv}{\var}{\promise}{\type}}}
 \\
 \interpret{\tyapp{\tyconstant}{\listof\head}}
           {\tyenv}
@@ -56,8 +56,8 @@
 \\
 \interpret{\tyopen{\type}{\var}}{\tyenv}
 &=&
-\interpret{\type}{\tenvcons\tyenv{\listof\adef}}
-&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
+\interpret{\type}{\tenvcons\tyenv{\listof\adef}}\\
+&&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
 \\
 % FIXME: Manque le cas des \listof.
 \end{array}

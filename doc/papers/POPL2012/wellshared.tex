@@ -13,13 +13,13 @@
 
 \infer
 {
-\wellsharedterm{\tenvbind\tyenv{\var}{\promisse}{\type}}
+\wellsharedterm{\tenvbind\tyenv{\var}{\promise}{\type}}
                {\term}
                {\pretype}
 }{
 \wellsharedterm{\tyenv}
-               {\tlam{\bind{\var}{\promisse}{\type}}{\term}}
-               {\ptarrow{\erase{\type}}{\promisse}{\pretype}}
+               {\tlam{\bind{\var}{\promise}{\type}}{\term}}
+               {\ptarrow{\erase{\type}}{\promise}{\pretype}}
 }
 
 \infer{
@@ -40,14 +40,14 @@
 
 
 \boxed{
-\wellsharedhead{\tyenv}{\head}{\promisse}{\pretype}
+\wellsharedhead{\tyenv}{\head}{\promise}{\pretype}
 }
 \begin{center}
 \begin{mathpar}
 \infer{
-\tenvlookup{\tyenv}{\var} = \bind{\var}{\promisse}{\type}
+\tenvlookup{\tyenv}{\var} = \bind{\var}{\promise}{\type}
 }{
-\wellsharedhead{\tyenv}{\var}{\promisse}{\erase{\type}}
+\wellsharedhead{\tyenv}{\var}{\promise}{\erase{\type}}
 }
 
 %
@@ -83,11 +83,11 @@
 }
 
 \infer{
-\wellsharedhead{\tyenv}{\head}{\promisse_2}{\pretype_1'} \\\\
-\promisse_1 \leq \promisse_2 \\
+\wellsharedhead{\tyenv}{\head}{\promise_2}{\pretype_1'} \\\\
+\promise_1 \leq \promise_2 \\
 \subpretype{\pretype_1'}{\pretype_1}
 }{
-\wellsharedspine{\tyenv}{\ptarrow{\pretype_1}{\promisse_1}{\pretype_2}}
+\wellsharedspine{\tyenv}{\ptarrow{\pretype_1}{\promise_1}{\pretype_2}}
                 {\head\listof\head}
                 {\pretype_3}
 }
@@ -153,12 +153,12 @@
 \begin{center}
 \begin{mathpar}
 \infer{
-\wellsharedhead{\tyenv}{\head}{\promisse_2}{\pretype'} \\\\
-\promisse_1 \leq \promisse_2 \\
+\wellsharedhead{\tyenv}{\head}{\promise_2}{\pretype'} \\\\
+\promise_1 \leq \promise_2 \\
 \subpretype{\pretype_1'}{\pretype_1}
 }{
 \wellsharedkindspine{\tyenv}
-                    {\pkarrow{\pretype}{\promisse_1}{\prekind}}
+                    {\pkarrow{\pretype}{\promise_1}{\prekind}}
                     {\head\listof\head}
 }
 
@@ -180,12 +180,12 @@
 }
 
 \infer{
-\promisse \leq \promisse' \\
+\promise \leq \promise' \\
 \subpretype{\pretype_1'}{\pretype_1} \\
 \subpretype{\pretype_2}{\pretype_2'} \\
 }{
-\subpretype{\ptarrow{\pretype_1}{\promisse}{\pretype_2}} 
-           {\ptarrow{\pretype_1'}{\promisse'}{\pretype_2'}}
+\subpretype{\ptarrow{\pretype_1}{\promise}{\pretype_2}} 
+           {\ptarrow{\pretype_1'}{\promise'}{\pretype_2'}}
 }
 % FIXME: Rajouter transitivite et reflexivite?
 \end{mathpar}
