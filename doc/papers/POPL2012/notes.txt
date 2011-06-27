@@ -1,8 +1,0 @@
-Proposition de titre: Type-safe incremental type checking
-
-1. Introduction
-
-Context: 
-Software development is more about editing than writing. 
-
-
