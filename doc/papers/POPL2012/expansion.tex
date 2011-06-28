@@ -17,15 +17,15 @@
      {\interpret{\term}{\tenvbind{\tyenv}{\var}{\promise}{\type}}}
 \\
 \interpret
-    {\tdef{\listof\adef}{\term}}
+    {\tdef{\adefs}{\term}}
     {\tyenv}
 &=&
-\interpret{\term}{\tenvcons\tyenv{\listof\adef}}
+\interpret{\term}{\tenvcons\tyenv{\adefs}}
 \\
 \interpret{\topen{\term}{\var}}{\tyenv}
 &=&
-\interpret{\term}{\tenvcons\tyenv{\listof\adef}} \\
-&&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
+\interpret{\term}{\tenvcons\tyenv{\adefs}} \\
+&&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs}
 \\
 \interpret{\constant}{\tyenv} 
 &=&
@@ -49,15 +49,15 @@
     {\interpret{\spine}{\tyenv}} 
 \\
 \interpret
-    {\tydef{\listof\adef}{\type}}
+    {\tydef{\adefs}{\type}}
     {\tyenv}
 &=&
-\interpret{\type}{\tenvcons\tyenv{\listof\adef}}
+\interpret{\type}{\tenvcons\tyenv{\adefs}}
 \\
 \interpret{\tyopen{\type}{\var}}{\tyenv}
 &=&
-\interpret{\type}{\tenvcons\tyenv{\listof\adef}}\\
-&&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef}
+\interpret{\type}{\tenvcons\tyenv{\adefs}}\\
+&&\defcomment{where } \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs}
 \\
 % FIXME: Manque le cas des \listof.
 \end{array}

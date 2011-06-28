@@ -95,7 +95,7 @@
 \end{center}
 
 \boxed{
-\wellsharedadefs{\tyenv}{\listof\adef}
+\wellsharedadefs{\tyenv}{\adefs}
 }
 \begin{center}
 \begin{mathpar}
@@ -106,9 +106,9 @@
 
 \infer{
 \wellsharedterm{\tyenv}{\term}{\erase{\type}}\\
-\wellsharedadefs{\tenvdef{\tyenv}{\var}{\type}{\term}}{\listof\adef}
+\wellsharedadefs{\tenvdef{\tyenv}{\var}{\type}{\term}}{\adefs}
 }{
-\wellsharedadefs{\tyenv}{\xadef{\var}{\type}{\term}\listof\adef}
+\wellsharedadefs{\tyenv}{\xadef{\var}{\type}{\term}\adefs}
 }
 \end{mathpar}
 \end{center}
@@ -125,10 +125,10 @@
 }
 
 \infer{
-\wellsharedadefs{\tyenv}{\listof\adef} \\\\
-\wellsharedtype{\tenvcons{\tyenv}{\listof\adef}}{\type}
+\wellsharedadefs{\tyenv}{\adefs} \\\\
+\wellsharedtype{\tenvcons{\tyenv}{\adefs}}{\type}
 }{
-\wellsharedtype{\tyenv}{\tydef{\listof\adef}{\type}}
+\wellsharedtype{\tyenv}{\tydef{\adefs}{\type}}
 }
 
 \infer{
@@ -148,7 +148,7 @@
 \end{center}
 
 \boxed{
-\wellsharedkindspine{\tyenv}{\prekind}{\listof\adef}
+\wellsharedkindspine{\tyenv}{\prekind}{\adefs}
 }
 \begin{center}
 \begin{mathpar}

@@ -1,6 +1,6 @@
 \begin{figure}
 \boxed{
-\openscope{\tyenv}{\term}{\listof\adef}
+\openscope{\tyenv}{\term}{\adefs}
 }
 \begin{center}
 \begin{mathpar}
@@ -9,16 +9,16 @@
                {\type}
                {\term}
                {\emptylist}
-               {\listof\adef}
+               {\adefs}
 }{
-\openscope{\tyenv}{\oftype{\term}{\type}}{\listof\adef}
+\openscope{\tyenv}{\oftype{\term}{\type}}{\adefs}
 }
 
 % FIXME: Les \' ne se voient pas tres bien.
 \end{mathpar}
 \end{center}
 \boxed{
-\openscopespine{\tyenv}{\type}{\term}{\spine}{\listof\adef}
+\openscopespine{\tyenv}{\type}{\term}{\spine}{\adefs}
 }
 \begin{center}
 \begin{mathpar}
@@ -26,12 +26,12 @@
 \openscopespine{\tenvdef{\tyenv}{\var}{\head}{\type}}{\typebis}
                {\term}
                {\spine}
-               {\listof\adef}
+               {\adefs}
 }{
 \openscopespine{\tyenv}{\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
                {\tlam{\bind{\var}{\promise}{\type}}{\term}}
                {\head\spine}
-               {\xadef{\var}{\head}{\type}\listof\adef}
+               {\xadef{\var}{\head}{\type}\adefs}
 }
 
 \infer{
@@ -44,20 +44,20 @@
 }
 
 \infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\
-\openscopespine{\tenvcons{\tyenv}{\listof\adef}}{\type}
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
+\openscopespine{\tenvcons{\tyenv}{\adefs}}{\type}
                {\term}
                {\spine}
-               {{\listof\adef}'}
+               {{\adefs}'}
 }{
 \openscopespine{\tyenv}{\type}
                {\topen{\term}{\var}}
                {\spine}
-               {\listof\adef{\listof\adef}'}
+               {\adefs{\adefs}'}
 }
 
 \infer{
-\openscopespine{\tenvcons{\tyenv}{\listof\adef}}
+\openscopespine{\tenvcons{\tyenv}{\adefs}}
                {\type}
                {\term}
                {\spine}
@@ -65,9 +65,9 @@
 }{
 \openscopespine{\tyenv}
                {\type}
-               {\tdef{\listof\adef}{\term}}
+               {\tdef{\adefs}{\term}}
                {\spine}
-               {\listof\adef {\listof{\adef}}'}
+               {\adefs {\listof{\adef}}'}
 }
 
 \infer{
@@ -93,13 +93,13 @@
                {\type}
                {\term}
                {\spine{\spine}'}
-               {\listof\adef}
+               {\adefs}
 }{
   \openscopespine{\tyenv}
                  {\type}
                  {\tapp{\var}{\spine}}
                  {{\spine}'}
-                 {\listof\adef}
+                 {\adefs}
 }
 
 

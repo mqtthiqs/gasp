@@ -1,6 +1,6 @@
 \begin{figure}
 \boxed{
-\whnf{\tyenv}{\term}{\type}{\spine}{\listof\adef}{\term}
+\whnf{\tyenv}{\term}{\type}{\spine}{\adefs}{\term}
 }
 \begin{center}
 \begin{mathpar}
@@ -9,14 +9,14 @@
      {\term}
      {\typebis}
      {{\spine}'}
-     {\listof\adef}
+     {\adefs}
      {\term}
 }{
 \whnf{\tyenv}
      {\tlam{\bind\var\promise\type}{\term}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
      {\head'{\spine}'}
-     {\xadef{\var}{\head'}{\type}\listof\adef}
+     {\xadef{\var}{\head'}{\type}\adefs}
      {\term}
 }
 
@@ -27,14 +27,14 @@
      {\tapp{\head}{\concat{\spine}{\var}}}
      {\typebis}
      {{\spine}'}
-     {\listof\adef}
+     {\adefs}
      {\term}
 }{
 \whnf{\tyenv}
      {\tapp{\head}{\spine}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
      {\head'{\spine}'}
-     {\xadef{\var}{\head'}{\type}\listof\adef}
+     {\xadef{\var}{\head'}{\type}\adefs}
      {\term}
 }
 
@@ -45,14 +45,14 @@
      {\term}
      {\type}
      {\spine \head' {\spine}'}
-     {\listof\adef}
+     {\adefs}
      {\term}
 }{
 \whnf{\tyenv}
      {\tapp{\var}{\spine}}
      {\typebis}
      {\head'{\spine}'}
-     {\listof\adef}
+     {\adefs}
      {\term}
 }
 
@@ -77,35 +77,35 @@
 }
 
 \infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\
-\whnf{\tenvcons{\tyenv}{\listof\adef}}
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
+\whnf{\tenvcons{\tyenv}{\adefs}}
      {\term}
      {\type}
      {\spine}
-     {{\listof\adef}'}
+     {{\adefs}'}
      {\term}
 }{
 \whnf{\tyenv}
      {\topen{\term}{\var}}
      {\type}
      {\spine}
-     {\listof\adef{\listof\adef}'}
+     {\adefs{\adefs}'}
      {\term}
 }
 
 \infer{
-\whnf{\tenvcons{\tyenv}{\listof\adef}}
+\whnf{\tenvcons{\tyenv}{\adefs}}
      {\term}
      {\type}
      {\spine}
-     {{\listof\adef}'}
+     {{\adefs}'}
      {\term}
 }{
 \whnf{\tyenv}
-     {\tdef{\listof\adef}{\term}}
+     {\tdef{\adefs}{\term}}
      {\type}
      {\spine}
-     {\listof\adef{\listof\adef}'}
+     {\adefs{\adefs}'}
      {\term}
 }
 \end{mathpar}

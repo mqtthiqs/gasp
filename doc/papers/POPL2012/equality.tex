@@ -5,9 +5,9 @@
 \begin{center}
 \begin{mathpar}
 \infer{
-\whnf{\tyenv}{\term}{\type}{\emptylist}{\listof\adef}{\term'}\\\\
-\whnf{\tyenv}{\termbis}{\type}{\emptylist}{{\listof\adef}'}{\termbis'}\\\\
-\equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\listof\adef}}{{\listof\adef}'}}
+\whnf{\tyenv}{\term}{\type}{\emptylist}{\adefs}{\term'}\\\\
+\whnf{\tyenv}{\termbis}{\type}{\emptylist}{{\adefs}'}{\termbis'}\\\\
+\equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\adefs}}{{\adefs}'}}
               {\term'}
               {\termbis'}
               {\type}
@@ -33,11 +33,11 @@
 % FIXME: Probleme de notation ici.
 \whnf{\tyenv}
      {\tenvlookup{\tyenv}{\var}}{\type}{\spine}
-     {\listof\adef}{\term'}\\\\
+     {\adefs}{\term'}\\\\
 \whnf{\tyenv}
      {\tenvlookup{\tyenv}{\var'}}{\type}
-     {{\spine}'}{{\listof\adef}'}{\termbis'}\\\\
-\equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\listof\adef}}{{\listof\adef}'}}
+     {{\spine}'}{{\adefs}'}{\termbis'}\\\\
+\equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\adefs}}{{\adefs}'}}
               {\term'}
               {\termbis'}
               {\type}

@@ -40,7 +40,7 @@
 \\
 
 &|& 
-\tydef{\listof\adef}{\type}
+\tydef{\adefs}{\type}
 & \bnfcomment{Local definitions}
 \\
 
@@ -103,6 +103,15 @@
 &::=& 
 \xadef{\var}{\term}{\type} 
 & \bnfcomment{\bf Definitions}
+\\
+\adefs
+&::=&
+\emptylist
+& \bnfcomment{Empty}
+\\
+& | &
+\adef\, \adefs
+& \bnfcomment{Constructed}
 \\
 \\
 \binding

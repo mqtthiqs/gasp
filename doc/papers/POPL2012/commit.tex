@@ -9,17 +9,17 @@
 }
 
 \infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\
-\tcterm{\tyenv\listof\adef}{\term}{\type}
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
+\tcterm{\tyenv\adefs}{\term}{\type}
 }{
 \tcterm{\tyenv}{\topen{\term}{\var}}{\tyopen{\type}{\var}}
 }
 \\
 \infer{
-\tcdefs{\tyenv}{\listof\adef} \\\\
-\tcterm{\tenvcons{\tyenv}{\listof\adef}}{\term}{\type}
+\tcdefs{\tyenv}{\adefs} \\\\
+\tcterm{\tenvcons{\tyenv}{\adefs}}{\term}{\type}
 }{
-\tcterm{\tyenv}{\tdef{\listof\adef}{\term}}{\tydef{\listof\adef}\type}
+\tcterm{\tyenv}{\tdef{\adefs}{\term}}{\tydef{\adefs}\type}
 }
 
 \infer{
@@ -69,8 +69,8 @@
 }
 
 \infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\\\
-\tcspine{\tenvcons{\tyenv}{\listof\adef}}
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\\\
+\tcspine{\tenvcons{\tyenv}{\adefs}}
         {\type}
         {\spine}
         {\typebis}
@@ -78,19 +78,19 @@
 \tcspine{\tyenv}
         {\topen{\type}{\var}}
         {\spine}
-        {\tydef{\listof\adef}\typebis}
+        {\tydef{\adefs}\typebis}
 }
 
 \infer{
-\tcspine{\tyenv\listof\adef}
+\tcspine{\tyenv\adefs}
         {\type}
         {\spine}
         {\typebis}
 }{
 \tcspine{\tyenv}
-        {\tydef{\listof\adef}{\type}}
+        {\tydef{\adefs}{\type}}
         {\spine}
-        {\tydef{\listof\adef}{\typebis}}
+        {\tydef{\adefs}{\typebis}}
 }
 
 \infer{
@@ -103,7 +103,7 @@
 \end{mathpar}
 \end{center}
 
-\boxedtitle{\tcdefs{\tyenv}{\listof\adef}}
+\boxedtitle{\tcdefs{\tyenv}{\adefs}}
 \begin{center}
 \begin{mathpar}
 \infer{
@@ -114,9 +114,9 @@
 \infer{
 \tcterm{\tyenv}{\term}{\typebis} \\
 \equaltype{\tyenv}{\type}{\typebis} \\
-\tcdefs{\tyenv\xadef{\var}{\term}{\type}}{\listof\adef}
+\tcdefs{\tyenv\xadef{\var}{\term}{\type}}{\adefs}
 }{
-\tcdefs{\tyenv}{\xadef{\var}{\term}{\type}\listof\adef}
+\tcdefs{\tyenv}{\xadef{\var}{\term}{\type}\adefs}
 }
 \end{mathpar}
 \end{center}
