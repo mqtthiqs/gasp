@@ -1,7 +1,7 @@
 \begin{figure}
+\boxedtitle{\tcterm{\tyenv}{\term}{\type}}
 \begin{center}
 \begin{mathpar}
-\boxed{\tcterm{\tyenv}{\term}{\type}}\\
 \infer{
 \tcterm{\tenvcons{\tyenv}{\binding}}{\term}{\type}
 }{
@@ -36,9 +36,9 @@
 }
 \end{mathpar}
 \end{center}
+\boxedtitle{\distinctheads{\tyenv}{\listof\head}}
 \begin{center}
 \begin{mathpar}
-\boxed{\distinctheads{\tyenv}{\listof\head}}\\
 \infer{
 }{
 \distinctheads{\tyenv}{\emptylist}
@@ -52,9 +52,9 @@
 }
 \end{mathpar}
 \end{center}
+\boxedtitle{\tcspine{\tyenv}{\type}{\listof\head}{\type}}
 \begin{center}
 \begin{mathpar}
-\boxed{\tcspine{\tyenv}{\type}{\listof\head}{\type}}\\
 \infer{
 \equaltype{\tyenv}{\type}{\tenvlookuptype{\tyenv}{\head}} \\\\
 \tcspine{\tenvdef{\tyenv}{\var}{\head}{\type}}
@@ -103,11 +103,9 @@
 \end{mathpar}
 \end{center}
 
+\boxedtitle{\tcdefs{\tyenv}{\listof\adef}}
 \begin{center}
 \begin{mathpar}
-\boxed{
-\tcdefs{\tyenv}{\listof\adef}
-}\\
 \infer{
 }{
 \tcdefs{\tyenv}{\emptylist}
