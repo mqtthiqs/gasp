@@ -23,7 +23,7 @@
 \begin{center}
 \begin{mathpar}
 \infer{
-\equalspine{\tyenv}{\listof\head}{{\listof\head}'}
+\equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\listof\head}{{\listof\head}'}
 }{
 \equalwhnfterm{\tyenv}{\tapp{\head}{\listof\head}}{\tapp{\head}{{\listof\head}'}}
               {\type}
@@ -96,7 +96,8 @@
 }
 
 \infer{
-\equalspine{\tyenv}{\listof\head}{{\listof\head}'}
+% FIXME: Refer to signature for constant!
+\equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\tyconstant}}{\listof\head}{{\listof\head}'}
 }{
 \equaltype{\tyenv}
           {\tyapp{\tyconstant}{\listof\head}}
@@ -110,34 +111,48 @@
 \end{center}
 
 \boxed{
-\equalspine{\tyenv}{\listof\head}{\listof\head}
+\equalspine{\tyenv}{\type}{\listof\head}{\listof\head}
 }
 \begin{center}
 \begin{mathpar}
 \infer{
 }{
-\equalspine{\tyenv}{\emptylist}{\emptylist}
+\equalspine{\tyenv}{\type}{\emptylist}{\emptylist}
 }
 
 \infer{
 \equalspine{\tyenv}
+           {\typebis}
            {{\listof\head}}
            {{\listof\head}'}
 }{
 \equalspine{\tyenv}
+           {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
            {\head{\listof\head}}
            {\head{\listof\head}'}
 }
 
 \infer{
-\tenvlookup{\tyenv}{\var} = \oftype{\term}{\type} \\
-\tenvlookup{\tyenv}{\var'} = \oftype{\termbis}{\typebis} \\\\
-\equaltype{\tyenv}{\type}{\typebis} \\
+\equalterm{\tyenv}{\tenvlookup{\tyenv}{\var}}{\tenvlookup{\tyenv}{\var'}}{\type}
 \equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
+           {\typebis}
            {{\listof\head}}
            {{\listof\head}'}
 }{
 \equalspine{\tyenv}
+           {\typrod{\bind{\var}{\pused}{\type}}{\typebis}}
+           {\var{\listof\head}}
+           {\var'{\listof\head}'}
+}
+
+\infer{
+\equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
+           {\typebis}
+           {{\listof\head}}
+           {{\listof\head}'}
+}{
+\equalspine{\tyenv}
+           {\typrod{\bind{\var}{\punused}{\type}}{\typebis}}
            {\var{\listof\head}}
            {\var'{\listof\head}'}
 }

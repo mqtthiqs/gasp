@@ -1,0 +1,59 @@
+% A package for automatically collecting proofs and moving them to a separate place.
+% A more elaborate version of this package (`preuve.sty') leaves a pointer in a margin paragraph.
+
+% This package assumes that a ``proof'' environment is already defined, and that this environment
+% accepts an optional label. It alters its definition so that proofs may be moved if desired.
+% It also adds an invocation of \locallabelreset at the beginning of every proof.
+% (Hard to do this elsewhere, because of the optional label.)
+
+% This package assumes that ``theorem'' and ``lemma'' environments are already defined, and alters
+% their definitions so that the ``proof'' environment that follows may be moved.
+
+\ProvidesPackage{preuve-modeste}[2005/07/08]
+
+% We rely on exercise.sty by Didier Rémy.
+\RequirePackage{exercise}
+
+% This code, executed at the beginning of every theorem, defines \lastthm to the name of the current
+% theorem, to be used when typesetting the proof that follows.
+\def\@thmpatch#1#2{%
+  \gdef\lastthm{#1 \csname the#2\endcsname}%
+}
+
+% Modify the ``theorem'' and ``lemma'' environments so that the above two patches are invoked.
+\let\org@theorem\theorem
+\def\theorem{\@ifnextchar[{\ytheorem}{\xtheorem}}
+\def\xtheorem{\org@theorem\@thmpatch{Theorem}{theorem}}
+\def\ytheorem[#1]{\org@theorem[#1]\@thmpatch{Theorem}{theorem}}
+
+\let\org@lemma\lemma
+\def\lemma{\@ifnextchar[{\ylemma}{\xlemma}}
+\def\xlemma{\org@lemma\@thmpatch{Lemma}{lemma}}
+\def\ylemma[#1]{\org@lemma[#1]\@thmpatch{Lemma}{lemma}}
+
+% Save the existing proof environment under a different name.
+\let\org@proof\proof
+\let\endorg@proof\endproof
+\let\proof\relax
+\let\endproof\relax
+
+% Define our own proof environment using the exercise package.
+\newanswer{proof}
+  % To be executed before and after processing the proof, at its original location.
+  {}
+  {}
+  % Define the environment that should be used when the proof is to be inserted in line.
+  {\begin{org@proof}\locallabelreset}
+  {\end{org@proof}}
+  % Evaluate the name of the current theorem.
+  % It will be written to the answer file and becomes the parameter #1 below when read back.
+  {{\lastthm}}
+  [1]
+  % Define the environment that should be used when the proof is to be typeset in a remote place.
+  % We then typeset ``Proof of theorem X'' instead of just ``Proof''.
+  {\begin{org@proof}[of #1]\locallabelreset}
+  {\end{org@proof}}
+
+% When using WhizzyTeX, proofs should be set in line.
+\@ifundefined{WhizzyTeX}{}{\setanswer{inline}}
+

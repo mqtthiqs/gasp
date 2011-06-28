@@ -1,0 +1,20 @@
+% Almost all theorem environments are predefined by LNCS.
+% Their proof environment requires a manual \qed.
+
+\spnewtheorem{fact}[theorem]{Fact}{\bfseries}{\itshape}
+
+% Avoid some hyperref warnings.
+\def\toclevel@theorem{0}
+\def\toclevel@lemma{0}
+\def\toclevel@definition{0}
+\def\toclevel@example{0}
+\def\toclevel@claim{0}
+\def\toclevel@fact{0}
+\def\toclevel@corollary{0}
+
+% Macros for typesetting proof cases.
+\newcommand{\proofcasenovspace}[2][Case]{$\circ$ \textit{#1} #2}
+\newcommand{\proofskip}{\vspace{0.7mm}}
+\newcommand{\proofcase}{\proofskip\proofcasenovspace}
+\newcommand{\proofsubcase}[1]{Sub-case #1}
+

@@ -83,6 +83,7 @@
 % Expansion
 %%%%%%%%%%%
 \newcommand\interpret[2]{\llbracket #1 \rrbracket_{#2}}
+\newcommand\interprettyenv[1]{\llbracket #1 \rrbracket}
 
 % Environments
 %%%%%%%%%%%%%%
@@ -134,5 +135,5 @@
 \newcommand\equalwhnfterm[4]{#1 \vdash #2 \leftrightarrow #3 : #4}
 \newcommand\whnf[6]{#1 \vdash #2 : #3 \,\triangleleft\, #4 \Downarrow \tdef{#5}{#6}}
 \newcommand\equaltype[3]{#1 \vdash #2 \equiv #3}
-\newcommand\equalspine[3]{#1 \vdash #2 \equiv #3}
+\newcommand\equalspine[4]{#1; #2 \vdash #3 \equiv #4}
 \newcommand\distinctheads[2]{#1 \vdash #2 \textrm{ pat}}

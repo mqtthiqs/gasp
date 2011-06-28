@@ -5,6 +5,7 @@
 %\usepackage{amsthm}
 \usepackage{amssymb}
 \newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
 \usepackage{preuve-modeste}
 \usepackage{whizzy}
 \usepackage{mathpartir}
@@ -99,7 +100,8 @@ $\openscope{\Gamma}{\term}{\listof\adef}$ holds.
 % FIXME: Ici, dire que toute forme beta-normale bien typée du Spine Calcul
 % FIXME: se traduit vers un objet de notre system bien formé pour les
 % FIXME: règles précédentes. 
-% FIXME: Donner la procedure?
+
+% FIXME: Donner la procedure! 
 
 % FIXME: Réciproquement, la variante de l'expansion où l'on fait une béta-
 % FIXME: réduction après chaque expansion produit une forme canonique.
@@ -111,11 +113,14 @@ $\openscope{\Gamma}{\term}{\listof\adef}$ holds.
 % FIXME: calcul tandis que l'on peut le faire en présence de partage. 
 % FIXME: Cette quantité est sans doute une bonne mesure du partage.
 
+% FIXME: Enoncer les theoremes de correction/completude.
+
 \subsection{Commit as a type checking algorithm}
 
 % FIXME: Indiquer quelque part qu'en pratique, on infere les annotations
 % FIXME: de type des definitions mais qu'on les suppose donnees ici pour
 % FIXME: simplifier la presentation. 
+
 
 \subsubsection{Typed repositories, and their operations}
 
@@ -133,6 +138,50 @@ $\openscope{\Gamma}{\term}{\listof\adef}$ holds.
 
 \paragraph{Equality decision procedure}
 \input{equality}
+
+\subsubsection{Soundness and Completeness}
+
+\begin{definition}[A-injectivity]
+A definition $\adef \equiv \xadef{\var}{\term}{\type}$ is A-injective
+in $\tyenv$ iff for all $\spine_1 \spine_2$ such that
+$\tcterm{\tenvcons{\tyenv}\adef}{\tapp\var{\spine_1}}{\typebis}$ holds
+$\tcterm{\tenvcons{\tyenv}\adef}{\tapp\var{\spine_2}}{\typebis}$
+holds, and
+$\equalterm{\tenvcons{\tyenv}{\adef}}{\tapp{\var}{\spine_1}}
+           {\tapp{\var}{\spine_2}}
+           {\typebis}$
+holds, then $\equalspine{\tyenv}{\type}{\spine_1}{\spine_2}$ holds. 
+\end{definition}
+
+\begin{theorem}
+If $\tcterm{\tyenv}{\term}{\type}$ holds then $\xadef{\var}{\term}{\type}$ is
+$\type$-injective in~$\tyenv$.
+\end{theorem}
+
+\begin{theorem}[Soundness]\ \\[-1em]
+\begin{itemize}
+\item  If $\tcterm{\tyenv}{\term}{\type}$ holds then 
+$\tcterm{\interprettyenv{\tyenv}}{\interpret{\term}{\tyenv}}{\interpret{\type}{\tyenv}}$
+holds in the Spine~Calculus. 
+\item If $\equalterm{\tyenv}{\term}{\termbis}{\type}$ holds then
+$\equalterm{\interprettyenv{\tyenv}}{\interpret{\term}{\tyenv}}
+           {\interpret{\termbis}{\tyenv}}{\interpret{\type}{\tyenv}}$
+holds in the Spine~Calculus. 
+\item \ldots
+\end{itemize}
+\end{theorem}
+
+\begin{theorem}[Completeness]\ \\[-1em]
+\begin{itemize}
+\item  If $\tcterm{\interprettyenv{\tyenv}}{\interpret{\term}{\tyenv}}{\interpret{\type}{\tyenv}}$ 
+holds in the Spine~Calculus then $\tcterm{\tyenv}{\term}{\type}$ holds.
+\item If
+$\equalterm{\interprettyenv{\tyenv}}{\interpret{\term}{\tyenv}}
+           {\interpret{\termbis}{\tyenv}}{\interpret{\type}{\tyenv}}$ holds in the Spine~Calculus
+then $\equalterm{\tyenv}{\term}{\termbis}{\type}$ holds.
+\item \ldots
+\end{itemize}
+\end{theorem}
 
 \subsection{Safe incremental type checking using {\system}}
 
