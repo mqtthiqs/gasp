@@ -3,11 +3,11 @@
 \begin{math}
 \begin{array}{rclr}
 
-\interpret{\tapp{\head}{\listof\head}}{\tyenv}
+\interpret{\tapp{\head}{\spine}}{\tyenv}
 &=& 
 \tapp
     {\interpret{\head}{\tyenv}}
-    {\interpret{\listof\head}{\tyenv}} 
+    {\interpret{\spine}{\tyenv}} 
 \\
 \interpret
     {\tlam{\bind{\var}{\promise}{\type}}{\term}}
@@ -41,12 +41,12 @@
 \typrod{\slfbind{\var}{\interpret{\type}{\tyenv}}}
      {\interpret{\typebis}{\tenvbind{\tyenv}{\var}{\promise}{\type}}}
 \\
-\interpret{\tyapp{\tyconstant}{\listof\head}}
+\interpret{\tyapp{\tyconstant}{\spine}}
           {\tyenv}
 &=&
 \tyapp
     {\tyconstant}
-    {\interpret{\listof\head}{\tyenv}} 
+    {\interpret{\spine}{\tyenv}} 
 \\
 \interpret
     {\tydef{\listof\adef}{\type}}

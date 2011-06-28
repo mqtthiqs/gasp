@@ -18,19 +18,19 @@
 \end{mathpar}
 \end{center}
 \boxed{
-\openscopespine{\tyenv}{\type}{\term}{\listof\head}{\listof\adef}
+\openscopespine{\tyenv}{\type}{\term}{\spine}{\listof\adef}
 }
 \begin{center}
 \begin{mathpar}
 \infer{
 \openscopespine{\tenvdef{\tyenv}{\var}{\head}{\type}}{\typebis}
                {\term}
-               {\listof\head}
+               {\spine}
                {\listof\adef}
 }{
 \openscopespine{\tyenv}{\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
                {\tlam{\bind{\var}{\promise}{\type}}{\term}}
-               {\head\listof\head}
+               {\head\spine}
                {\xadef{\var}{\head}{\type}\listof\adef}
 }
 
@@ -47,12 +47,12 @@
 \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\
 \openscopespine{\tenvcons{\tyenv}{\listof\adef}}{\type}
                {\term}
-               {\listof\head}
+               {\spine}
                {{\listof\adef}'}
 }{
 \openscopespine{\tyenv}{\type}
                {\topen{\term}{\var}}
-               {\listof\head}
+               {\spine}
                {\listof\adef{\listof\adef}'}
 }
 
@@ -60,21 +60,21 @@
 \openscopespine{\tenvcons{\tyenv}{\listof\adef}}
                {\type}
                {\term}
-               {\listof\head}
+               {\spine}
                {{\listof{\adef}}'}
 }{
 \openscopespine{\tyenv}
                {\type}
                {\tdef{\listof\adef}{\term}}
-               {\listof\head}
+               {\spine}
                {\listof\adef {\listof{\adef}}'}
 }
 
 \infer{
 }{
 \openscopespine{\tyenv}{\type}
-               {\tapp{\constant}{\listof\head}}
-               {{\listof\head}'}
+               {\tapp{\constant}{\spine}}
+               {{\spine}'}
                {\emptylist}
 }
 
@@ -82,8 +82,8 @@
 \tenvlookup{\tyenv}{\var} = \bind{\var}{\promise}{\type}
 }{
 \openscopespine{\tyenv}{\type}
-               {\tapp{\var}{\listof\head}}
-               {{\listof\head}'}
+               {\tapp{\var}{\spine}}
+               {{\spine}'}
                {\emptylist}
 }
 
@@ -92,13 +92,13 @@
 \openscopespine{\tyenv}
                {\type}
                {\term}
-               {\listof\head{\listof\head}'}
+               {\spine{\spine}'}
                {\listof\adef}
 }{
   \openscopespine{\tyenv}
                  {\type}
-                 {\tapp{\var}{\listof\head}}
-                 {{\listof\head}'}
+                 {\tapp{\var}{\spine}}
+                 {{\spine}'}
                  {\listof\adef}
 }
 

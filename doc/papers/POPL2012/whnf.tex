@@ -1,6 +1,6 @@
 \begin{figure}
 \boxed{
-\whnf{\tyenv}{\term}{\type}{\listof\head}{\listof\adef}{\term}
+\whnf{\tyenv}{\term}{\type}{\spine}{\listof\adef}{\term}
 }
 \begin{center}
 \begin{mathpar}
@@ -8,14 +8,14 @@
 \whnf{\tenvcons{\tyenv}{\xadef{\var}{\head'}{\type}}}
      {\term}
      {\typebis}
-     {{\listof\head}'}
+     {{\spine}'}
      {\listof\adef}
      {\term}
 }{
 \whnf{\tyenv}
      {\tlam{\bind\var\promise\type}{\term}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
-     {\head'{\listof\head}'}
+     {\head'{\spine}'}
      {\xadef{\var}{\head'}{\type}\listof\adef}
      {\term}
 }
@@ -24,16 +24,16 @@
 \wellsharedhead{\tyenv}{\head'}{\promise'}{\pretype} \\
 \subpretype{\pretype}{\erase{\type}}\\\\
 \whnf{\tenvcons{\tyenv}{\xadef{\var}{\head'}{\type}}}
-     {\tapp{\head}{\concat{\listof\head}{\var}}}
+     {\tapp{\head}{\concat{\spine}{\var}}}
      {\typebis}
-     {{\listof\head}'}
+     {{\spine}'}
      {\listof\adef}
      {\term}
 }{
 \whnf{\tyenv}
-     {\tapp{\head}{\listof\head}}
+     {\tapp{\head}{\spine}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
-     {\head'{\listof\head}'}
+     {\head'{\spine}'}
      {\xadef{\var}{\head'}{\type}\listof\adef}
      {\term}
 }
@@ -44,14 +44,14 @@
 \whnf{\tyenv}
      {\term}
      {\type}
-     {\listof\head \head' {\listof\head}'}
+     {\spine \head' {\spine}'}
      {\listof\adef}
      {\term}
 }{
 \whnf{\tyenv}
-     {\tapp{\var}{\listof\head}}
+     {\tapp{\var}{\spine}}
      {\typebis}
-     {\head'{\listof\head}'}
+     {\head'{\spine}'}
      {\listof\adef}
      {\term}
 }
@@ -59,11 +59,11 @@
 \infer{
 }{
 \whnf{\tyenv}
-     {\tapp{\head}{\listof\head}}
+     {\tapp{\head}{\spine}}
      {\type}
      {\emptylist}
      {\emptylist}
-     {\tapp{\head}{\listof\head}}
+     {\tapp{\head}{\spine}}
 }
 
 \infer{
@@ -81,14 +81,14 @@
 \whnf{\tenvcons{\tyenv}{\listof\adef}}
      {\term}
      {\type}
-     {\listof\head}
+     {\spine}
      {{\listof\adef}'}
      {\term}
 }{
 \whnf{\tyenv}
      {\topen{\term}{\var}}
      {\type}
-     {\listof\head}
+     {\spine}
      {\listof\adef{\listof\adef}'}
      {\term}
 }
@@ -97,14 +97,14 @@
 \whnf{\tenvcons{\tyenv}{\listof\adef}}
      {\term}
      {\type}
-     {\listof\head}
+     {\spine}
      {{\listof\adef}'}
      {\term}
 }{
 \whnf{\tyenv}
      {\tdef{\listof\adef}{\term}}
      {\type}
-     {\listof\head}
+     {\spine}
      {\listof\adef{\listof\adef}'}
      {\term}
 }

@@ -23,40 +23,40 @@
 \begin{center}
 \begin{mathpar}
 \infer{
-\equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\listof\head}{{\listof\head}'}
+\equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{{\spine}'}
 }{
-\equalwhnfterm{\tyenv}{\tapp{\head}{\listof\head}}{\tapp{\head}{{\listof\head}'}}
+\equalwhnfterm{\tyenv}{\tapp{\head}{\spine}}{\tapp{\head}{{\spine}'}}
               {\type}
 }
 
 \infer{
 % FIXME: Probleme de notation ici.
 \whnf{\tyenv}
-     {\tenvlookup{\tyenv}{\var}}{\type}{\listof\head}
+     {\tenvlookup{\tyenv}{\var}}{\type}{\spine}
      {\listof\adef}{\term'}\\\\
 \whnf{\tyenv}
      {\tenvlookup{\tyenv}{\var'}}{\type}
-     {{\listof\head}'}{{\listof\adef}'}{\termbis'}\\\\
+     {{\spine}'}{{\listof\adef}'}{\termbis'}\\\\
 \equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\listof\adef}}{{\listof\adef}'}}
               {\term'}
               {\termbis'}
               {\type}
 }{
 \equalwhnfterm{\tyenv}
-              {\tapp{\var}{\listof\head}}
-              {\tapp{\var'}{{\listof\head}'}}
+              {\tapp{\var}{\spine}}
+              {\tapp{\var'}{{\spine}'}}
               {\type}
 }
 
 \infer{
 \equalwhnfterm{\tenvbind{\tyenv}{\var}{\promise}{\type}}
               {\term}
-              {\tapp{\head}{\concat{\listof\head}{\var}}}
+              {\tapp{\head}{\concat{\spine}{\var}}}
               {\type}
 }{
 \equalwhnfterm{\tyenv}
               {\tlam{\bind{\var}{\promise}{\type}}{\term}}
-              {\tapp{\head}{\listof\head}}
+              {\tapp{\head}{\spine}}
               {\typrod{\bind{\var}{\promise}{\type}}\type}
 }
 
@@ -97,11 +97,11 @@
 
 \infer{
 % FIXME: Refer to signature for constant!
-\equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\tyconstant}}{\listof\head}{{\listof\head}'}
+\equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\tyconstant}}{\spine}{{\spine}'}
 }{
 \equaltype{\tyenv}
-          {\tyapp{\tyconstant}{\listof\head}}
-          {\tyapp{\tyconstant}{{\listof\head}'}}
+          {\tyapp{\tyconstant}{\spine}}
+          {\tyapp{\tyconstant}{{\spine}'}}
           {}
 }
 % FIXME: Manque les cas ``type = \tyopen{}{}'' et ``type = \tydef{}{}''. 
@@ -111,7 +111,7 @@
 \end{center}
 
 \boxed{
-\equalspine{\tyenv}{\type}{\listof\head}{\listof\head}
+\equalspine{\tyenv}{\type}{\spine}{\spine}
 }
 \begin{center}
 \begin{mathpar}
@@ -123,38 +123,38 @@
 \infer{
 \equalspine{\tyenv}
            {\typebis}
-           {{\listof\head}}
-           {{\listof\head}'}
+           {{\spine}}
+           {{\spine}'}
 }{
 \equalspine{\tyenv}
            {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
-           {\head{\listof\head}}
-           {\head{\listof\head}'}
+           {\head{\spine}}
+           {\head{\spine}'}
 }
 
 \infer{
 \equalterm{\tyenv}{\tenvlookup{\tyenv}{\var}}{\tenvlookup{\tyenv}{\var'}}{\type}
 \equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
            {\typebis}
-           {{\listof\head}}
-           {{\listof\head}'}
+           {{\spine}}
+           {{\spine}'}
 }{
 \equalspine{\tyenv}
            {\typrod{\bind{\var}{\pused}{\type}}{\typebis}}
-           {\var{\listof\head}}
-           {\var'{\listof\head}'}
+           {\var{\spine}}
+           {\var'{\spine}'}
 }
 
 \infer{
 \equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
            {\typebis}
-           {{\listof\head}}
-           {{\listof\head}'}
+           {{\spine}}
+           {{\spine}'}
 }{
 \equalspine{\tyenv}
            {\typrod{\bind{\var}{\punused}{\type}}{\typebis}}
-           {\var{\listof\head}}
-           {\var'{\listof\head}'}
+           {\var{\spine}}
+           {\var'{\spine}'}
 }
 \end{mathpar}
 \end{center}

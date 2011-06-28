@@ -23,20 +23,20 @@
 }
 
 \infer{
-\distinctheads{\tyenv}{\listof\head}\\\\
-\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\listof\head}{\type}
+\distinctheads{\tyenv}{\spine}\\\\
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{\type}
 }{
-\tcterm{\tyenv}{\tapp{\var}{\listof\head}}{\type}
+\tcterm{\tyenv}{\tapp{\var}{\spine}}{\type}
 }
 
 \infer{
-\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\listof\head}{\type}
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{\type}
 }{
-\tcterm{\tyenv}{\tapp{\constant}{\listof\head}}{\type}
+\tcterm{\tyenv}{\tapp{\constant}{\spine}}{\type}
 }
 \end{mathpar}
 \end{center}
-\boxedtitle{\distinctheads{\tyenv}{\listof\head}}
+\boxedtitle{\distinctheads{\tyenv}{\spine}}
 \begin{center}
 \begin{mathpar}
 \infer{
@@ -45,26 +45,26 @@
 }
 
 \infer{
-\forall \head', \listof\head = \listof\head_1 \head' \listof\head_2 \Rightarrow \head \not\equiv \head' \\
-\distinctheads{\tyenv}{\listof\head}
+\forall \head', \spine = \spine_1 \head' \spine_2 \Rightarrow \head \not\equiv \head' \\
+\distinctheads{\tyenv}{\spine}
 }{
-\distinctheads{\tyenv}{\head\listof\head}
+\distinctheads{\tyenv}{\head\spine}
 }
 \end{mathpar}
 \end{center}
-\boxedtitle{\tcspine{\tyenv}{\type}{\listof\head}{\type}}
+\boxedtitle{\tcspine{\tyenv}{\type}{\spine}{\type}}
 \begin{center}
 \begin{mathpar}
 \infer{
 \equaltype{\tyenv}{\type}{\tenvlookuptype{\tyenv}{\head}} \\\\
 \tcspine{\tenvdef{\tyenv}{\var}{\head}{\type}}
         {\typebis}
-        {\listof\head}
+        {\spine}
         {\typebis'}
 }{
 \tcspine{\tyenv}
         {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
-        {\head\listof\head}
+        {\head\spine}
         {\typebis'}
 }
 
@@ -72,24 +72,24 @@
 \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\adef} \\\\
 \tcspine{\tenvcons{\tyenv}{\listof\adef}}
         {\type}
-        {\listof\head}
+        {\spine}
         {\typebis}
 }{
 \tcspine{\tyenv}
         {\topen{\type}{\var}}
-        {\listof\head}
+        {\spine}
         {\tydef{\listof\adef}\typebis}
 }
 
 \infer{
 \tcspine{\tyenv\listof\adef}
         {\type}
-        {\listof\head}
+        {\spine}
         {\typebis}
 }{
 \tcspine{\tyenv}
         {\tydef{\listof\adef}{\type}}
-        {\listof\head}
+        {\spine}
         {\tydef{\listof\adef}{\typebis}}
 }
 

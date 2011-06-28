@@ -7,7 +7,7 @@
 \term 
 
 &::=& 
-\tapp{\head}{\listof\head} 
+\tapp{\head}{\spine} 
 & \bnfcomment{Application}
 \\
 
@@ -35,7 +35,7 @@
 \\
 
 &|& 
-\tyapp{\tyconstant}{\listof\head}
+\tyapp{\tyconstant}{\spine}
 & \bnfcomment{Type construction}
 \\
 
@@ -74,6 +74,16 @@
 &|& 
 \var
 & \bnfcomment{Variable}
+\\
+\\
+&&&\bnfcomment{\bf Spine}\\
+\spine
+
+&::=& \emptylist
+& \bnfcomment{Empty}
+\\
+&|& \head\,\spine
+& \bnfcomment{Constructed}
 \\
 \\
 &&&\bnfcomment{\bf Promises}\\

@@ -6,9 +6,9 @@
 \begin{mathpar}
 \infer{
 \wellsharedhead{\tyenv}{\head}{\pused}{\pretype_1}\\\\
-\wellsharedspine{\tyenv}{\pretype_1}{\listof\head}{\pretype_2}
+\wellsharedspine{\tyenv}{\pretype_1}{\spine}{\pretype_2}
 }{
-\wellsharedterm{\tyenv}{\tapp{\head}{\listof\head}}{\pretype_2}
+\wellsharedterm{\tyenv}{\tapp{\head}{\spine}}{\pretype_2}
 }
 
 \infer
@@ -23,15 +23,15 @@
 }
 
 \infer{
-\wellsharedadefs{\tyenv}{\listof\head} \\\\
-\wellsharedterm{\tenvcons{\tyenv}{\listof\head}}{\term}{\sigma}
+\wellsharedadefs{\tyenv}{\spine} \\\\
+\wellsharedterm{\tenvcons{\tyenv}{\spine}}{\term}{\sigma}
 }{
-\wellsharedterm{\tyenv}{\tdef{\listof\head}{\term}}{\sigma}
+\wellsharedterm{\tyenv}{\tdef{\spine}{\term}}{\sigma}
 }
 
 \infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\head}\\\\
-\wellsharedterm{\tenvcons{\tyenv}{\listof\head}}{\term}{\sigma}
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\spine}\\\\
+\wellsharedterm{\tenvcons{\tyenv}{\spine}}{\term}{\sigma}
 }{
 \wellsharedterm{\tyenv}{\topen{\term}{\var}}{\sigma}
 }
@@ -73,7 +73,7 @@
 \end{center}
 
 \boxed{
-\wellsharedspine{\tyenv}{\pretype}{\listof\head}{\pretype}
+\wellsharedspine{\tyenv}{\pretype}{\spine}{\pretype}
 }
 \begin{center}
 \begin{mathpar}
@@ -88,7 +88,7 @@
 \subpretype{\pretype_1'}{\pretype_1}
 }{
 \wellsharedspine{\tyenv}{\ptarrow{\pretype_1}{\promise_1}{\pretype_2}}
-                {\head\listof\head}
+                {\head\spine}
                 {\pretype_3}
 }
 \end{mathpar}
@@ -132,17 +132,17 @@
 }
 
 \infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\listof\head}\\\\
-\wellsharedtype{\tenvcons\tyenv{\listof\head}}{\type}
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\spine}\\\\
+\wellsharedtype{\tenvcons\tyenv{\spine}}{\type}
 }{
 \wellsharedtype{\tyenv}{\tyopen{\type}{\var}}
 }
 
 \infer{
 % \signature\tyconstant = \kind
-\wellsharedkindspine{\tyenv}{\erase\kind}{\listof\head}
+\wellsharedkindspine{\tyenv}{\erase\kind}{\spine}
 }{
-\wellsharedtype{\tyenv}{\tyapp{\tyconstant}{\listof\head}}
+\wellsharedtype{\tyenv}{\tyapp{\tyconstant}{\spine}}
 }
 \end{mathpar}
 \end{center}
@@ -159,7 +159,7 @@
 }{
 \wellsharedkindspine{\tyenv}
                     {\pkarrow{\pretype}{\promise_1}{\prekind}}
-                    {\head\listof\head}
+                    {\head\spine}
 }
 
 \infer{
