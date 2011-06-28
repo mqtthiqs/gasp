@@ -1,9 +1,7 @@
 \begin{figure}
-\boxed{
-\tcterm{\tyenv}{\term}{\type}
-}
 \begin{center}
 \begin{mathpar}
+\boxed{\tcterm{\tyenv}{\term}{\type}}\\
 \infer{
 \tcterm{\tenvcons{\tyenv}{\binding}}{\term}{\type}
 }{
@@ -25,18 +23,38 @@
 }
 
 \infer{
+\distinctheads{\tyenv}{\listof\head}\\\\
 \tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\listof\head}{\type}
 }{
-\tcterm{\tyenv}{\tapp{\head}{\listof\head}}{\type}
+\tcterm{\tyenv}{\tapp{\var}{\listof\head}}{\type}
+}
+
+\infer{
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\listof\head}{\type}
+}{
+\tcterm{\tyenv}{\tapp{\constant}{\listof\head}}{\type}
 }
 \end{mathpar}
 \end{center}
-
-\boxed{
-\tcspine{\tyenv}{\type}{\listof\head}{\type}
-}
 \begin{center}
 \begin{mathpar}
+\boxed{\distinctheads{\tyenv}{\listof\head}}\\
+\infer{
+}{
+\distinctheads{\tyenv}{\emptylist}
+}
+
+\infer{
+\forall \head', \listof\head = \listof\head_1 \head' \listof\head_2 \Rightarrow \head \not\equiv \head' \\
+\distinctheads{\tyenv}{\listof\head}
+}{
+\distinctheads{\tyenv}{\head\listof\head}
+}
+\end{mathpar}
+\end{center}
+\begin{center}
+\begin{mathpar}
+\boxed{\tcspine{\tyenv}{\type}{\listof\head}{\type}}\\
 \infer{
 \equaltype{\tyenv}{\type}{\tenvlookuptype{\tyenv}{\head}} \\\\
 \tcspine{\tenvdef{\tyenv}{\var}{\head}{\type}}
@@ -85,11 +103,11 @@
 \end{mathpar}
 \end{center}
 
-\boxed{
-\tcdefs{\tyenv}{\listof\adef}
-}
 \begin{center}
 \begin{mathpar}
+\boxed{
+\tcdefs{\tyenv}{\listof\adef}
+}\\
 \infer{
 }{
 \tcdefs{\tyenv}{\emptylist}

@@ -4,5 +4,5 @@
 )
 (whizzy-add-configuration
  "main\.tex" 
- '((whizzy . "section -advi \"advi -geometry 1270x1024 -fullwidth \" -dvicopy dvicopy" ))
+ '((whizzy . "section -advi \"advi -geometry 2048x1024 -fullwidth \" -dvicopy dvicopy" ))
 )
