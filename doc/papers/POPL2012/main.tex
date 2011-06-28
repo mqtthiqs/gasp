@@ -1,5 +1,11 @@
 \documentclass[9pt,authoryear]{sigplanconf}
 
+\usepackage{ntheorem}
+\usepackage{amsmath}
+%\usepackage{amsthm}
+\usepackage{amssymb}
+\newtheorem{theorem}{Theorem}
+\usepackage{preuve-modeste}
 \usepackage{whizzy}
 \usepackage{mathpartir}
 \usepackage{macros}
@@ -62,7 +68,7 @@ keyword1, keyword2
 \paragraph{Spine calculus}
 \input{spine-lf-syntax}
 
-\paragraph{Importing shared definitions in scope}
+\paragraph{Importing shared definitions into local scope}
 \input{openscope}
 
 \paragraph{Expansion of {\system} objects into spine calculus objects}
@@ -73,8 +79,18 @@ keyword1, keyword2
 
 \subsection{Well-shared pretyped terms}
 
-\subsubsection{A simply typed system for well-shared terms}
+\subsubsection{A simply typed system for well-shared objects}
+
+\input{pretype-syntax}
+
 \input{wellshared}
+
+% FIXME: Expliquer les regles.
+
+\begin{theorem}
+If $\wellsharedterm{\Gamma}{\term}{\pretype}$ holds, then 
+$\openscope{\Gamma}{\term}{\listof\adef}$ holds. 
+\end{theorem}
 
 \subsubsection{From Spine Form LF to {\system}, and back}
 

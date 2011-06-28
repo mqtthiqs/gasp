@@ -1,0 +1,34 @@
+\begin{figure}
+
+\begin{center}
+\begin{math}
+\begin{array}{rclr}
+&&&\bnfcomment{\bf Pretypes}\\
+\pretype
+
+&::=& 
+\ptconst
+&\bnfcomment{Constant} 
+\\
+
+&|& 
+\ptarrow{\pretype}{\promise}{\pretype}
+&\bnfcomment{Arrow}
+\\
+\\
+&&&\bnfcomment{\bf Prekinds}\\
+\prekind
+
+&::=& 
+\pkconst
+&\bnfcomment{Type} 
+\\
+
+&|& 
+\pkarrow{\pretype}{\promise}{\prekind}
+&\bnfcomment{Arrow}
+\\
+\end{array}
+\end{math}
+\end{center}
+\end{figure}
