@@ -30,12 +30,12 @@
 }
 
 \infer{
-% FIXME: Probleme de notation ici.
-\whnf{\tyenv}
-     {\tenvlookup{\tyenv}{\var}}{\type}{\spine}
+\whnfbis{\tyenv}
+     {\tenvlookup{\tyenv}{\var}}
+     {\spine}
      {\adefs}{\term'}\\\\
-\whnf{\tyenv}
-     {\tenvlookup{\tyenv}{\var'}}{\type}
+\whnfbis{\tyenv}
+     {\tenvlookup{\tyenv}{\var'}}
      {{\spine}'}{{\adefs}'}{\termbis'}\\\\
 \equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\adefs}}{{\adefs}'}}
               {\term'}
@@ -133,7 +133,7 @@
 }
 
 \infer{
-\equalterm{\tyenv}{\tenvlookup{\tyenv}{\var}}{\tenvlookup{\tyenv}{\var'}}{\type}
+\equalterm{\tyenv}{\tenvlookup{\tyenv}{\var}}{\tenvlookup{\tyenv}{\var'}}{\type}\\
 \equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
            {\typebis}
            {{\spine}}
