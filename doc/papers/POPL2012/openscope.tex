@@ -30,7 +30,7 @@
 }{
 \openscopespine{\tyenv}{\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
                {\tlam{\bind{\var}{\promise}{\type}}{\term}}
-               {\head\spine}
+               {\conslist\head\spine}
                {\xadef{\var}{\head}{\type}\adefs}
 }
 
@@ -53,7 +53,7 @@
 \openscopespine{\tyenv}{\type}
                {\topen{\term}{\var}}
                {\spine}
-               {\adefs{\adefs}'}
+               {\conslist\adefs{\adefs}'}
 }
 
 \infer{
@@ -67,7 +67,7 @@
                {\type}
                {\tdef{\adefs}{\term}}
                {\spine}
-               {\adefs {\listof{\adef}}'}
+               {\conslist\adefs{\listof{\adef}}'}
 }
 
 \infer{
