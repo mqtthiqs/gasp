@@ -1,75 +1,92 @@
 \begin{figure}
-\boxedtitle{\tcterm{\tyenv}{\term}{\type}}
+\boxedtitle{\tcterm{\tyenv}{\term}{\promise}{\type}}
 \begin{center}
 \begin{mathpar}
-\infer{
-\tcterm{\tenvcons{\tyenv}{\binding}}{\term}{\type}
+\inferrule*[left=C-Abs-Injective]{
+\tcterm{\tenvcons{\tyenv}{\bind{\var}{\promise'}{\type}}}{\term}{\promise}{\type} \\
+\var \in \fv\term
 }{
-\tcterm{\tyenv}{\tlam{\binding}{\term}}{\typrod{\binding}{\type}}
+  \tcterm{\tyenv}
+         {\tlam{\bind{\var}{\promise'}{\type}}{\term}}
+         {\promise}
+         {\typrod{\bind{\var}{\promise'}{\type}}{\typebis}}
 }
 
-\infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
-\tcterm{\tyenv\adefs}{\term}{\type}
+\inferrule*[left=C-Abs]{
+\tcterm{\tenvcons{\tyenv}{\binding}}{\term}{\promise}{\type} \\
+\var \not\in \fv\term
 }{
-\tcterm{\tyenv}{\topen{\term}{\var}}{\tyopen{\type}{\var}}
+\tcterm{\tyenv}{\tlam{\binding}{\term}}{\prigid}{\typrod{\binding}{\type}}
+}
+
+\inferrule*[left=C-Open]{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
+\tcterm{\tyenv\adefs}{\term}{\promise}{\type}
+}{
+\tcterm{\tyenv}{\topen{\term}{\var}}{\promise}{\tyopen{\type}{\var}}
 }
 \\
-\infer{
-\tcdefs{\tyenv}{\adefs} \\\\
-\tcterm{\tenvcons{\tyenv}{\adefs}}{\term}{\type}
+\inferrule*[left=C-Def]{
+\tcdefs{\tyenv}{\adefs} \\
+\tcterm{\tenvcons{\tyenv}{\adefs}}{\term}{\promise}{\type}
 }{
-\tcterm{\tyenv}{\tdef{\adefs}{\term}}{\tydef{\adefs}\type}
+\tcterm{\tyenv}{\tdef{\adefs}{\term}}{\promise}{\tydef{\adefs}\type}
 }
 
-\infer{
+\inferrule*[left=C-Cst-App]{
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{\type}
+}{
+\tcterm{\tyenv}{\tapp{\constant}{\spine}}{\pany}{\type}
+}
+
+\inferrule*[left=C-App-Pat]{
 \distinctheads{\tyenv}{\spine}\\\\
-\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{\type}
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\var}}{\spine}{\type}
 }{
-\tcterm{\tyenv}{\tapp{\var}{\spine}}{\type}
+\tcterm{\tyenv}{\tapp{\var}{\spine}}{\pany}{\type}
 }
 
-\infer{
-\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{\type}
+\inferrule*[left=C-App]{
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\var}}{\spine}{\type}
 }{
-\tcterm{\tyenv}{\tapp{\constant}{\spine}}{\type}
+\tcterm{\tyenv}{\tapp{\var}{\spine}}{\prigid}{\type}
 }
 \end{mathpar}
 \end{center}
 \boxedtitle{\distinctheads{\tyenv}{\spine}}
 \begin{center}
 \begin{mathpar}
-\infer{
+\inferrule*[left=C-EPat]{
 }{
 \distinctheads{\tyenv}{\emptylist}
 }
 
-\infer{
+\inferrule*[left=C-NEPat]{
 \forall \head', \spine = \spine_1 \head' \spine_2 \Rightarrow \head \not\equiv \head' \\
 \distinctheads{\tyenv}{\spine}
 }{
-\distinctheads{\tyenv}{\head\spine}
+\distinctheads{\tyenv}{\conslist\head\spine}
 }
 \end{mathpar}
 \end{center}
 \boxedtitle{\tcspine{\tyenv}{\type}{\spine}{\type}}
 \begin{center}
 \begin{mathpar}
-\infer{
-\equaltype{\tyenv}{\type}{\tenvlookuptype{\tyenv}{\head}} \\\\
-\tcspine{\tenvdef{\tyenv}{\var}{\head}{\type}}
+\inferrule*[left=CS-Arg]{
+\equaltype{\tyenv}{\type}{\tenvlookuptype{\tyenv}{\head}} \\
+\tcspine{\tenvdef{\tyenv}{\var}{\head}{\promise}{\type}}
         {\typebis}
         {\spine}
         {\typebis'}
 }{
 \tcspine{\tyenv}
         {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
-        {\head\spine}
+        {\conslist\head\spine}
         {\typebis'}
 }
 
-\infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\\\
+\inferrule*[left=CS-Open]{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
 \tcspine{\tenvcons{\tyenv}{\adefs}}
         {\type}
         {\spine}
@@ -81,7 +98,7 @@
         {\tydef{\adefs}\typebis}
 }
 
-\infer{
+\inferrule*[left=CS-Def]{
 \tcspine{\tyenv\adefs}
         {\type}
         {\spine}
@@ -93,7 +110,7 @@
         {\tydef{\adefs}{\typebis}}
 }
 
-\infer{
+\inferrule*[left=CS-Empty]{
 }{
 \tcspine{\tyenv}
         {\type}
@@ -106,17 +123,17 @@
 \boxedtitle{\tcdefs{\tyenv}{\adefs}}
 \begin{center}
 \begin{mathpar}
-\infer{
+\inferrule*[left=CD-Empty]{
 }{
 \tcdefs{\tyenv}{\emptylist}
 }
 
-\infer{
-\tcterm{\tyenv}{\term}{\typebis} \\
+\inferrule*[left=CD-Def]{
+\tcterm{\tyenv}{\term}{\promise}{\typebis} \\
 \equaltype{\tyenv}{\type}{\typebis} \\
-\tcdefs{\tyenv\xadef{\var}{\term}{\pany}{\type}}{\adefs}
+\tcdefs{\tyenv\xadef{\var}{\term}{\promise}{\type}}{\adefs}
 }{
-\tcdefs{\tyenv}{\xadef{\var}{\term}{\pany}{\type}\adefs}
+\tcdefs{\tyenv}{\xadef{\var}{\term}{\promise}{\type}\adefs}
 }
 \end{mathpar}
 \end{center}

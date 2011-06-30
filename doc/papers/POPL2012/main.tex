@@ -91,7 +91,7 @@ keyword1, keyword2
 % FIXME: Expliquer les regles.
 
 \begin{theorem}
-If $\wellsharedterm{\Gamma}{\term}{\promise}{\pretype}$ holds, then 
+If $\wellsharedterm{\Gamma}{\term}{\promise}x{\pretype}$ holds, then 
 $\openscope{\Gamma}{\term}{\adefs}$ holds. 
 \end{theorem}
 
@@ -145,11 +145,11 @@ $\openscope{\Gamma}{\term}{\adefs}$ holds.
 
 \subsubsection{Soundness and Completeness}
 
-\begin{definition}[A-injectivity]
-A definition $\adef \equiv \xadef{\var}{\term}{\pany}{\type}$ is A-injective
+\begin{definition}[Injectivity]
+A definition $\adef \equiv \xadef{\var}{\term}{\pany}{\type}$ is injective
 in $\tyenv$ iff for all $\spine_1 \spine_2$ such that
-$\tcterm{\tenvcons{\tyenv}\adef}{\tapp\var{\spine_1}}{\typebis}$ holds
-$\tcterm{\tenvcons{\tyenv}\adef}{\tapp\var{\spine_2}}{\typebis}$
+$\tcterm{\tenvcons{\tyenv}\adef}{\tapp\var{\spine_1}}{\promise}{\typebis}$ holds
+$\tcterm{\tenvcons{\tyenv}\adef}{\tapp\var{\spine_2}}{\promise}{\typebis}$
 holds, and
 $\equalterm{\tenvcons{\tyenv}{\adef}}{\tapp{\var}{\spine_1}}
            {\tapp{\var}{\spine_2}}
@@ -159,7 +159,7 @@ holds, then $\equalspine{\tyenv}{\type}{\spine_1}{\spine_2}$ holds.
 
 \begin{theorem}
 If $\tcterm{\tyenv}{\term}{\type}$ holds then $\xadef{\var}{\term}{\pany}{\type}$ is
-$\type$-injective in~$\tyenv$.
+injective in~$\tyenv$.
 \end{theorem}
 
 \begin{theorem}[Soundness]\ \\[-1em]

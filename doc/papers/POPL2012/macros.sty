@@ -45,6 +45,7 @@
 
 % Misc
 \newcommand\oftype[3]{#1 \stackrel{#2}{:} #3}
+\newcommand\fv[1]{FV(#1)}
 
 % Definition construction
 \newcommand\xadef[4]{[#1 = \oftype{#2}{#3}{#4}]}
@@ -131,7 +132,7 @@
 %%%%%%%%%%%%%%%
 
 % Judgements
-\newcommand\tcterm[3]{#1 \vdash #2 \Uparrow #3}
+\newcommand\tcterm[4]{#1 \vdash #2 \stackrel{#3}{\Uparrow} #4}
 \newcommand\tcdefs[2]{#1 \vdash #2}
 \newcommand\tcspine[4]{#1 ; #2 \vdash #3 \Uparrow #4}
 \newcommand\equalterm[4]{#1 \vdash #2 \equiv #3 : #4}
