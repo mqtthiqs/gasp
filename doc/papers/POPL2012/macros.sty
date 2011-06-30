@@ -138,7 +138,7 @@
 \newcommand\equalterm[4]{#1 \vdash #2 \equiv #3 : #4}
 \newcommand\equalwhnfterm[4]{#1 \vdash #2 \leftrightarrow #3 : #4}
 \newcommand\whnfbis[5]{#1 \vdash #2 \,\triangleleft\, #3 \Downarrow \tdef{#4}{#5}}
-\newcommand\whnf[6]{\whnfbis{#1}{\oftype{#2}{#3}}{#4}{#5}{#6}}
+\newcommand\whnf[6]{\whnfbis{#1}{#2 : #3}{#4}{#5}{#6}}
 \newcommand\equaltype[3]{#1 \vdash #2 \equiv #3}
 \newcommand\equalspine[4]{#1; #2 \vdash #3 \equiv #4}
 \newcommand\distinctheads[2]{#1 \vdash #2 \textrm{ pat}}

@@ -4,8 +4,8 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
-\whnf{\tenvcons{\tyenv}{\xadef{\var}{\pany}{\head'}{\type}}}
+\inferrule*[left=N-Beta]{
+\whnf{\tenvcons{\tyenv}{\xadef{\var}{\head'}{\promise}{\type}}}
      {\term}
      {\typebis}
      {{\spine}'}
@@ -16,14 +16,16 @@
      {\tlam{\bind\var\promise\type}{\term}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
      {\head'{\spine}'}
-     {\xadef{\var}{\head'}{\pany}{\type}\adefs}
+     {\xadef{\var}{\head'}{\promise}{\type}\adefs}
      {\term}
 }
 
-\infer{
-\wellsharedhead{\tyenv}{\head'}{\promise'}{\pretype} \\
-\subpretype{\pretype}{\erase{\type}}\\\\
-\whnf{\tenvcons{\tyenv}{\xadef{\var}{\pany}{\head'}{\type}}}
+\inferrule*[left=N-Push]{
+\tcterm{\tyenv}{\head}{\pany}{\typebis'} \\
+\tcterm{\tyenv}{\head'}{\promise'}{\type'} \\
+\promise' \le \promise\\
+% FIXME: \equaltype{\tyenv}{\type}{\type'} Redondante? \\
+\whnf{\tenvcons{\tyenv}{\xadef{\var}{\head'}{\promise}{\type}}}
      {\tapp{\head}{\concat{\spine}{\var}}}
      {\typebis}
      {{\spine}'}
@@ -34,11 +36,11 @@
      {\tapp{\head}{\spine}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
      {\head'{\spine}'}
-     {\xadef{\var}{\head'}{\pany}{\type}\adefs}
+     {\xadef{\var}{\head'}{\promise}{\type}\adefs}
      {\term}
 }
 
-\infer{
+\inferrule*[left=N-Expand]{
 \wellsharedhead{\tyenv}{\head'}{\promise'}{\pretype} \\
 \tenvlookup{\tyenv}{\var} = (\oftype{\term}{\pany}{\type}) \\\\
 \whnf{\tyenv}
@@ -56,7 +58,7 @@
      {\term}
 }
 
-\infer{
+\inferrule*[left=N-Finish-App]{
 }{
 \whnf{\tyenv}
      {\tapp{\head}{\spine}}
@@ -66,7 +68,7 @@
      {\tapp{\head}{\spine}}
 }
 
-\infer{
+\inferrule*[left=N-Finish-Abs]{
 }{
 \whnf{\tyenv}
      {\tlam{\binding}{\term}}
@@ -76,7 +78,7 @@
      {\tlam{\binding}{\term}}
 }
 
-\infer{
+\inferrule*[left=N-Open]{
 \openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
 \whnf{\tenvcons{\tyenv}{\adefs}}
      {\term}
@@ -93,7 +95,7 @@
      {\term}
 }
 
-\infer{
+\inferrule*[left=N-Def]{
 \whnf{\tenvcons{\tyenv}{\adefs}}
      {\term}
      {\type}
@@ -104,6 +106,39 @@
 \whnf{\tyenv}
      {\tdef{\adefs}{\term}}
      {\type}
+     {\spine}
+     {\adefs{\adefs}'}
+     {\term}
+}
+
+\inferrule*[left=N-Open-Type]{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\adefs} \\
+\whnf{\tenvcons{\tyenv}{\adefs}}
+     {\term}
+     {\type}
+     {\spine}
+     {{\adefs}'}
+     {\term}
+}{
+\whnf{\tyenv}
+     {\term}
+     {\topen\type\var}
+     {\spine}
+     {\adefs{\adefs}'}
+     {\term}
+}
+
+\inferrule*[left=N-Def]{
+\whnf{\tenvcons{\tyenv}{\adefs}}
+     {\term}
+     {\type}
+     {\spine}
+     {{\adefs}'}
+     {\term}
+}{
+\whnf{\tyenv}
+     {\term}
+     {\tdef\adefs\type}
      {\spine}
      {\adefs{\adefs}'}
      {\term}
