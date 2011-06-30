@@ -4,8 +4,8 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
-\whnf{\tyenv}{\term}{\type}{\emptylist}{\adefs}{\term'}\\\\
+\inferrule*[left=Eq-whnf]{
+\whnf{\tyenv}{\term}{\type}{\emptylist}{\adefs}{\term'}\\
 \whnf{\tyenv}{\termbis}{\type}{\emptylist}{{\adefs}'}{\termbis'}\\\\
 \equalwhnfterm{\tenvcons{\tenvcons{\tyenv}{\adefs}}{{\adefs}'}}
               {\term'}
@@ -22,14 +22,14 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
+\inferrule*[left=Eq-Inj-Head]{
 \equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{{\spine}'}
 }{
 \equalwhnfterm{\tyenv}{\tapp{\head}{\spine}}{\tapp{\head}{{\spine}'}}
               {\type}
 }
 
-\infer{
+\inferrule*[left=Eq-Diff-Head]{
 \whnfbis{\tyenv}
      {\tenvlookup{\tyenv}{\var}}
      {\spine}
@@ -48,11 +48,11 @@
               {\type}
 }
 
-\infer{
-\equalwhnfterm{\tenvbind{\tyenv}{\var}{\promise}{\type}}
-              {\term}
-              {\tapp{\head}{\concat{\spine}{\var}}}
-              {\type}
+\inferrule*[left=Eq-Abs-App]{
+\equalterm{\tenvbind{\tyenv}{\var}{\promise}{\type}}
+          {\term}
+          {\tapp{\head}{\concat{\spine}{\var}}}
+          {\type}
 }{
 \equalwhnfterm{\tyenv}
               {\tlam{\bind{\var}{\promise}{\type}}{\term}}
@@ -60,11 +60,12 @@
               {\typrod{\bind{\var}{\promise}{\type}}\type}
 }
 
-\infer{
-\equalwhnfterm{\tenvbind{\tyenv}{\var}{\promise}{\type}}
-              {\term}
-              {\termbis}
-              {\type}
+% FIXME: Meme \promise?
+\inferrule*[left=Eq-Abs-Abs]{
+\equalterm{\tenvbind{\tyenv}{\var}{\promise}{\type}}
+          {\term}
+          {\termbis}
+          {\type}
 }{
 \equalwhnfterm{\tyenv}
               {\tlam{\bind{\var}{\promise}{\type}}{\term}}
@@ -84,7 +85,7 @@
 \begin{center}
 \begin{mathpar}
 % FIXME: Il faut argumenter ici que le choix arbitraire de \promise est correct. 
-\infer{
+\inferrule*[left=Eq-Prod-Type]{
 \equaltype{\tyenv}{\type}{\type'} \\
 \equaltype{\tenvbind{\tyenv}{\var}{\promise}{\type}}
           {\typebis}
@@ -95,7 +96,7 @@
           {\typrod{\bind{\var}{\promise'}{\type'}}{\typebis'}}
 }
 
-\infer{
+\inferrule*[left=Eq-App-Type]{
 % FIXME: Refer to signature for constant!
 \equalspine{\tyenv}{\tenvlookuptype{\tyenv}{\tyconstant}}{\spine}{{\spine}'}
 }{
@@ -115,12 +116,12 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
+\inferrule*[left=Eq-Empty-Spine]{
 }{
 \equalspine{\tyenv}{\type}{\emptylist}{\emptylist}
 }
 
-\infer{
+\inferrule*[left=Eq-Equal-Spine-Head]{
 \equalspine{\tyenv}
            {\typebis}
            {{\spine}}
@@ -128,31 +129,19 @@
 }{
 \equalspine{\tyenv}
            {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
-           {\head{\spine}}
-           {\head{\spine}'}
+           {\conslist\head{\spine}}
+           {\conslist\head{\spine}'}
 }
 
-\infer{
+\inferrule*[left=Eq-Diff-Spine-Head]{
 \equalterm{\tyenv}{\tenvlookup{\tyenv}{\var}}{\tenvlookup{\tyenv}{\var'}}{\type}\\
-\equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
+\equalspine{\tenvdef{\tyenv}{\var}{\var'}{\promise}{\type}}
            {\typebis}
            {{\spine}}
            {{\spine}'}
 }{
 \equalspine{\tyenv}
-           {\typrod{\bind{\var}{\pany}{\type}}{\typebis}}
-           {\var{\spine}}
-           {\var'{\spine}'}
-}
-
-\infer{
-\equalspine{\tenvdef{\tyenv}{\var}{\var'}{\type}}
-           {\typebis}
-           {{\spine}}
-           {{\spine}'}
-}{
-\equalspine{\tyenv}
-           {\typrod{\bind{\var}{\pany}{\type}}{\typebis}}
+           {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
            {\var{\spine}}
            {\var'{\spine}'}
 }
