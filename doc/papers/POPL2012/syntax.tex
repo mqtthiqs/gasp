@@ -82,7 +82,7 @@
 &::=& \emptylist
 & \bnfcomment{Empty}
 \\
-&|& \head\,\spine
+&|& \conslist{\head\}{\spine}
 & \bnfcomment{Constructed}
 \\
 \\
@@ -110,7 +110,7 @@
 & \bnfcomment{Empty}
 \\
 & | &
-\adef\, \adefs
+\conslist{\adef\}{\adefs}
 & \bnfcomment{Constructed}
 \\
 \\
