@@ -6,17 +6,29 @@
 \slfterm
 
 &::=& 
-\tapp{\head}{\listof\slfterm} 
+\tapp{\head}{\slfspine} 
 & \bnfcomment{Head application}
 \\
 &|& 
-\tapp{\slfterm}{\listof\slfterm} 
+\tapp{\slfterm}{\slfspine} 
 & \bnfcomment{Application}
 \\
 
 &|&
 \tlam{\slfbind{\var}{\slftype}}{\slfterm}
 & \bnfcomment{Abstraction}
+\\
+\\
+&&&\bnfcomment{\bf Spines}\\
+\slfspine
+
+&::=&
+\emptylist
+& \bnfcomment{Empty}
+\\
+&::=&
+\conslist{\slfterm}{\slfspine}
+& \bnfcomment{Constructed}
 \\
 \\
 &&&\bnfcomment{\bf Types}\\
@@ -28,7 +40,7 @@
 \\
 
 &|&
-\tyapp{\tyconstant}{\listof\slfterm}
+\tyapp{\tyconstant}{\slfspine}
 & \bnfcomment{Type construction}
 \\
 \\
