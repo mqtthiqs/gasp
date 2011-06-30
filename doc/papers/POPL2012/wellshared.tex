@@ -5,7 +5,7 @@
 \begin{center}
 \begin{mathpar}
 \infer{
-\wellsharedhead{\tyenv}{\head}{\pused}{\pretype_1}\\\\
+\wellsharedhead{\tyenv}{\head}{\pany}{\pretype_1}\\\\
 \wellsharedspine{\tyenv}{\pretype_1}{\spine}{\pretype_2}
 }{
 \wellsharedterm{\tyenv}{\tapp{\head}{\spine}}{\pretype_2}
@@ -62,12 +62,12 @@
 \infer{
 \tenvlookup{\tyenv}{\var} = (\oftype{\term}{\type})
 }{
-\wellsharedhead{\tyenv}{\var}{\pused}{\erase{\type}}
+\wellsharedhead{\tyenv}{\var}{\pany}{\erase{\type}}
 }
 
 \infer{
 }{
-\wellsharedhead{\tyenv}{\constant}{\pused}{\erase{\type}}
+\wellsharedhead{\tyenv}{\constant}{\pany}{\erase{\type}}
 }
 \end{mathpar}
 \end{center}
