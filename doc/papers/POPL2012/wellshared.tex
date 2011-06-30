@@ -1,39 +1,41 @@
 \begin{figure}
 \boxedtitle{
-\wellsharedterm{\tyenv}{\term}{\pretype}
+\wellsharedterm{\tyenv}{\term}{\promise}{\pretype}
 }
 \begin{center}
 \begin{mathpar}
-\infer{
-\wellsharedhead{\tyenv}{\head}{\pany}{\pretype_1}\\\\
+\inferrule*[left=Wf-App]{
+\wellsharedhead{\tyenv}{\head}{\pany}{\pretype_1}\\
 \wellsharedspine{\tyenv}{\pretype_1}{\spine}{\pretype_2}
 }{
-\wellsharedterm{\tyenv}{\tapp{\head}{\spine}}{\pretype_2}
+\wellsharedterm{\tyenv}{\tapp{\head}{\spine}}{\promise}{\pretype_2}
 }
 
-\infer
+\inferrule*[left=Wf-Abs]
 {
 \wellsharedterm{\tenvbind\tyenv{\var}{\promise}{\type}}
                {\term}
+               {\promise}
                {\pretype}
 }{
 \wellsharedterm{\tyenv}
                {\tlam{\bind{\var}{\promise}{\type}}{\term}}
+               {\promise}
                {\ptarrow{\erase{\type}}{\promise}{\pretype}}
 }
 
-\infer{
-\wellsharedadefs{\tyenv}{\spine} \\\\
-\wellsharedterm{\tenvcons{\tyenv}{\spine}}{\term}{\sigma}
+\inferrule*[left=Wf-Def]{
+\wellsharedadefs{\tyenv}{\spine} \\
+\wellsharedterm{\tenvcons{\tyenv}{\spine}}{\term}{\promise}{\sigma}
 }{
-\wellsharedterm{\tyenv}{\tdef{\spine}{\term}}{\sigma}
+\wellsharedterm{\tyenv}{\tdef{\spine}{\term}}{\promise}{\sigma}
 }
 
-\infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\spine}\\\\
-\wellsharedterm{\tenvcons{\tyenv}{\spine}}{\term}{\sigma}
+\inferrule*[left=Wf-Open]{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\spine}\\
+\wellsharedterm{\tenvcons{\tyenv}{\spine}}{\term}{\promise}{\sigma}
 }{
-\wellsharedterm{\tyenv}{\topen{\term}{\var}}{\sigma}
+\wellsharedterm{\tyenv}{\topen{\term}{\var}}{\promise}{\sigma}
 }
 \end{mathpar}
 \end{center}
@@ -44,28 +46,14 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
-\tenvlookup{\tyenv}{\var} = \bind{\var}{\promise}{\type}
+\inferrule*[left=Lookup-Env]{
+\oftype{\tenvlookuptype{\tyenv}{\var}}{\promise}{\type}
 }{
 \wellsharedhead{\tyenv}{\var}{\promise}{\erase{\type}}
 }
 
-%
-% J'ai l'impression que l'on peut sans risque affirmer
-% qu'une définition est toujours utilisable. En effet,
-% si on avait un alias de la forme :
-%       fun (x :_unused A). (y = x) in y
-% alors la définition [y = x] serait mal typée.
-% Cela briserait l'invariant que les environnements 
-% ne contiennent que des définitions bien typées par
-% ce système. 
-\infer{
-\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\pany}{\type})
-}{
-\wellsharedhead{\tyenv}{\var}{\pany}{\erase{\type}}
-}
-
-\infer{
+% FIXME: Add signature lookup here.
+\inferrule*[left=Lookup-Sig]{
 }{
 \wellsharedhead{\tyenv}{\constant}{\pany}{\erase{\type}}
 }
@@ -77,18 +65,20 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
+\inferrule*[left=Wf-ESpine]{
 }{
 \wellsharedspine{\tyenv}{\pretype}{\emptylist}{\pretype}
 }
 
-\infer{
-\wellsharedhead{\tyenv}{\head}{\promise_2}{\pretype_1'} \\\\
-\promise_1 \leq \promise_2 \\
-\subpretype{\pretype_1'}{\pretype_1}
+\inferrule*[left=Wf-NESpine]{
+\wellsharedhead{\tyenv}{\head}{\promise_2}{\pretype_1} \\
+\promise_1 \leq \promise_2  \\
+\wellsharedspine{\tyenv}{\pretype_2}
+                {\spine}
+                {\pretype_3} 
 }{
 \wellsharedspine{\tyenv}{\ptarrow{\pretype_1}{\promise_1}{\pretype_2}}
-                {\head\spine}
+                {\conslist\head\spine}
                 {\pretype_3}
 }
 \end{mathpar}
@@ -99,16 +89,16 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
+\inferrule*[left=Wf-EDefs]{
 }{
 \wellsharedadefs{\tyenv}{\emptylist}
 }
 
-\infer{
-\wellsharedterm{\tyenv}{\term}{\erase{\type}}\\
-\wellsharedadefs{\tenvdef{\tyenv}{\var}{\term}{\type}}{\adefs}
+\inferrule*[left=Wf-NEDefs]{
+\wellsharedterm{\tyenv}{\term}{\promise}{\erase{\type}}\\
+\wellsharedadefs{\tenvdef{\tyenv}{\var}{\term}{\promise}{\type}}{\adefs}
 }{
-\wellsharedadefs{\tyenv}{\xadef{\var}{\term}{\pany}{\type}\adefs}
+\wellsharedadefs{\tyenv}{\xadef{\var}{\term}{\promise}{\type}\adefs}
 }
 \end{mathpar}
 \end{center}
@@ -118,28 +108,28 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
+\inferrule*[left=Wf-Product-Type]{
 \wellsharedtype{\tenvcons\tyenv\binding}{\type}
 }{
 \wellsharedtype{\tyenv}{\typrod{\binding}{\type}}
 }
 
-\infer{
-\wellsharedadefs{\tyenv}{\adefs} \\\\
+\inferrule*[left=Wf-Def-Type]{
+\wellsharedadefs{\tyenv}{\adefs} \\
 \wellsharedtype{\tenvcons{\tyenv}{\adefs}}{\type}
 }{
 \wellsharedtype{\tyenv}{\tydef{\adefs}{\type}}
 }
 
-\infer{
-\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\spine}\\\\
+\inferrule*[left=Wf-Open-Type]{
+\openscope{\tyenv}{\tenvlookup{\tyenv}{\var}}{\spine}\\
 \wellsharedtype{\tenvcons\tyenv{\spine}}{\type}
 }{
 \wellsharedtype{\tyenv}{\tyopen{\type}{\var}}
 }
 
-\infer{
-% \signature\tyconstant = \kind
+\inferrule*[left=Wf-App-Type]{
+% FIXME: \signature\tyconstant = \kind
 \wellsharedkindspine{\tyenv}{\erase\kind}{\spine}
 }{
 \wellsharedtype{\tyenv}{\tyapp{\tyconstant}{\spine}}
@@ -152,45 +142,24 @@
 }
 \begin{center}
 \begin{mathpar}
-\infer{
-\wellsharedhead{\tyenv}{\head}{\promise_2}{\pretype'} \\\\
-\promise_1 \leq \promise_2 \\
-\subpretype{\pretype_1'}{\pretype_1}
-}{
-\wellsharedkindspine{\tyenv}
-                    {\pkarrow{\pretype}{\promise_1}{\prekind}}
-                    {\head\spine}
-}
-
-\infer{
+\inferrule*[left=Wf-Kd-ESpine]{
 }{
 \wellsharedkindspine{\tyenv}{\pkconst}{\emptylist}
 }
+
+\inferrule*[left=Wf-Kd-NESpine]{
+\wellsharedhead{\tyenv}{\head}{\promise_2}{\pretype} \\
+\promise_1 \leq \promise_2 \\
+\wellsharedkindspine{\tyenv}
+                    {\pkarrow{\pretype}{\promise_1}{\prekind}}
+                    {\conslist\head\spine}
+}{
+\wellsharedkindspine{\tyenv}
+                    {\pkarrow{\pretype}{\promise_1}{\prekind}}
+                    {\conslist\head\spine}
+}
 \end{mathpar}
 \end{center}
-
-\boxedtitle{
-\subpretype{\pretype}{\pretype}
-}
-\begin{center}
-\begin{mathpar}
-\infer{
-}{
-\subpretype{\ptconst}{\ptconst}
-}
-
-\infer{
-\promise \leq \promise' \\
-\subpretype{\pretype_1'}{\pretype_1} \\
-\subpretype{\pretype_2}{\pretype_2'} \\
-}{
-\subpretype{\ptarrow{\pretype_1}{\promise}{\pretype_2}} 
-           {\ptarrow{\pretype_1'}{\promise'}{\pretype_2'}}
-}
-% FIXME: Rajouter transitivite et reflexivite?
-\end{mathpar}
-\end{center}
-
 \caption{Well-formed sharing.}
 \label{fig:well-shared}
 \end{figure}

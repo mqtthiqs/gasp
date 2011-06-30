@@ -44,7 +44,7 @@
 \newcommand\topen[2]{[ #1 ]_{#2}}
 
 % Misc
-\newcommand\oftype[3]{#1 \stackrel{:}{#2} #3}
+\newcommand\oftype[3]{#1 \stackrel{#2}{:} #3}
 
 % Definition construction
 \newcommand\xadef[4]{[#1 = \oftype{#2}{#3}{#4}]}
@@ -63,8 +63,8 @@
 \newcommand\kprod[2]{\typrod{#1}{#2}}
 
 % Promise construction
-\newcommand\prigid{R}
-\newcommand\pany{A}
+\newcommand\prigid{\mathcal{R}}
+\newcommand\pany{\mathcal{A}}
 
 % Spine form LF Syntax
 %%%%%%%%%%%%%%%%%%%%%%
@@ -119,8 +119,8 @@
 \newcommand\erase[1]{\lfloor #1 \rfloor}
 
 % Judgments
-\newcommand\wellsharedterm[3]{#1 \vdash_{s} #2 : #3}
-\newcommand\wellsharedhead[4]{#1 \vdash_{s} #2 \stackrel{#3}{:} #4}
+\newcommand\wellsharedterm[4]{#1 \vdash_{s} \oftype{#2}{#3}{#4}}
+\newcommand\wellsharedhead[4]{#1 \vdash_{s} \oftype{#2}{#3}{#4}}
 \newcommand\wellsharedadefs[2]{#1 \vdash_{s} #2}
 \newcommand\wellsharedspine[4]{#1 ; #2 \vdash_{s} #3 \uparrow #4}
 \newcommand\wellsharedtype[2]{#1 \vdash_{s} #2}
