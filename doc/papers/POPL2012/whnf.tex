@@ -5,7 +5,7 @@
 \begin{center}
 \begin{mathpar}
 \infer{
-\whnf{\tenvcons{\tyenv}{\xadef{\var}{\head'}{\type}}}
+\whnf{\tenvcons{\tyenv}{\xadef{\var}{\pany}{\head'}{\type}}}
      {\term}
      {\typebis}
      {{\spine}'}
@@ -16,14 +16,14 @@
      {\tlam{\bind\var\promise\type}{\term}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
      {\head'{\spine}'}
-     {\xadef{\var}{\head'}{\type}\adefs}
+     {\xadef{\var}{\head'}{\pany}{\type}\adefs}
      {\term}
 }
 
 \infer{
 \wellsharedhead{\tyenv}{\head'}{\promise'}{\pretype} \\
 \subpretype{\pretype}{\erase{\type}}\\\\
-\whnf{\tenvcons{\tyenv}{\xadef{\var}{\head'}{\type}}}
+\whnf{\tenvcons{\tyenv}{\xadef{\var}{\pany}{\head'}{\type}}}
      {\tapp{\head}{\concat{\spine}{\var}}}
      {\typebis}
      {{\spine}'}
@@ -34,13 +34,13 @@
      {\tapp{\head}{\spine}}
      {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
      {\head'{\spine}'}
-     {\xadef{\var}{\head'}{\type}\adefs}
+     {\xadef{\var}{\head'}{\pany}{\type}\adefs}
      {\term}
 }
 
 \infer{
 \wellsharedhead{\tyenv}{\head'}{\promise'}{\pretype} \\
-\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\type}) \\\\
+\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\pany}{\type}) \\\\
 \whnf{\tyenv}
      {\term}
      {\type}

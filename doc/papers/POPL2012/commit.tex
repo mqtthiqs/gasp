@@ -114,9 +114,9 @@
 \infer{
 \tcterm{\tyenv}{\term}{\typebis} \\
 \equaltype{\tyenv}{\type}{\typebis} \\
-\tcdefs{\tyenv\xadef{\var}{\term}{\type}}{\adefs}
+\tcdefs{\tyenv\xadef{\var}{\term}{\pany}{\type}}{\adefs}
 }{
-\tcdefs{\tyenv}{\xadef{\var}{\term}{\type}\adefs}
+\tcdefs{\tyenv}{\xadef{\var}{\term}{\pany}{\type}\adefs}
 }
 \end{mathpar}
 \end{center}

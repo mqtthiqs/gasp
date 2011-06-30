@@ -82,7 +82,7 @@
 &::=& \emptylist
 & \bnfcomment{Empty}
 \\
-&|& \conslist{\head\}{\spine}
+&|& \conslist{\head}{\spine}
 & \bnfcomment{Constructed}
 \\
 \\
@@ -101,7 +101,7 @@
 \\
 \adef 
 &::=& 
-\xadef{\var}{\term}{\type} 
+\xadef{\var}{\term}{\promise}{\type} 
 & \bnfcomment{\bf Definitions}
 \\
 \adefs
@@ -110,7 +110,7 @@
 & \bnfcomment{Empty}
 \\
 & | &
-\conslist{\adef\}{\adefs}
+\conslist{\adef}{\adefs}
 & \bnfcomment{Constructed}
 \\
 \\

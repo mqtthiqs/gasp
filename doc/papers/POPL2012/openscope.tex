@@ -1,6 +1,6 @@
 \begin{figure}
 \boxedtitle{
-\openscope{\tyenv}{\oftype{\term}{\type}}{\adefs}
+\openscope{\tyenv}{\oftype{\term}{\pany}{\type}}{\adefs}
 }
 \begin{center}
 \begin{mathpar}
@@ -11,7 +11,7 @@
                {\emptylist}
                {\adefs}
 }{
-\openscope{\tyenv}{\oftype{\term}{\type}}{\adefs}
+\openscope{\tyenv}{\oftype{\term}{\pany}{\type}}{\adefs}
 }
 
 % FIXME: Les \' ne se voient pas tres bien.
@@ -31,7 +31,7 @@
 \openscopespine{\tyenv}{\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
                {\tlam{\bind{\var}{\promise}{\type}}{\term}}
                {\conslist\head\spine}
-               {\xadef{\var}{\head}{\type}\adefs}
+               {\xadef{\var}{\head}{\pany}{\type}\adefs}
 }
 
 \infer{
@@ -88,7 +88,7 @@
 }
 
 \infer{
-\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\type}) \\\\
+\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\pany}{\type}) \\\\
 \openscopespine{\tyenv}
                {\type}
                {\term}

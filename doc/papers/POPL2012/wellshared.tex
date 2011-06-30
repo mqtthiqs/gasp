@@ -60,7 +60,7 @@
 % ne contiennent que des définitions bien typées par
 % ce système. 
 \infer{
-\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\type})
+\tenvlookup{\tyenv}{\var} = (\oftype{\term}{\pany}{\type})
 }{
 \wellsharedhead{\tyenv}{\var}{\pany}{\erase{\type}}
 }
@@ -108,7 +108,7 @@
 \wellsharedterm{\tyenv}{\term}{\erase{\type}}\\
 \wellsharedadefs{\tenvdef{\tyenv}{\var}{\term}{\type}}{\adefs}
 }{
-\wellsharedadefs{\tyenv}{\xadef{\var}{\term}{\type}\adefs}
+\wellsharedadefs{\tyenv}{\xadef{\var}{\term}{\pany}{\type}\adefs}
 }
 \end{mathpar}
 \end{center}

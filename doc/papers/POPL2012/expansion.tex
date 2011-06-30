@@ -34,7 +34,7 @@
 \interpret{\var}{\tyenv} 
 &=&
 \interpret{\term}{\tyenv} \\
-&& \defcomment{where } \tenvlookup{\tyenv}{x} = (\oftype{\term}{\type})
+&& \defcomment{where } \tenvlookup{\tyenv}{x} = (\oftype{\term}{\pany}{\type})
 \\
 \interpret{\typrod{\bind{\var}{\promise}{\type}}{\typebis}}{\tyenv}
 &=&
