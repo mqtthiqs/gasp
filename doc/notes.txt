@@ -1,6 +1,100 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Fri Jul  1, 2011  8:47 AM
+
+
+Quelques éléments pour expliciter les différents problèmes et
+
+leurs motivations respectives.
+
+
+Tout d'abord, sur le design de la syntaxe. La syntaxe doit être
+
+suffisamment expressive pour représenter un ensemble arbitraire de
+termes canoniques de SLF (Spine Form LF) partageant des fragments
+
+de sous-termes. Elle doit aussi être compacte.
+
+
+Ce dernier point justifie la non-utilisation des formes η-expansées.
+
+
+Pour l'expressivité, je vois donc deux résultats à prouver :
+
+
+a. Complétude vis-à-vis des formes canoniques de SLF.
+
+Toute forme canonique de SLF (bien typée) est représentable en un
+objet bien typé dans notre langage. Cela devrait être évident.
+
+
+b. Complétude vis-à-vis des formes canoniques avec partage.
+
+
+C'est l'aspect intéressant. Il faut d'une part caractériser simplement
+le partage que nous souhaitons être capable d'exprimer (on doit
+pouvoir fournir aux utilisateurs de S² une spécification simple des
+deltas que l'on peut écrire et ceux que l'on ne peut pas). Il faut d'autre
+
+part montrer que l'ensemble des objets bien typés de notre langage capture
+
+effectivement bien ces termes avec partages.
+
+
+Pour le moment, j'essaie de converger vers quelque chose comme ça
+pour la spécification du partage que nous souhaitons capturer
+
+(c'est encore à raffiner):
+
+
+Si T est une forme canonique de SLF tel que
+
+   T = C (F t₁ ... t_n)
+
+avec:
+
+   C, un contexte de forme canonique
+
+   F, une fonction pris dans une classe de fonctions injectives (FI). 
+
+   t_i, des formes canoniques
+
+
+Pourquoi choisir des fonctions F injectives? Parce que l'on souhaite
+
+avoir un algorithme de vérification des types, et en particulier un
+
+test de conversion, capable de prendre en compte le partage et de
+
+n'expanser les définitions que lorsque que c'est nécessaire. En
+particulier, on veut réduire 
+
+
+     F (l) ≡ F (l') ⇒ l ≡ l'
+
+
+Si un vérificateur incrémental de type a utilisé du partage
+"pertinent", la vérification du bon typage du delta qu'il produit
+devrait alors être "optimal". (Tout ceci est à formaliser dans
+
+la définition du typage incrémental.)
+
+   
+
+Comment choisir la classe de fonctions injectives FI? On veut
+
+certainement un critère simple, syntaxique, inspiré de ce que Pfenning
+
+a proposé dans son papier sur les définitions. Cependant, nous sommes
+dans un cadre légèrement différent. J'essaie donc actuellement de
+converger vers un système de type capturant ces fonctions injectives
+intéressantes et facilement spécifiables/explicables à nos
+utilisateurs. Pour être plus précis, je suis actuellement en train de
+creuser la piste des patterns à la Milner.
+
+
+
 Fri Jun 24, 2011  4:00 PM
 
 
