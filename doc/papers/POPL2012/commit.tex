@@ -34,20 +34,21 @@
 }
 
 \inferrule*[left=C-Cst-App]{
-\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{\type}
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\head}}{\spine}{\promise}{\type}
 }{
-\tcterm{\tyenv}{\tapp{\constant}{\spine}}{\pany}{\type}
+\tcterm{\tyenv}{\tapp{\constant}{\spine}}{\promise}{\type}
 }
 
 \inferrule*[left=C-App-Pat]{
-\distinctheads{\tyenv}{\spine}\\\\
-\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\var}}{\spine}{\type}
+\distinctheads{\tyenv}{\spine}\\
+\oftype{\tenvlookup{\tyenv}{\var}}{\pany}{\typebis} \\
+\tcspine{\tyenv}{\typebis}{\spine}{\pany}{\type}
 }{
 \tcterm{\tyenv}{\tapp{\var}{\spine}}{\pany}{\type}
 }
 
 \inferrule*[left=C-App]{
-\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\var}}{\spine}{\type}
+\tcspine{\tyenv}{\tenvlookuptype{\tyenv}{\var}}{\spine}{\promise}{\type}
 }{
 \tcterm{\tyenv}{\tapp{\var}{\spine}}{\prigid}{\type}
 }
@@ -69,20 +70,24 @@
 }
 \end{mathpar}
 \end{center}
-\boxedtitle{\tcspine{\tyenv}{\type}{\spine}{\type}}
+\boxedtitle{\tcspine{\tyenv}{\type}{\spine}{\promise}{\type}}
 \begin{center}
 \begin{mathpar}
 \inferrule*[left=CS-Arg]{
-\equaltype{\tyenv}{\type}{\tenvlookuptype{\tyenv}{\head}} \\
-\tcspine{\tenvdef{\tyenv}{\var}{\head}{\promise}{\type}}
+\oftype{\tenvlookup{\tyenv}{\varbis}}{\promise'}{\type'} \\
+\equaltype{\tyenv}{\type}{\type'} \\
+\promise' \leq \promise \\
+\tcspine{\tenvdef{\tyenv}{\var}{\varbis}{\promise}{\type}}
         {\typebis}
         {\spine}
+        {\promise''}
         {\typebis'}
 }{
 \tcspine{\tyenv}
         {\typrod{\bind{\var}{\promise}{\type}}{\typebis}}
-        {\conslist\head\spine}
-        {\typebis'}
+        {\conslist\varbis\spine}
+        {\pmin{\promise''}{\promise'}}
+        {\tdef{\xadef{\var}{\varbis}{\promise}{\type}}\typebis'}
 }
 
 \inferrule*[left=CS-Open]{
@@ -90,11 +95,13 @@
 \tcspine{\tenvcons{\tyenv}{\adefs}}
         {\type}
         {\spine}
+        {\promise}
         {\typebis}
 }{
 \tcspine{\tyenv}
         {\topen{\type}{\var}}
         {\spine}
+        {\promise}
         {\tydef{\adefs}\typebis}
 }
 
@@ -102,11 +109,13 @@
 \tcspine{\tyenv\adefs}
         {\type}
         {\spine}
+        {\promise}
         {\typebis}
 }{
 \tcspine{\tyenv}
         {\tydef{\adefs}{\type}}
         {\spine}
+        {\promise}
         {\tydef{\adefs}{\typebis}}
 }
 
@@ -115,6 +124,7 @@
 \tcspine{\tyenv}
         {\type}
         {\emptylist}
+        {\pany}
         {\type}
 }
 \end{mathpar}

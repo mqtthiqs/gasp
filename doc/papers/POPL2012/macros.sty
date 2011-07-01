@@ -66,6 +66,7 @@
 % Promise construction
 \newcommand\prigid{\mathcal{R}}
 \newcommand\pany{\mathcal{A}}
+\newcommand\pmin[2]{#1 \sqcap #2}
 
 % Spine form LF Syntax
 %%%%%%%%%%%%%%%%%%%%%%
@@ -134,7 +135,7 @@
 % Judgements
 \newcommand\tcterm[4]{#1 \vdash #2 \stackrel{#3}{\Uparrow} #4}
 \newcommand\tcdefs[2]{#1 \vdash #2}
-\newcommand\tcspine[4]{#1 ; #2 \vdash #3 \Uparrow #4}
+\newcommand\tcspine[5]{#1 ; #2 \vdash #3 \stackrel{#4}\Uparrow #5}
 \newcommand\equalterm[4]{#1 \vdash #2 \equiv #3 : #4}
 \newcommand\equalwhnfterm[4]{#1 \vdash #2 \leftrightarrow #3 : #4}
 \newcommand\whnfbis[5]{#1 \vdash #2 \,\triangleleft\, #3 \Downarrow \tdef{#4}{#5}}
