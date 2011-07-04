@@ -61,6 +61,10 @@ avec:
    t_i, des formes canoniques
 
 
+alors il existe un terme U de S² bien typé dont l'expansion est T.
+
+   
+
 Pourquoi choisir des fonctions F injectives? Parce que l'on souhaite
 
 avoir un algorithme de vérification des types, et en particulier un
