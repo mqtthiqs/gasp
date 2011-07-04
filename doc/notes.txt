@@ -95,7 +95,7 @@ dans un cadre légèrement différent. J'essaie donc actuellement de
 converger vers un système de type capturant ces fonctions injectives
 intéressantes et facilement spécifiables/explicables à nos
 utilisateurs. Pour être plus précis, je suis actuellement en train de
-creuser la piste des patterns à la Milner.
+creuser la piste des patterns à la Miller.
 
 
 
