@@ -1,6 +1,30 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Tue Jul  5, 2011  9:42 AM
+
+
+A lire :
+
+
+"Efficient Representation and Validation of Logical Proofs"
+George C. Necula
+Peter Lee
+October 1997
+
+
+Dans ce papier, Necula se pose des problèmes d'efficacité de
+représentation des termes LF. Sa réponse, si j'ai bien compris,
+consiste à rendre implicite certaines parties des termes. Ils
+optimisent ainsi la taille des preuves. La reconstruction de la partie
+implicite semble être faite pendant la vérification. 
+
+
+Notre réponse à l'efficacité de la représentation consiste à rendre
+possible du partage en termes déjà vérifiés et termes à
+vérifier. Notre solution est bien différente.
+
+
 Fri Jul  1, 2011  8:47 AM
 
 
