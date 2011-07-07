@@ -1,6 +1,46 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Thu Jul  7, 2011  3:53 PM
+
+
+Je poursuis mon exploration des caractérisations possibles des
+fonctions injectives. Une vue abstraite du problème s'énonce ainsi :
+
+
+   M N₁ ≡ M N₂ ⇒ N₁ ≡ N₂
+
+
+signifie que M est _inversible à gauche_ i.e.
+
+
+   ∃ P. (P o M) = Id
+
+
+C'est Roberto Amadio qui m'a suggéré une telle formulation.
+
+
+Roberto Di Cosmo a écrit le papier suivant sur les termes inversibles
+
+du lambda-calcul:
+
+
+Second Order Isomorphic Types: A Proof Theoretic Study on Second Order
+
+lambda-calculus with Surjective Pairing and Terminal Object.
+
+
+Notre cadre est légèrement différent car on peut supposer que M est une
+
+forme normale avec partage (i.e. une forme normale avec des définitions
+
+non expansées représentées par des applications de fonctions elles-mêmes
+
+injectives). Cela peut tout de même donner des idées...
+
+Je le lis maintenant.
+
+
 Tue Jul  5, 2011  9:42 AM
 
 
