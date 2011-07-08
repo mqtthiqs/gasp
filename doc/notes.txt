@@ -1,6 +1,25 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Fri Jul  8, 2011 10:04 AM
+
+
+Notre problème sur l'injectivité s'énonce ainsi.
+
+
+Soit l'ensemble de lambda-termes suivant.
+
+
+   u ::= λx₁ ... x_n. h u₁ ... u_m
+
+
+où h est injective, n ≥ 0 et m ≥ 0.
+
+
+Sous quelles conditions le terme "u" est-il injectif (vis-à-vis de βη)?
+
+   
+
 Fri Jul  8, 2011  9:47 AM
 
 
