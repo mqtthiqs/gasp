@@ -1,6 +1,38 @@
 Content-Type: text/enriched
 Text-Width: 70
 
+Fri Jul  8, 2011  9:47 AM
+
+
+J'explore la litérature sur les rétractions :
+
+
+- Retracts in simply typed \lambda\beta\eta-calculus
+  Liguoro, Piperno, Statman
+
+- Provable isomorphisms and domain equations in models of typed
+  languages.
+  Longo, Bruce
+
+- Types for Hereditary Permutators
+  Makoto Tatsuta
+
+- Invertible Terms in the lambda calculus
+  Bergstra, Klop
+
+- On the building of affine retractions 
+  Schubert.
+
+
+Extrait du papier "On the building of affine retractions" de Schubert :
+
+  
+"By the Curry–Howard isomorphism, retractions can also be used in
+automated provers as a vehicle supporting the reuse of already proved
+subproblems"
+
+
+
 Thu Jul  7, 2011  3:53 PM
 
 
