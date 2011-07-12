@@ -1,6 +1,9 @@
 
-val term : NLF_Sign.t -> SLF.term -> LF.entity
+open ILF
+open NLF
 
-val from_obj : LF.obj -> SLF.term
-val from_fam : LF.fam -> SLF.term
-val from_kind : LF.kind -> SLF.term
+val term : NLF.signature -> SLF.term -> ILF.entity
+
+val from_obj : ILF.obj -> SLF.term
+val from_fam : ILF.fam -> SLF.term
+val from_kind : ILF.kind -> SLF.term

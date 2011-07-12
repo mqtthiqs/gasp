@@ -1,14 +1,15 @@
 
+module Definitions : Definitions.Sig with type variable = string 
+
 type ident = string
 
 type term' =
   | Type
   | Prod of ident * term * term
-  | Arr of term * term
-  | Lam of ident option * term
+  | Lam of ident * term * term
   | App of term * term
   | Ident of ident
-  | Box of term * (ident * int) option * term
+  | Def of (term option, term, term) Definitions.construct
 
 and term = term' Position.located
 

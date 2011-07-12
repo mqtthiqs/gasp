@@ -1,96 +1,137 @@
 open Util
+open NLF
+open ILF
 open Name
 
 module P = Position
+module LF = ILF
 
 (* Typing: from SLF to LF *)
 
-let term : NLF_Sign.t -> SLF.term -> LF.entity =
-fun sign t ->
-  let rec term env {P.value=t; P.position=pos} =
-      match t with
-	| SLF.Type -> LF.Kind LF.KType
-	| SLF.Prod(x,t,u) ->
+let term : NLF.signature -> SLF.term -> ILF.entity =
+  fun sign t ->
+    let rec term env {P.value=t; P.position=pos} =
+	match t with
+	  | SLF.Type -> LF.Kind LF.KType
+	  | SLF.Prod(x,t,u) ->
 	    begin match term env t with
 	      | LF.Fam a -> 
-		  begin match term (Stringset.add x env) u with
-		    | LF.Kind k -> LF.Kind(LF.KProd(Some (mk_variable x),a,k))
-		    | LF.Fam b -> LF.Fam(LF.FProd(Some (mk_variable x),a,b))
-		    | _ -> Errors.not_a_kind_or_fam u
-		  end
+		begin match term (Stringset.add x env) u with
+		  | LF.Kind k -> LF.Kind(LF.KProd(mk_variable x,a,k))
+		  | LF.Fam b -> LF.Fam(LF.FProd(mk_variable x,a,b))
+		  | _ -> Errors.not_a_kind_or_fam u
+		end
 	      | _ -> Errors.not_a_fam t
 	    end
-	| SLF.Arr(t,u) ->
-	    begin match term env t, term env u with
-	      | LF.Fam a, LF.Kind k -> LF.Kind(LF.KProd(None,a,k))
-	      | LF.Fam a, LF.Fam b -> LF.Fam(LF.FProd(None,a,b))
-	      | LF.Fam _, _ -> Errors.not_a_kind_or_fam u
-	      | _ -> Errors.not_a_fam t
+	  | SLF.Lam(x,ty,u) ->
+	    begin match term env ty, term (Stringset.add x env) u with
+	      | LF.Fam a, LF.Obj o -> LF.Obj(LF.OLam(mk_variable x,a,o))
+	      | _ -> Errors.not_an_obj u
 	    end
-	| SLF.Lam(Some x,u) ->
-	  begin match term (Stringset.add x env) u with
-	    | LF.Obj o -> LF.Obj(LF.OLam(Some (mk_variable x),o))
-	    | _ -> Errors.not_an_obj u
-	  end
-	| SLF.Lam(None, u) ->
-	  begin match term env u with
-	    | LF.Obj o -> LF.Obj(LF.OLam(None, o))
-	    | _ -> Errors.not_an_obj u
-	  end
-	| SLF.App(t,u) ->
+
+	  | SLF.Def (SLF.Definitions.Open (x, t)) ->
+	    let x = mk_variable x in
+	    begin match term env t with
+	      | LF.Obj o -> LF.Obj (LF.ODef (LF.Definitions.Open (x, o)))
+	      | LF.Fam a -> LF.Fam (LF.FDef (LF.Definitions.Open (x, a)))
+	      | _ -> Errors.not_a_fam_or_obj t
+	    end
+
+	  | SLF.Def (SLF.Definitions.Define (defs, t)) ->
+	    let env, defs = definitions env defs in
+	    begin match term env t with
+	      | LF.Obj o -> LF.Obj (LF.ODef (LF.Definitions.Define (defs, o)))
+	      | LF.Fam a -> LF.Fam (LF.FDef (LF.Definitions.Define (defs, a)))
+	      | _ -> Errors.not_a_fam_or_obj t
+	    end
+
+	  | SLF.App(t,u) ->
 	    begin match term env t, term env u with
-	      | LF.Fam a, LF.Obj o -> LF.Fam(LF.FApp(a,o))
-	      | LF.Obj o, LF.Obj v -> LF.Obj(LF.OApp(o,v))
+	      | LF.Fam a, LF.Obj o -> LF.Fam(LF.FApp(a,[o]))
+	      | LF.Obj o, LF.Obj v -> LF.Obj(LF.OApp(o,[v]))
 	      | _, LF.Obj _ -> Errors.not_a_fam_or_obj t
 	      | _ -> Errors.not_an_obj u
 	    end
-	| SLF.Box (t,p,u) ->
-	  begin match term env t with
-	    | LF.Obj t ->
-	      let s = match term env u with
-		| LF.Obj u -> u
-		| _ -> Errors.not_an_obj u in
-	      LF.Obj(LF.OBox(t, Option.map (fun (x,n) -> mk_variable x, n) p, s))
-	    | _ -> Errors.not_an_obj t
-	  end
-	| SLF.Ident x ->
+	  | SLF.Ident x ->
 	    (* if it's in [env] it's a (declared) variable *)
 	    if Stringset.mem x env
 	    then LF.Obj(LF.OVar (mk_variable x))
 	    (* if it's in [sign] it's a constant*)
-	    else if NLF_Sign.mem_fconst (mk_fconst x) sign
+	    else if NLF.mem_fconst (mk_fconst x) sign
 	    then LF.Fam (LF.FConst (mk_fconst x))
-	    else if NLF_Sign.mem_oconst (mk_oconst x) sign
+	    else if NLF.mem_oconst (mk_oconst x) sign
 	    then LF.Obj (LF.OConst (mk_oconst x))
 	    (* otherwise it might still be a (defined) variable looked up in XLFa *)
 	    else LF.Obj(LF.OVar (mk_variable x))
-  in
-  term Stringset.empty t
+    and definitions env defs =
+      List.fold_left (fun (env, defs) (x, ty, t) ->
+	let ty = match ty with
+	  | None -> None
+	  | Some ty ->
+	    match term env ty with
+	      | LF.Fam a -> Some a
+	      | _ -> Errors.not_a_fam ty
+	in
+	match t with
+	  | None -> (Stringset.add x env, LF.Definitions.declare (mk_variable x) ty defs)
+	  | Some t -> 
+	    begin match term env t with
+	      | LF.Obj o -> 
+		(Stringset.add x env, LF.Definitions.define (mk_variable x) o ty defs)
+	      | _ -> Errors.not_an_obj t
+	    end)
+	(env, LF.Definitions.empty ()) 
+	(SLF.Definitions.as_list defs)
+
+    in
+    term Stringset.empty t
 
 (* Detyping: from LF to SLF *)
 
 let rec from_obj' = function
-  | LF.OConst c -> SLF.Ident (of_oconst c)
-  | LF.OVar x -> SLF.Ident (of_variable x)
-  | LF.OLam (None, t) -> SLF.Lam (None, from_obj t)
-  | LF.OLam (Some x, t) -> SLF.Lam (Some (of_variable x), from_obj t)
-  | LF.OApp (t,u) -> SLF.App (from_obj t, from_obj u)
-  | LF.OBox (t,p,u) -> SLF.Box (from_obj t, Option.map (fun (x,n) -> of_variable x, n) p, from_obj u)
+  | LF.OConst c -> 
+    SLF.Ident (of_oconst c)
+  | LF.OVar x -> 
+    SLF.Ident (of_variable x)
+  | LF.OLam (x, ty, t) -> 
+    SLF.Lam (of_variable x, from_fam ty, from_obj t)
+  | LF.OApp (t,us) -> 
+    let t = from_obj t in
+    let loc x = Position.with_pos (Position.position t) x in
+    List.fold_left (fun lhs u -> SLF.App (loc lhs, from_obj u)) (Position.value t) us
+  | LF.ODef (LF.Definitions.Open (x, t)) -> 
+    SLF.Def (SLF.Definitions.Open (of_variable x, from_obj t))
+  | LF.ODef (LF.Definitions.Define (defs, t)) -> 
+    SLF.Def (SLF.Definitions.Define (from_definitions defs, from_obj t))
+
+and from_definitions defs = 
+  List.fold_left (fun defs (x, ty, t) ->
+    let ty = match ty with None -> None | Some ty -> Some (from_fam ty) in
+    match t with 
+      | None -> SLF.Definitions.declare (of_variable x) ty defs 
+      | Some t -> SLF.Definitions.define (of_variable x) (from_obj t) ty defs)
+    (SLF.Definitions.empty ())
+    (LF.Definitions.as_list defs)
 
 and from_obj t = P.with_pos P.dummy (from_obj' t)
 
 and from_fam' = function
   | LF.FConst c -> SLF.Ident (of_fconst c)
-  | LF.FProd (None, a, b) -> SLF.Arr(from_fam a, from_fam b)
-  | LF.FProd (Some x, a, b) -> SLF.Prod(of_variable x, from_fam a, from_fam b)
-  | LF.FApp (a,t) -> SLF.App (from_fam a, from_obj t)
+  | LF.FProd (x, a, b) -> SLF.Prod(of_variable x, from_fam a, from_fam b)
+  | LF.FApp (a,t) -> 
+    let a = from_fam a in
+    let loc x = Position.with_pos (Position.position a) x in
+    List.fold_left (fun lhs u -> SLF.App (loc lhs, from_obj u)) (Position.value a) t
+  | LF.FDef (LF.Definitions.Open (x, t)) -> 
+    SLF.Def (SLF.Definitions.Open (of_variable x, from_fam t))
+  | LF.FDef (LF.Definitions.Define (defs, t)) -> 
+    SLF.Def (SLF.Definitions.Define (from_definitions defs, from_fam t))
 
 and from_fam a = P.with_pos P.dummy (from_fam' a)
 
 let rec from_kind' = function
   | LF.KType -> SLF.Type
-  | LF.KProd(None,a,k) -> SLF.Arr(from_fam a, from_kind k)
-  | LF.KProd(Some x,a,k) -> SLF.Prod(of_variable x, from_fam a, from_kind k)
+  | LF.KProd(x,a,k) -> SLF.Prod(of_variable x, from_fam a, from_kind k)
 
 and from_kind (k:LF.kind) : SLF.term = 
   P.with_pos P.dummy (from_kind' k)

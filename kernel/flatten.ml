@@ -27,12 +27,15 @@ let rec fam : ILF.fam -> NLF.fam = function
     NLF.FConst f
   | FProd (x, a, b) -> 
     NLF.FProd (x, fam a, fam b)
-  | FApp (a, args) -> 
-    assert (not_fapp a);
+  | FApp (FConst x, args) -> 
     let args_defs, args = name_arguments args in
-    NLF.FDef (NLF.Definitions.Define (args_defs, NLF.FApp (fam a, args)))
+    NLF.FDef (NLF.Definitions.Define (args_defs, NLF.FApp (x, args)))
   | FDef d -> 
     NLF.FDef (map_construct (Option.map fam) obj fam d)
+  | t -> 
+    (* There is not structured term in functional position. *)
+    Format.fprintf Format.std_formatter "@[%a@]" Pp.pp_fam t;
+    assert false
 
 and obj = function
   | OConst o -> 

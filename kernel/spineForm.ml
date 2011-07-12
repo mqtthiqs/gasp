@@ -16,7 +16,10 @@ let rec fam = function
     atom (FDef (Definitions.map_construct (Option.map close_fam) close_obj close_fam d))
 
 and close_fam a = 
-  let a, args = fam a in FApp (a, args)
+  let a, args = fam a in
+  match args with 
+    | [] -> a
+    | args -> FApp (a, args)
 
 and obj = function
   | OConst o -> 
@@ -33,7 +36,9 @@ and obj = function
 
 and close_obj a = 
   let a, args = obj a in
-  OApp (a, args)
+  match args with
+    | [] -> a
+    | args -> OApp (a, args)
 
 and kind = function
   | KType -> KType

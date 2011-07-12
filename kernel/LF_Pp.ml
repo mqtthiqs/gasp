@@ -2,24 +2,36 @@ open Format
 
 module type Sig = sig
   type obj
+  type fam
   type head
+  type fhead 
   val pp_obj : formatter -> obj -> unit
+  val pp_fam : formatter -> fam -> unit
   val pp_head : formatter -> head -> unit
+  val pp_fhead : formatter -> fhead -> unit
 end
 
 module Make (LF : sig 
   include LF.Sig 
   val pp_head : formatter -> head -> unit
+  val pp_fhead : formatter -> fhead -> unit
 end) 
-: Sig with type obj = LF.obj and type head = LF.head = 
-struct
+: Sig
+  with type obj = LF.obj 
+  and type fam = LF.fam
+  and type head = LF.head 
+  and type fhead = LF.fhead
+=  struct
 
   open LF
   module DefPP = Definitions_Pp.Make (Definitions)
 
   type obj = LF.obj
+  type fam = LF.fam
   type head = LF.head
+  type fhead = LF.fhead
   let pp_head = LF.pp_head
+  let pp_fhead = LF.pp_fhead
 
   let is_wilcard x = ((Name.of_variable x).[0] = '_')
 
@@ -31,7 +43,7 @@ struct
     | FProd (x, a, b) -> 
       fprintf fmt "@[{%a : %a} %a@]" pp_ident x pp_fam a pp_fam b      
     | FApp (f, args) -> 
-      fprintf fmt "@[%a (%a)@]" pp_fam f pp_arguments args
+      fprintf fmt "@[%a (%a)@]" pp_fhead f pp_arguments args
     | FDef d ->
       DefPP.pp_construct pp_ident pp_opt_fam pp_obj pp_fam fmt d
 

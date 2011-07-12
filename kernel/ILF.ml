@@ -1,16 +1,29 @@
 module rec ILF : sig
   include LF.Sig 
-  type t
-end with type t = ILF.obj and type head = ILF.t = struct
+  type head_ 
+  type fhead_ 
+end 
+with type head_ = ILF.obj 
+and type head = ILF.head_ 
+and type fhead_ = ILF.fam 
+and type fhead = ILF.fhead_
+= struct
   include LF.Make (ILF)
-  type t = ILF.obj
+  type head_ = ILF.obj
+  type fhead_ = ILF.fam
 end
 
 module rec Pp : sig
-  include LF_Pp.Sig with type obj = ILF.obj and type head = ILF.obj
+  include LF_Pp.Sig 
+  with type obj = ILF.obj 
+  and type head = ILF.obj
+  and type fam = ILF.fam
+  and type fhead = ILF.fam
   val pp_head : Format.formatter -> head -> unit
+  val pp_fhead : Format.formatter -> fhead -> unit
 end = LF_Pp.Make (struct
   include ILF
-  let pp_head : Format.formatter -> head -> unit = Pp.pp_obj
+  let pp_head = Pp.pp_obj
+  let pp_fhead = Pp.pp_fam 
 end)
     

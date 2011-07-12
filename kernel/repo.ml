@@ -1,95 +1,85 @@
 open Util
+open NLF
+open ILF
 
 module Constants = struct
   open Name
 
   let commit_const = mk_fconst Settings.commit_const
-  let commit_type = NLF.FAtom(Varmap.empty, commit_const, [])
+  let commit_type = NLF.FConst commit_const
+
   let version_const = mk_fconst Settings.version_const
-  let version_fatom = Varmap.empty, version_const, []
-  let version_type = NLF.FAtom version_fatom
+  let version_type = NLF.FConst version_const
+
   let version_o_const = mk_oconst Settings.version_o_const
-  let version_o = NLF.Obj(Varmap.empty, NLF.VHead(Cst(version_o_const), version_fatom))
-  let version_s c v = NLF.DAtom(Cst(mk_oconst Settings.version_s_const), [c; v], version_fatom)
+  let version_o = NLF.OConst version_o_const
+  let version_s c v = NLF.OApp (HConst version_o_const, [c; v])
 
 end
 
 type t = {
-  sign : NLF_Sign.t;
+  sign : NLF.signature;
   term : NLF.obj;
-  varno : int
 }
 
-let rec compile_sign s : NLF_Sign.t = List.fold_left
-  (fun sign (x,t) -> match SLF_LF.term sign t with
-    | LF.Kind k ->
-      let k = LF_XLF.kind k in
-      let k = XLF_XLFf.kind k in
-      Util.if_debug (fun () -> Format.printf "@[F %s :: %a@]@." x XLFf_Pp.kind k);
-      let k = XLFf_NLF.kind sign Constants.version_o k in
-      Util.if_debug (fun () -> Format.printf "@[N %s :: %a@]@." x NLF_Pp.kind k);
-      NLF_Sign.add_fconst (Name.mk_fconst x) k sign
-    | LF.Fam a ->
-      let a = LF_XLF.fam a in
-      let a = XLF_XLFf.fam a in
-      Util.if_debug (fun () -> Format.printf "@[F %s :: %a@]@." x XLFf_Pp.fam a);
-      let a = XLFf_NLF.fam sign Constants.version_o a in
-      Util.if_debug (fun () -> Format.printf "@[N %s :: %a@]@." x NLF_Pp.fam a);
-      NLF_Sign.add_oconst (Name.mk_oconst x) a sign
-    | LF.Obj t -> failwith ("obj in signature: "^x)
-  ) NLF_Sign.empty s
+let empty_repo = Constants.version_o
 
-let compile_term sign repo a =
-    (fun x -> match SLF_LF.term sign x with
-       | LF.Obj t -> t
-       | _ -> assert false) //
-      LF_XLF.obj //
-      XLF_XLFf.obj //
-      (fun t ->
-	Util.if_debug (fun () -> Format.printf "%a@." XLFf_Pp.obj t);
-	XLFf_NLF.obj sign repo (t, a))
+let compile_lf_fam sign ?(repo=empty_repo) fam =
+  TypeCheck.fam sign repo (Flatten.fam (SpineForm.fam fam))
 
-let reify_term t =
-  (NLF_XLF.obj // LF_XLF.from_obj // SLF_LF.from_obj) t
+let compile_lf_obj sign ?(repo=empty_repo) obj =
+  TypeCheck.obj sign repo (Flatten.obj (SpineForm.obj obj))
 
-let reify_sign s =
-  NLF_Sign.fold (fun entry acc -> match entry with
-    | NLF_Sign.FDecl (c, k) -> (Name.of_fconst c, SLF_LF.from_kind (LF_XLF.from_kind (NLF_XLF.kind k))) :: acc
-    | NLF_Sign.ODecl (c, a) -> (Name.of_oconst c, SLF_LF.from_fam (LF_XLF.from_fam (NLF_XLF.fam a))) :: acc
+let compile_lf_kind sign ?(repo=empty_repo) kind =
+  TypeCheck.kind sign repo (Flatten.kind (SpineForm.kind kind))
+
+let compile_sign s = 
+  let compile_entry outs (x, t) = 
+    match SLF_LF.term outs t with
+      | ILF.Kind k -> NLF.bind_fconst (Name.mk_fconst x) (compile_lf_kind outs k) outs
+      | ILF.Fam a -> NLF.bind_oconst (Name.mk_oconst x) (compile_lf_fam outs a) outs
+      | ILF.Obj _ -> Errors.not_a_kind_or_fam t
+  in
+  List.fold_left compile_entry (NLF.empty ()) s
+
+let compile_term sign repo t = 
+  match SLF_LF.term sign t with
+    | ILF.Obj o -> compile_lf_obj sign ~repo o
+    | _ -> assert false
+
+let reify_term t = SLF_LF.from_obj (NLF_ILF.obj t)
+
+let reify_kind k = SLF_LF.from_kind (NLF_ILF.kind k)
+
+let reify_fam a = SLF_LF.from_fam (NLF_ILF.fam a)
+
+let reify_sign s = 
+  NLF.fold (fun entry acc -> match entry with
+    | NLF.FDecl (c, k) -> (Name.of_fconst c, reify_kind k) :: acc
+    | NLF.ODecl (c, a) -> (Name.of_oconst c, reify_fam a) :: acc
   ) s []
 
-let init sign =
+let init sign = 
   let sign = compile_sign sign in
-  {sign = sign;
-   varno = Name.gen_status();
-   term = Constants.version_o}
+  {
+    sign = sign;
+    term = empty_repo
+  }
 
-let check repo =			(* TODO temp *)
-  let s = reify_sign repo.sign in
+let check repo = 
+ let s = reify_sign repo.sign in
   Format.printf "%a@." SLF_Pp.sign s;
   let s = compile_sign s in
   let t = reify_term repo.term in
-  Name.gen_init 0;
-  ignore (compile_term s Constants.version_o Constants.version_type t)
+  ignore (compile_term s empty_repo t)
 
-let commit repo term =
-  let old_head = match repo.term with
-    | NLF.Obj(_, (NLF.VHead(h, p) as v)) -> v
-    | _ -> assert false in              (* because expected type was an atom, not a product *)
-  let new_term = compile_term repo.sign repo.term Constants.commit_type term in
-  let new_term = match new_term with
-    | NLF.Obj(sigma, (NLF.VHead(h, p) as new_head)) ->
-      let x = Name.gen_variable () in
-      let d = Constants.version_s new_head old_head in
-      NLF.Obj(Name.Varmap.add x d sigma, NLF.VHead(Name.Var x, Constants.version_fatom))
-    | _ -> assert false in		(* because expected type was an atom, not a product *)
-  {repo with term = new_term; varno = Name.gen_status()}
+let commit repo term = assert false
 
 let show repo = 
   Format.printf " signature:@.";
   SLF_Pp.sign Format.std_formatter (reify_sign repo.sign);
   Format.printf " term:@.";
-  Format.printf "@[%a@]@." NLF_Pp.obj repo.term
+  Format.printf "@[%a@]@." NLF.Pp.pp_obj repo.term
 
 let checkout repo =
   Format.printf "@[%a@]@." SLF_Pp.term (reify_term repo.term)
@@ -98,7 +88,6 @@ let load () =
   let ch = open_in_bin !Settings.repo in
   let repo = Marshal.from_channel (open_in_bin !Settings.repo) in
   close_in ch;
-  Name.gen_init repo.varno;
   repo
 
 let save repo = 

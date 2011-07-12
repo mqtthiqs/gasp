@@ -6,10 +6,12 @@ module type Sig = sig
 
   type head 
 
+  type fhead 
+
   type fam =
     | FConst of fconst
     | FProd of variable * fam * fam
-    | FApp of fam * head list
+    | FApp of fhead * head list
     | FDef of (fam option, obj, fam) Definitions.construct
 
   and obj = 
@@ -52,16 +54,21 @@ module type Sig = sig
 
 end
 
-module Make (Head : sig type t end) : Sig with type head = Head.t =
-struct
+module Make (Head : sig 
+  type head_
+  type fhead_
+end) : Sig with type head = Head.head_ and type fhead = Head.fhead_ 
+= struct
   module Definitions = Definitions.Make (Name) 
 
-  type head = Head.t
+  type head = Head.head_
+
+  type fhead = Head.fhead_
 
   type fam =
     | FConst of fconst
     | FProd of variable * fam * fam
-    | FApp of fam * head list
+    | FApp of fhead * head list
     | FDef of (fam option, obj, fam) Definitions.construct
 
   and obj = 

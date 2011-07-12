@@ -19,7 +19,7 @@ let map_construct on_fam on_obj on_term = function
 let rec fam = function
   | NLF.FConst f -> FConst f
   | NLF.FProd (x, a, b) -> FProd (x, fam a, fam b)
-  | NLF.FApp (a, args) -> FApp (fam a, List.map head args)
+  | NLF.FApp (a, args) -> FApp (FConst a, List.map head args)
   | NLF.FDef d -> FDef (map_construct (Option.map fam) obj fam d)
     
 and obj = function
