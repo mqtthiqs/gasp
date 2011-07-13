@@ -6,13 +6,13 @@ module Constants = struct
   open Name
 
   let commit_const = mk_fconst Settings.commit_const
-  let commit_type = NLF.FConst commit_const
+  let commit_type = NLF.fconst commit_const
 
   let version_const = mk_fconst Settings.version_const
-  let version_type = NLF.FConst version_const
+  let version_type = NLF.fconst version_const
 
   let version_o_const = mk_oconst Settings.version_o_const
-  let version_o = NLF.OConst version_o_const
+  let version_o = NLF.oconst version_o_const
   let version_s c v = NLF.OApp (HConst version_o_const, [c; v])
 
 end
@@ -25,13 +25,13 @@ type t = {
 let empty_repo = Constants.version_o
 
 let compile_lf_fam sign ?(repo=empty_repo) fam =
-  TypeCheck.fam sign repo (Flatten.fam (SpineForm.fam fam))
+  TypeCheck.fam sign Constants.commit_type repo (Flatten.fam (SpineForm.fam fam))
 
 let compile_lf_obj sign ?(repo=empty_repo) obj =
-  TypeCheck.obj sign repo (Flatten.obj (SpineForm.obj obj))
+  TypeCheck.obj sign Constants.commit_type repo (Flatten.obj (SpineForm.obj obj))
 
 let compile_lf_kind sign ?(repo=empty_repo) kind =
-  TypeCheck.kind sign repo (Flatten.kind (SpineForm.kind kind))
+  TypeCheck.kind sign Constants.commit_type repo (Flatten.kind (SpineForm.kind kind))
 
 let compile_sign s = 
   let compile_entry outs (x, t) = 

@@ -42,3 +42,9 @@ let wf_obj = function
 let wf_fam = function
   | FConst _ -> false
   | _ -> true
+
+let fconst x = 
+  FApp (x, [])
+
+let oconst x = 
+  OApp (HConst x, [])
