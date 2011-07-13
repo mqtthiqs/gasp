@@ -2,7 +2,11 @@ open Name
 
 module type Sig = sig
 
-  module Definitions : Definitions.Sig with type variable = Name.variable
+  module Environment : Environment.Sig with type variable = Name.variable
+
+  module Definitions : Definitions.Sig 
+    with type variable = Name.variable
+    and type ('ty, 't) t = ('ty, 't) Environment.t
 
   type head 
 
@@ -11,19 +15,21 @@ module type Sig = sig
   type fam =
     | FConst of fconst
     | FProd of variable * fam * fam
-    | FApp of fhead * head list
+    | FApp of fhead * spine
     | FDef of (fam option, obj, fam) Definitions.construct
 
   and obj = 
     | OConst of oconst
     | OVar of variable
     | OLam of variable * fam * obj
-    | OApp of head * head list
+    | OApp of head * spine
     | ODef of (fam option, obj, obj) Definitions.construct
 
   and kind =
     | KType
     | KProd of variable * fam * kind
+
+  and spine = head list
 
   type entity =
     | Kind of kind
@@ -57,9 +63,14 @@ end
 module Make (Head : sig 
   type head_
   type fhead_
-end) : Sig with type head = Head.head_ and type fhead = Head.fhead_ 
+end) : Sig 
+with type head  = Head.head_ 
+ and type fhead = Head.fhead_ 
 = struct
+
   module Definitions = Definitions.Make (Name) 
+
+  module Environment = Definitions
 
   type head = Head.head_
 
@@ -68,19 +79,21 @@ end) : Sig with type head = Head.head_ and type fhead = Head.fhead_
   type fam =
     | FConst of fconst
     | FProd of variable * fam * fam
-    | FApp of fhead * head list
+    | FApp of fhead * spine
     | FDef of (fam option, obj, fam) Definitions.construct
 
   and obj = 
     | OConst of oconst
     | OVar of variable
     | OLam of variable * fam * obj
-    | OApp of head * head list
+    | OApp of head * spine
     | ODef of (fam option, obj, obj) Definitions.construct
 
   and kind =
     | KType
     | KProd of variable * fam * kind
+
+  and spine = head list
 
   type entity =
     | Kind of kind

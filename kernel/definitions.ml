@@ -13,6 +13,10 @@ sig
   val map_construct : ('ty -> 'ty) -> ('o -> 'o) -> ('t -> 't) 
     -> ('ty, 'o, 't) construct -> ('ty, 'o, 't) construct
 
+  val ( --> ) : variable -> 'o -> 'ty -> ('ty, 'o) definitions
+
+  val ( @@ ) : ('ty, 'o) definitions -> ('ty, 'o) definitions -> ('ty, 'o) definitions
+
 end
 
 module Make (Name : sig type variable end) : Sig with type variable = Name.variable = struct
@@ -30,4 +34,9 @@ module Make (Name : sig type variable end) : Sig with type variable = Name.varia
     | Open (x, t) -> Open (x, on_term t)
     | Define (defs, t) -> Define (map on_type on_obj defs, on_term t)
     
+  let ( --> ) x o ty = 
+    define x o ty (empty ())
+
+  let ( @@ ) d d' = disjoint_join d d'
+
 end

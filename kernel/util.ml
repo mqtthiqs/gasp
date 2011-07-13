@@ -41,4 +41,8 @@ module Option = struct
     | Some x -> Some (f x)
 end
 
+let unSome = function
+  | Some x -> x
+  | None -> failwith "UnSome"
+
 module Stringset = Set.Make(struct type t = string let compare = Pervasives.compare end)

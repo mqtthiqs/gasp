@@ -17,9 +17,10 @@ let rec fam = function
 
 and close_fam a = 
   let a, args = fam a in
-  match args with 
-    | [] -> a
-    | args -> FApp (a, args)
+  match a, args with 
+    | FConst _, args -> FApp (a, args)
+    | _, [] -> a
+    | _, _ -> FApp (a, args)
 
 and obj = function
   | OConst o -> 
@@ -36,9 +37,10 @@ and obj = function
 
 and close_obj a = 
   let a, args = obj a in
-  match args with
-    | [] -> a
-    | args -> OApp (a, args)
+  match a, args with
+    | (OConst _ | OVar _), args -> OApp (a, args)
+    | _, [] -> a
+    | _, _ -> OApp (a, args)
 
 and kind = function
   | KType -> KType

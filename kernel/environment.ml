@@ -19,6 +19,8 @@ sig
       
   val lookup_definition : variable -> ('ty, 't) t -> 't * 'ty
 
+  val lookup : variable -> ('ty, 't) t -> (variable * 'ty * 't option)
+
   val as_list : ('ty, 't) t -> (variable * 'ty * 't option) list
 
   val map : ('ty -> 'ty) -> ('t -> 't) -> ('ty, 't) t -> ('ty, 't) t
@@ -67,12 +69,18 @@ struct
     with Not_found -> 
       raise (Unbound x)
 
+  let as_triple = 
+    function
+      | (x, Declare ty) -> (x, ty, None) 
+      | (x, Define (ty, t)) -> (x, ty, Some t) 
+
+  let lookup x e = 
+    try as_triple (x, List.assoc x e)
+    with Not_found -> 
+      raise (Unbound x)
+
   let as_list e = 
-    List.rev 
-      (List.fold_left (fun accu -> function
-	| (x, Declare ty) -> (x, ty, None) :: accu
-	| (x, Define (ty, t)) -> (x, ty, Some t) :: accu) [] 
-	 e)
+    List.rev (List.fold_left (fun accu x -> as_triple x :: accu) [] e)
 
   let map on_type on_term = 
     List.map (function
