@@ -222,7 +222,7 @@ and wf_obj sign env = function
     let a_definitions, a = wf_fam sign env a in
     let (definitions, o, b) = wf_obj sign (declare x (Some a) env) o in
     (* FIXME: Here we duplicate "definitions". There should be some way    *)
-    (* FIXME: to share it by returning something like:                     *)
+    (* FIXME: to share them by returning something like:                     *)
     (* FIXME: (f = \x. definitions in o), f, {x} y = f x in open y in b    *)
     (* FIXME: Yet, I do not know which annotation should be given on [f]'s *)
     (* FIXME: definition...                                                *)
@@ -253,16 +253,33 @@ and wf_obj sign env = function
   | OVar _ | OConst _ ->
     assert false
 
+let wf_obj sign env o = 
+  let (defs, o, _) = wf_obj sign env o in
+  ODef (Define (defs, o))
+
+let wf_fam sign env f = 
+  let (defs, f) = wf_fam sign env f in 
+  FDef (Define (defs, f))
+
+let rec wf_kind sign env = function
+  | KType -> 
+    KType
+  | KProd (x, a, k) ->
+    let (x, a, k) = Refresh.alpha_rename_kind_prod x a k in    
+    let a = wf_fam sign env a in
+    let env = declare x (Some a) env in 
+    KProd (x, a, wf_kind sign env k)
+
 let in_repo fam_of_repo repo what = 
   what (fst (whnf_obj (empty ()) fam_of_repo repo))
     
 let obj sign fam_of_repo repo o = 
-  assert false
+  in_repo fam_of_repo repo (fun env -> wf_obj sign env o)
 
 let fam sign fam_of_repo repo f = 
-  assert false
+  in_repo fam_of_repo repo (fun env -> wf_fam sign env f)
 
-let kind sign fam_of_repo repo o = 
-  assert false
+let kind sign fam_of_repo repo k = 
+  in_repo fam_of_repo repo (fun env -> wf_kind sign env k)
 
    
