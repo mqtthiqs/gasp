@@ -41,7 +41,7 @@ all : all-generic check
 all-generic: clear $(STARGET) $(TARGET)
 
 $(TARGET): $(STARGET)
-	ln -s $(STARGET) $(TARGET)
+	ln -fs $(STARGET) $(TARGET)
 
 clear:
 	@rm -f $(STARGET)
