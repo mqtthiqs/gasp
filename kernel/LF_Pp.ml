@@ -5,10 +5,12 @@ module type Sig = sig
   type fam
   type head
   type fhead 
+  type kind
   val pp_obj : formatter -> obj -> unit
   val pp_fam : formatter -> fam -> unit
   val pp_head : formatter -> head -> unit
   val pp_fhead : formatter -> fhead -> unit
+  val pp_kind : formatter -> kind -> unit
 end
 
 module Make (LF : sig 
@@ -21,6 +23,7 @@ end)
   and type fam = LF.fam
   and type head = LF.head 
   and type fhead = LF.fhead
+  and type kind = LF.kind
 =  struct
 
   open LF
@@ -30,6 +33,8 @@ end)
   type fam = LF.fam
   type head = LF.head
   type fhead = LF.fhead
+  type kind = LF.kind 
+
   let pp_head = LF.pp_head
   let pp_fhead = LF.pp_fhead
 
@@ -48,12 +53,13 @@ end)
       DefPP.pp_construct pp_ident pp_opt_fam pp_obj pp_fam fmt d
 
   and pp_opt_fam fmt = function
-    | None -> ()
+    | None -> fprintf fmt "@[?@]"
     | Some x -> pp_fam fmt x
 
   and pp_arguments fmt = function
     | [] -> ()
-    | h :: hs -> fprintf fmt "@[%a@,@[%a@]@]" pp_head h pp_arguments hs
+    | [ h ] -> fprintf fmt "@[%a@]" pp_head h 
+    | h :: hs -> fprintf fmt "@[%a@;@[%a@]@]" pp_head h pp_arguments hs
 
   and pp_ident fmt x = 
     fprintf fmt "@[%s@]" (Name.of_variable x)

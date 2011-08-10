@@ -21,6 +21,11 @@ let map_construct on_fam on_obj on_term = function
     NLF.Definitions.Open (x, on_term t)
   | Definitions.Define (defs, t) -> 
     NLF.Definitions.Define (map on_fam on_obj defs, on_term t)
+
+let define mk defs t = 
+  match NLF.Definitions.as_list defs with
+    | [] -> t
+    | _ -> mk (NLF.Definitions.Define (defs, t))
   
 let rec fam : ILF.fam -> NLF.fam = function
   | FConst f -> 
@@ -29,7 +34,7 @@ let rec fam : ILF.fam -> NLF.fam = function
     NLF.FProd (x, fam a, fam b)
   | FApp (FConst x, args) -> 
     let args_defs, args = name_arguments args in
-    NLF.FDef (NLF.Definitions.Define (args_defs, NLF.FApp (x, args)))
+    define (fun x -> NLF.FDef x) args_defs (NLF.FApp (x, args))
   | FDef d -> 
     NLF.FDef (map_construct (Option.map fam) obj fam d)
   | t -> 
@@ -48,7 +53,7 @@ and obj = function
     assert (not_oapp a);
     let defs, args = name_arguments args in
     let defs, a = name_obj defs a in
-    NLF.ODef (NLF.Definitions.Define (defs, NLF.OApp (a, args)))
+    define (fun x -> NLF.ODef x) defs (NLF.OApp (a, args))
   | ODef d -> 
     NLF.ODef (map_construct (Option.map fam) obj obj d)
 
