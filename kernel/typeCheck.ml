@@ -12,7 +12,7 @@ let ( @+ ) : env -> definitions -> env =
   fun env defs ->
     List.fold_left (fun (env : env) -> function (x, ty, t) -> 
       match t with
-	| None -> (Environment.declare x (unSome ty) env : env)
+	| None -> Environment.declare x (unSome ty) env
 	| Some t -> Environment.define x t (unSome ty) env) env (as_list defs)
 
 (** [definitions_as_env D] converts a set of definitions [D] as an
@@ -22,62 +22,81 @@ let definitions_as_env = ( @+ ) (Environment.empty ())
 (** [D +@ Γ] is the environment [Γ] prefixed with the set of 
     definitions [D], injected as an environment. 
     Precondition: bindings in [D] must be annotated with their types. *)
-let ( +@ ) : definitions -> env -> env =  
-  fun defs env -> definitions_as_env defs @@ env
+(* Unused? let ( +@ ) : definitions -> env -> env =  
+  fun defs env -> definitions_as_env defs @@ env *)
 
-(** [whnf_from_definition_construct Γ on_obj refresh_term on_term]
-    generically implements the dynamic semantics of the two
-    environment related constructions of the language, namely [Open (x, t)] 
-    and [Define (definitions, t)]. 
+(** [apply_definition_construct Γ on_obj refresh_term on_term] gives a
+    (parameterized) dynamic semantics to the two environment related
+    constructions of the language, namely [Open (x, t)] and [Define
+    (definitions, t)], as actions on their sub-term [t].
 
     - [on_obj Γ xa xo] where [xa] is the typing annotation associated
-    to [xo] in [Γ].
+    to [xo] in [Γ]. It computes the local environment associated to the
+    object [xo].
 
-    - [on_term] is applied to the sub-term under the local definitions
-    computed from [Open] or [Define]. *)
-let whnf_from_definition_construct  env on_obj refresh_term on_term = function
+    - [on_term] is applied to the sub-term [t] under the local definitions
+    computed from [Open] or [Define]. 
+    
+    - [on_definitions] is applied to the [definitions] to obtain a
+    local environment. When these [definitions] come from an unchecked
+    term, their typing annotations must be inferred. On the contrary,
+    when these [definitions] come from an already checked term (i.e.
+    a term that comes from the typing environment), then typing
+    annotations are already present. Therefore, [on_definitions] will
+    be instantiated with the type checker in the first case and with
+    the identity function in the second case. 
+*)
+let apply_definition_construct env on_definitions on_obj refresh_term on_term = function
   | Open (x, t) ->
     let (xo, xa) = lookup_definition x env in
-    let x_definitions = on_obj env xa xo in
-    on_term x_definitions (env @+ x_definitions) t
+    let x_environment = on_obj env xa xo in
+    on_term x_environment (env @@ x_environment) t
 
   | Define (definitions, t) ->
     let definitions, t = 
       Refresh.alpha_rename_define definitions refresh_term t 
     in
-    (* FIXME: Infer the type of each definition. *)
-    on_term definitions (env @+ definitions) t
+    let local_env = on_definitions env definitions in
+    on_term local_env (env @@ local_env) t
 
 (** [whnf_obj_spine Γ A o S] computes the weak head normal form of [o] 
-    applied to [S] at type [A] under typing environment [Γ]. *)
-let rec whnf_obj_spine : env -> fam -> obj -> spine -> definitions * obj = 
+    applied to [S] at type [A] under typing environment [Γ] as well
+    as the local environment that is necessary to interpret [o]
+    under [Γ]. 
+
+    Preconditions: 
+    - [A] is a well-formed family. 
+    - [o] is a well-formed object. 
+    - [S] is compatible with the expectations of [t]. 
+
+*)
+let rec whnf_obj_spine : env -> fam -> obj -> spine -> env * obj = 
   fun env a t l ->
     let a_definitions, a = whnf_fam (empty ()) env a in
     match a, t, l with
-      (*
-	  x ≡ y      Γ, [x = h : ty] ⊢ o : b ◃ l ⇓ D in t
-	  ——————————————————————-———
-	  Γ ⊢ λ [x : ty]. o : π[y : ty]. b ◃ h l ⇓[ x = h : ty ] D in t
-      *)
-      | FProd (y, ty', b), OLam (x, ty, o), h :: l ->
+	
+    (*
+      x ≡ y      Γ, [x = h : ty] ⊢ o : b ◃ l ⇓ D in t
+      —————————————————————————————————————————————————————————————
+      Γ ⊢ λ [x : ty]. o : π[y : ty]. b ◃ h l ⇓ [ x = h : ty ] D in t
+    *)
+    | FProd (y, ty', b), OLam (x, ty, o), h :: l ->
 	let (x, ty, o)  = Refresh.alpha_rename_lam x ty o in
 	let (y, ty', b) = Refresh.alpha_rename_prod y ~into:x ty' b in
-      (* If we are working with a well-typed object, then [ty == ty']. *)
-      let definition = (x --> (head_as_obj h)) (Some ty) in
-      let (definitions, t) = 
-	whnf_obj_spine (env @+ definition) b o l
-      in
-      (a_definitions @@ definition @@ definitions, t)
-
+	(* As we are working with a well-typed object, we have [ty == ty']. *)
+	let definition = (x --> (head_as_obj h)) (Some ty) in
+	let (definitions, t) = whnf_obj_spine (env @+ definition) b o l	in
+	(a_definitions @@ definition @@ definitions, t)
+	  
     (* 
-       ——————————————————————————-
+       ——————————————————————————————————————————————————
        Γ ⊢ λ [ x : ty ]. o : A ◃ • ⇓ • in λ [ x : ty ]. o
     *)
     | _, OLam _, [] -> 
       (empty (), t)
 
     (* 
-       ——————————–
+       ———————————————————————————
        Γ ⊢ c S : A ◃ • ⇓ • in c S
     *)
     | a, OApp (HConst _, _), _ -> 
@@ -88,27 +107,27 @@ let rec whnf_obj_spine : env -> fam -> obj -> spine -> definitions * obj =
       let (_, xa, xt) = lookup x env in
       begin match xt with
 	(* 
-	   ——————————————————————
+	   ——————————————————————————
 	   Γ ⊢ x S : A ◃ • ⇓ • in x S
 	*)
 	| None -> assert (l' = []); (empty (), t)
 
 	(* 
-	   Γ[x] = (xt : xa) 
-	   Γ ⊢ xt : A ◃ S l ⇓ D in u
-	   ——————————————————————
+	   Γ[x] = (u : xa) 
+	   Γ ⊢ u : A ◃ S l ⇓ D in u
+	   ——————————————————————————
 	   Γ ⊢ x S : A ◃ • ⇓ D in u
 	*)
 	| Some xt -> whnf_obj_spine env xa xt (l @ l')
       end
 
 
-    (* See [whnf_from_definition_construct]. *)
+    (* See [apply_definition_construct]. *)
     | a, ODef d, l ->
-      whnf_from_definition_construct env import_obj Refresh.obj
+      apply_definition_construct env (fun x -> x) import_obj Refresh.obj
 	(fun defs env x -> 
 	  let (definitions, t) = whnf_obj_spine env a x l in
-	  (defs @@ definitions, t)) d
+	  (defs @@ on_definitions env definitions, t)) d
 
 
     | _ -> 
@@ -122,7 +141,7 @@ and whnf_fam : definitions -> env -> fam -> definitions * fam =
     Format.fprintf Format.std_formatter "@[WHNF_FAM:@, @[%a@]@]@." Pp.pp_fam fam;
     match fam with
       | FDef d ->
-	whnf_from_definition_construct env import_obj Refresh.fam
+	apply_definition_construct env import_obj Refresh.fam
 	  (fun d' -> whnf_fam (defs @@ d')) d
 
       | x -> 
