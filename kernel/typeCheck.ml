@@ -119,7 +119,7 @@ and whnf_obj env a o = whnf_obj_spine env a o []
 
 and whnf_fam : definitions -> env -> fam -> definitions * fam = 
   fun defs env fam ->
-    Format.fprintf Format.std_formatter "@[WHNF_FAM:@, @[%a@]@]\n" Pp.pp_fam fam;
+    Format.fprintf Format.std_formatter "@[WHNF_FAM:@, @[%a@]@]@." Pp.pp_fam fam;
     match fam with
       | FDef d ->
 	whnf_from_definition_construct env import_obj Refresh.fam
@@ -255,9 +255,9 @@ fun destruct_a sign env a spine ->
 
 let rec wf_fam : signature -> env -> fam -> definitions * fam =
   fun sign env a ->
-    Format.fprintf Format.std_formatter "@[WF_FAM':@, @[%a@]@]\n" Pp.pp_fam a;
+    Format.fprintf Format.std_formatter "@[WF_FAM':@, @[%a@]@]@." Pp.pp_fam a;
     let a_definitions, nude_a = whnf_fam (empty ()) env a in
-    Format.fprintf Format.std_formatter "@[WF_FAM' (RAW):@, @[%a@]@]\n" Pp.pp_fam nude_a;
+    Format.fprintf Format.std_formatter "@[WF_FAM' (RAW):@, @[%a@]@]@." Pp.pp_fam nude_a;
     let definitions, wf_nude_a = 
       match nude_a with
 	| FApp (h, spine) ->
