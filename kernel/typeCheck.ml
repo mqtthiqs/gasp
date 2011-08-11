@@ -332,7 +332,8 @@ and wf_obj sign env o : obj * fam =
       let h_fam_definitions, h_fam = whnf_fam (empty ()) env h_fam in
       let env = env @@ h_fam_definitions in
       let final_fam = wf_spine destruct_fam_prod sign env h_fam l in
-      (OApp (h, l), close (fun x -> FDef x) h_fam_definitions final_fam)
+      (close (fun x -> ODef x) h_fam_definitions (OApp (h, l)), 
+       close (fun x -> FDef x) h_fam_definitions final_fam)
 
     | ODef (Open (x, o)) ->
       let xo, xty = lookup_definition x env in
