@@ -49,7 +49,7 @@ name:
 }
 
 term1:
-  t=loc(term1) RARROW u=loc(term2) 
+  t=loc(term2) RARROW u=loc(term1) 
 { 
   mk_arrow t u
 }

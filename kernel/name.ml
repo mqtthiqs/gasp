@@ -1,6 +1,7 @@
 type variable = string
 type fconst = string
 type oconst = string
+module Varset = Set.Make(struct type t = variable let compare = Pervasives.compare end)
 module Varmap = Map.Make(struct type t = variable let compare = Pervasives.compare end)
 module Fconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end)
 module Oconstmap = Map.Make(struct type t = fconst let compare = Pervasives.compare end)

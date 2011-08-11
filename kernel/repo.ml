@@ -73,7 +73,8 @@ let check repo =
   let t = reify_term repo.term in
   ignore (compile_term s empty_repo t)
 
-let commit repo term = assert false
+let commit repo term = 
+  assert false
 
 let show repo = 
   Format.printf " signature:@.";

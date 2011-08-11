@@ -39,6 +39,10 @@ module Option = struct
   let map f = function
     | None -> None
     | Some x -> Some (f x)
+
+  let apply f default = function
+    | None -> default
+    | Some x -> f x
 end
 
 let unSome = function

@@ -6,11 +6,13 @@ module type Sig = sig
   type head
   type fhead 
   type kind
+  type env
   val pp_obj : formatter -> obj -> unit
   val pp_fam : formatter -> fam -> unit
   val pp_head : formatter -> head -> unit
   val pp_fhead : formatter -> fhead -> unit
   val pp_kind : formatter -> kind -> unit
+  val pp_environment : formatter -> env -> unit
 end
 
 module Make (LF : sig 
@@ -24,16 +26,20 @@ end)
   and type head = LF.head 
   and type fhead = LF.fhead
   and type kind = LF.kind
+  and type env = LF.env
 =  struct
 
   open LF
   module DefPP = Definitions_Pp.Make (Definitions)
+
+  module EnvPP = DefPP.E
 
   type obj = LF.obj
   type fam = LF.fam
   type head = LF.head
   type fhead = LF.fhead
   type kind = LF.kind 
+  type env = LF.env
 
   let pp_head = LF.pp_head
   let pp_fhead = LF.pp_fhead
@@ -83,5 +89,7 @@ end)
       fprintf fmt "type"
     | KProd (x, a, k) -> 
       fprintf fmt "{%a : %a} %a" pp_ident x pp_fam a pp_kind k
+
+  let pp_environment = EnvPP.pp_environment pp_ident pp_obj pp_fam
 
 end

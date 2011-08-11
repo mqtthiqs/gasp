@@ -58,6 +58,10 @@ module type Sig = sig
 
   val fold : (entry -> 'a -> 'a) -> signature -> 'a -> 'a
 
+  type definitions = (fam option, obj) Definitions.t
+
+  type env = (fam, obj) Environment.t
+    
 end
 
 module Make (Head : sig 
@@ -121,6 +125,11 @@ with type head  = Head.head_
   let mem_fconst x (m, _, _) = Fconstmap.mem x m
 
   let fold f (_,_,l) acc = List.fold_left (fun acc e -> f e acc) acc l
+
+  type definitions = (fam option, obj) Definitions.t
+
+  type env = (fam, obj) Environment.t
+    
 
 end
 
