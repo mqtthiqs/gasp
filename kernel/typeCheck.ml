@@ -72,21 +72,21 @@ let apply_definition_construct env on_definitions on_obj refresh_term on_term = 
 *)
 let rec whnf_obj_spine : env -> fam -> obj -> spine -> env * obj = 
   fun env a t l ->
-    let a_definitions, a = whnf_fam (empty ()) env a in
+    let (a_env, a) = whnf_fam (empty ()) env a in
     match a, t, l with
 	
     (*
       x ≡ y      Γ, [x = h : ty] ⊢ o : b ◃ l ⇓ D in t
-      —————————————————————————————————————————————————————————————
-      Γ ⊢ λ [x : ty]. o : π[y : ty]. b ◃ h l ⇓ [ x = h : ty ] D in t
+      —————————————————————————————––————————————————————————————————
+      Γ ⊢ λ [x : ty]. o : π[y : ty']. b ◃ h l ⇓ [ x = h : ty ] D in t
     *)
     | FProd (y, ty', b), OLam (x, ty, o), h :: l ->
 	let (x, ty, o)  = Refresh.alpha_rename_lam x ty o in
 	let (y, ty', b) = Refresh.alpha_rename_prod y ~into:x ty' b in
-	(* As we are working with a well-typed object, we have [ty == ty']. *)
-	let definition = (x --> (head_as_obj h)) (Some ty) in
-	let (definitions, t) = whnf_obj_spine (env @+ definition) b o l	in
-	(a_definitions @@ definition @@ definitions, t)
+	(* As we are working with a well-typed object, we have [ty ≡ ty']. *)
+	let extra_env = (x --> (head_as_obj h)) ty in
+	let (local_env, t) = whnf_obj_spine (env @@ extra_env) b o l	in
+	(a_env @@ extra_env @@ local_env, t)
 	  
     (* 
        ——————————————————————————————————————————————————
@@ -124,10 +124,10 @@ let rec whnf_obj_spine : env -> fam -> obj -> spine -> env * obj =
 
     (* See [apply_definition_construct]. *)
     | a, ODef d, l ->
-      apply_definition_construct env (fun x -> x) import_obj Refresh.obj
-	(fun defs env x -> 
-	  let (definitions, t) = whnf_obj_spine env a x l in
-	  (defs @@ on_definitions env definitions, t)) d
+      apply_definition_construct env (fun _ x -> definitions_as_env x) import_obj Refresh.obj
+	(fun local_env env x -> 
+	  let (local_env', t) = whnf_obj_spine env a x l in
+	  (local_env @@ local_env', t)) d
 
 
     | _ -> 
@@ -136,16 +136,17 @@ let rec whnf_obj_spine : env -> fam -> obj -> spine -> env * obj =
 
 and whnf_obj env a o = whnf_obj_spine env a o []
 
-and whnf_fam : definitions -> env -> fam -> definitions * fam = 
-  fun defs env fam ->
+and whnf_fam : env -> env -> fam -> env * fam = 
+  fun local_env env fam ->
     Format.fprintf Format.std_formatter "@[WHNF_FAM:@, @[%a@]@]@." Pp.pp_fam fam;
     match fam with
       | FDef d ->
-	apply_definition_construct env import_obj Refresh.fam
-	  (fun d' -> whnf_fam (defs @@ d')) d
+	apply_definition_construct env 
+	  (fun _ x -> definitions_as_env x) import_obj Refresh.fam
+	  (fun d' -> whnf_fam (local_env @@ d')) d
 
       | x -> 
-	(defs, x)
+	(local_env, x)
 
 and import_obj env a o = 
   fst (whnf_obj_spine env a o [])
@@ -184,9 +185,9 @@ let rec conv_spine destruct_prod conv_head sign (env : env) a l l' =
 
 let rec conv_obj : signature -> env -> fam -> obj -> obj -> bool =
   fun sign env a t u ->
-    let t_definitions, whnf_t = whnf_obj env a t in
-    let u_definitions, whnf_u = whnf_obj env a u in
-    conv_whnf_obj sign (env @+ (t_definitions @@ u_definitions)) whnf_t whnf_u
+    let t_local_env, whnf_t = whnf_obj env a t in
+    let u_local_env, whnf_u = whnf_obj env a u in
+    conv_whnf_obj sign (env @@ (t_local_env @@ u_local_env)) whnf_t whnf_u
 
 and conv_whnf_obj : signature -> env -> obj -> obj -> bool = 
   fun sign env t u ->
@@ -222,9 +223,9 @@ and conv_head sign env h h' =
       conv_obj sign env xa xo (head_as_obj h)
 	
 and conv_fam sign env a b = 
-  let a_definitions, nude_a = whnf_fam (empty ()) env a 
-  and b_definitions, nude_b = whnf_fam (empty ()) env b in
-  let env = env @+ (a_definitions @@ b_definitions) in
+  let a_local_env, nude_a = whnf_fam (empty ()) env a 
+  and b_local_env, nude_b = whnf_fam (empty ()) env b in
+  let env = env @@ (a_local_env @@ b_local_env) in
   match nude_a, nude_b with
     | FProd (x, a, b), FProd (x', a', b') ->
       let (x, a, b) = Refresh.alpha_rename_prod x a b in
@@ -272,10 +273,10 @@ fun destruct_a sign env a spine ->
     | _ ->
       raise (InvalidSpine (sign, env, spine, BadArity (spine = [])))
 
-let rec wf_fam : signature -> env -> fam -> definitions * fam =
+let rec wf_fam : signature -> env -> fam -> env * fam =
   fun sign env a ->
     Format.fprintf Format.std_formatter "@[WF_FAM':@, @[%a@]@]@." Pp.pp_fam a;
-    let a_definitions, nude_a = whnf_fam (empty ()) env a in
+    let a_local_env, nude_a = whnf_fam (empty ()) env a in
     Format.fprintf Format.std_formatter "@[WF_FAM' (RAW):@, @[%a@]@]@." Pp.pp_fam nude_a;
     let definitions, wf_nude_a = 
       match nude_a with
@@ -291,13 +292,13 @@ let rec wf_fam : signature -> env -> fam -> definitions * fam =
 	  let b_definitions, b = wf_fam sign (declare x a env) b in
 	  (a_definitions @@ b_definitions, FProd (x, a, b))
 
-      (* This case should never appear. (see FIXME in NLF) *)
+	(* This case should never appear. (see FIXME in NLF) *)
 	| FConst _ -> assert false
 
-      (* This case should not appear thanks to [whnf_fam]. *)
+	(* This case should not appear thanks to [whnf_fam]. *)
 	| FDef _ -> assert false
     in
-    (a_definitions @@ definitions, wf_nude_a)
+    (a_local_env @@ local_env, wf_nude_a)
 
 and wf_obj sign env o =
   Format.fprintf Format.std_formatter "@[WF_OBJ':@, @[%a@]@]\n" Pp.pp_obj o;
