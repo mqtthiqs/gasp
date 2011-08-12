@@ -7,12 +7,15 @@ module type Sig = sig
   type fhead 
   type kind
   type env
+  type spine
   val pp_obj : formatter -> obj -> unit
   val pp_fam : formatter -> fam -> unit
   val pp_head : formatter -> head -> unit
   val pp_fhead : formatter -> fhead -> unit
   val pp_kind : formatter -> kind -> unit
+  val pp_spine : formatter -> spine -> unit
   val pp_environment : formatter -> env -> unit
+  val pp_telescope : formatter -> (Name.variable * fam) list -> unit
 end
 
 module Make (LF : sig 
@@ -27,6 +30,7 @@ end)
   and type fhead = LF.fhead
   and type kind = LF.kind
   and type env = LF.env
+  and type spine = LF.spine
 =  struct
 
   open LF
@@ -40,6 +44,7 @@ end)
   type fhead = LF.fhead
   type kind = LF.kind 
   type env = LF.env
+  type spine = LF.spine
 
   let pp_head = LF.pp_head
   let pp_fhead = LF.pp_fhead
@@ -54,7 +59,7 @@ end)
     | FProd (x, a, b) -> 
       fprintf fmt "@[{%a : %a} %a@]" pp_ident x pp_fam a pp_fam b      
     | FApp (f, args) -> 
-      fprintf fmt "@[%a (%a)@]" pp_fhead f pp_arguments args
+      fprintf fmt "@[%a (%a)@]" pp_fhead f pp_spine args
     | FDef d ->
       DefPP.pp_construct pp_ident pp_opt_fam pp_obj pp_fam fmt d
 
@@ -62,10 +67,10 @@ end)
     | None -> fprintf fmt "@[?@]"
     | Some x -> pp_fam fmt x
 
-  and pp_arguments fmt = function
+  and pp_spine fmt = function
     | [] -> ()
     | [ h ] -> fprintf fmt "@[%a@]" pp_head h 
-    | h :: hs -> fprintf fmt "@[%a@;@[%a@]@]" pp_head h pp_arguments hs
+    | h :: hs -> fprintf fmt "@[%a@;@[%a@]@]" pp_head h pp_spine hs
 
   and pp_ident fmt x = 
     fprintf fmt "@[%s@]" (Name.of_variable x)
@@ -80,7 +85,7 @@ end)
     | OApp (h, []) ->
       pp_head fmt h
     | OApp (h, args) -> 
-      fprintf fmt "@[%a (%a)@]" pp_head h pp_arguments args
+      fprintf fmt "@[%a (%a)@]" pp_head h pp_spine args
     | ODef d -> 
       DefPP.pp_construct pp_ident pp_opt_fam pp_obj pp_obj fmt d
 
@@ -91,5 +96,15 @@ end)
       fprintf fmt "{%a : %a} %a" pp_ident x pp_fam a pp_kind k
 
   let pp_environment = EnvPP.pp_environment pp_ident pp_obj pp_fam
+
+  let rec pp_telescope fmt = function
+    | [] -> ()
+    | [ b ] -> fprintf fmt "@[%a@]" pp_binding b
+    | b :: hs -> fprintf fmt "@[%a@;@[%a@]@]" pp_binding b pp_telescope hs
+      
+  and pp_binding fmt (x, a) = 
+    fprintf fmt "@[%a @,:@ @[%a@]@]" 
+      pp_ident x
+      pp_fam a
 
 end

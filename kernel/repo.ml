@@ -24,21 +24,24 @@ type t = {
 
 let empty_repo = Constants.version_o
 
-let compile_lf_fam sign ?(repo=empty_repo) fam =
-  TypeCheck.fam sign Constants.commit_type repo (Flatten.fam (SpineForm.fam fam))
+let compile_lf_fam sign ?repo fam =
+  TypeCheck.fam sign Constants.commit_type ?repo (Flatten.fam (SpineForm.fam fam))
 
-let compile_lf_obj sign ?(repo=empty_repo) obj =
-  TypeCheck.obj sign Constants.commit_type repo (Flatten.obj (SpineForm.obj obj))
+let compile_lf_obj sign ?repo obj =
+  TypeCheck.obj sign Constants.commit_type ?repo (Flatten.obj (SpineForm.obj obj))
 
-let compile_lf_kind sign ?(repo=empty_repo) kind =
-  TypeCheck.kind sign Constants.commit_type repo (Flatten.kind (SpineForm.kind kind))
+let compile_lf_kind sign ?repo kind =
+  TypeCheck.kind sign Constants.commit_type ?repo (Flatten.kind (SpineForm.kind kind))
 
 let compile_sign s = 
   let compile_entry outs (x, t) = 
     match SLF_LF.term outs t with
-      | ILF.Kind k -> NLF.bind_fconst (Name.mk_fconst x) (compile_lf_kind outs k) outs
-      | ILF.Fam a -> NLF.bind_oconst (Name.mk_oconst x) (compile_lf_fam outs a) outs
-      | ILF.Obj _ -> Errors.not_a_kind_or_fam t
+      | ILF.Kind k -> 
+	NLF.bind_fconst (Name.mk_fconst x) (compile_lf_kind outs k) outs
+      | ILF.Fam a -> 
+	NLF.bind_oconst (Name.mk_oconst x) (compile_lf_fam outs a) outs
+      | ILF.Obj _ -> 
+	Errors.not_a_kind_or_fam t
   in
   List.fold_left compile_entry (NLF.empty ()) s
 

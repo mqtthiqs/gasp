@@ -14,7 +14,7 @@ module Make (Environment : Environment.Sig) = struct
 	  pp_ident x pp_ty ty aux e
 
       | (x, ty, Some t) :: e -> 
-	fprintf fmt "@[@[%a =@;@[(%a : %a)@]@]@;@[%a@]@]" 
+	fprintf fmt "@[@[%a =@;@[(%a@;:@ %a)@]@]@;@[%a@]@]" 
 	  pp_ident x pp_term t pp_ty ty aux e
     in
     aux fmt (as_list e)

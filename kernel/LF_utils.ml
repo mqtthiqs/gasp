@@ -109,4 +109,41 @@ struct
 
   end
 
+  (** [Γ @+ D] is the typing environment [Γ] extended with a 
+      set of definitions [D]. 
+      Precondition: bindings in [D] must be annotated with their types. *)
+  let ( @+ ) : env -> definitions -> env = 
+    fun env defs ->
+      List.fold_left (fun (env : env) -> function (x, ty, t) -> 
+	match t with
+	  | None -> 
+	    Environment.declare x (unSome ty) env
+	  | Some t -> 
+	    Environment.define x t (unSome ty) env) env (Definitions.as_list defs)
+
+  (** [definitions_as_env D] converts a set of definitions [D] as an
+      environment. *)
+  let definitions_as_env = ( @+ ) (Environment.empty ())
+    
+  (** [env_as_definitions Γ] converts an environment as a set of
+      definitions. *)
+  let env_as_definitions env = 
+    List.fold_left (fun defs (x, ty, t) -> 
+      match t with
+	| None -> Environment.declare x (Some ty) defs
+	| Some t -> Environment.define x t (Some ty) defs)
+      (Definitions.empty ()) (Environment.as_list env)
+
+  (** [D +@ Γ] is the environment [Γ] prefixed with the set of 
+      definitions [D], injected as an environment. 
+      Precondition: bindings in [D] must be annotated with their types. *)
+  let ( +@ ) : definitions -> env -> env =  
+    fun defs env -> Environment.disjoint_join (definitions_as_env defs) env 
+
+  let close mk defs t = 
+    match Definitions.as_list defs with
+      | [] -> t
+      | _ -> mk (Definitions.Define (env_as_definitions defs, t))
+      
+
 end

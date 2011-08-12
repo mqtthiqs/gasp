@@ -26,7 +26,7 @@ module Refresh = Utils.Refresh (struct
     | c -> c
   let fhead r c = c
 end)
-    
+
 include Body
 
 let head_as_obj h = 
@@ -48,3 +48,25 @@ let fconst x =
 
 let oconst x = 
   OApp (HConst x, [])
+
+let destruct_fam_prod = function
+  | FProd (x, a, b) -> 
+    let (x, a, b) = Refresh.alpha_rename_prod x a b in
+    Some (x, a, b)
+  | _ -> None
+    
+let destruct_kind_prod = function
+  | KProd (x, a, k) -> 
+    let (x, a, k) = Refresh.alpha_rename_kind_prod x a k in
+    Some (x, a, k)
+  | _ -> None
+    
+let rec telescope_of_fam_prod a = 
+  match destruct_fam_prod a with
+    | None -> []
+    | Some (x, a, b) -> (x, a) :: telescope_of_fam_prod b
+
+let rec telescope_of_kind_prod a = 
+  match destruct_kind_prod a with
+    | None -> []
+    | Some (x, a, b) -> (x, a) :: telescope_of_kind_prod b

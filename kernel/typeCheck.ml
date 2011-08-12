@@ -1,37 +1,51 @@
 open Util
+open NLF.Utils
 open NLF
  
 open Definitions
 type definitions = NLF.definitions
 
-(** [Γ @+ D] is the typing environment [Γ] extended with a 
-    set of definitions [D]. 
-    Precondition: bindings in [D] must be annotated with their types. *)
-let ( @+ ) : env -> definitions -> env = 
-  fun env defs ->
-    List.fold_left (fun (env : env) -> function (x, ty, t) -> 
-      match t with
-	| None -> Environment.declare x (unSome ty) env
-	| Some t -> Environment.define x t (unSome ty) env) env (as_list defs)
+(** Debugging stuff. *)
+let indent = ref (-1) 
+let enter = 
+  fun flag title what result ->
+    if flag then begin 
+      incr indent;
+      Printf.printf "<%s [%d]>\n" title !indent;
+      what ();
+      let msg = Format.flush_str_formatter () in
+      Printf.printf " === input ===\n%s\n" msg;
+    end;
+    let r = result () in
+    if flag then begin 
+      let msg = Format.flush_str_formatter () in
+      Printf.printf " === output ===\n%s\n</%s [%d]>\n" msg title !indent;
+      decr indent;
+    end;
+    r
 
-(** [definitions_as_env D] converts a set of definitions [D] as an
-    environment. *)
-let definitions_as_env = ( @+ ) (Environment.empty ())
+let dbg_open_fam_flag = true
+let dbg_conv_spine_flag = true
+let dbg_wf_fam_flag = true
+let dbg_wf_obj_flag = true
+let dbg_wf_kind_flag = true
 
-(** [env_as_definitions Γ] converts an environment as a set of
-    definitions. *)
-let env_as_definitions env = 
-  List.fold_left (fun defs (x, ty, t) -> 
-    match t with
-      | None -> Environment.declare x (Some ty) defs
-      | Some t -> Environment.define x t (Some ty) defs)
-    (Definitions.empty ()) (Environment.as_list env)
+(** Typing errors. *)
+type invalid_spine_reason = 
+  | NotConvertible of fam * fam
+  | NotAProduct
+  | BadArity of bool
 
-(** [D +@ Γ] is the environment [Γ] prefixed with the set of 
-    definitions [D], injected as an environment. 
-    Precondition: bindings in [D] must be annotated with their types. *)
-let ( +@ ) : definitions -> env -> env =  
-  fun defs env -> definitions_as_env defs @@ env 
+exception InvalidSpine of signature * env * spine * invalid_spine_reason
+
+exception InvalidTypeAnnotation of variable * fam * fam
+
+exception UnboundFamilyConstructor of fhead
+
+(** Lookup for the type of a head. *)
+let fam_of_head sign env = function
+  | HConst c -> find_oconst c sign 
+  | HVar y -> lookup_declaration y env
 
 (** [apply_definition_construct Γ on_obj refresh_term on_term] gives a
     (parameterized) dynamic semantics to the two environment related
@@ -67,20 +81,90 @@ let apply_definition_construct env on_definitions on_obj refresh_term on_term = 
     let local_env = on_definitions env definitions in
     on_term local_env (env @@ local_env) t
 
-(** [whnf_obj_spine Γ A o S] computes the weak head normal form of [o] 
+(** [conv_spine destruct_prod conv_head sign env a l l'] *)
+let rec conv_spine conv_head sign env telescope l l' =
+  match telescope, l, l' with
+    | _, [], [] -> 
+      true
+
+    | (x, a) :: b, h :: l, h' :: l' ->
+      if conv_head sign env h h' then 
+	let env = define x (head_as_obj h) a env in
+	conv_spine conv_head sign env b l l'
+      else 
+	false
+
+    | _ ->
+      (* By well-formedness of [l] and [l']. *)
+      assert false
+
+and dbg_conv_spine conv_head sign env telescope l l' = 
+  enter dbg_conv_spine_flag "conv_spine" 
+    (fun () -> 
+      Format.fprintf Format.str_formatter 
+	"@[%a@,@ ⊢@,@ @[%a@]@ @,≡@ @[%a@] at@ @,@[%a@]@]"
+	Pp.pp_environment env
+	Pp.pp_spine l
+	Pp.pp_spine l'
+	Pp.pp_telescope telescope)
+    (fun () ->
+      let r = conv_spine conv_head sign env telescope l l' in
+      Format.fprintf Format.str_formatter "@[%B@]" r;
+      r)
+
+(** [open_fam Δ Γ A] computes a set of definitions 
+    [Δ'] and a family [B] such that:
+
+    - [Δ' in B] is equivalent to [Δ in A] under [Γ].
+    - [B] is not an environment related construct. 
+
+*)
+let rec open_fam : signature -> env -> env -> fam -> env * fam = 
+  fun sign local_env env fam ->
+    match fam with
+      | FDef d ->
+	apply_definition_construct env 
+	  (fun _ x -> definitions_as_env x) (import_obj sign) Refresh.fam
+	  (fun d' -> dbg_open_fam sign (local_env @@ d')) d
+
+      | x -> 
+	(local_env, x)
+
+and dbg_open_fam sign local_env env fam = 
+  enter dbg_open_fam_flag "open_fam" 
+    (fun () -> 
+      Format.fprintf Format.str_formatter "@[@[%a@]@, |@, @[%a@]@, ⊢@, @[%a@]@]"
+	Pp.pp_environment env
+	Pp.pp_environment local_env
+	Pp.pp_fam fam)
+    (fun () ->
+      let (r_env, fam') as r = open_fam sign local_env env fam in
+      Format.fprintf Format.str_formatter "@[%a@ in@ %a@]@]"
+	Pp.pp_environment r_env
+	Pp.pp_fam fam';
+      (* The resulting family cannot be an environment-related construct. *)
+      assert (match fam' with FDef _ -> false | _ -> true);
+(*      assert (conv_fam sign (env @@ local_env @@ r_env) fam fam'); *)
+      r)
+
+(** [whnf_obj_spine Γ A o l] computes the weak head normal form of [t] 
     applied to [S] at type [A] under typing environment [Γ] as well
-    as the local environment that is necessary to interpret [o]
+    as the local environment that is necessary to interpret [t]
     under [Γ]. 
 
     Preconditions: 
     - [A] is a well-formed family. 
-    - [o] is a well-formed object. 
-    - [S] is compatible with the expectations of [t]. 
+    - [t] is a well-formed object. 
+    - [l] is compatible with the expectations of [t]. 
+
+    This implements the judgment:
+
+         Γ ⊢ t : a ◃ l ⇓ D in t
 
 *)
-let rec whnf_obj_spine : env -> fam -> obj -> spine -> env * obj = 
-  fun env a t l ->
-    let (a_env, a) = whnf_fam (empty ()) env a in
+and whnf_obj_spine : signature -> env -> fam -> obj -> spine -> env * obj = 
+  fun sign env a t l ->
+    let (a_env, a) = dbg_open_fam sign (empty ()) env a in
     match a, t, l with
 	
     (*
@@ -93,7 +177,7 @@ let rec whnf_obj_spine : env -> fam -> obj -> spine -> env * obj =
 	let (y, ty', b) = Refresh.alpha_rename_prod y ~into:x ty' b in
 	(* As we are working with a well-typed object, we have [ty ≡ ty']. *)
 	let extra_env = (x --> (head_as_obj h)) ty in
-	let (local_env, t) = whnf_obj_spine (env @@ extra_env) b o l	in
+	let (local_env, t) = whnf_obj_spine sign (env @@ extra_env) b o l	in
 	(a_env @@ extra_env @@ local_env, t)
 	  
     (* 
@@ -126,86 +210,53 @@ let rec whnf_obj_spine : env -> fam -> obj -> spine -> env * obj =
 	   ——————————————————————————
 	   Γ ⊢ x S : A ◃ • ⇓ D in u
 	*)
-	| Some xt -> whnf_obj_spine env xa xt (l @ l')
+	| Some xt -> whnf_obj_spine sign env xa xt (l @ l')
       end
 
 
     (* See [apply_definition_construct]. *)
     | a, ODef d, l ->
-      apply_definition_construct env (fun _ x -> definitions_as_env x) import_obj Refresh.obj
+      apply_definition_construct env (fun _ x -> definitions_as_env x) (import_obj sign) Refresh.obj
 	(fun local_env env x -> 
-	  let (local_env', t) = whnf_obj_spine env a x l in
+	  let (local_env', t) = whnf_obj_spine sign env a x l in
 	  (local_env @@ local_env', t)) d
 
     | _ -> 
       (* FIXME: To be removed. *)
       assert false (* Because obj is well-formed. *)
 
-and whnf_obj env a o = 
-  Format.fprintf Format.std_formatter 
-    "@[(WHNF-OBJ) @[%a@]@ |- @[%a@]@ : @[%a@]@]@." 
-    Pp.pp_environment env Pp.pp_obj o Pp.pp_fam a;
-  whnf_obj_spine env a o []
+and whnf_obj sign env a o = 
+  whnf_obj_spine sign env a o []
 
-and whnf_fam : env -> env -> fam -> env * fam = 
-  fun local_env env fam ->
+and dbg_whnf_obj sign env a o = 
+  enter dbg_open_fam_flag "whnf_obj" 
+    (fun () -> 
+      Format.fprintf Format.str_formatter "@[@[%a@]@, ⊢@, @[%a@]@,:@ @[%a@]@]"
+	Pp.pp_environment env
+	Pp.pp_obj o
+	Pp.pp_fam a)
+    (fun () ->
+      let (r_env, o') as r = whnf_obj sign env a o in
+      Format.fprintf Format.str_formatter "@[%a@ in@ %a@]"
+	Pp.pp_environment r_env
+	Pp.pp_obj o';
+      r)
 
-    match fam with
-      | FDef d ->
-	apply_definition_construct env 
-	  (fun _ x -> definitions_as_env x) import_obj Refresh.fam
-	  (fun d' -> whnf_fam (local_env @@ d')) d
+and import_obj sign env a o = 
+  fst (whnf_obj_spine sign env a o [])
 
-      | x -> 
-	(local_env, x)
-
-and import_obj env a o = 
-  fst (whnf_obj_spine env a o [])
-
-let fam_of_head sign env = function
-  | HConst c -> find_oconst c sign 
-  | HVar y -> lookup_declaration y env
-
-let destruct_fam_prod = function
-  | FProd (x, a, b) -> 
-    let (x, a, b) = Refresh.alpha_rename_prod x a b in
-    Some (x, a, b)
-  | _ -> None
-
-let destruct_kind_prod = function
-  | KProd (x, a, k) -> 
-    let (x, a, k) = Refresh.alpha_rename_kind_prod x a k in
-    Some (x, a, k)
-  | _ -> None
-
-let rec conv_spine destruct_prod conv_head sign (env : env) a l l' =
-  match destruct_prod a, l, l' with
-    | _, [], [] -> 
-      true
-
-    | Some (x, a, b), h :: l, h' :: l' ->
-      if conv_head sign env h h' then 
-	let env = define x (head_as_obj h) a env in
-	conv_spine destruct_prod conv_head sign env b l l'
-      else 
-	false
-
-    | _ ->
-      (* By well-formedness of [l] and [l']. *)
-      assert false
-
-
-let rec conv_obj : signature -> env -> fam -> obj -> obj -> bool =
+and conv_obj : signature -> env -> fam -> obj -> obj -> bool =
   fun sign env a t u ->
-    let t_local_env, whnf_t = whnf_obj env a t in
-    let u_local_env, whnf_u = whnf_obj env a u in
+    let t_local_env, whnf_t = whnf_obj sign env a t in
+    let u_local_env, whnf_u = whnf_obj sign env a u in
     conv_whnf_obj sign (env @@ (t_local_env @@ u_local_env)) whnf_t whnf_u
 
 and conv_whnf_obj : signature -> env -> obj -> obj -> bool = 
   fun sign env t u ->
     match t, u with
       | OApp (h1, l1), OApp (h2, l2) when h1 = h2 ->
-	conv_spine destruct_fam_prod conv_head sign env (fam_of_head sign env h1) l1 l2
+	conv_spine conv_head sign env 
+	  (telescope_of_fam_prod (fam_of_head sign env h1)) l1 l2
 
       | OApp (_, _), OApp (_, _) ->
 	false
@@ -235,12 +286,8 @@ and conv_head sign env h h' =
       conv_obj sign env xa xo (head_as_obj h)
 	
 and conv_fam sign env a b = 
-  Format.fprintf Format.std_formatter 
-    "@[(FAM-CONV) @[%a@]@ |- @[%a@]@ =?=@ @[%a@]@]@." 
-    Pp.pp_environment env Pp.pp_fam a Pp.pp_fam b;
-
-  let a_local_env, nude_a = whnf_fam (empty ()) env a 
-  and b_local_env, nude_b = whnf_fam (empty ()) env b in
+  let a_local_env, nude_a = open_fam sign (empty ()) env a 
+  and b_local_env, nude_b = open_fam sign (empty ()) env b in
   let env = env @@ (a_local_env @@ b_local_env) in
 
   match nude_a, nude_b with
@@ -254,29 +301,19 @@ and conv_fam sign env a b =
       if h' <> h then 
 	false
       else 
-	conv_spine destruct_kind_prod conv_head sign env (find_fconst h sign) l l'
+	let t = try 
+	  telescope_of_kind_prod (find_fconst h sign)
+	  with Not_found -> raise (UnboundFamilyConstructor h)
+	in
+	conv_spine conv_head sign env t l l'
     | _ ->
       false
-
-type invalid_spine_reason = 
-  | NotConvertible of fam * fam
-  | NotAProduct
-  | BadArity of bool
-
-exception InvalidSpine of signature * env * spine * invalid_spine_reason
-
-exception InvalidTypeAnnotation of variable * fam * fam
-
-let close mk defs t = 
-  match as_list defs with
-    | [] -> t
-    | _ -> mk (Define (env_as_definitions defs, t))
 
 let rec wf_spine = 
   fun destruct_a sign env a spine ->
     match spine, destruct_a a with
       | [], _ -> 
-	a
+	empty (), a
 
       | h :: l, Some (x, a, b) ->
 	let h_fam = fam_of_head sign env h in
@@ -284,7 +321,8 @@ let rec wf_spine =
 	  raise (InvalidSpine (sign, env, spine, NotConvertible (a, h_fam)))
 	else 
 	  let extra_env = (x --> (head_as_obj h)) a in
-	  wf_spine destruct_a sign (env @@ extra_env) b l
+	  let local_defs, a = wf_spine destruct_a sign (env @@ extra_env) b l in
+	  (extra_env @@ local_defs, a)
 
       | _ :: _, None -> 
 	raise (InvalidSpine (sign, env, spine, NotAProduct))
@@ -298,14 +336,14 @@ let rec wf_fam : signature -> env -> fam -> fam =
 	  
       | FProd (x, a, b) -> 
 	let (x, a, b) = Refresh.alpha_rename_prod x a b in
-	let a = wf_fam sign env a in
-	let b = wf_fam sign (declare x a env) b in
+	let a = dbg_wf_fam sign env a in
+	let b = dbg_wf_fam sign (declare x a env) b in
 	FProd (x, a, b)
 
       | FDef (Open (x, a)) ->
 	let xo, xty = lookup_definition x env in
-	let x_definitions, _ = whnf_obj env xty xo in
-	let a = wf_fam sign (env @@ x_definitions) a in
+	let x_definitions, _ = whnf_obj sign env xty xo in
+	let a = dbg_wf_fam sign (env @@ x_definitions) a in
 	FDef (Open (x, a))
 	  
       | FDef (Define (definitions, a)) ->
@@ -313,32 +351,45 @@ let rec wf_fam : signature -> env -> fam -> fam =
 	  Refresh.alpha_rename_define definitions Refresh.fam a
 	in    
 	let local_definitions = wf_definitions sign env local_definitions in
-	let a = wf_fam sign (env @+ local_definitions) a in
+	let a = dbg_wf_fam sign (env @+ local_definitions) a in
 	FDef (Define (local_definitions, a))
 
       (* This case should never appear. (see FIXME in NLF) *)
       | FConst _ -> assert false
 
+and dbg_wf_fam sign env a = 
+  enter dbg_wf_fam_flag "wf_fam" 
+    (fun () ->
+      Format.fprintf Format.str_formatter "@[%a@]@, ⊢@, @[%a@]@]"
+	Pp.pp_environment env
+	Pp.pp_fam a)
+    (fun () ->
+      let r = wf_fam sign env a in
+      Format.fprintf Format.str_formatter "@[%a@]" Pp.pp_fam r;
+      r)
+
 and wf_obj sign env o : obj * fam =
   match o with
     | OLam (x, a, o) ->
       let (x, a, o) = Refresh.alpha_rename_lam x a o in
-      let a = wf_fam sign env a in
-      let (o, b) = wf_obj sign (declare x a env) o in
+      let a = dbg_wf_fam sign env a in
+      let (o, b) = dbg_wf_obj sign (declare x a env) o in
       (OLam (x, a, o), FProd (x, a, b))
 
     | OApp (h, l) ->
       let h_fam = fam_of_head sign env h in
-      let h_fam_definitions, h_fam = whnf_fam (empty ()) env h_fam in
+      Format.printf "@[fam_of_head@;@[%a@]@]" 
+	Pp.pp_fam h_fam;
+      let h_fam_definitions, h_fam = open_fam sign (empty ()) env h_fam in
       let env = env @@ h_fam_definitions in
-      let final_fam = wf_spine destruct_fam_prod sign env h_fam l in
+      let local_defs, final_fam = wf_spine destruct_fam_prod sign env h_fam l in
       (close (fun x -> ODef x) h_fam_definitions (OApp (h, l)), 
-       close (fun x -> FDef x) h_fam_definitions final_fam)
+       close (fun x -> FDef x) (h_fam_definitions @@ local_defs) final_fam)
 
     | ODef (Open (x, o)) ->
       let xo, xty = lookup_definition x env in
-      let x_definitions, _ = whnf_obj env xty xo in
-      let o, a = wf_obj sign (env @@ x_definitions) o in
+      let x_definitions, _ = whnf_obj sign env xty xo in
+      let o, a = dbg_wf_obj sign (env @@ x_definitions) o in
       (ODef (Open (x, o)), FDef (Open (x, a)))
 
     | ODef (Define (definitions, o)) ->
@@ -346,18 +397,31 @@ and wf_obj sign env o : obj * fam =
 	Refresh.alpha_rename_define definitions Refresh.obj o 
       in    
       let local_definitions = wf_definitions sign env local_definitions in
-      let o, a = wf_obj sign (env @+ local_definitions) o in
+      let o, a = dbg_wf_obj sign (env @+ local_definitions) o in
       (ODef (Define (local_definitions, o)), 
        FDef (Define (local_definitions, a)))
 
     | OVar _ | OConst _ ->
       assert false
 
+and dbg_wf_obj sign env o = 
+  enter dbg_wf_obj_flag "wf_obj" 
+    (fun () -> 
+      Format.fprintf Format.str_formatter "@[%a@]@, ⊢@, @[%a@]@]"
+	Pp.pp_environment env
+	Pp.pp_obj o)
+    (fun () ->
+      let (o', a) as r = wf_obj sign env o in
+      Format.fprintf Format.str_formatter "@[@[%a@]@,:@ @[%a@]@]"
+	Pp.pp_obj o'
+	Pp.pp_fam a;
+      r)
+
 and wf_definitions sign env defs = 
   List.fold_left (fun (defs : definitions) (x, ty, o) ->
     match o with
       | Some o ->
-	let (o, a) = wf_obj sign (env @+ defs) o in
+	let (o, a) = dbg_wf_obj sign (env @+ defs) o in
 	let ty = match ty with
 	  | None -> a
 	  | Some ty -> 
@@ -373,25 +437,26 @@ and wf_definitions sign env defs =
     (empty ()) 
     (as_list defs)
 
-(*
-let wf_obj sign env o = 
-  let (defs, o, _) = wf_obj sign env o in
-  close (fun x -> ODef x) defs o
-
-let wf_fam sign env f = 
-  let (defs, f) = wf_fam sign env f in 
-  close (fun x -> FDef x) defs f
-*)
-
 let rec wf_kind sign env = function
   | KType -> 
     KType
 
   | KProd (x, a, k) ->
     let (x, a, k) = Refresh.alpha_rename_kind_prod x a k in    
-    let a = wf_fam sign env a in
+    let a = dbg_wf_fam sign env a in
     let env = declare x a env in 
-    KProd (x, a, wf_kind sign env k)
+    KProd (x, a, dbg_wf_kind sign env k)
+
+and dbg_wf_kind sign env k =
+  enter dbg_wf_kind_flag "wf_kind" 
+    (fun () -> 
+      Format.fprintf Format.str_formatter "@[%a@]@, ⊢@, @[%a@]@]"
+	Pp.pp_environment env
+	Pp.pp_kind k)
+    (fun () ->
+      let r = wf_kind sign env k in
+      Format.fprintf Format.str_formatter "@[%a@]" Pp.pp_kind r;
+      r)
 
 let message_of_reason = function
   | NotConvertible (a, b) -> 
@@ -424,27 +489,27 @@ let handle_error body =
 
     | InvalidSpine (_, _, _, reason) ->
       type_checking_error (message_of_reason reason)
+
+    | UnboundFamilyConstructor v ->
+      type_checking_error 
+	(Printf.sprintf "Family constructor `%s' is unbound in signature." 
+	   (Name.of_fconst v))
       
-let in_repo fam_of_repo repo (what : env -> _) = 
+let in_repo sign fam_of_repo ?repo (what : env -> _) = 
   handle_error
-    (fun () -> what (fst (whnf_obj (Environment.empty ()) fam_of_repo repo)))
+    (fun () -> 
+      match repo with
+	| None -> what (Environment.empty ())
+	| Some repo -> 
+	  what (fst (dbg_whnf_obj sign (Environment.empty ()) fam_of_repo repo)))
     
-let obj sign fam_of_repo repo o = 
-  Format.fprintf Format.std_formatter "@[WF_OBJ:@,@[%a@]@]\n" Pp.pp_obj o;
-  in_repo fam_of_repo repo (fun (env : env) -> wf_obj sign env o)
+let obj sign fam_of_repo ?repo o = 
+  in_repo sign fam_of_repo ?repo (fun env -> dbg_wf_obj sign env o)
 
-let fam sign fam_of_repo repo a = 
-    Format.fprintf Format.std_formatter "@[WF_FAM:@, @[%a@]@]\n" 
-      Pp.pp_fam a;
-  in_repo fam_of_repo repo (fun env -> 
-    let b = wf_fam sign env a in
-    Format.fprintf Format.std_formatter "@[WF_FAM:@, @[%a@]@, => @,@[%a@]@]\n" 
-      Pp.pp_fam a Pp.pp_fam b;
-    b
-  ) 
+let fam sign fam_of_repo ?repo a = 
+  in_repo sign fam_of_repo ?repo (fun env -> dbg_wf_fam sign env a)
 
-let kind sign fam_of_repo repo k = 
-  Format.fprintf Format.std_formatter "@[WF_KIND:@,@[%a@]@]\n" Pp.pp_kind k;
-  in_repo fam_of_repo repo (fun env -> wf_kind sign env k)
+let kind sign fam_of_repo ?repo k = 
+  in_repo sign fam_of_repo ?repo (fun env -> dbg_wf_kind sign env k)
 
    
