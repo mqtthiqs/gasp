@@ -31,7 +31,12 @@ type position = (variable * int) option
 
 module Pp = struct
   open Format
-  let variable fmt x = fprintf fmt "%s_%d" x.external_name x.internal_name
+  let variable fmt x = 
+    if x.internal_name = 0 then 
+      fprintf fmt "%s" x.external_name
+    else 
+      fprintf fmt "%s_%d" x.external_name x.internal_name
+
   let name fmt = function
     | None -> fprintf fmt "_"
     | Some x -> variable fmt x
