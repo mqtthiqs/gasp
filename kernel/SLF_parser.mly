@@ -100,9 +100,15 @@ term3:
 {
   Def (Definitions.Define ((x --> u) None, t))
 }
-| OPEN x=ID IN t=loc(term1) 
+| OPEN u=loc(term1) IN t=loc(term1) 
 { 
-  Def (Definitions.Open (x, t))
+  match u.Position.value with
+    | Ident x -> 
+      Def (Definitions.Open (x, t))
+    | t -> 
+      let x = Name.gen_variable () in
+      Def (Definitions.Define ((x --> u) None, 
+			       Position.with_pos u.Position.position (Ident x)))
 }
 | TYPE 
 { 
