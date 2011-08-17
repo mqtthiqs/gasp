@@ -59,7 +59,7 @@ struct
 
   exception Unbound of Name.variable
 
-  let assoc x e = 
+  let assoc ?(only_internal=false) x e = 
     let rec aux equality = function
       | [] -> raise Not_found
       | (y, v) :: e -> 
@@ -68,7 +68,10 @@ struct
     try 
       aux Name.same_internal_names e
     with Not_found ->
-      aux Name.same_external_names e
+      if only_internal then 
+	raise Not_found 
+      else 
+	aux Name.same_external_names e
 
   let lookup_declaration x e = 
     try
@@ -108,8 +111,10 @@ struct
 
   (* [e1] binds into [e2]. *)    
   let disjoint_join e1 e2 = 
-    (* FIXME: Check for disjointness. *)
-(*    assert (List.for_all (fun (x, _) -> try ignore (lookup x e2); false with _ -> true) e1);  *)
+    assert (List.for_all (fun (x, _) -> 
+      try 
+	ignore (assoc ~only_internal:true x e2); false 
+      with _ -> true) e1);  
     e2 @ e1 
 
 end

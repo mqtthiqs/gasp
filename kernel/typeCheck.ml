@@ -169,7 +169,7 @@ and open_destruct_kind_prod sign env k =
 
 (** [whnf_obj_spine Γ A o l] computes the weak head normal form of [t] 
     applied to [S] at type [A] under typing environment [Γ] as well
-    as the local environment that is necessary to interpret [t]
+    as the local environment [D] that is necessary to interpret [t]
     under [Γ]. 
 
     Preconditions: 
