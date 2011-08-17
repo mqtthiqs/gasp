@@ -196,6 +196,7 @@ and whnf_obj_spine : signature -> env -> fam -> obj -> spine -> env * obj =
 	let (x, ty, o)  = Refresh.alpha_rename_lam x ty o in
 	let (y, ty', b) = Refresh.alpha_rename_prod y ~into:x ty' b in
 	(* As we are working with a well-typed object, we have [ty ≡ ty']. *)
+	assert (conv_fam sign env ty ty');
 	let extra_env = (x --> (head_as_obj h)) ty in
 	let (local_env, t) = whnf_obj_spine sign (env @@ extra_env) b o l	in
 	(a_env @@ extra_env @@ local_env, t)
