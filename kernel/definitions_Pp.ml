@@ -10,11 +10,13 @@ module Make (Definitions : Definitions.Sig) = struct
      | Open (x, t) -> 
        fprintf fmt "@[<hov 2>open @[%a@]@;in@ @[%a@]@]" 
 	 pp_ident x pp_term t
+     | Define (defs, t) when is_empty defs ->
+       pp_term fmt t
      | Define (defs, t) -> 
-       fprintf fmt "@[<hov 2>defs @[%a@]@;in@ @[%a@]@]" 
+       fprintf fmt "@[defs @[%a@]@;in@ @[%a@]@]" 
 	 pp_definitions defs pp_term t
     and pp_definitions fmt defs = 
-      E.pp_environment pp_ident pp_obj pp_ty fmt defs
+      E.pp_environment ~show_fam:false pp_ident pp_obj pp_ty fmt defs
     in
     aux 
 

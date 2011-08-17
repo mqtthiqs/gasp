@@ -1,7 +1,6 @@
 open Util
-open LF
 
-module Make (LF: Sig) =
+module Make (LF: LF.Sig) =
 struct
   open LF
 

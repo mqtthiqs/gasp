@@ -7,6 +7,7 @@ module type Sig = sig
   type fhead 
   type kind
   type env
+  type definitions
   type spine
   val pp_obj : formatter -> obj -> unit
   val pp_fam : formatter -> fam -> unit
@@ -15,6 +16,7 @@ module type Sig = sig
   val pp_kind : formatter -> kind -> unit
   val pp_spine : formatter -> spine -> unit
   val pp_environment : formatter -> env -> unit
+  val pp_definitions : formatter -> definitions -> unit
   val pp_telescope : formatter -> (Name.variable * fam) list -> unit
 end
 
@@ -31,6 +33,7 @@ end)
   and type kind = LF.kind
   and type env = LF.env
   and type spine = LF.spine
+  and type definitions = LF.definitions
 =  struct
 
   open LF
@@ -45,6 +48,7 @@ end)
   type kind = LF.kind 
   type env = LF.env
   type spine = LF.spine
+  type definitions = LF.definitions
 
   let pp_head = LF.pp_head
   let pp_fhead = LF.pp_fhead
@@ -106,5 +110,8 @@ end)
     fprintf fmt "@[%a @,:@ @[%a@]@]" 
       pp_ident x
       pp_fam a
+
+  let pp_definitions fmt (defs : definitions) = 
+    EnvPP.pp_environment pp_ident pp_obj pp_opt_fam fmt defs
 
 end

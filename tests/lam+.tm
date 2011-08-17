@@ -1,1 +1,1 @@
-commit (lam [x] lam [y] app x (app (app x y) y))
+commit (lam [x : tm] lam [y : tm] app x (app (app x y) y))

@@ -8,7 +8,8 @@
   let keywords = [
     "type", TYPE;
     "open", OPEN;
-    "in", IN
+    "in", IN;
+    "def", DEF
   ]
 
   let is_keyword =
@@ -39,6 +40,7 @@ rule main = parse
   | eof                                   { EOF }
   | "."                                   { DOT }
   | ":"                                   { COLON }
+  | "="                                   { EQ }
   | '('                                   { LPAREN }
   | ')'                                   { RPAREN }
   | '['                                   { LBRACKET }

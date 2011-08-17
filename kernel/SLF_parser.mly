@@ -1,5 +1,6 @@
 %{
   open SLF
+  open Definitions
 
   let parse_error = Error.error "during parsing"
 
@@ -13,8 +14,8 @@
 %}
 
 %token EOF
-%token COLON TYPE DOT LARROW RARROW UNDERSCORE 
-%token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE OPEN IN
+%token COLON TYPE DOT LARROW RARROW UNDERSCORE EQ
+%token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE OPEN IN DEF
 %token<string> ID
 
 %start<SLF.sign> signature
@@ -98,6 +99,10 @@ term3:
 | x=ID 
 { 
   Ident x 
+}
+| DEF x=ID EQ u=loc(term1) IN t=loc(term1)
+{
+  Def (Definitions.Define ((x --> u) None, t))
 }
 | OPEN x=ID IN t=loc(term1) 
 { 

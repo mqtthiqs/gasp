@@ -63,10 +63,19 @@ let destruct_kind_prod = function
     
 let rec telescope_of_fam_prod a = 
   match destruct_fam_prod a with
-    | None -> []
-    | Some (x, a, b) -> (x, a) :: telescope_of_fam_prod b
+    | None -> ([], a)
+    | Some (x, a, b) -> 
+      let (t, b) = telescope_of_fam_prod b in
+      ((x, a) :: t, b)
+
+let rec telescope_close t a = 
+  match t with
+    | [] -> a
+    | (x, b) :: t -> FProd (x, b, telescope_close t a)
 
 let rec telescope_of_kind_prod a = 
   match destruct_kind_prod a with
-    | None -> []
-    | Some (x, a, b) -> (x, a) :: telescope_of_kind_prod b
+    | None -> ([], a)
+    | Some (x, a, b) -> 
+      let (t, b) = telescope_of_kind_prod b in 
+      ((x, a) :: t, b)

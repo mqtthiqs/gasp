@@ -1,75 +1,113 @@
 open Util
 open ILF
 open ILF
+let ( @@ ) = NLF.Definitions.( @@ )
 
 let not_fapp = function FApp _ -> false | _ -> true
 
 let not_oapp = function OApp _ -> false | _ -> true
 
-let atom x = (x, NLF.Definitions.empty ())
+let atom x = (NLF.Definitions.empty (), x)
 
 let map on_fam on_obj defs =
   List.fold_left (fun def (x, ty, t) -> 
     match t with
-      | None -> NLF.Definitions.declare x (on_fam ty) def
-      | Some t -> NLF.Definitions.define x (on_obj t) (on_fam ty) def)
+      | None -> 
+	let defs, ty = on_fam ty in
+	NLF.Definitions.declare x ty (def @@ defs)
+      | Some t -> 
+	let t_defs, t = on_obj t in
+	let a_defs, a = on_fam ty in
+	NLF.Definitions.define x t a (def @@ t_defs @@ a_defs))
     (NLF.Definitions.empty ())
     (Definitions.as_list defs)
 
-let map_construct on_fam on_obj on_term = function
+let map_construct mk on_fam on_obj on_term refresh_term = function
   | Definitions.Open (x, t) -> 
-    NLF.Definitions.Open (x, on_term t)
-  | Definitions.Define (defs, t) -> 
-    NLF.Definitions.Define (map on_fam on_obj defs, on_term t)
+    (* FIXME: Wrong. *)
+    let defs, t = on_term t in
+    (defs, mk (NLF.Definitions.Open (x, t)))
+
+  | Definitions.Define (ndefs, t) -> 
+    let ndefs, t = 
+      Refresh.alpha_rename_define ndefs refresh_term t 
+    in
+    let ndefs = map on_fam on_obj ndefs in
+    let defs, t = on_term t in
+    (ndefs @@ defs, t)
 
 let define mk defs t = 
   match NLF.Definitions.as_list defs with
     | [] -> t
     | _ -> mk (NLF.Definitions.Define (defs, t))
   
-let rec fam : ILF.fam -> NLF.fam = function
+let rec fam = function
   | FConst f -> 
-    NLF.FConst f
+    atom (NLF.FConst f)
   | FProd (x, a, b) -> 
-    NLF.FProd (x, fam a, fam b)
+    let (x, a, b)  = Refresh.alpha_rename_prod x a b in
+    let defs, a = fam a in
+    defs, NLF.FProd (x, a, close_fam b)
   | FApp (FConst x, args) -> 
     let args_defs, args = name_arguments args in
-    define (fun x -> NLF.FDef x) args_defs (NLF.FApp (x, args))
+    args_defs, NLF.FApp (x, args)
   | FDef d -> 
-    NLF.FDef (map_construct (Option.map fam) obj fam d)
+    map_construct (fun x -> NLF.FDef x) opt_fam obj fam Refresh.fam d
   | t -> 
     (* There is not structured term in functional position. *)
     Format.fprintf Format.std_formatter "@[%a@]" Pp.pp_fam t;
     assert false
 
-and obj = function
+and opt_fam = function
+  | None -> NLF.Definitions.empty (), None
+  | Some a -> let defs, a = fam a in defs, Some a
+
+and obj : obj -> NLF.definitions * NLF.obj = function
   | OConst o -> 
-    NLF.OConst o
+    atom (NLF.OConst o)
   | OVar x -> 
-    NLF.OVar x
+    atom (NLF.OVar x)
   | OLam (x, a, t) -> 
-    NLF.OLam (x, fam a, obj t)
+    let (x, a, t)  = Refresh.alpha_rename_lam x a t in
+    atom (NLF.OLam (x, close_fam a, close_obj t))
   | OApp (a, args) -> 
     assert (not_oapp a);
     let defs, args = name_arguments args in
-    let defs, a = name_obj defs a in
-    define (fun x -> NLF.ODef x) defs (NLF.OApp (a, args))
+    let odefs, a = name_obj a in
+(*    Format.eprintf "@\n@[%a AND %a@]@\n@." 
+      NLF.Pp.pp_definitions defs NLF.Pp.pp_definitions odefs; *)
+    (defs @@ odefs, NLF.OApp (a, args))
   | ODef d -> 
-    NLF.ODef (map_construct (Option.map fam) obj obj d)
+    map_construct (fun x -> NLF.ODef x) opt_fam obj obj Refresh.obj d
+
+and close_obj o = 
+  let defs, r = obj o in 
+  let r = define (fun x -> NLF.ODef x) defs r in
+(*  Format.eprintf "@\n@[Close @[%a@]@ @;-> @[%a@]@]@\n@." 
+    Pp.pp_obj o
+    NLF.Pp.pp_obj r; *)
+  r
+
+and close_fam f = 
+(*   Format.printf "@[CLOSE %a@]@." Pp.pp_fam f; *)
+  let defs, f = fam f in 
+  define (fun x -> NLF.FDef x) defs f
 
 and fresh_def defs o =
   let x = Name.gen_variable () in
   NLF.Definitions.define x o None defs, NLF.HVar x
 
-and name_obj defs = function
-  | OConst o -> defs, NLF.HConst o
-  | OVar x -> defs, NLF.HVar x
-  | o -> fresh_def defs (obj o)
+and name_obj : ILF.obj -> NLF.definitions * NLF.head = function
+  | OConst o -> NLF.Definitions.empty (), NLF.HConst o
+  | OVar x -> NLF.Definitions.empty (), NLF.HVar x
+  | o -> 
+    let odefs, o = obj o in 
+    fresh_def odefs o
 
 and name_arguments args = 
   let name_argument (defs, args) o =
-    let defs, h = name_obj defs o in
-    (defs, h :: args)
+    let odefs, h = name_obj o in
+    (defs @@ odefs, h :: args)
   in
   let defs, args = 
     List.fold_left name_argument (NLF.Definitions.empty (), []) args
@@ -78,11 +116,13 @@ and name_arguments args =
 
 and kind = function
   | KType -> NLF.KType
-  | KProd (x, a, k) -> NLF.KProd (x, fam a, kind k)
+  | KProd (x, a, k) -> NLF.KProd (x, close_fam a, kind k)
 
 let entity = function
   | Kind k -> NLF.Kind (kind k)
-  | Fam f -> NLF.Fam (fam f)
-  | Obj o -> NLF.Obj (obj o)
+  | Fam f -> NLF.Fam (close_fam f)
+  | Obj o -> NLF.Obj (close_obj o)
 
+let obj = close_obj
 
+let fam = close_fam

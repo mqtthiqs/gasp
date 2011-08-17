@@ -6,6 +6,8 @@ sig
   type ('ty, 't) t
  
   val empty : unit -> ('ty, 't) t
+
+  val is_empty : ('ty, 't) t -> bool
     
   val define : variable -> 't -> 'ty -> ('ty, 't) t -> ('ty, 't) t
     
@@ -45,6 +47,8 @@ struct
 
   let empty () = []
 
+  let is_empty e = (e = [])
+
   let declare x ty e = (x, Declare ty) :: e
 
   let define x t ty e = (x, Define (ty, t)) :: e
@@ -80,15 +84,17 @@ struct
       raise (Unbound x)
 
   let as_list e = 
-    List.rev (List.fold_left (fun accu x -> as_triple x :: accu) [] e)
+    List.fold_left (fun accu x -> as_triple x :: accu) [] e
 
   let map on_type on_term = 
     List.map (function
       | (x, Declare ty) -> (x, Declare (on_type ty))
       | (x, Define (ty, t)) -> (x, Define (on_type ty, on_term t)))
 
+  (* [e1] binds into [e2]. *)    
   let disjoint_join e1 e2 = 
     (* FIXME: Check for disjointness. *)
-    e1 @ e2
+    assert (List.for_all (fun (x, _) -> try ignore (lookup x e2); false with _ -> true) e1); 
+    e2 @ e1 
 
 end

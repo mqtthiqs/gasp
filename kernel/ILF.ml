@@ -27,3 +27,11 @@ end = LF_Pp.Make (struct
   let pp_fhead = Pp.pp_fam 
 end)
     
+module Utils = LF_utils.Make (ILF)
+
+let refresh_obj = ref None
+module Refresh = Utils.Refresh (struct
+  let head r = (Util.unSome !refresh_obj) r
+  let fhead r c = c
+end)
+let _ = refresh_obj := Some (Refresh.obj)
