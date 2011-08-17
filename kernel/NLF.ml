@@ -12,10 +12,10 @@ end)
 module Pp = LF_Pp.Make (struct
   include Body
   let pp_head fmt = function
-    | HConst x -> Format.fprintf fmt "@[%s@]" (Name.of_oconst x)
-    | HVar x -> Format.fprintf fmt "@[%s@]" (Name.of_variable x)
+    | HConst x -> Format.fprintf fmt "@[%a@]" Name.Pp.oconst x
+    | HVar x -> Format.fprintf fmt "@[%a@]" Name.Pp.variable x
   let pp_fhead fmt x = 
-    Format.fprintf fmt "@[%s@]" (Name.of_fconst x)
+    Format.fprintf fmt "@[%a@]" Name.Pp.fconst x
 end)
 
 module Utils = LF_utils.Make (Body)

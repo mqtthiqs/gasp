@@ -264,7 +264,7 @@ and dbg_whnf_obj sign env a o =
       r)
 
 and import_obj sign env a o = 
-  fst (whnf_obj_spine sign env a o [])
+  fst (dbg_whnf_obj sign env a o)
 
 and conv_obj : signature -> env -> fam -> obj -> obj -> bool =
   fun sign env a t u ->
@@ -527,30 +527,30 @@ let message_of_reason = function
   | NotAProduct ->
     "not a product"
 
-let type_checking_error msg = 
-  Error.global_error "type checking" msg
+let error_buffer = Buffer.create 13
+let error_formatter = Format.formatter_of_buffer error_buffer
+let type_checking_error _ = 
+  Error.global_error "type checking" (Buffer.contents error_buffer)
 
 let handle_error body = 
   try 
     body () 
   with 
     | InvalidTypeAnnotation (x, ty, a) -> 
-      type_checking_error 
-	(Format.fprintf Format.str_formatter 
-	   "@[%s@ @;@[is expected to have type:@]@,@ @[%a@]@,\
+      Format.kfprintf type_checking_error error_formatter
+	"@[%s@ @;@[is expected to have type:@]@,@ @[%a@]@,\
             @[but the following type is given:@]@,@ @[%a@].@]"
-	   (Name.of_variable x)
-	   Pp.pp_fam ty
-	   Pp.pp_fam a;
-	 Format.flush_str_formatter ())
+	(Name.of_variable x)
+	Pp.pp_fam ty
+	Pp.pp_fam a
 
     | InvalidSpine (_, _, _, reason) ->
       type_checking_error (message_of_reason reason)
 
     | UnboundFamilyConstructor v ->
-      type_checking_error 
-	(Printf.sprintf "Family constructor `%s' is unbound in signature." 
-	   (Name.of_fconst v))
+      Format.kfprintf type_checking_error error_formatter
+	"@[Family constructor `@[%a@]' is unbound in signature.@]" 
+	   Name.Pp.fconst v
           
 let fam sign a = 
   handle_error (fun () -> dbg_wf_fam sign a)

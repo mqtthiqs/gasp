@@ -22,11 +22,16 @@ let map on_fam on_obj defs =
     (NLF.Definitions.empty ())
     (Definitions.as_list defs)
 
+let define mk defs t = 
+  match NLF.Definitions.as_list defs with
+    | [] -> t
+    | _ -> mk (NLF.Definitions.Define (defs, t))
+
 let map_construct mk on_fam on_obj on_term refresh_term = function
   | Definitions.Open (x, t) -> 
     (* FIXME: Wrong. *)
     let defs, t = on_term t in
-    (defs, mk (NLF.Definitions.Open (x, t)))
+    atom (mk (NLF.Definitions.Open (x, define mk defs t)))
 
   | Definitions.Define (ndefs, t) -> 
     let ndefs, t = 
@@ -35,11 +40,6 @@ let map_construct mk on_fam on_obj on_term refresh_term = function
     let ndefs = map on_fam on_obj ndefs in
     let defs, t = on_term t in
     (ndefs @@ defs, t)
-
-let define mk defs t = 
-  match NLF.Definitions.as_list defs with
-    | [] -> t
-    | _ -> mk (NLF.Definitions.Define (defs, t))
   
 let rec fam = function
   | FConst f -> 

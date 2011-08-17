@@ -52,7 +52,7 @@ rule main = parse
   | "_"                                   { UNDERSCORE }
   | identifier                            { let id = lexeme lexbuf in
                                             try is_keyword id 
-					    with Not_found -> ID (id)
+					    with Not_found -> ID (Name.mk_variable id)
                                           }
   | "%"                                  { comment lexbuf }
   | _                                     

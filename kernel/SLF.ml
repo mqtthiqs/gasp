@@ -1,7 +1,7 @@
 
-module Definitions = Definitions.Make (struct type variable = string end)
+module Definitions = Definitions.Make (Name)
 
-type ident = string
+type ident = Name.variable
 
 type term' =
   | Type

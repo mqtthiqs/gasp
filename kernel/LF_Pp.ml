@@ -57,7 +57,7 @@ end)
 
   let rec pp_fam fmt = function
     | FConst f ->
-      fprintf fmt "@[%s@]" (Name.of_fconst f)
+      fprintf fmt "@[%a@]" Name.Pp.fconst f
     | FProd (x, a, b) when is_wilcard x -> 
       fprintf fmt "@[%a -> %a@]" pp_fam a pp_fam b
     | FProd (x, a, b) -> 
@@ -81,7 +81,7 @@ end)
 
   and pp_obj fmt = function
     | OConst o -> 
-      fprintf fmt "@[%s@]" (Name.of_oconst o)
+      fprintf fmt "@[%a@]" Name.Pp.oconst o
     | OVar x -> 
       pp_ident fmt x
     | OLam (x, a, t) -> 

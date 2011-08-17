@@ -15,11 +15,11 @@ let list_prec = function
   | [] -> 0
   | _::_ -> 50
     
-let ident fmt x = fprintf fmt "@[%s@]" x
+let ident = Name.Pp.variable
 
 module PpDef = Definitions_Pp.Make (Definitions)
 
-let is_wildcard x = (x.[0] = '_')
+let is_wildcard x = ((Name.of_variable x).[0] = '_')
 
 let pp_term pp fmt t = 
   match P.value t with
@@ -32,8 +32,8 @@ let pp_term pp fmt t =
       fprintf fmt "@[{%a@ :@ %a}@ %a@]" 
 	ident x (pp (<=)) a (pp (<=)) b
     | Lam (x,ty,b) -> 
-      fprintf fmt "@[[%s : %a]@] %a@]"
-	x (pp (<=)) ty (pp (<=)) b
+      fprintf fmt "@[[%a : %a]@] %a@]"
+	ident x (pp (<=)) ty (pp (<=)) b
     | App (t,u) -> 
       fprintf fmt "@[%a@ %a@]" 
 	(pp (<=)) t (pp (<)) u

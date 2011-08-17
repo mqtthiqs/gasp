@@ -1,7 +1,7 @@
 
-module Definitions : Definitions.Sig with type variable = string 
+module Definitions : Definitions.Sig with type variable = Name.variable
 
-type ident = string
+type ident = Name.variable
 
 type term' =
   | Type

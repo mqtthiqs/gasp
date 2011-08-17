@@ -78,26 +78,26 @@ struct
 
     and binder r = binder' (fam r) r
 
-    let fresh_binder ?(into=Name.gen_variable ()) r x = 
+    let fresh_binder r x ?(into=Name.refresh_variable x) () = 
       let r = Renaming.add x into r in
       (r, into)
 
     let alpha_rename_lam x ?into ty t = 
-      let (r, y) = fresh_binder Renaming.empty ?into x in
+      let (r, y) = fresh_binder Renaming.empty ?into x () in
       (y, fam r ty, obj r t)
 
     let alpha_rename_prod x ?into ty a = 
-      let (r, y) = fresh_binder Renaming.empty ?into x in
+      let (r, y) = fresh_binder Renaming.empty ?into x () in
       (y, fam r ty, fam r a)
 
     let alpha_rename_kind_prod x ?into ty k = 
-      let (r, y) = fresh_binder Renaming.empty ?into x in
+      let (r, y) = fresh_binder Renaming.empty ?into x () in
       (y, fam r ty, kind r k)
 
     let alpha_rename_define defs on_term t = 
       let ldefs = Definitions.as_list defs in
       let xs = List.map (fun (x, _, _) -> x) ldefs in
-      let r, ys = list_fold_map fresh_binder Renaming.empty xs in
+      let r, ys = list_fold_map (fun k x -> fresh_binder k x ()) Renaming.empty xs in
       let definition ndefs (_, a, t) y =
 	let a = Option.map (fam r) a in
 	match t with

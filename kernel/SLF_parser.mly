@@ -4,19 +4,15 @@
 
   let parse_error = Error.error "during parsing"
 
-  let fresh = 
-    let x = ref 0 in 
-    fun () -> incr x; "_" ^ string_of_int !x
-
   let mk_arrow u t = 
-    Prod (fresh (), u, t)
+    Prod (Name.gen_variable (), u, t)
 
 %}
 
 %token EOF
 %token COLON TYPE DOT LARROW RARROW UNDERSCORE EQ
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE OPEN IN DEF
-%token<string> ID
+%token<Name.variable> ID
 
 %start<SLF.sign> signature
 %start<SLF.term> terml
@@ -46,7 +42,7 @@ name:
 }
 | UNDERSCORE 
 { 
-  fresh ()
+  Name.gen_variable ()
 }
 
 term1:

@@ -31,7 +31,11 @@ sig
 
 end
 
-module Make (Name : sig type variable end) 
+module Make (Name : sig
+  type variable
+  val same_internal_names : variable -> variable -> bool
+  val same_external_names : variable -> variable -> bool
+end)
 : Sig with type variable = Name.variable = 
 struct
 
@@ -55,9 +59,20 @@ struct
 
   exception Unbound of Name.variable
 
+  let assoc x e = 
+    let rec aux equality = function
+      | [] -> raise Not_found
+      | (y, v) :: e -> 
+	if equality x y then v else aux equality e
+    in
+    try 
+      aux Name.same_internal_names e
+    with Not_found ->
+      aux Name.same_external_names e
+
   let lookup_declaration x e = 
     try
-      match List.assoc x e with
+      match assoc x e with
 	| Declare ty -> ty
 	| Define (ty, _) -> ty
     with Not_found -> 
@@ -67,7 +82,7 @@ struct
 
   let lookup_definition x e = 
     try
-      match List.assoc x e with
+      match assoc x e with
 	| Declare _ -> raise (Undefined x)
 	| Define (ty, t) -> (t, ty)
     with Not_found -> 
@@ -79,7 +94,7 @@ struct
       | (x, Define (ty, t)) -> (x, ty, Some t) 
 
   let lookup x e = 
-    try as_triple (x, List.assoc x e)
+    try as_triple (x, assoc x e)
     with Not_found -> 
       raise (Unbound x)
 
@@ -94,7 +109,7 @@ struct
   (* [e1] binds into [e2]. *)    
   let disjoint_join e1 e2 = 
     (* FIXME: Check for disjointness. *)
-    assert (List.for_all (fun (x, _) -> try ignore (lookup x e2); false with _ -> true) e1); 
+(*    assert (List.for_all (fun (x, _) -> try ignore (lookup x e2); false with _ -> true) e1);  *)
     e2 @ e1 
 
 end

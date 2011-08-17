@@ -19,7 +19,11 @@ sig
 
 end
 
-module Make (Name : sig type variable end) : Sig with type variable = Name.variable = struct
+module Make (Name : sig 
+  type variable 
+  val same_internal_names : variable -> variable -> bool
+  val same_external_names : variable -> variable -> bool
+end) : Sig with type variable = Name.variable = struct
 
   include Environment.Make (Name)
 
