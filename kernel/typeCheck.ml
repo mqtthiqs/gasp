@@ -234,7 +234,6 @@ and whnf_obj_spine : signature -> env -> fam -> obj -> spine -> env * obj =
 	| Some xt -> whnf_obj_spine sign env xa xt (l @ l')
       end
 
-
     (* See [apply_definition_construct]. *)
     | a, ODef d, l ->
       apply_definition_construct env 
@@ -244,7 +243,6 @@ and whnf_obj_spine : signature -> env -> fam -> obj -> spine -> env * obj =
 	  (local_env @@ local_env', t)) d
 
     | _ -> 
-      (* FIXME: To be removed. *)
       assert false (* Because obj is well-formed. *)
 
 and whnf_obj sign env a o = 

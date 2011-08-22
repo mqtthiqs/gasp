@@ -105,10 +105,14 @@ term3:
   match u.Position.value with
     | Ident x -> 
       Def (Definitions.Open (x, t))
-    | t -> 
+    | _ -> 
       let x = Name.gen_variable () in
-      Def (Definitions.Define ((x --> u) None, 
-			       Position.with_pos u.Position.position (Ident x)))
+      let xt : SLF.term = 
+	Position.with_pos 
+	  u.Position.position 
+	  (Def (Definitions.Open (x, t)))
+      in
+      Def (Definitions.Define ((x --> u) None, xt))
 }
 | TYPE 
 { 
