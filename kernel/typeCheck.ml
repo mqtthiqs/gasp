@@ -313,9 +313,22 @@ and conv_head sign env h h' =
       c = c'
     | HVar x, HVar y when x = y -> 
       true
-    | HVar x, h | h, HVar x ->
-      let (xo, xa) = lookup_definition x env in
-      conv_obj sign env xa xo (head_as_obj h)
+    | HVar x, HVar y ->
+      begin try let (xo, xa) = lookup_definition x env in
+		conv_obj sign env xa xo (head_as_obj h)
+	with _ -> (* [x] has no definition. It is only declared *)
+	  try let (yo, ya) = lookup_definition y env in
+	      conv_obj sign env ya (OVar x) yo
+	  with _ -> (* [y] has no definition. It is only declared *)
+	    false
+      end
+    | h, HVar x | HVar x, h ->
+      begin try let (xo, xa) = lookup_definition x env in
+		conv_obj sign env xa xo (head_as_obj h)
+	with _ -> (* [x] has no definition. It is only declared *)
+	  false
+      end
+
 	
 and conv_fam sign env a b = 
   let a_local_env, nude_a = open_fam sign (empty ()) env a 

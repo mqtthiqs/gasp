@@ -81,11 +81,13 @@ and obj : obj -> NLF.definitions * NLF.obj = function
     map_construct (fun x -> NLF.ODef x) opt_fam obj obj Refresh.obj d
 
 and close_obj o = 
+(*  Format.eprintf "@\n@[Close @[%a@]@ ?@]@\n@." 
+    Pp.pp_obj o; *)
   let defs, r = obj o in 
   let r = define (fun x -> NLF.ODef x) defs r in
 (*  Format.eprintf "@\n@[Close @[%a@]@ @;-> @[%a@]@]@\n@." 
     Pp.pp_obj o
-    NLF.Pp.pp_obj r; *)
+    NLF.Pp.pp_obj r;  *)
   r
 
 and close_fam f = 
@@ -94,8 +96,12 @@ and close_fam f =
   define (fun x -> NLF.FDef x) defs f
 
 and fresh_def defs o =
-  let x = Name.gen_variable () in
-  NLF.Definitions.define x o None defs, NLF.HVar x
+  match o with
+  | NLF.OConst o -> NLF.Definitions.empty (), NLF.HConst o
+  | NLF.OVar x -> NLF.Definitions.empty (), NLF.HVar x
+  | o ->
+    let x = Name.gen_variable () in
+    NLF.Definitions.define x o None defs, NLF.HVar x
 
 and name_obj : ILF.obj -> NLF.definitions * NLF.head = function
   | OConst o -> NLF.Definitions.empty (), NLF.HConst o
@@ -106,8 +112,12 @@ and name_obj : ILF.obj -> NLF.definitions * NLF.head = function
 
 and name_arguments args = 
   let name_argument (defs, args) o =
-    let odefs, h = name_obj o in
-    (defs @@ odefs, h :: args)
+    match o with
+      | OConst o | OApp (OConst o, []) -> (defs, NLF.HConst o :: args)
+      | OVar x | OApp (OVar x, []) -> (defs, NLF.HVar x :: args)
+      | _ -> 
+	let odefs, h = name_obj o in
+	(defs @@ odefs, h :: args)
   in
   let defs, args = 
     List.fold_left name_argument (NLF.Definitions.empty (), []) args
