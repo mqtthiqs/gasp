@@ -14,3 +14,4 @@ type term' =
 and term = term' Position.located
 
 type sign = (ident * term) list
+

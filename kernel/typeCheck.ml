@@ -572,3 +572,48 @@ let kind sign k =
 
 let obj sign env o = 
   handle_error (fun () -> dbg_wf_obj sign env o)
+
+open ILF
+
+let rec checkout_obj sign env : NLF.obj -> ILF.obj = function
+  | OConst c -> ILF.OConst c
+  | OVar x -> checkout_head sign env (HVar x)
+  | OLam (x, a, o) -> 
+    ILF.OLam (x, 
+	      checkout_fam sign env a, 
+	      checkout_obj sign (declare x a env) o)
+  | OApp (h, s) ->
+    ILF.OApp (checkout_head sign env h, 
+	      List.map (checkout_head sign env) s)
+  | ODef (Open (x, t)) ->
+    let xo, xty = lookup_definition x env in
+    let x_definitions = import_obj sign env xty xo in
+    checkout_obj sign (env @@ x_definitions) t
+  | ODef (Define (definitions, t)) ->
+    checkout_obj sign (env @+ definitions) t
+
+and checkout_fam sign env = function
+  | FConst f -> ILF.FConst f
+  | FProd (x, a, b) ->     
+    ILF.FProd (x, 
+	      checkout_fam sign env a, 
+	      checkout_fam sign (declare x a env) b)
+  | FApp (f, s) ->
+    ILF.FApp (ILF.FConst f,
+	      List.map (checkout_head sign env) s)
+
+  | FDef (Open (x, t)) ->
+    let xo, xty = lookup_definition x env in
+    let x_definitions = import_obj sign env xty xo in
+    checkout_fam sign (env @@ x_definitions) t
+  | FDef (Define (definitions, t)) ->
+    checkout_fam sign (env @+ definitions) t
+
+and checkout_head sign env = function
+  | HVar x -> 
+    begin try 
+	    checkout_obj sign env (fst (lookup_definition x env)) 
+      with _ -> ILF.OVar x 
+    end
+  | HConst x ->
+    ILF.OConst x

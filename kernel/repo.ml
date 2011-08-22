@@ -110,7 +110,8 @@ let show repo =
   Format.printf "@[%a@]@." NLF.Pp.pp_obj (term_from_repo repo)
 
 let checkout repo =
-  Format.printf "@[%a@]@." SLF_Pp.term (reify_term (term_from_repo repo))
+  let t = SLF_LF.from_obj (TypeCheck.checkout_obj repo.sign repo.env repo.head) in
+  Format.printf "@[%a@]@." SLF_Pp.term t
 
 let load () = 
   let ch = open_in_bin !Settings.repo in
