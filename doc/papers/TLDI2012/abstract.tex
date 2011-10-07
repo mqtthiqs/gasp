@@ -1,0 +1,172 @@
+\documentclass[9pt,authoryear]{sigplanconf}
+
+\usepackage{ntheorem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\usepackage{mathpartir}
+\usepackage{macros}
+\usepackage{breqn}
+
+\begin{document}
+
+\conferenceinfo{TLDI '12}{January 28 2012, Philadelphia, USA.}
+\copyrightyear{2012} 
+\copyrightdata{[to be supplied]} 
+
+\titlebanner{banner above paper title}        % These are ignored unless
+\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Incremental Type Checking}
+%\subtitle{Subtitle Text, if any}
+
+\authorinfo{Name1}
+           {Affiliation1}
+           {Email1}
+\authorinfo{Name2\and Name3}
+           {Affiliation2/3}
+           {Email2/3}
+
+\maketitle
+
+\begin{abstract}
+  We study the problem of verifying the well-typing of terms, not in a
+  batch fashion, as it is usually the case for typed languages, but
+  incrementally, that is by sequentially modifying a term, and
+  re-verifying each time only a smaller amount of information.
+\end{abstract}
+
+\category{CR-number}{subcategory}{third-level}
+
+\terms
+term1, term2
+
+\keywords
+keyword1, keyword2
+
+\section{Introduction}
+
+As developments grow and type systems become more involved, writing a
+correct program in one shot becomes quite difficult. On the other
+side, writing a program in many correct steps can be tedious because
+generally, the verification tools rechecks the whole development at
+each step. This second option is the usual practice when the time for
+verification is neglectible wrt. the time for making the change, but
+this is less and less the case, especially when the language in
+question embed proof aspects, and verification involves proof
+search. Some mechanisms exist already to cope with the incrementality
+of proofs or program development: separate compilation, interactive
+toplevel with undo, tactic languages; they all provide in different
+ways a rough approximation of the process of modifying and checking
+incrementally a large term.
+
+We propose here an architecture for a generic incremental
+type-checker, a data structure for repositories of typed proofs and a
+language for describing proof deltas. It is based on the simple idea
+of sharing common subterms to avoid recheckings and exploits the idea
+of encoding a derivation in a metalanguage. This way, given a
+signature declaring the typing rules and an (untrusted) typing
+algorithm for my language of choice, I get an incremental type-checker
+for that language. The metalanguage approach gives us the ability to
+encode all the aforementioned usual incrementality mechanisms, and
+more.
+
+\section{Building up the metalanguage}
+
+As a first example, let us consider a purposedly simplistic sorted
+language of boolean and arithmetic expressions:
+$$ e, e' \gequal n \gor e + e' \gor e \land e' \gor e \leq e' $$
+The algorithm to determine in a batch fashion wether the term
+$$ e_1 = (1 + 3 \leq 2 + 4) \land (8 \leq 3) $$
+is well-sorted is trivial (we don't care about its evaluation here,
+just well-sortedness). But what if I change subterm $2+4$ in $e_1$
+into $7 \leq 2+4$, to obtain $e_2$? Clearly, it should be verified
+that context $7\leq []$ is well-sorted (it is), that $2+4$ ``fits''
+into its hole (it does), that the whole thing ``fits'' into its new
+context $(1+3\leq [])\land(8\leq 3)$ (it is not); but the other,
+unchanged subterms need not be. For that, we would have to
+``remember'' the state of the verifier in some way.
+
+If only we had \emph{names} (memory addresses, hashes) for
+sufficiently enough subterms of our initial term, $$ e_1 =
+(\overbrace{1 + 3}^\mmeta \leq \overbrace{2+4}^\mmmeta) \land
+\overbrace{(8 \leq 3)}^\mmmmeta\text{\ ,} $$ we could express
+concisely the change as a \emph{delta} $$\delta_1 = (\mmeta\leq(7\leq
+\mmmeta))\land \mmmmeta \text{\ ,}$$ sharing unchanged subterms. If
+only we had \emph{annotated} our initial term with the states of the
+verifier,
+$$e_1 = (\overbrace{1 + 3}^{\mmeta:\nat} \leq \overbrace{2 + 4}^{\mmmeta:\nat}) \land
+\overbrace{(8 \leq 3)}^{\mmmmeta:\bool}\text{\ ,} $$ we would have a
+simple process to verify $e_2$ taking advantage of $e_1$'s derivation,
+in $O(|\delta_2|)$: verify $\delta_1$ as a term, retrieving the sort
+of names from a stored map. This suggests a data structure for a
+\emph{repository} of named, annotated, verified subexpressions: a map
+from names, or \emph{metavariables}, to terms and types, together with
+a \emph{head} metavariable identifying the top of the term: $$\mr
+\gequal X, \Delta \quad\text{where}\quad \Delta : (\mmeta\mapsto M :
+A) \text{\ .}$$
+
+Terms $M$ should be written in a language allowing to encode our expressions with metavariables,
+and types $A$ should contain the whole state of the batch verifier
+(here the sort). One modular choice for this metalanguage is \emph{LF}
+\cite{harper1993framework}: it allows to specify syntax and rules of
+an object language as a \emph{signature} $\Sigma$, and check terms
+against this signature. We'll use an increasing fragment of it. The
+so-called \emph{intrinsic} style of LF signature for our language
+could be:
+\begin{align*}
+  tp &: \type,\quad nat : tp,\quad bool : tp,\quad exp : tp\to nat,\\
+  atom &: \nat\to exp\ nat,\\
+  plus &: exp\ nat \to exp\ nat \to exp\ nat,\\
+  and &: exp\ bool\to exp\ bool\to exp\ bool,\\
+  leq &: exp\ nat\to exp\ nat\to exp\ bool
+\end{align*}
+In this style, the encoding of an expression and its (object) type is
+a term in the metalanguage, but appears in the type of this
+expression. The repository associated with expression $e_1$ is
+\begin{align*}
+  T,
+  \begin{array}{rl}
+  X &\mapsto plus\ 1\ 3 : exp\ nat \\
+  Y &\mapsto plus\ 2\ 4 : exp\ nat \\
+  Z &\mapsto leq\ 8\ 3 : exp\ bool \\
+  T &\mapsto and\ (leq\ X\ Y)\ Z : exp\ bool \\
+\end{array}
+\end{align*}
+
+\section{Expressivity}
+
+
+
+\section{Architecture}
+
+The \emph{kernel} is the component in charge of verifying terms
+against a signature and a repository, and updating this repository. It
+supports two basic operations:
+\begin{itemize}
+\item $\pfunction{push}{\Sigma}{\mr,M}$ checks $M$ against $\Sigma$
+  in $\mr$, synthetizes its type $A$, chooses a fresh metavariable
+  $\mmeta$ for $M$ and returns $\mr[\mmeta\mapsto M:A]$ and $\mmeta$.
+\item $\pfunction{pull}\Sigma{\mr, \mmeta}$ returns the term $M$
+  associated with $\mmeta$ in $\mr$ recursively: all metavariables are
+  unfolded to their definitions.
+\end{itemize}
+
+The \emph{slicer} is the component in charge of slicing a term $M$
+into many terms for the kernel to push in the repository.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{abbrvnat}
+\bibliography{../../../../../Documents/These/biblio.bib}
+
+
+% \begin{thebibliography}{}
+% \softraggedright
+% \bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
+% P. Q. Smith, and X. Y. Jones. ...reference text...
+% \end{thebibliography}
+
+\end{document}
