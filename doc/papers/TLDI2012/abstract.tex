@@ -1,4 +1,4 @@
-\documentclass[9pt,authoryear]{sigplanconf}
+\documentclass[9pt]{sigplanconf}
 
 \usepackage{ntheorem}
 \usepackage{amsmath}
@@ -17,14 +17,16 @@
 \titlebanner{banner above paper title}        % These are ignored unless
 \preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{Incremental Type Checking}
+\title{Safe Incremental Type Checking}
 %\subtitle{Subtitle Text, if any}
 
 \authorinfo{Matthias Puech}
-           {University of Bologna, University Paris Diderot}
+           {Department of Comp. Sci., Univ. of Bologna,\\
+             PPS, Team $\pi r^2$ (Univ. Paris Diderot, CNRS, INRIA)}
            {puech@cs.unibo.it}
+
 \authorinfo{Yann R\'egis-Gianas}
-           {University Paris Diderot, CNRS, and INRIA}
+           {PPS, Team $\pi r^2$ (Univ. Paris Diderot, CNRS, INRIA)}
            {yrg@pps.jussieu.fr}
 
 \maketitle
@@ -33,42 +35,46 @@
   We study the problem of verifying the well-typing of terms, not in a
   batch fashion, as it is usually the case for typed languages, but
   incrementally, that is by sequentially modifying a term, and
-  re-verifying each time only a smaller amount of information.
+  re-verifying each time only a smaller amount of information than the
+  whole term, still ensuring that it is well-typed.
 \end{abstract}
 
-\category{CR-number}{subcategory}{third-level}
+\category{D.3.3}{Language Constructs and Features}{Data types and
+  structures} \category{F.3.1}{Logics and Meanings of
+  Programs}{Specifying and Verifying and Reasoning about
+  Programs --- Logics of programs}
 
 \terms
-term1, term2
+Theory, Languages
 
 \keywords
-keyword1, keyword2
+incrementality, type checking, logical framework, version control
 
 \section{Introduction}
 
 As programs grow and type systems become more involved, writing a
 correct program in one shot becomes quite difficult. On the other
-hand, writing a program in many correct steps can be tedious because
-generally, the verification tool rechecks the entire development at
-each step. This second option is the usual practice when the time for
-verification is negligible with respect to the time to make the
-change, but this is less and less the case, especially when the
-language in question contains proof aspects, and verification involves
-proof search. Some mechanisms already exist to cope with the
-incrementality of proofs or program development: separate compilation,
-interactive toplevel with undo, tactic languages; they all provide in
-different ways a rough approximation of the process of modifying and
-checking incrementally a large term.
+hand, writing a program in many correct steps is the usual practice
+when the time for verification is negligible; the verification tool
+then rechecks the entire development at each step. But this gets more
+tedious especially when the language in question contains proof
+aspects, and verification involves proof search. Some mechanisms
+already exist to cope with the incrementality of proofs or program
+development: separate compilation, interactive toplevel with undo,
+tactic languages; they all provide in different ways a rough
+approximation of the process of modifying and checking incrementally a
+large term.
 
-We propose here an architecture for a generic incremental
-type-checker, a data structure for repositories of typed proofs and a
+We propose here an architecture for a generic and safe incremental
+type checker, a data structure for repositories of typed proofs and a
 language for describing proof deltas. It is based on the simple idea
-of sharing common subterms to avoid rechecking and exploits encoding a
-derivation in a metalanguage. This way, given a signature declaring
-the typing rules and an (untrusted) typing algorithm for my language
-of choice, I get an incremental type-checker for that language. The
-metalanguage approach gives us the ability to encode all the
-aforementioned usual incrementality mechanisms, and more, making our
+of sharing common subterms to avoid rechecking, and exploits encoding
+a derivation in a metalanguage to guarantee the well-typing of the
+result. This way, given a signature declaring the typing rules and an
+(untrusted) typing algorithm for my language of choice, I get an
+incremental type checker for that language. The metalanguage approach
+gives us the ability to encode all the aforementioned usual
+incrementality mechanisms in a type-safe way, and more, making our
 system akin to a typed version control system.
 
 \section{Sharing-based incrementality}
@@ -76,7 +82,7 @@ system akin to a typed version control system.
 As a first example, let us consider a purposedly simplistic sorted
 language of boolean and arithmetic expressions:
 $$ e, e' \gequal n \gor e + e' \gor e \land e' \gor e \leq e' $$
-The algorithm to determine in a batch fashion wether the term
+The algorithm to determine in a batch fashion whether the term
 $$ e_1 = (1 + 3 \leq 2 + 4) \land (8 \leq 3) $$ is well-sorted is
 trivial (we don't care about its evaluation here, just its
 well-sortedness). But what if I then change subterm $2+4$ in $e_1$
@@ -108,27 +114,33 @@ and types, together with a \emph{head} metavariable identifying the
 top of the expression: $$\mr \gequal X, \Delta \quad\text{where}\quad
 \Delta : (\mmeta\mapsto M : A) \text{\ .}$$
 
-\section{The metalanguage}
+\section{A metalanguage to encode derivations}
 
 What language are terms $M$ and types $A$ written into? Terms should
 encode our expressions with metavariables, and types $A$ should encode
 the whole state of the batch verifier (here the sort). An obvious
-choice is to take $M\gequal(e \text{ with metavariables})$ and $A\gequal
-\bool\gor\nat$, but switching to another language, we'd have to
-redefine another repository language. Another more modular choice for
-this is the \emph{metalanguage} \emph{LF} \cite{harper1993framework}: it allows
-to specify syntax and rules of an object language as a
-\emph{signature} $\Sigma$, and check terms against this signature with
-a generic algorithm. We'll use an increasing fragment of it. The
-so-called \emph{intrinsic} style of LF signature for our expression
-language is:
-\begin{align*}
-  tp &: \type,\quad nat : tp,\quad bool : tp,\quad exp : tp\to nat,\\
-  atom &: \nat\to exp\ nat,\\
-  plus &: exp\ nat \to exp\ nat \to exp\ nat,\\
-  and &: exp\ bool\to exp\ bool\to exp\ bool,\\
-  leq &: exp\ nat\to exp\ nat\to exp\ bool
-\end{align*}
+choice is to take $M\gequal(e \text{ with metavariables})$ and
+$A\gequal \bool\gor\nat$, but switching to another language, we'd have
+to redefine another repository language. Moreover, this choice is no
+longer expressive enough when introducing binders. Another more
+modular choice for this is the \emph{metalanguage} \emph{LF}
+\cite{harper1993framework}: it allows to specify syntax and rules of
+an object language as a \emph{signature} $\Sigma$, and check terms
+against this signature with a generic algorithm. We'll use an
+increasing fragment of it. The so-called \emph{intrinsic} style of LF
+signature for our expression language is:
+$$
+\begin{array}{rl}
+  \mathsf{tp} &: \type,\quad
+  \mathsf{nat} : \mathsf{tp},\quad
+  \mathsf{bool} : \mathsf{tp},\quad
+  \mathsf{exp} : \mathsf{tp}\to \mathsf{nat},\\
+  \mathsf{atom} &: \nat\to \mathsf{exp}\ \mathsf{nat},\\
+  \mathsf{plus} &: \mathsf{exp}\ \mathsf{nat} \to \mathsf{exp}\ \mathsf{nat} \to \mathsf{exp}\ \mathsf{nat},\\
+  \mathsf{and} &: \mathsf{exp}\ \mathsf{bool}\to \mathsf{exp}\ \mathsf{bool}\to \mathsf{exp}\ \mathsf{bool},\\
+  \mathsf{leq} &: \mathsf{exp}\ \mathsf{nat}\to \mathsf{exp}\ \mathsf{nat}\to \mathsf{exp}\ \mathsf{bool}
+\end{array}
+$$
 In this style, both the encoding of an expression and its sort are
 \emph{terms} in the metalanguage, but the sort appears in the
 \emph{type} of the encoded expression. As an example, the repository
@@ -136,10 +148,10 @@ associated with expression $e_1$ is
 \begin{align*}
   T, \left(
   \begin{array}{l}
-  X \mapsto plus\ 1\ 3 : exp\ nat \\
-  Y \mapsto plus\ 2\ 4 : exp\ nat \\
-  Z \mapsto leq\ 8\ 3 : exp\ bool \\
-  T \mapsto and\ (leq\ X\ Y)\ Z : exp\ bool \\
+  X \mapsto \mathsf{plus}\ 1\ 3 : \mathsf{exp}\ \mathsf{nat} \\
+  Y \mapsto \mathsf{plus}\ 2\ 4 : \mathsf{exp}\ \mathsf{nat} \\
+  Z \mapsto \mathsf{leq}\ 8\ 3 : \mathsf{exp}\ \mathsf{bool} \\
+  T \mapsto \mathsf{and}\ (\mathsf{leq}\ X\ Y)\ Z : \mathsf{exp}\ \mathsf{bool} \\
 \end{array}\right)
 \end{align*}
 
@@ -148,16 +160,18 @@ languages. We can for example add functions, applications and
 variables to our expressions in a purely first-order style (using de
 Bruijn indices for variables) if we annotate them not only with sorts
 but with an environment of free variables:
-\begin{align*}
-  exp &: env\to tp\to \type,\\
-  atom &: \prd E {env} \nat\to exp\ E\ nat,\\
-  var &: \prd E {env} \prd A {tp} var\ E\ A \to exp\ E\ A,\\
-  leq &: \prd E {env} exp\ e\ nat\to exp\ E\ nat\to exp\ E\ bool, \\
-  lam &: \prd E {env} \prd {A, B} {tp} exp\ (cons\ A\ E)\ B \to
-  exp\ E\ (arr\ A\ B)\\
+$$
+\begin{array}{rl}
+  \mathsf{exp} &: \mathsf{env}\to \mathsf{tp}\to \type,\\
+  \mathsf{atom} &: \prd E {\mathsf{env}} \nat\to \mathsf{exp}\ E\ \mathsf{nat},\\
+  \mathsf{var} &: \prd E {\mathsf{env}} \prd A {\mathsf{tp}} \mathsf{var}\ E\ A \to \mathsf{exp}\ E\ A,\\
+  \mathsf{leq} &: \prd E {\mathsf{env}} \mathsf{exp}\ E\ \mathsf{nat}\to \mathsf{exp}\ E\ \mathsf{nat}\to \mathsf{exp}\ E\ \mathsf{bool}, \\
+  \mathsf{lam} &: \prd E {\mathsf{env}} \prd {A, B} {\mathsf{tp}}
+  \mathsf{exp}\ (\mathsf{cons}\ A\ E)\ B \\ &
+  \qquad\to\mathsf{exp}\ E\ (\mathsf{arr}\ A\ B)\\
   \ldots
-\end{align*}
-
+\end{array}
+$$
 The encoded expressions are however very verbose: each term
 constructor takes as argument all these annotations. We can
 nonetheless make these information \emph{implicit} in terms (but
@@ -166,32 +180,37 @@ in \cite{necula1997efficient}. This reconstruction is
 language-dependent, user-provided but does not impair the safety of
 the system for the whole term is still checked afterwards.
 
-There is plenty of room for improvement here: one could for instance
-wish to make use of admissible rules to increase sharing (e.g. adding
-a $lam$ constructor at the top of a term requires to rewrite the whole
-term, or better, apply weakening on it); this supposes to support
-computations on derivation. Besides, LF promotes the use of
-lambda-tree syntax to represent binders; it would require a mechanism
-toimplicitly manage and share the environment in our metalanguage.
+LF promotes the use of lambda-tree syntax to represent binders:
+instead of encoding the syntax first-order, it uses the $\lambda$
+binder built in LF to encode binders in the object language. This
+style of encoding has the advantage of making the manipulation of the
+environment (weakening, exchange\ldots) implicit in the deltas, but
+raises new challenges for the delta language and the verification
+process: how to share a subterm underneith a lambda? How to
+efficiently verify that such a delta is well-typed?
 
 \section{Expressivity}
 
-Aside from enabling to encode a large class of languages generically,
-the metalanguage approach allows to express incrementality features
-usually implemented in an ad-hoc manner, simply by adding new
-constants to the signature.
+Aside from enabling to encode a large class of deductive systems
+safely and generically, the metalanguage approach allows to express
+incrementality features usually implemented in an ad-hoc manner,
+simply by adding new constants to the signature.
+
+\paragraph{Version control}
 
 Suppose we want to implement an \emph{undo system}, storing successive
 versions of a closed expression of sort $bool$ and able to rollback to
 a previous version. We add constants
-\begin{align*}
-  &version : \type,\quad vnil : version,\\
-  &vcons : exp\ nil\ bool \to version \to version
-\end{align*}
+$$
+\begin{array}{rl}
+  &\mathsf{version} : \type,\quad \mathsf{vnil} : \mathsf{version},\\
+  &\mathsf{vcons} : \mathsf{exp}\ \mathsf{nil}\ \mathsf{bool} \to \mathsf{version} \to \mathsf{version}
+\end{array}
+$$
 to the signature. The empty repository is now represented as
 $vnil$. Each time we have pushed a full expression $M$, and if $S$ was
-the previous head (a $version$ called its \emph{ancestor}), we push
-$vcons\ M\ S$. This gives us a data structure for an undo stack, and a
+the previous head (a $\mathsf{version}$ called its \emph{ancestor}), we push
+$\mathsf{vcons}\ M\ S$. This gives us a data structure for an undo stack, and a
 \emph{commit} algorithm. But the sharing inherent to our repositories
 lets us actually represent \emph{trees} of versions, by sharing common
 stack tails, each list head being a \emph{branch}. Reconciling two
@@ -199,37 +218,43 @@ branches' changes into a unique head is called \emph{merging} in
 version control system's terminology: a merge is a version with
 several ancestors. We can represent merges by revising our previous
 addition to the signature into
-\begin{align*}
-  &version : \type,\quad ancestors : \type,\quad anil : ancestors,\\
-  &acons : version \to ancestors \to ancestors,\\
-  &vcons : exp\ nil\ bool \to ancestors \to version
-\end{align*}
+$$\begin{array}{rl}
+  &\mathsf{version} : \type,\quad
+  \mathsf{ancestors} : \type,\quad
+  \mathsf{anil} : \mathsf{ancestors},\\
+  &\mathsf{acons} : \mathsf{version} \to \mathsf{ancestors} \to \mathsf{ancestors},\\
+  &\mathsf{vcons} : \mathsf{exp}\ \mathsf{nil}\ \mathsf{bool} \to \mathsf{ancestors} \to \mathsf{version}
+\end{array}$$
 This defines a data structure to represent (acyclic) \emph{graphs} of
 versions; it is the exact data structure of repository used by version
 control systems \textsf{Git}, \textsf{Monotone} and \textsf{Mercurial}
-(see \cite{baudis2009current}).
+(see e.g. \cite{chacon2009git}) except that where they have directories
+and text files we have arbitrary typed terms.
+
+\paragraph{Top-down construction}
 
 While our system is based on \emph{bottom-up} term construction, we
 can encode \emph{top-down} construction common to some programming
 environments (e.g. \textsf{Agda}) and tactic-based proof assistants
-(\textsf{Coq}). The user constructs terms by
+(e.g. \textsf{Coq}). The user constructs terms by
 successively filling \emph{holes} with terms containing other
 holes. To add (linear) holes to our expressions, add constant
-$$ hole : \prd E {env} \prd A {tp} exp\ E\ A $$
+$$ \mathsf{hole} : \prd E {\mathsf{env}} \prd A {\mathsf{tp}} \mathsf{exp}\ E\ A $$
 to the signature. To instantiate a hole with an expression, commit the
 substituted term preserving sharing of subterms.
 
 \section{Architecture}
 
-The system follows a layered architecture.
+We can implement this system following a layered architecture.
 
 The \emph{kernel} is the component in charge of verifying terms
 against a signature and a repository, and updating this repository. It
 supports two basic operations:
 \begin{itemize}
-\item $\pfunction{push}{\Sigma}{\mr,M}$ checks $M$ against $\Sigma$
-  in $\mr$, synthetizes its type $A$, chooses a fresh metavariable
-  $\mmeta$ for $M$ and returns $\mr[\mmeta\mapsto M:A]$ and $\mmeta$.
+\item $\pfunction{push}{\Sigma}{\mr,M}$ checks a small part $M$ of a
+  larger term against $\Sigma$ in $\mr$, synthetizes its type $A$,
+  chooses a fresh metavariable $\mmeta$ for $M$ and returns
+  $\mr[\mmeta\mapsto M:A]$ and $\mmeta$.
 \item $\pfunction{pull}\Sigma{\mr, \mmeta}$ returns the term $M$
   associated with $\mmeta$ in $\mr$ recursively: all metavariables are
   unfolded to their definitions.
@@ -239,23 +264,24 @@ The \emph{slicer} is the component in charge of slicing a term $M$
 into many terms, pushing them to the repository to enable future
 sharing, and adding version markers. It supports operations:
 \begin{itemize}
-\item $\pfunction{commit}\Sigma{\mr, M}$ pushes $vcons\ M\ (acons\ \mmeta\
-  anil)$ to $\mr$ in several $\function{push}{}$ operations, where
-  $\mmeta$ is the current head.
-\item $\pfunction{merge}\Sigma{\mr, M, \mmmeta}$ pushes $vcons\ M\
-  (acons\ \mmeta\ (acons\ \mmmeta\ anil))$ to $\mr$. Note that it
-  doesn't actually perform the merge, it simply commits a previously
-  computed merge node with value $M$.
+\item $\pfunction{commit}\Sigma{\mr, M}$ pushes $\mathsf{vcons}\ M\
+  (\mathsf{acons}\ \mmeta\ \mathsf{anil})$ to $\mr$ in several
+  $\function{push}{}$ operations, where $\mmeta$ is the current head.
+\item $\pfunction{merge}\Sigma{\mr, M, \mmmeta}$ pushes
+  $\mathsf{vcons}\ M\ (\mathsf{acons}\ \mmeta\ (\mathsf{acons}\
+  \mmmeta\ \mathsf{anil}))$ to $\mr$. Note that it doesn't actually
+  perform the merge, it simply commits a previously computed merge
+  node with value $M$.
 \end{itemize}
 
 The \emph{reconstructor} performs the reconstruction of the derivation
 (an $M$) from the initial expression (an $e$), given the
 derivations for its metavariables (an $\mr$), and the expected type
-($exp\ nil\ bool$), and commits $M$.
+($\mathsf{exp}\ \mathsf{nil}\ \mathsf{bool}$), and commits $M$.
 
 Finally, the \emph{compressor} computes a delta $e'$ from a
-metavariable-free expression $e$ by recognizing equal subterms. This
-can be achieved by \emph{hash-consing}.
+metavariable-free expression $e$ by recognizing equal subterms in
+$\mr$. This can be achieved by \emph{hash-consing}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
