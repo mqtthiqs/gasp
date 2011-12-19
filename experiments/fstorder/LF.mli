@@ -1,32 +1,75 @@
 open Names
 
-type head =
-  | HConst of Names.OConst.t
-  | HVar of int
-
 type fam =
-  | FApp of Names.FConst.t * obj list
-  | FArr of fam * fam
-  | FProd of fam * fam
+  | FApp of FConst.t * obj list
+  | FProd of string option * fam * fam
 
 and obj =
-  | OApp of spine
+  | OApp of OConst.t * obj list
+  | OVar of int
   | OMeta of Meta.t
-
-and spine = head * obj list
 
 type kind =
   | KType
-  | KProd of fam * kind
+  | KProd of string option * fam * kind
 
 type env = fam list
 
-type entry =
-  | OConst of fam
-  | FConst of kind
+module Env : sig
+  type t
+  val empty : t
+  val find : int -> t -> fam
+  val add : fam -> t -> t
+end
+
+module Sign : sig
+
+  type entry =
+    | OConst of fam
+    | FConst of kind
+
+  type t
+  val empty : t
+  val ofind : OConst.t -> t -> fam
+  val ffind : FConst.t -> t -> kind
+  val oadd : OConst.t -> fam -> t -> t
+  val fadd : FConst.t -> kind -> t -> t
+end
 
 module Subst : sig
-  val obj : spine -> obj -> obj
-  val fam : spine -> fam -> fam
-  val kind : spine -> kind -> kind
+  val obj : obj -> obj -> obj
+  val fam : obj -> fam -> fam
+  val kind : obj -> kind -> kind
+end
+
+module Strat : sig
+
+  type entity =
+    | Kind of kind
+    | Fam of fam
+    | Obj of obj
+
+  open SLF
+  val term : Sign.t -> string option list -> term -> entity
+  val sign : Sign.t -> sign -> Sign.t
+end
+
+module Unstrat : sig
+  open SLF
+  val obj : string option list -> obj -> term
+  val fam : string option list -> fam -> term
+  val kind : string option list -> kind -> term
+end
+
+module Util : sig
+  val fold_meta : (Meta.t -> obj) -> obj -> obj
+end
+
+module Printer : sig
+  open Format
+  val obj : formatter -> obj -> unit
+  val fam : formatter -> fam -> unit
+  val kind : formatter -> kind -> unit
+  val entity : formatter -> Strat.entity -> unit
+  val sign : formatter -> Sign.t -> unit
 end

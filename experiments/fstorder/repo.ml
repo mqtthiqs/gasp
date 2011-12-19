@@ -13,34 +13,8 @@ end = struct
   let add = M.add
 end
 
-module Env : sig
-  type t
-  val empty : t
-  val find : int -> t -> LF.fam
-  val add : LF.fam -> t -> t
-end = struct
-  type t = LF.fam list
-  let empty = []
-  let find x l = List.nth l x
-  let add a l = (a :: l)
-end
-
-module Sign : sig
-  type t
-  val empty : t
-  val ofind : OConst.t -> t -> LF.fam
-  val ffind : FConst.t -> t -> LF.kind
-end = struct
-  module MO = Map.Make(OConst)
-  module MF = Map.Make(FConst)
-  type t = LF.fam MO.t * LF.kind MF.t
-  let empty = MO.empty, MF.empty
-  let ofind x ((o, f):t) = MO.find x o
-  let ffind x ((o, f):t) = MF.find x f
-end
-
 type t = {
-  sign: Sign.t;
+  sign: LF.Sign.t;
   ctx: Context.t;
   head: Meta.t
 }

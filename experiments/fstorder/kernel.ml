@@ -2,55 +2,48 @@
 module Check = struct
 
   open LF
+  open Repo
 
-  let head sign ctx env : head -> fam = function
-    | HConst c -> Repo.Sign.ofind c sign
-    | HVar x -> Repo.Env.find x env
+  let rec obj repo env = function
+    | OApp (c, l) -> app repo env (l, Sign.ofind c repo.sign)
+    | OVar x -> Env.find x env
+    | OMeta x -> snd (Repo.Context.find x repo.ctx)
 
-  let rec obj sign ctx env = function
-    | OApp (h, l) -> app sign ctx env (l, head sign ctx env h)
-    | OMeta x -> snd (Repo.Context.find x ctx)
-
-  and app sign ctx env = function
+  and app repo env = function
     | [], (FApp _ as a) -> a
     | [], _ -> failwith "not eta-expanded"
-    | m :: l, FArr (a, b) ->
-      if obj sign ctx env m = a           (* TODO eq *)
-      then app sign ctx env (l, b)
+    | m :: l, FProd (_, a, b) ->
+      if obj repo env m = a           (* TODO eq *)
+      then app repo env (l, Subst.fam m b)
       else failwith "type mismatch"
-    | OApp s :: l, FProd (a, b) ->
-      if obj sign ctx env (OApp s) = a           (* TODO eq *)
-      then app sign ctx env (l, Subst.fam s b)
-      else failwith "type mismatch"
-    | OMeta _ :: _, FProd _ -> failwith "can't use a meta as a dependent argument"
     | _ :: _, FApp _ -> failwith "non-functional application"
 
-  and fapp sign ctx env = function
+  and fapp repo env = function
     | [], KType -> ()
     | _ :: _, KType -> failwith "non-functional application"
     | [], _ -> failwith "not eta-expanded"
-    | OApp s :: l, KProd (a, k) ->
-      if obj sign ctx env (OApp s) = a           (* TODO eq *)
-      then fapp sign ctx env (l, Subst.kind s k)
+    | m :: l, KProd (_, a, k) ->
+      if obj repo env m = a           (* TODO eq *)
+      then fapp repo env (l, Subst.kind m k)
       else failwith "type mismatch"
-    | OMeta _ :: _, KProd _ -> failwith "can't use a meta as a dependent argument"
 
-  let rec fam sign ctx env = function
-    | FApp (c, l) -> fapp sign ctx env (l, Repo.Sign.ffind c sign)
-    | FArr (a, b) -> fam sign ctx env a; fam sign ctx env b
-    | FProd (a, b) -> fam sign ctx env a; fam sign ctx (Repo.Env.add a env) b
+  let rec fam repo env = function
+    | FApp (c, l) -> fapp repo env (l, Sign.ffind c repo.sign)
+    | FProd (_, a, b) -> fam repo env a; fam repo (Env.add a env) b
 
-  let rec kind sign ctx env = function
+  let rec kind repo env = function
     | KType -> ()
-    | KProd (a, k) -> fam sign ctx env a; kind sign ctx (Repo.Env.add a env) k
+    | KProd (_, a, k) -> fam repo env a; kind repo (Env.add a env) k
 
 end
 
-let gensym =
-  let n = ref 0 in
-  fun () -> incr n; string_of_int !n
-
 let push repo m =
-  let a = Check.obj repo.Repo.sign repo.Repo.ctx Repo.Env.empty m in
+  let gensym =
+    let n = ref 0 in
+    fun () -> incr n; string_of_int !n in
+  let a = Check.obj repo LF.Env.empty m in
   let x = Names.Meta.make ("X"^gensym()) in
   { repo with Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx }
+
+let rec pull repo x =
+   LF.Util.fold_meta (pull repo) (fst (Repo.Context.find x repo))
