@@ -1,5 +1,5 @@
 <*.ml> : annot
 <SLF.ml{,i}> : package(camlp4.extend), package(camlp4.quotations), syntax(camlp4o)
-<slicer.ml> : package(camlp4.quotations), syntax(camlp4o), ppopt_SLF
+<slicer.ml> : package(camlp4.quotations), syntax(camlp4o), pa(SLF.cma)
 
 <gasp.{byte,native,top}> : package(camlp4.lib)

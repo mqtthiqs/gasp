@@ -3,7 +3,8 @@ open Command
 ;;
 
 dispatch begin function
-  | After_rules ->
-    flag ["ppopt_SLF"] & S[A"-ppopt"; P"SLF.cmo"]
+  | After_options ->
+    pflag_and_dep ["ocaml"; "ocamldep"] "pa" (fun pa -> S[A"-ppopt"; P pa]);
+    pflag_and_dep ["ocaml"; "compile"] "pa" (fun pa -> S[A"-ppopt"; P pa]);
   | _ -> ()
 end
