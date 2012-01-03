@@ -16,13 +16,15 @@ end
 type t = {
   sign: LF.Sign.t;
   ctx: Context.t;
-  head: Meta.t
+  head: Meta.t;
+  bound: OConstSet.t
 }
 
 let init sign : t = {
   sign = sign;
   ctx = Context.empty;
-  head = Meta.make "empty"
+  head = Meta.make "empty";
+  bound = OConstSet.empty
 }
 
 let load f : t =

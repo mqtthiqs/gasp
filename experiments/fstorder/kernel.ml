@@ -43,7 +43,7 @@ let push repo m =
     fun () -> incr n; string_of_int !n in
   let a = Check.obj repo LF.Env.empty m in
   let x = Names.Meta.make ("X"^gensym()) in
-  { repo with Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx }
+  { repo with Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx }, LF.OMeta x
 
 let rec pull repo x =
    LF.Util.fold_meta (pull repo) (fst (Repo.Context.find x repo))

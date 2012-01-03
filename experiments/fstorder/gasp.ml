@@ -1,1 +1,1 @@
-let repo = Kernel.push (Repo.init Slicer.prelude)
+let repo = Slicer.commit (Repo.init Slicer.prelude)

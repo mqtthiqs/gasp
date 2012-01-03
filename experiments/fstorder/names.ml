@@ -19,6 +19,8 @@ module OConst : NameSig = struct
   let repr x = x
 end
 
+module OConstSet : Set.S with type elt = OConst.t = Set.Make(OConst)
+
 module FConst : NameSig = struct
   type t = string
   let compare = String.compare
