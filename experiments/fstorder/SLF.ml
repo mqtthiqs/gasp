@@ -13,6 +13,8 @@ module Parser = struct
 
   open Camlp4.PreCast
 
+  module Gram = MakeGram(Lexer)
+
   let ident = Gram.Entry.mk "ident"
   let term = Gram.Entry.mk "term"
   let term_eoi = Gram.Entry.mk "term_eoi"
@@ -36,7 +38,7 @@ module Parser = struct
       [ t = term; u = term -> <:expr<  SLF.App ($t$, $u$) >> ]
   | "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
-      | "$"; x = ident -> <:expr< SLF.Meta $str:x$ >>
+      | "#"; x = ident -> <:expr< SLF.Meta $str:x$ >>
       | "("; t = term; ")" -> t ]
   ];
 
