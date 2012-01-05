@@ -51,6 +51,9 @@ module Strat : sig
 
   open SLF
   val term : Sign.t -> string option list -> term -> entity
+  val obj : Sign.t -> string option list -> term -> obj
+  val fam : Sign.t -> string option list -> term -> fam
+  val kind : Sign.t -> string option list -> term -> kind
   val sign : Sign.t -> sign -> Sign.t
 end
 

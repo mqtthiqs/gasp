@@ -1,5 +1,5 @@
-let prelude = LF.Strat.sign LF.Sign.empty
-  <:raw_sign<
+let prelude : LF.Sign.t =
+  <:sign<
     version : type.
     ancestors : type.
     anil : ancestors.
@@ -18,10 +18,11 @@ let rec commit_rec repo = function
   | m -> repo, m
 
 let commit repo m =
-  let m = OApp (OConst.make "vcons",
-            [m; OApp (OConst.make "acons",
-                      [OMeta repo.Repo.head; OApp (OConst.make "anil", [])])
-                                 ]) in
+  let x = SLF.Meta(Names.Meta.repr repo.Repo.head) in
+  let m = LF.Strat.obj prelude []
+    <:obj<
+      vcons $m$ (acons $x$ anil)
+    >> in
   commit_rec repo m
 
 let merge repo m = assert false

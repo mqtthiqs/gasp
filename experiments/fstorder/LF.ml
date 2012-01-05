@@ -104,6 +104,18 @@ module Strat = struct
         | Obj _ -> failwith "object in sign"
         | Fam a -> sign (Sign.oadd (Names.OConst.make c) a s) s'
         | Kind k -> sign (Sign.fadd (Names.FConst.make c) k s) s'
+
+  let obj sign env t = match term sign env t with
+    | Obj m -> m
+    | _ -> failwith "stratification error"
+
+  let fam sign env t = match term sign env t with
+    | Fam a -> a
+    | _ -> failwith "stratification error"
+
+  let kind sign env t = match term sign env t with
+    | Kind k -> k
+    | _ -> failwith "stratification error"
 end
 
 module Unstrat = struct
@@ -155,14 +167,19 @@ module Printer = struct
 end
 
 
-(* module Quot = struct *)
+module Parser = struct
 
-(*   open Camlp4.PreCast.Syntax.Quotation *)
+  open Camlp4.PreCast
+  open Camlp4.PreCast
 
-(*   let expand_term_quot loc _ s = Gram.parse_string term_eoi loc s *)
-(*   let expand_sign_quot loc _ s = Gram.parse_string sign_eoi loc s *)
+  let expand_obj_quot loc a s : (* LF.obj *) Ast.expr =
+    SLF.Parser.expand_term_quot loc a s
 
-(*   let _ = *)
-(*     add "term" DynAst.expr_tag expand_term_quot; *)
-(*     add "sign" DynAst.expr_tag expand_sign_quot; *)
-(* end *)
+  let expand_sign_quot loc a s : (* LF.sign *) Ast.expr =
+    SLF.Parser.expand_sign_quot loc a s
+
+  let _ =
+    Syntax.Quotation.add "obj" Syntax.Quotation.DynAst.expr_tag expand_obj_quot;
+    Syntax.Quotation.add "sign" Syntax.Quotation.DynAst.expr_tag expand_sign_quot;
+
+end

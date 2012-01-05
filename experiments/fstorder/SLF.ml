@@ -13,8 +13,6 @@ module Parser = struct
 
   open Camlp4.PreCast
 
-  module Gram = MakeGram(Lexer)
-
   let ident = Gram.Entry.mk "ident"
   let term = Gram.Entry.mk "term"
   let term_eoi = Gram.Entry.mk "term_eoi"
@@ -39,6 +37,7 @@ module Parser = struct
   | "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
       | "#"; x = ident -> <:expr< SLF.Meta $str:x$ >>
+      | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
   ];
 
@@ -54,21 +53,30 @@ module Parser = struct
   sign:
   [[ -> <:expr< SLF.Nil >>
    | x = LIDENT; ":"; t = term; "."; s = sign -> <:expr< SLF.Cons ($str:x$, $t$, $s$) >>
+   | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
    ]];
   sign_eoi: [[ s = sign; `EOI -> s]];
   END;;
 
-  module Quot = struct
+  open Syntax.Quotation
 
-    open Syntax.Quotation
+  let expand_term_quot loc _ s =
+    let q = !Camlp4_config.antiquotations in
+    Camlp4_config.antiquotations := true;
+    let res = Gram.parse_string term_eoi loc s in
+    Camlp4_config.antiquotations := q;
+    res
 
-    let expand_term_quot loc _ s = Gram.parse_string term_eoi loc s
-    let expand_sign_quot loc _ s = Gram.parse_string sign_eoi loc s
+  let expand_sign_quot loc _ s =
+    let q = !Camlp4_config.antiquotations in
+    Camlp4_config.antiquotations := true;
+    let res = Gram.parse_string sign_eoi loc s in
+    Camlp4_config.antiquotations := q;
+    res
 
-    let _ =
-      add "raw_term" DynAst.expr_tag expand_term_quot;
-      add "raw_sign" DynAst.expr_tag expand_sign_quot;
-  end
+  let _ =
+    add "raw_term" DynAst.expr_tag expand_term_quot;
+    add "raw_sign" DynAst.expr_tag expand_sign_quot;
 
 end
 
