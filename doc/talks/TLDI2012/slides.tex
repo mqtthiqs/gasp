@@ -1,0 +1,66 @@
+\documentclass[ignorenonframetext,red]{beamer}
+
+\usepackage{ucs}
+\usepackage{amsfonts,amsmath}
+\usepackage{stmaryrd}
+\usepackage[utf8x]{inputenc}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{listings}
+
+\usepackage{../../macros}
+
+\date{\small January 28,\\[0.5em] \sf TLDI 2012}
+
+\title{Safe incremental type-checking}
+
+\author[Matthias Puech \& Yann Régis-Gianas] {
+  Matthias Puech\inst{1,2} \and Yann Régis-Gianas\inst{2}
+}
+
+\institute {
+  \inst 1 {Dept. of Computer Science, University of Bologna} \and
+  \inst 2 {Univ. Paris Diderot, Sorbonne Paris Cité, PPS, CNRS,  ${\pi}r^2$, INRIA}
+}
+
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}[circle]
+
+\usefonttheme{serif}
+
+\lstset{
+  language=[Objective]Caml,
+  basicstyle=\sf,
+  columns=flexible,
+  literate={->}{{$\to$ }}1 {*}{$\times$ }1 {>=}{{$\geq$}}1
+  {<>}{{$\neq$}}1 {'a}{{$\alpha$}}1 {'b}{{$\beta$}}1 {'c}{{$\gamma$}}1
+}
+
+\begin{document}
+
+\frame\titlepage
+
+\section{Motivation}
+
+\subsection{Type-checking}
+
+% checker suffit ds plein de cas, pas besoin d'executer
+
+\subsection{Incremental}
+
+% on refait plein de fois le même calcul
+
+\subsection{Safe}
+
+% mémoization? -> besoin d'un certificat
+
+\section{Metalanguage}
+
+\subsection{Requirements}
+
+\subsection{}
+
+\end{document}
