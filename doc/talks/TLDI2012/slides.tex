@@ -13,7 +13,8 @@
 
 \usepackage{../../macros}
 
-\usetikzlibrary{automata, positioning, shapes.misc, chains}
+\usetikzlibrary{automata, positioning, shapes.geometric, shapes.misc,
+  chains, backgrounds, fit}
 
 \tikzset{
   state/.style={
@@ -24,6 +25,35 @@
     text height=1.5ex,text depth=.25ex
   }
 }
+
+\tikzset{
+  tribox/.style={
+    isosceles triangle,
+    isosceles triangle apex angle=30,
+  }
+}
+
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}[circle]
+
+\usefonttheme{serif}
+\usecolortheme[rgb={0.7,0.2,0.2}]{structure}
+\definecolor{greenish}{rgb}{0.20,0.48,0.09} % vert des exemples
+
+\theoremstyle{example}
+\newtheorem{remark}[theorem]{\translate{Remark}}
+\newtheorem{remarks}[theorem]{\translate{Remarks}}
+
+\lstset{
+  language=[Objective]Caml,
+  escapechar=\%,
+  basicstyle=\sf,
+  columns=flexible,
+  literate={->}{{$\to$ }}1 {*}{$\times$ }1 {>=}{{$\geq$}}1
+  {<>}{{$\neq$}}1 {'a}{{$\alpha$}}1 {'b}{{$\beta$}}1 {'c}{{$\gamma$}}1
+}
+
 
 \date{\small January 28,\\[0.5em] \sf TLDI 2012}
 
@@ -38,29 +68,13 @@
   \inst 2 {Univ. Paris Diderot, Sorbonne Paris Cité, PPS, CNRS,  ${\pi}r^2$, INRIA}
 }
 
-\setbeamertemplate{footline}[frame number]
-\setbeamertemplate{navigation symbols}{}
-\setbeamertemplate{itemize item}[circle]
-
-\usefonttheme{serif}
-\usecolortheme[rgb={0.7,0.2,0.2}]{structure}
-\definecolor{greenish}{rgb}{0.20,0.48,0.09} % vert des exemples
-
-\lstset{
-  language=[Objective]Caml,
-  basicstyle=\sf,
-  columns=flexible,
-  literate={->}{{$\to$ }}1 {*}{$\times$ }1 {>=}{{$\geq$}}1
-  {<>}{{$\neq$}}1 {'a}{{$\alpha$}}1 {'b}{{$\beta$}}1 {'c}{{$\gamma$}}1
-}
-
 \begin{document}
 
 \frame\titlepage
 
 \section{Motivation}
 
-\subsection{Type-checking}
+\subsection{The problem}
 
 \begin{frame}{\textcolor{gray}{Safe incremental} type-checking}
 
@@ -68,11 +82,11 @@
       \only<1>{Weakly-typed programs need testing}
       \only<2->{Strongly-typed programs need less testing}
     }
-    \vspace{1em}
-    \begin{overlayarea}{\textwidth}{8em}
+    \vspace{1.5em}
+    \begin{overlayarea}{\textwidth}{7em}
       \centering
       \only<1>{
-        \begin{tikzpicture}[node distance=4em, auto, bend left, >=stealth]
+        \begin{tikzpicture}[node distance=4em, auto, bend left, >=latex]
           \node[initial, state] (source) {source};
           \node[accepting, state] (exec) [above right=of source] {executable};
           \node[state] (result) [below right=of exec] {result};
@@ -85,7 +99,7 @@
       }
 
       \only<2->{
-        \begin{tikzpicture}[node distance=4em, auto, bend left, >=stealth]
+        \begin{tikzpicture}[node distance=4em, auto, bend left, >=latex]
           \node[initial, state] (source) {source};
           \node[state] (bool) [above right=of source] {typed source};
           \node[accepting, state] (exec) [below right=of bool] {executable};
@@ -109,14 +123,7 @@
 
   \end{block}
 
-  \begin{block}{}
-
-
-  \end{block}
-
 \end{frame}
-
-\subsection{Incremental}
 
 \begin{frame}{\textcolor{gray}{Safe} incremental
     \textcolor{gray}{type-checking}}
@@ -128,7 +135,7 @@
       \begin{example}
         \begin{itemize}
         \item Dependent types (conversion)
-        \item Type inference (\eg\ ML, unification)
+        \item Type inference (\eg\ \sysname{ML}, unification)
         \end{itemize}
       \end{example}
       But is called repeatedly with \emph{almost} the same input
@@ -144,104 +151,328 @@
         program and its \emph{impact}
       \end{itemize}
 
-      \begin{figure}
         \centering
-        \begin{tikzpicture}[node distance=2em, >=stealth, hv
+        \begin{tikzpicture}[node distance=2em, >=latex, hv
           path/.style={to path={-| (\tikztotarget)}}, vh
           path/.style={to path={|- (\tikztotarget)}} ]
           \node (term) {$\delta$}; \node (repo) [below=of
-          term]{$\mr$}; \node[state] (tc) [right=of term] {incremental
-            type-checker}; \node (repo2) [right=of tc] {$\mmr$};
+          term]{$\mr$}; \node[state] (tc) [right=of term]
+          {$\mathsf{check}$}; 
+          \node (repo2) [right=of tc] {$\mmr$};
           \path[->] (term) edge node {} (tc) (tc) edge node {} (repo2)
           (repo) edge [in=-90, out=0, hv path] node {} (tc) ;
         \end{tikzpicture}
-      \end{figure}
     \end{block}
-  \end{onlyenv}
 
-  \begin{onlyenv}<3>
-    \begin{block}{Instances of this problem}
+    \begin{block}{Requirements}
       \begin{itemize}
-      \item Separate type-checking (granularity = file)
-      \item Version storage
-      \item Module system
-      \end{itemize}
-    \end{block}
-    \begin{block}{Challenges}
-      Given a typed language:
-      \begin{itemize}
-      \item What language for deltas?
-      \item What data structures for repositories?
-      \item What \emph{commit} algorithm?
-      \item What safety?
+      \item if $\vdash \delta(\mr) : A$ then $\function{check}{\mr,
+          \delta} = \mmr$
+      \item $\mathsf{check}$ computes $\mmr$ in $O(|\delta|)$ \small\qquad\qquad (and not
+        $O(\delta(\mr))$)
       \end{itemize}
     \end{block}
   \end{onlyenv}
 
 \end{frame}
 
-\begin{frame}{\textcolor{greenish}{Example}}
+\subsection{Why is it interesting?}
+
+\begin{frame}[fragile]{Instances of this problem}
+  \begin{block}{Module system}
+    We can encode \emph{separate module typing} by incrementally
+    modifying a term:
+
+    \begin{overlayarea}{\textwidth}{13em}
+    \small
+    \begin{columns}
+      \begin{column}{0.4\textwidth}
+        \begin{lstlisting}
+module M = struct
+  let a : int = 2 + 2
+  let b : int -> bool =
+    fun x -> x = 4
+end
+        \end{lstlisting}
+\pause
+        \begin{lstlisting}
+module N = struct
+  let c : bool = M.a = 4
+  let d : int = M.b 4
+end
+        \end{lstlisting}
+      \end{column}
+      \begin{column}{1mm}
+        \rule{.1mm}{4cm}
+      \end{column}
+\pause
+      \begin{column}{0.5\textwidth}
+        \begin{onlyenv}<3>
+        \begin{lstlisting}
+let M.a : int = 2 + 2 in
+  let M.b : int -> bool =
+    fun x -> x = 4 in
+    ()
+        \end{lstlisting}
+        \vspace{2.4em}
+        \end{onlyenv}
+        \begin{onlyenv}<4->
+        \begin{lstlisting}
+let M.a : int = 2 + 2 in
+  let M.b : int -> bool =
+    fun x -> x = 4 in
+    let M.c : bool = M.a = 4 in
+      let M.d : int = M.b 4 in
+        ()
+        \end{lstlisting}
+        \end{onlyenv}
+      \end{column}
+    \end{columns}
+    \end{overlayarea}
+    \begin{visibleenv}<5>
+      \begin{remark}
+        If definition of \textsf{M.a} changes {\footnotesize (but not its type)}, no need to recheck the rest
+      \end{remark}
+    \end{visibleenv}
+  \end{block}
 \end{frame}
 
-\begin{frame}[fragile]{Memoization}
-  \begin{overlayarea}{\textwidth}{14em}
+\begin{frame}[fragile]{Instances of this problem}
+  \begin{block}{Interactive toplevel}
+    We can encode a \emph{typing interactive toplevel} by
+    incrementally modifying a term:
+    \begin{overlayarea}{\textwidth}{10em}
+    \begin{columns}
+      \begin{column}{0.47\textwidth}
+        \begin{lstlisting}[escapechar=\%]
+# let a = 2 + 2 ;;
+val a : int% \textcolor{gray}{= 4} %
+        \end{lstlisting}
+\pause
+        \begin{lstlisting}[escapechar=\%]
+# let b = fun x -> x = a ;;
+val b : int -> bool % \textcolor{gray}{= fun} %
+        \end{lstlisting}
+      \end{column}
+      \begin{column}{.1mm}
+        \rule{.1mm}{3cm}
+      \end{column}
+      \begin{column}{0.44\textwidth}
+        \begin{onlyenv}<3>
+          \begin{lstlisting}
+let a = 2 + 2 in
+  a
+          \end{lstlisting}
+          \vspace{1.2em}
+        \end{onlyenv}
+        \begin{onlyenv}<4->
+          \begin{lstlisting}
+let a = 2 + 2 in
+  let b = fun x -> x = a in
+    b
+          \end{lstlisting}
+        \end{onlyenv}
+      \end{column}
+    \end{columns}
+    \end{overlayarea}
+    \begin{visibleenv}<5>
+      \begin{remarks}
+        \begin{itemize}
+        \item The interaction model of most ITP (\sysname{Coq},
+          \sysname{Matita}\ldots)
+        \item If definition of \textsf{a} changes, no need to recheck \textsf{b}
+        \end{itemize}
+      \end{remarks}
+    \end{visibleenv}
+  \end{block}
+\end{frame}
 
+\begin{frame}{Instances of this problem}
+  \begin{block}{Refactoring tools}
+    % spec/semantics-preserving
+    We can see \emph{refactoring} as a type-preserving modification
+    $\alert f$ of a term, i.e. a \emph{metatheorem}:
+    $$ \funname{refactor_{\mathit{\alert f}}}\ :\quad \vdash M : A \quad\text{implies}\quad \vdash \alert f(M) : A $$
+  \end{block}
+  \begin{examples}
+    \begin{itemize}
+    \item $\alpha$-conversion (renaming)
+    \item $\beta$-contraction/expansion (inlining/factoring)
+    \item add argument to function with default value
+    \end{itemize}
+  \end{examples}
+\end{frame}
+
+\begin{frame}{Instances of this problem}
+  \begin{block}{Typed version control}
+    Design a syntax- and type-aware version control system, \ie:
+
+    \begin{description}
+    \item[$\function{checkout}{\mr, n}$] prints well-typed $M_n$ in $\mr$
+      \item[$\function{commit}{\mr, \delta, n}$] adds well-typed $\delta$
+        w.r.t current version as $n$ in $\mr$
+      \item[$\function{merge}{\mr, m, n, p}$] merges $m$ and $n$ in $\mr$ as $p$
+    \end{description}
+
+    Advantages:
+    \begin{itemize}
+    \item semantic deltas easier to read, more precise (as opposed to
+      textual \sysname{diff}s)
+    \item well-typing of every version is ensured and incrementally checked
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{\textcolor{greenish}{Examples}}
+\end{frame}
+
+\begin{frame}{Challenges}
+  Given a typed language:
+  \begin{itemize}
+  \item What language for deltas?
+  \item What data structures for repositories?
+  \item What \emph{commit} algorithm?
+  \item What safety?
+  \end{itemize}
+\end{frame}
+
+\subsection{Why is it hard?}
+
+\begin{frame}[fragile]{Incremental computation}
+  \begin{block}{Memoization}\vspace{0.5em}
+    \begin{overlayarea}{\textwidth}{.7\textheight}
     \begin{onlyenv}<1-2>
-      \begin{lstlisting}
-let check0 check env = function
-  | Var x -> List.assoc x env
-  | Lam (x, a, t) ->
-    let b = check ((x, a) :: env) t in Arr (a, b)
-  | App (t, u) -> match check env t with
-      | Arr (a, b) when check env u = a -> b
-      | _ -> failwith "wrong application"
-
-let rec check env t = check0 check env t
-      \end{lstlisting}
-      \pause\vspace{1em}
-      \begin{itemize}
-      \item Builds the derivation on the stack
-      \item Discards it
-      \end{itemize}
-    \end{onlyenv}
-
-    \begin{onlyenv}<3-4>
-      \begin{lstlisting}
-module M = Map.Make(struct type t = env * tm
-                        let compare = (=) end)
-
-let tbl = ref (M.empty : tp M.t)
+      A \only<2>{\alert{memoizing} }type-checker:
+      \begin{overlayarea}{\textwidth}{10em}
+        \begin{onlyenv}<1>
+          \begin{lstlisting}
 
 let rec check env t =
-  try M.find (env, t) !tbl with Not_found ->
-    let a = check0 check env t in
-    tbl := M.add (env, t) a !tbl; a
-      \end{lstlisting}
-      \pause\pause\vspace{1em}
+  match t with
+  | ... -> ... None
+  | ... -> ... Some a
+          \end{lstlisting}
+        \end{onlyenv}
+        \begin{onlyenv}<2>
+          \begin{lstlisting}
+let tbl : (env * tm, tp) Hashtbl.t = Hashtbl.create 13
+let rec check env t =
+  try Hashtbl.find (env,t) tbl with Not_found ->
+  match t with
+    | ... -> ... None
+    | ... -> ... Hashtbl.add tbl (env,t) a; Some a
+          \end{lstlisting}
+        \end{onlyenv}
+      \end{overlayarea}
+      \begin{overlayarea}{\textwidth}{3em}
+        \begin{beamercolorbox}{white}
+          \begin{onlyenv}<1>
+            \begin{itemize}
+            \item builds the derivation (on the stack)
+            \item discards it
+            \end{itemize}
+          \end{onlyenv}
+          \begin{onlyenv}<2>
+            \begin{itemize}
+            \item builds the derivation (as a global map $\funname{tbl}$)
+            \item reuses any subderivation if syntactically equal
+            \end{itemize}
+          \end{onlyenv}
+        \end{beamercolorbox}
+      \end{overlayarea}
+    \end{onlyenv}
+
+    \begin{onlyenv}<3->
+      \begin{enumerate}
+      \item[\itplus] lightweight, efficient implementation
+      \item[\itplus] random access to all subderivations
+      \item [\itminus] no reuse of derivations in compatible
+        environments \\
+        {\footnotesize What if I want \emph{e.g.} weakening or
+          permutation to be taken into account?}
+      \item[\itminus] no reuse if refactored program ($\alpha$,
+        $\beta$-equivalence,\ldots)
+      \item[\itminus] no justification for the added code
+      \end{enumerate}
+
+      {\footnotesize Mixes two goals:}
       \begin{itemize}
-      \item Table $\mathsf{tbl}$ contains derivation
-      \item If $\mathsf{tbl}(\Gamma, M) = A$ then $\Gamma\vdash M : A$
+      \item {\large \it derivation synthesis} \footnotesize (the typing algorithm)
+      \item {\large \it object reuse} \footnotesize (sharing common subderivation)
       \end{itemize}
-
     \end{onlyenv}
+    \end{overlayarea}
+\end{block}
+\end{frame}
 
-    \begin{onlyenv}<5>
-      \begin{block}{Achievements}
-        \begin{itemize}
-        \item Detect syntactically equal (env, term)
-        \item Reuse associated derivation
-        \item Random access to sub-derivations
-        \end{itemize}
-      \end{block}
-      \begin{block}{Limitations}
-        \begin{itemize}
-        \item Strictly syntactical reuse
-        \item How can I trust the added code?
-        \end{itemize}
-      \end{block}
+% mémoization? -> besoin d'un certificat
+
+\begin{frame}{Incremental computation}
+
+  \begin{block}{Bidirectional incremental updates}
+    % view the derivation as the document we're editing
+    % through a view (the program)
+    {\centering
+    \begin{tikzpicture}[node distance=4em, auto, >=latex]
+      \node (D) {$\mathcal D$};
+      \node (checkout) [right=of D, state, tribox] {$\funname{get}$};
+      \node (M) [right=of checkout] {$M$};
+      \node (M') [below=of M] {$M'$};
+      \node (commit) [state, tribox, left=of M', shape border
+      rotate=180] {$\funname{putback}$};
+      \node (D') [below=of D] {$\mathcal D'$};
+
+      \path[->]
+      (D) edge (checkout)
+      (checkout) edge (M)
+      (M) edge [color=red, double] node [name=delta] {$\delta$} (M')
+      (commit) edge (D')
+      ;
+
+      \draw[->]
+      (D) |- ++(1,-1) -| (commit)
+      ;
+
+      \alt<3>{
+        \draw[->] [out=0, in=0, color=red] (delta) edge (commit);
+      }{
+        \draw[->] (M') edge (commit);
+      }
+
+      \begin{pgfonlayer}{background}
+        \node [fill=yellow!30,fit=(D) (D'), label=above:Derivations, ellipse] {};
+        \node [fill=yellow!30,fit=(M) (M'), label=above:Programs, ellipse] {};
+        \node [fill=yellow!30,fit=(checkout) (commit),
+        label=above:Lens, ellipse, inner sep=0] {};
+      \end{pgfonlayer}
+
+    \end{tikzpicture}
+    }
+  \begin{itemize}
+  \item $\function{get}{\mathcal D}$ projects derivation $\mathcal D$
+    to a program $M$
+    \begin{onlyenv}<-2>
+    \item $\function{putback}{\mathcal D, M'}$ checks $M'$ and returns
+      its derivation $\mathcal D'$ \pause
+      \begin{enumerate}
+      \item[\itplus] state-based approach
+      \item[\itminus] connection between $\mathcal D$ and $M'$ is lost
+      \item[\itminus] in $O(|M'|)$, not $O(|\delta|)$
+      \end{enumerate}
     \end{onlyenv}
-
-  \end{overlayarea}
+    \begin{onlyenv}<3->
+    \item $\function{putback}{\mathcal D, \alert\delta}$ checks
+      $\alert{\delta}$ against $\alert{\mathcal D}$ and returns
+      $\mathcal D'$
+      \begin{enumerate}
+      \item[\itplus] \alert{change}-based approach
+      \item[\itplus] $\delta$ is the connection between $\mathcal D$
+        and $\mathcal D'$
+      \item[\itplus] can be in $O(|\delta|)$
+      \end{enumerate}
+    \end{onlyenv}
+  \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{A language for derivations}
@@ -251,13 +482,6 @@ let rec check env t =
   \item
   \end{itemize}
 \end{frame}
-
-\begin{frame}{}
-  
-\end{frame}
-\subsection{Safe}
-
-% mémoization? -> besoin d'un certificat
 
 \section{Metalanguage}
 
