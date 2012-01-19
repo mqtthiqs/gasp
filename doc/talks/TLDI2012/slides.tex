@@ -134,8 +134,9 @@
       Type-checking can be expensive
       \begin{example}
         \begin{itemize}
-        \item Dependent types (conversion)
-        \item Type inference (\eg\ \sysname{ML}, unification)
+        \item very large term (whole program)
+        \item dependent types (conversion)
+        \item type inference (\eg\ \sysname{ML}, unification)
         \end{itemize}
       \end{example}
       But is called repeatedly with \emph{almost} the same input
@@ -168,8 +169,8 @@
       \begin{itemize}
       \item if $\vdash \delta(\mr) : A$ then $\function{check}{\mr,
           \delta} = \mmr$
-      \item $\mathsf{check}$ computes $\mmr$ in $O(|\delta|)$ \small\qquad\qquad (and not
-        $O(\delta(\mr))$)
+      \item $\mathsf{check}$ computes $\mmr$ in less than $O(|\delta(\mr)|)$ \small\qquad (ideally
+        $O(|\delta|)$)
       \end{itemize}
     \end{block}
   \end{onlyenv}
@@ -178,9 +179,9 @@
 
 \subsection{Why is it interesting?}
 
-\begin{frame}[fragile]{Instances of this problem}
+\begin{frame}[fragile]{Expected instances of this problem}
   \begin{block}{Module system}
-    We can encode \emph{separate module typing} by incrementally
+    We can model \emph{separate module typing} by incrementally
     modifying a term:
 
     \begin{overlayarea}{\textwidth}{13em}
@@ -237,9 +238,9 @@ let M.a : int = 2 + 2 in
   \end{block}
 \end{frame}
 
-\begin{frame}[fragile]{Instances of this problem}
+\begin{frame}[fragile]{Expected instances of this problem}
   \begin{block}{Interactive toplevel}
-    We can encode a \emph{typing interactive toplevel} by
+    We can model a \emph{\textbf{typing} interactive toplevel} by
     incrementally modifying a term:
     \begin{overlayarea}{\textwidth}{10em}
     \begin{columns}
@@ -287,7 +288,7 @@ let a = 2 + 2 in
   \end{block}
 \end{frame}
 
-\begin{frame}{Instances of this problem}
+\begin{frame}{Expected instances of this problem}
   \begin{block}{Refactoring tools}
     % spec/semantics-preserving
     We can see \emph{refactoring} as a type-preserving modification
@@ -299,41 +300,46 @@ let a = 2 + 2 in
     \item $\alpha$-conversion (renaming)
     \item $\beta$-contraction/expansion (inlining/factoring)
     \item add argument to function with default value
+    \item remove dead code
     \end{itemize}
   \end{examples}
 \end{frame}
 
-\begin{frame}{Instances of this problem}
+\begin{frame}{Expected instances of this problem}
   \begin{block}{Typed version control}
     Design a syntax- and type-aware version control system, \ie:
 
-    \begin{description}
-    \item[$\function{checkout}{\mr, n}$] prints well-typed $M_n$ in $\mr$
-      \item[$\function{commit}{\mr, \delta, n}$] adds well-typed $\delta$
-        w.r.t current version as $n$ in $\mr$
-      \item[$\function{merge}{\mr, m, n, p}$] merges $m$ and $n$ in $\mr$ as $p$
-    \end{description}
+    \begin{itemize}
+    \item stores typed AST, not text
+    \item well-typing ensured and incrementally checked
+    \end{itemize}
 
     Advantages:
     \begin{itemize}
-    \item semantic deltas easier to read, more precise (as opposed to
-      textual \sysname{diff}s)
-    \item well-typing of every version is ensured and incrementally checked
+    \item semantic deltas easier to read\\
+      {\small (as opposed to textual \sysname{diff}s)}
+    \item $\funname{merge}$ statically well-typed, more precise
     \end{itemize}
   \end{block}
 \end{frame}
 
-\begin{frame}{\textcolor{greenish}{Examples}}
-\end{frame}
-
-\begin{frame}{Challenges}
-  Given a typed language:
-  \begin{itemize}
-  \item What language for deltas?
-  \item What data structures for repositories?
-  \item What \emph{commit} algorithm?
-  \item What safety?
-  \end{itemize}
+\begin{frame}[fragile]{\textcolor{greenish}{Examples}}
+    \begin{center}
+      \begin{tabular}{r|l}
+      \textcolor{greenish}{initial term} &
+      \textsf{\large\textbf{let} f x = x + 1
+        \textbf{in} f 3 / 2} \\[2em]\pause
+      \textcolor{greenish}{easy interleave} &
+      \textsf{\large\textbf{let} f x = \alert{2 *} (x + 1) \textbf{in}
+        f 3 / 2} \\[2em]\pause
+      \textcolor{greenish}{env interleave} &
+      \textsf{\large\textbf{let} f x =
+        (\alert{\textbf{let} y = true \textbf{in}} x + 1) \textbf{in}
+        f 3 / 2} \\[2em]\pause
+      \textcolor{greenish}{type change} &
+      \textsf{\large\textbf{let} f x = x \alert{$>$} 1 \textbf{in} f 3 / 2}
+    \end{tabular}
+    \end{center}
 \end{frame}
 
 \subsection{Why is it hard?}
@@ -388,17 +394,21 @@ let rec check env t =
       \item[\itplus] random access to all subderivations
       \item [\itminus] no reuse of derivations in compatible
         environments \\
-        {\footnotesize What if I want \emph{e.g.} weakening or
+        {\footnotesize what if I want \eg weakening or
           permutation to be taken into account?}
       \item[\itminus] no reuse if refactored program ($\alpha$,
-        $\beta$-equivalence,\ldots)
-      \item[\itminus] no justification for the added code
+        $\beta$-equivalence,\ldots) \\
+        {\footnotesize or complex recognition procedure that enlarges
+          the trusted base}
+      \item[\itminus] {\large\it no justification for the added code} \\
+        {\footnotesize or painful proof of conservativity}
       \end{enumerate}
 
       {\footnotesize Mixes two goals:}
+
       \begin{itemize}
-      \item {\large \it derivation synthesis} \footnotesize (the typing algorithm)
-      \item {\large \it object reuse} \footnotesize (sharing common subderivation)
+      \item {\large derivation synthesis} \footnotesize (the typing algorithm)
+      \item {\large object reuse} \footnotesize (sharing common subderivation)
       \end{itemize}
     \end{onlyenv}
     \end{overlayarea}
@@ -412,6 +422,8 @@ let rec check env t =
   \begin{block}{Bidirectional incremental updates}
     % view the derivation as the document we're editing
     % through a view (the program)
+    % --> bijective
+
     {\centering
     \begin{tikzpicture}[node distance=4em, auto, >=latex]
       \node (D) {$\mathcal D$};
@@ -468,25 +480,30 @@ let rec check env t =
       \item[\itplus] \alert{change}-based approach
       \item[\itplus] $\delta$ is the connection between $\mathcal D$
         and $\mathcal D'$
-      \item[\itplus] can be in $O(|\delta|)$
+      \item[\itplus] possibly in $O(|\delta|)$
       \end{enumerate}
     \end{onlyenv}
   \end{itemize}
   \end{block}
 \end{frame}
 
-\begin{frame}{A language for derivations}
-  Let us take an off-the-shelf metalanguage: ELF.
-  \begin{itemize}
-  \item Signature $\Sigma$ = typing rules
-  \item
-  \end{itemize}
+\section{Proposition}
+
+\begin{frame}{What notion of delta?}
+  
 \end{frame}
 
-\section{Metalanguage}
+\begin{frame}{What justification language?}
+  % type-checker issues a certificate in a generic language
+\end{frame}
 
-\subsection{Requirements}
+\begin{frame}{A logical framework for incremental type-checking}
+  
+\end{frame}
 
-\subsection{}
+\begin{frame}{Conclusion}
+  
+\end{frame}
+
 
 \end{document}
