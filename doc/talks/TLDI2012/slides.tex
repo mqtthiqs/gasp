@@ -29,7 +29,7 @@
 \tikzset{
   tribox/.style={
     isosceles triangle,
-    isosceles triangle apex angle=30,
+    isosceles triangle apex angle=40,
   }
 }
 
@@ -157,7 +157,7 @@
           path/.style={to path={-| (\tikztotarget)}}, vh
           path/.style={to path={|- (\tikztotarget)}} ]
           \node (term) {$\delta$}; \node (repo) [below=of
-          term]{$\mr$}; \node[state] (tc) [right=of term]
+          term]{$\mr$}; \node[state, tribox] (tc) [right=of term]
           {$\mathsf{check}$}; 
           \node (repo2) [right=of tc] {$\mmr$};
           \path[->] (term) edge node {} (tc) (tc) edge node {} (repo2)
@@ -327,17 +327,17 @@ let a = 2 + 2 in
     \begin{center}
       \begin{tabular}{r|l}
       \textcolor{greenish}{initial term} &
-      \textsf{\large\textbf{let} f x = x + 1
-        \textbf{in} f 3 / 2} \\[2em]\pause
+      {\large\textbf{let} \textit{f x} = \textit{x} + 1
+        \textbf{in} \textit{f} 3 / 2} \\[2em]\pause
       \textcolor{greenish}{easy interleave} &
-      \textsf{\large\textbf{let} f x = \alert{2 *} (x + 1) \textbf{in}
-        f 3 / 2} \\[2em]\pause
+      {\large\textbf{let} \textit{f x} = \alert{2 *} (\textit{x} + 1) \textbf{in}
+        \textit{f} 3 / 2} \\[2em]\pause
       \textcolor{greenish}{env interleave} &
-      \textsf{\large\textbf{let} f x =
-        (\alert{\textbf{let} y = true \textbf{in}} x + 1) \textbf{in}
-        f 3 / 2} \\[2em]\pause
+      {\large\textbf{let} \textit{f x} =
+        (\alert{\textbf{let} \textit{y} = true \textbf{in}} \textit{x} + 1) \textbf{in}
+        \textit{f} 3 / 2} \\[2em]\pause
       \textcolor{greenish}{type change} &
-      \textsf{\large\textbf{let} f x = x \alert{$>$} 1 \textbf{in} f 3 / 2}
+      {\large\textbf{let} \textit{f x} = \textit{x} \alert{$>$} 1 \textbf{in} \only<5>{\alert}{\textit{f} 3 / 2}}
     \end{tabular}
     \end{center}
 \end{frame}
@@ -390,26 +390,28 @@ let rec check env t =
 
     \begin{onlyenv}<3->
       \begin{enumerate}
-      \item[\itplus] lightweight, efficient implementation
-      \item[\itplus] random access to all subderivations
-      \item [\itminus] no reuse of derivations in compatible
+      \item<3->[\itplus] lightweight, efficient implementation
+      \item<4->[\itplus] random access to all subderivations
+      \item<5->[\itminus] no reuse of derivations in compatible
         environments \\
         {\footnotesize what if I want \eg weakening or
           permutation to be taken into account?}
-      \item[\itminus] no reuse if refactored program ($\alpha$,
+      \item<6->[\itminus] no reuse if refactored program ($\alpha$,
         $\beta$-equivalence,\ldots) \\
-        {\footnotesize or complex recognition procedure that enlarges
-          the trusted base}
-      \item[\itminus] {\large\it no justification for the added code} \\
+        {\footnotesize or complex recognition procedure, enlarging the
+          trusted base}
+      \item<7->[\itminus] {\large\it no justification for the added code} \\
         {\footnotesize or painful proof of conservativity}
       \end{enumerate}
 
-      {\footnotesize Mixes two goals:}
+      \only<8->{
+        {\footnotesize Mixes two goals:}
 
-      \begin{itemize}
-      \item {\large derivation synthesis} \footnotesize (the typing algorithm)
-      \item {\large object reuse} \footnotesize (sharing common subderivation)
-      \end{itemize}
+        \begin{itemize}
+        \item {\large derivation synthesis} \footnotesize (the typing algorithm)
+        \item {\large object reuse} \footnotesize (sharing common subderivation)
+        \end{itemize}
+      }
     \end{onlyenv}
     \end{overlayarea}
 \end{block}
@@ -431,7 +433,7 @@ let rec check env t =
       \node (M) [right=of checkout] {$M$};
       \node (M') [below=of M] {$M'$};
       \node (commit) [state, tribox, left=of M', shape border
-      rotate=180] {$\funname{putback}$};
+      rotate=180] {$\funname{put}$};
       \node (D') [below=of D] {$\mathcal D'$};
 
       \path[->]
@@ -460,45 +462,203 @@ let rec check env t =
 
     \end{tikzpicture}
     }
-  \begin{itemize}
-  \item $\function{get}{\mathcal D}$ projects derivation $\mathcal D$
-    to a program $M$
-    \begin{onlyenv}<-2>
-    \item $\function{putback}{\mathcal D, M'}$ checks $M'$ and returns
-      its derivation $\mathcal D'$ \pause
-      \begin{enumerate}
-      \item[\itplus] state-based approach
-      \item[\itminus] connection between $\mathcal D$ and $M'$ is lost
-      \item[\itminus] in $O(|M'|)$, not $O(|\delta|)$
-      \end{enumerate}
-    \end{onlyenv}
-    \begin{onlyenv}<3->
-    \item $\function{putback}{\mathcal D, \alert\delta}$ checks
-      $\alert{\delta}$ against $\alert{\mathcal D}$ and returns
-      $\mathcal D'$
-      \begin{enumerate}
-      \item[\itplus] \alert{change}-based approach
-      \item[\itplus] $\delta$ is the connection between $\mathcal D$
-        and $\mathcal D'$
-      \item[\itplus] possibly in $O(|\delta|)$
-      \end{enumerate}
-    \end{onlyenv}
-  \end{itemize}
+    \begin{overlayarea}{\textwidth}{10em}
+      \begin{itemize}
+      \item $\function{get}{\mathcal D}$ projects derivation $\mathcal
+        D$ to a program $M$
+        \begin{onlyenv}<-2>
+        \item $\function{put}{\mathcal D, M'}$ checks $M'$ and returns
+          its derivation $\mathcal D'$ \pause
+          \begin{enumerate}
+          \item[\itplus] state-based approach
+          \item[\itminus] connection between $\mathcal D$ and $M'$ is
+            lost
+          \item[\itminus] in $O(|M'|)$, not $O(|\delta|)$
+          \end{enumerate}
+        \end{onlyenv}
+        \begin{onlyenv}<3->
+        \item $\function{put}{\mathcal D, \alert\delta}$ checks
+          $\alert{\delta}$ against $\alert{\mathcal D}$ and returns
+          $\mathcal D'$
+          \begin{enumerate}
+          \item[\itplus] \alert{change}-based approach
+          \item[\itplus] $\delta$ is the connection between $\mathcal
+            D$ and $\mathcal D'$
+          \item[\itplus] possibly in $O(|\delta|)$
+          \item[\itplus] justification for each change ($\mathcal D'$)
+          \end{enumerate}
+        \end{onlyenv}
+      \end{itemize}
+    \end{overlayarea}
   \end{block}
 \end{frame}
 
 \section{Proposition}
 
 \begin{frame}{What notion of delta?}
-  
+  \begin{itemize}
+  \item A \textcolor{greenish}{delta} $\delta$ is a term $M$ with
+    \emph{metavariables} $\mmeta, \mmmeta$ referring to existing
+    sub-derivations:\\[1em]
+
+    $ \delta \gequal \ldots \text{[syntax of $M$]} \ldots \gor
+    \mmeta $\\[1em]
+
+  \item A \textcolor{greenish}{repository} $\mr$ is a derivation
+    $\mathcal D$ with named, annotated subderivations (\emph{slices})
+    with random access:
+    \begin{align*}
+      \mathcal D^* &\gequal \ldots\text{[syntax of $\mathcal D$]}\ldots
+      \gor \mmeta \\
+      \mr &\gequal \Delta, \mmeta &\text{where}\quad\Delta : \mmeta\mapsto (\mathcal D^* : J)
+    \end{align*}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Safe \textcolor{gray}{incremental type-checking}}
+
+
+  \begin{block}{A certifying approach}
+    \vspace{0.5em}
+    {\centering
+      \begin{tikzpicture}[
+        auto, >=latex,
+        hv path/.style={to path={-| (\tikztotarget)}},
+        vh path/.style={to path={|- (\tikztotarget)}}
+        ]
+        \footnotesize
+        \node (delta) {$\delta : tm$};
+        \node (ti) [state, tribox, right=1em of delta]
+        {\textsf{infer}}; 
+        \node (deltalf) [right=1em of ti] {$\mathcal D^* : (\vdash \delta : B)$};
+        \node (tc) [state, tribox, right=1em of deltalf]
+        {\textsf{check}}; 
+
+        \begin{pgfonlayer}{background}
+          \node (put) [state, tribox, nearly transparent, rounded corners, fit=(ti.west)
+          (tc.apex), align=left] {\Huge\textsf{put}\\[3em]\ };
+        \end{pgfonlayer}
+
+        \node(D) [below left=2em and -3.5em of delta] {$\mr : (\vdash M : A)$};
+        \node (D') [right=2em of tc] {$\mmr : (\vdash M' : B)$};
+
+        \path[->]
+
+        (delta) edge (ti)
+        (ti) edge (deltalf)
+        (deltalf) edge (tc)
+        (tc) edge (D')
+        (D) edge [hv path] (ti) edge [hv path] (tc) ;
+
+
+      \end{tikzpicture}
+      }
+
+    \begin{itemize}
+    \item[\textsf{infer}] synthesizes the derivation\\
+      {\footnotesize complex, ad-hoc, untrusted, produces a certificate}
+    \item[\textsf{check}] checks the certificate\\
+      {\footnotesize simple, generic, trusted kernel}
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{What justification language?}
-  % type-checker issues a certificate in a generic language
+  \textbf{LF} can represent uniformly \emph{terms}, \emph{derivation} and
+  \emph{metatheorem statements}. Add:
+  \begin{itemize}
+  \item interpreted functions producing terms (tactics) \\
+    {\footnotesize Any OCaml function producing LF terms,
+      output verified by \textsf{check}}
+    \begin{example}
+      \begin{itemize}
+      \item[infer :] $\prd M {\const{tm}}
+        \{ A : \const{tp}\ |\ \app{\const{of}}\app{\var{M}}{\var{A}} \} =$ \\
+        {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e : \const{env}) (m :
+          \const{term}) \to \mathbf{match}\ m\ \mathbf{with} \ldots$}
+        \\[1em]
+
+      \item[get :] $\prd M {\const{tm}}
+        \{A : \const{tp}\ |\ \app{\const{of}}\app{\var{M}}{\var{A}}\}
+        \to \const{tm}=$ \\
+        {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e : \const{env}) (m :
+        \const{term}) \to m$}
+        \\[1em]
+
+      \item[]
+      \end{itemize}
+    \end{example}
+    \pause
+  \item random access to named, annotated subterms (slices) \\
+    {\footnotesize a term is a pair $\Delta, \mmeta$ where $\Delta :
+      (\mmeta\mapsto M : A)$}
+  \end{itemize}
+
+  \begin{example}
+    \vspace{-1.5em}
+    \small
+    \begin{align*}
+      \const{tm} &: \type. &
+      \const{tp} &: \type.\\
+      \const{app} &: \const{tm}\to \const{tm}\to \const{tm}.  &
+      \const{nat} &: \const{tp}.\\
+      \const{lam} &: (\const{tm}\to \const{tm})\to \const{tm}. &
+      \const{arr} &: \const{tp} \to \const{tp} \to \const{tp}. \\
+      \const{of} &: \const{tm} \to \const{tp} \to \type. \\
+      \const{of-app} &: \ldots &
+      \const{of-lam} &: \ldots
+    \end{align*}
+    \begin{align*}
+      \const{get} &: \prd A {\const{tp}} \prd M {\const{tm}}
+      \app{\const{of}}\app{\var M}{\var A} \to \var M \\
+      \const{infer} &:  \prd A {\const{tp}} \prd M {\const{tm}}
+      \app{\const{of}}\app{\var{M}}{\var{A}} = \\
+      & \qquad \mathbf{fun}\ (r : \const{repo}) (e : \const{env}) (a :
+      \const{term}) (m : \const{term}) \to \\ & \qquad\quad \mathbf{match}\ m\
+      \mathbf{with} \ldots
+    \end{align*}
+  \end{example}
 \end{frame}
 
 \begin{frame}{A logical framework for incremental type-checking}
-  
+  \begin{examples}
+
+    \begin{description}
+    \item[$\delta_0 = $]
+      \const{infer} \const{int} (\textbf{let} \textit{f x} = \textit{x} + 1
+      \textbf{in} \textit{f} 3 / 2)
+      \pause
+      {\footnotesize
+        \begin{align*}
+          \mathcal D_1 &: (x:\mathrm{int}\vdash x+1 : int) = \ldots \\
+          \mathcal D_2 &: (f:\mathrm{int}\to\mathrm{int}\vdash f\ 3\ /\ 2
+          : int) = \ldots \\
+          \mathcal D_3 &: (\vdash \mathbf{let}\ \mathit{f\ x} = \mathit{x}
+          + 1\ \mathbf{in}\ \mathit{f}\ 3\ /\ 2 : int) =
+          \mathsf{of\_let}\ \ldots \mathcal D_1\ \mathcal D_2 \\
+        \end{align*}}
+      \pause
+  \item[$\delta_1 = $]
+    $
+    \mathsf{infer}\ \mathsf{int}\ (\mathbf{let}\ f\ x\ = (\mathsf{get}\ \mathcal D_1) * 2\
+    \mathbf{in}\ (\mathsf{get}\ \mathcal D_2))
+    $
+      % \begin{tabular}{r|l}
+      % \textcolor{greenish}{initial term} &
+      % \textsf{\large\textbf{let} f x = x + 1
+      %   \textbf{in} f 3 / 2} \\[2em]\pause
+      % \textcolor{greenish}{easy interleave} &
+      % \textsf{\large\textbf{let} f x = \alert{2 *} (x + 1) \textbf{in}
+      %   f 3 / 2} \\[2em]\pause
+      % \textcolor{greenish}{env interleave} &
+      % \textsf{\large\textbf{let} f x =
+      %   (\alert{\textbf{let} y = true \textbf{in}} x + 1) \textbf{in}
+      %   f 3 / 2} \\[2em]\pause
+      % \textcolor{greenish}{type change} &
+      % \textsf{\large\textbf{let} f x = x \alert{$>$} 1 \textbf{in} \only<5>{\alert}{f 3 / 2}}
+    % \end{tabular}
+    \end{description}
+  \end{examples}
 \end{frame}
 
 \begin{frame}{Conclusion}

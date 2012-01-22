@@ -44,18 +44,22 @@
 \newcommand\gor{\ |\ }
 \newcommand\gequal{\ ::=\ }
 
+% Names
+\newcommand\name[1]{\ensuremath{\text{#1}}}
+\newcommand\var[1]{\name{\textit{#1}}}
+\newcommand\const[1]{\name{\textsf{#1}}}
+\newcommand\meta[1]{\name{\textit{#1}}}
+
 % Variables
-\newcommand\var[1]{#1}
-\newcommand\meta[1]{\textsf{#1}}
 \newcommand\typ[2]{{#1}:{#2}}
 
 \newcommand\mv{x}
 \newcommand\mmv{y}
 \newcommand\mmmv{z}
 
-\newcommand\mmeta{\meta x}
-\newcommand\mmmeta{\meta y}
-\newcommand\mmmmeta{\meta z}
+\newcommand\mmeta{\meta X}
+\newcommand\mmmeta{\meta Y}
+\newcommand\mmmmeta{\meta Z}
 \newcommand\mameta[1]{\typ{\mmeta}{#1}}
 
 \newcommand\mco{c}
@@ -69,8 +73,8 @@
 \newcommand\mmmr{\repo{R''}}
 
 % Terms
-\newcommand\postbinder{\cdot}
-\newcommand\prd[2]{\Pi{#1}:{#2}\postbinder}
+\newcommand\postbinder{.\ }
+\newcommand\prd[2]{\Pi{\var{#1}}:{#2}\postbinder}
 \newcommand\prdi[1]{\forall{#1}\postbinder}
 \newcommand\app[1]{{#1}\ }
 \newcommand\tlam[2]{\lambda{#1}:{#2}\postbinder}
