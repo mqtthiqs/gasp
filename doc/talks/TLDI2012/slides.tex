@@ -78,71 +78,32 @@
 
 \begin{frame}{\textcolor{gray}{Safe incremental} type-checking}
 
-  \begin{block}{
-      \only<1>{Weakly-typed programs need testing}
-      \only<2->{Strongly-typed programs need less testing}
-    }
-    \vspace{1.5em}
-    \begin{overlayarea}{\textwidth}{9em}
-      \centering
-      \only<1>{
-        \begin{tikzpicture}[node distance=4em, auto, bend left, >=latex]
-          \node[initial, state] (source) {source};
-          \node[accepting, state] (exec) [above right=of source] {executable};
-          \node[state] (result) [below right=of exec] {result};
-
-          \path[->]
-          (source) edge node {compile} (exec)
-          (exec) edge node {test} (result)
-          (result) edge node {fix} (source) ;
-        \end{tikzpicture}
-      }
-
-      \only<2->{
-        \begin{tikzpicture}[node distance=4em, auto, bend left, >=latex]
-          \node[initial, state] (source) {source};
-          \node[state] (bool) [above right=of source] {typed source};
-          \node[accepting, state] (exec) [below right=of bool] {executable};
-
-          \path[->]
-          (source) edge [bend left] node {type-check} (bool)
-          (bool) edge [bend left] node {compile} (exec)
-          (bool) edge [bend left] node {fix} (source);
-        \end{tikzpicture}
-      }
-    \end{overlayarea}
-
+  \begin{block}{Observations}
     \begin{itemize}
-    \item<3-> Compilation matters less to the elaboration of programs
-    \item<4-> \emph{A fortiori} for proof languages based on types
-      (\sysname{Agda}, \sysname{Coq})
+    \item Program elaboration is more and more an \emph{interaction}
+      between the programmer and the type-checker
+    \item The richer the type system is, the more expensive
+      type-checking gets
     \end{itemize}
-
+    \begin{example}
+      \begin{itemize}
+      \item very large term
+      \item dependent types (conversion)
+      \item type inference (\eg\ \sysname{ML}, unification)
+      \end{itemize}
+    \end{example}
   \end{block}
 
+  \begin{center}
+    \large \emph{\ldots but is called repeatedly with \emph{almost} the same input}
+  \end{center}
 \end{frame}
 
 \begin{frame}{\textcolor{gray}{Safe} incremental
     \textcolor{gray}{type-checking}}
 
-
-  \begin{onlyenv}<1>
     \begin{block}{Problem}
-      Type-checking can be expensive
-      \begin{example}
-        \begin{itemize}
-        \item very large term
-        \item dependent types (conversion)
-        \item type inference (\eg\ \sysname{ML}, unification)
-        \end{itemize}
-      \end{example}
-      But is called repeatedly with \emph{almost} the same input
-    \end{block}
-  \end{onlyenv}
-
-  \begin{onlyenv}<2>
-    \begin{block}{Proposition}
-      \emph{Take advantage of the knowledge from previous checks}
+      \emph{How to take advantage of the knowledge from previous type-checks?}
       \begin{itemize}
       \item Reuse pieces of derivations (stored in a \emph{repository})
       \item Check only the changed part (the \emph{delta}) of a
@@ -161,6 +122,7 @@
           (repo) edge [in=-90, out=0, hv path] node {} (tc) ;
         \end{tikzpicture}
     \end{block}
+    \pause
 
     \begin{block}{Requirements}
       \begin{itemize}
@@ -170,11 +132,16 @@
         $O(|\delta|)$)
       \end{itemize}
     \end{block}
-  \end{onlyenv}
 
 \end{frame}
 
 \subsection{Why is it interesting?}
+
+\begin{frame}{}
+  \begin{center}
+    {\centering\huge Applications}
+  \end{center}
+\end{frame}
 
 \begin{frame}[fragile]{Expected instances of this problem}
   \begin{block}{Module system}
@@ -276,7 +243,7 @@ let a = 2 + 2 in
     \begin{visibleenv}<5>
       \begin{remarks}
         \begin{itemize}
-        \item The interaction model of most ITP (\sysname{Coq},
+        \item {\bf The interaction model of most ITP} (\sysname{Coq},
           \sysname{Matita}\ldots)
         \item If definition of \textsf{a} changes, no need to recheck \textsf{b}
         \end{itemize}
@@ -289,7 +256,7 @@ let a = 2 + 2 in
   \begin{block}{Refactoring tools}
     % spec/semantics-preserving
     We can see \emph{refactoring} as a type-preserving modification
-    $\alert f$ of a term, i.e. a \emph{metatheorem}:
+    $\alert f$ of a term, \ie\ a \emph{metatheorem} with statement:
     $$ \funname{refactor_{\mathit{\alert f}}}\ :\quad \vdash M : A \quad\text{implies}\quad \vdash \alert f(M) : A $$
   \end{block}
   \begin{examples}
@@ -298,6 +265,7 @@ let a = 2 + 2 in
     \item $\beta$-contraction/expansion (inlining/factoring)
     \item add argument to function with default value
     \item remove dead code
+    \item \ldots
     \end{itemize}
   \end{examples}
 \end{frame}
@@ -489,17 +457,26 @@ let rec check env t =
   \end{block}
 \end{frame}
 
-\section{Proposition}
+\begin{frame}{}
+  \begin{center}
+    {\centering\huge Our proposal}
+  \end{center}
+\end{frame}
 
 \begin{frame}{What notion of delta?}
   \begin{itemize}
-  \item A \textcolor{greenish}{delta} $\delta$ is a term $M$ with
-    \emph{metavariables} $\mmeta, \mmmeta$ referring to existing
-    sub-derivations:\\[1em]
+  \item A \textcolor{greenish}{delta} $\delta$ is a term $M$ with:
+    \begin{itemize}
+    \item \emph{metavariables} $\mmeta, \mmmeta$ referring to existing
+      sub-derivations,
+    \item \emph{interpreted functions} $\mathsf{f, g}$ transforming
+      deltas into deltas
+    \end{itemize}
 
-    $ \delta \gequal \ldots \text{[syntax of $M$]} \ldots \gor
-    \mmeta $\\[1em]
+    $$ \delta \gequal \ldots \text{[syntax of $M$]} \ldots \gor
+    \mmeta \gor \function{f}{\vec\delta} $$
 
+    \pause
   \item A \textcolor{greenish}{repository} $\mr$ is a derivation
     $\mathcal D$ with named, annotated subderivations (\emph{slices})
     with random access:
@@ -523,7 +500,7 @@ let rec check env t =
         vh path/.style={to path={|- (\tikztotarget)}}
         ]
         \footnotesize
-        \node (delta) {$\delta : tm$};
+        \node (delta) {$\delta$};
         \node (ti) [state, tribox, right=1em of delta]
         {\textsf{infer}};
         \node (deltalf) [right=1em of ti] {$\mathcal D^* : (\vdash \delta : B)$};
@@ -560,9 +537,9 @@ let rec check env t =
 \end{frame}
 
 \begin{frame}{What justification language?}
-  \textbf{LF} can represent uniformly higher-order \emph{terms}, \emph{derivations} and
-  \emph{metatheorem statements} as \emph{objects} and
-  \emph{families}. \pause Extend with:
+  \textbf{LF} can represent uniformly higher-order \emph{terms},
+  \emph{derivations} as \emph{objects} and \emph{metatheorem
+    statements} as \emph{families}. \pause Extend with:
   \begin{overlayarea}\textwidth{18em}
     \begin{onlyenv}<2>
       \begin{block}{Interpreted functions} taking \& producing objects (tactics) \\
@@ -602,7 +579,7 @@ let rec check env t =
         \item $\mr$ is a pair $\Delta, \mmeta$ where $\Delta :
           (\mmeta\mapsto M : A)$
         \item $\function{check}{\mr, M}$ returns $\mr \cup \function{slice}{M}$
-        \item $\funname{slice}$ by $\lambda$-lifting or MLTT
+        \item $\funname{slice}$ by $\lambda$-lifting or CMTT
         \end{itemize}
         \begin{example}
           \begin{math}
