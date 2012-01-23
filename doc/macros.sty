@@ -79,7 +79,7 @@
 \newcommand\app[1]{{#1}\ }
 \newcommand\tlam[2]{\lambda{#1}:{#2}\postbinder}
 \newcommand\ulam[1]{\lambda{#1}\postbinder}
-\newcommand\letb[2]{\mathsf{let}\ {#1}={#2}\ \mathsf{in}\ }
+\newcommand\letb[2]{\mathsf{let}\ {\var{#1}}={#2}\ \mathsf{in}\ }
 \newcommand\lam{\tlam}
 \newcommand\clos[2]{{#1}[{#2}]}
 \newcommand\lclos[4]{\clos{\tlam{#1}{#2}{#3}}{#4}}
@@ -131,8 +131,8 @@
 \newcommand\hsubst[3]{{#1}\llbracket{#2}/{#3}\rrbracket}
 \newcommand\repl[3]{\subst{#1}{#2}{#3}}
 \newcommand\conv[2]{{#1}\equiv{#2}}
-
 \newcommand\ibox[3]{[#1]_{#2}^{#3}}
+\newcommand\compreh[3]{\{{\var{#1}}:{#2}\ |\ {#3}\}}
 
 % Languages
 \newcommand\lang[1]{\text{\rm\textsf{#1}}}

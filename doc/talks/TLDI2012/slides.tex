@@ -83,7 +83,7 @@
       \only<2->{Strongly-typed programs need less testing}
     }
     \vspace{1.5em}
-    \begin{overlayarea}{\textwidth}{7em}
+    \begin{overlayarea}{\textwidth}{9em}
       \centering
       \only<1>{
         \begin{tikzpicture}[node distance=4em, auto, bend left, >=latex]
@@ -114,9 +114,6 @@
 
     \begin{itemize}
     \item<3-> Compilation matters less to the elaboration of programs
-      \begin{quote}
-        “ If it type-checks, it should work ”
-      \end{quote}
     \item<4-> \emph{A fortiori} for proof languages based on types
       (\sysname{Agda}, \sysname{Coq})
     \end{itemize}
@@ -134,7 +131,7 @@
       Type-checking can be expensive
       \begin{example}
         \begin{itemize}
-        \item very large term (whole program)
+        \item very large term
         \item dependent types (conversion)
         \item type inference (\eg\ \sysname{ML}, unification)
         \end{itemize}
@@ -390,21 +387,20 @@ let rec check env t =
 
     \begin{onlyenv}<3->
       \begin{enumerate}
-      \item<3->[\itplus] lightweight, efficient implementation
-      \item<4->[\itplus] random access to all subderivations
-      \item<5->[\itminus] no reuse of derivations in compatible
+      \item<3->[\itplus] random access to all subderivations
+      \item<4->[\itminus] no reuse of derivations in compatible
         environments \\
         {\footnotesize what if I want \eg weakening or
           permutation to be taken into account?}
-      \item<6->[\itminus] no reuse if refactored program ($\alpha$,
+      \item<5->[\itminus] no reuse if refactored program ($\alpha$,
         $\beta$-equivalence,\ldots) \\
         {\footnotesize or complex recognition procedure, enlarging the
           trusted base}
-      \item<7->[\itminus] {\large\it no justification for the added code} \\
+      \item<6->[\itminus] {\large\it no justification for the added code} \\
         {\footnotesize or painful proof of conservativity}
       \end{enumerate}
 
-      \only<8->{
+      \only<7->{
         {\footnotesize Mixes two goals:}
 
         \begin{itemize}
@@ -510,7 +506,7 @@ let rec check env t =
     \begin{align*}
       \mathcal D^* &\gequal \ldots\text{[syntax of $\mathcal D$]}\ldots
       \gor \mmeta \\
-      \mr &\gequal \Delta, \mmeta &\text{where}\quad\Delta : \mmeta\mapsto (\mathcal D^* : J)
+      \mr &\gequal \Delta, \mmeta \qquad\text{where}\quad\Delta : \mmeta\mapsto (\mathcal D^* : J)
     \end{align*}
   \end{itemize}
 \end{frame}
@@ -529,7 +525,7 @@ let rec check env t =
         \footnotesize
         \node (delta) {$\delta : tm$};
         \node (ti) [state, tribox, right=1em of delta]
-        {\textsf{infer}}; 
+        {\textsf{infer}};
         \node (deltalf) [right=1em of ti] {$\mathcal D^* : (\vdash \delta : B)$};
         \node (tc) [state, tribox, right=1em of deltalf]
         {\textsf{check}}; 
@@ -556,114 +552,138 @@ let rec check env t =
 
     \begin{itemize}
     \item[\textsf{infer}] synthesizes the derivation\\
-      {\footnotesize complex, ad-hoc, untrusted, produces a certificate}
-    \item[\textsf{check}] checks the certificate\\
+      {\footnotesize complex, ad-hoc, untrusted}
+    \item[\textsf{check}] checks the derivation, slices it\\
       {\footnotesize simple, generic, trusted kernel}
     \end{itemize}
   \end{block}
 \end{frame}
 
 \begin{frame}{What justification language?}
-  \textbf{LF} can represent uniformly \emph{terms}, \emph{derivation} and
-  \emph{metatheorem statements}. Add:
-  \begin{itemize}
-  \item interpreted functions producing terms (tactics) \\
-    {\footnotesize Any OCaml function producing LF terms,
-      output verified by \textsf{check}}
-    \begin{example}
-      \begin{itemize}
-      \item[infer :] $\prd M {\const{tm}}
-        \{ A : \const{tp}\ |\ \app{\const{of}}\app{\var{M}}{\var{A}} \} =$ \\
-        {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e : \const{env}) (m :
-          \const{term}) \to \mathbf{match}\ m\ \mathbf{with} \ldots$}
-        \\[1em]
+  \textbf{LF} can represent uniformly higher-order \emph{terms}, \emph{derivations} and
+  \emph{metatheorem statements} as \emph{objects} and
+  \emph{families}. \pause Extend with:
+  \begin{overlayarea}\textwidth{18em}
+    \begin{onlyenv}<2>
+      \begin{block}{Interpreted functions} taking \& producing objects (tactics) \\
+        {\footnotesize any OCaml function producing LF objects, output
+          verified by \textsf{check}}
+        \begin{example}
+          \begin{enumerate}[inline]
+          \item[\const{infer} :] $\prd M {\const{tm}}
+            \compreh A {\const{tp}} {\app{\const{of}}\app{\var{M}}{\var{A}}} =$ \\
+            {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
+              \const{env}) (m : \const{obj}) \to \mathbf{match}\ m\
+              \mathbf{with} \ldots$}
+            \\[1em]
 
-      \item[get :] $\prd M {\const{tm}}
-        \{A : \const{tp}\ |\ \app{\const{of}}\app{\var{M}}{\var{A}}\}
-        \to \const{tm}=$ \\
-        {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e : \const{env}) (m :
-        \const{term}) \to m$}
-        \\[1em]
+          \item[\const{get} :] $\prd M {\const{tm}} \compreh A
+            {\const{tp}} {\app{\const{of}}\app{\var{M}}{\var{A}}}
+            \to \const{tm}=$ \\
+            {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
+              \const{env}) (m : \const{obj}) (d : \const{obj})\to m$}
+            \\[1em]
 
-      \item[]
-      \end{itemize}
-    \end{example}
-    \pause
-  \item random access to named, annotated subterms (slices) \\
-    {\footnotesize a term is a pair $\Delta, \mmeta$ where $\Delta :
-      (\mmeta\mapsto M : A)$}
-  \end{itemize}
+          \item[\const{inline} :] $\prd M {\const{tm}} \prd N
+            {\const{tm}\to\const{tm}} $\\ $\qquad \compreh A
+            {\const{tp}} {\app{\const{of}} \app{(\const{let}\ {\var
+                  M}\ {(\ulam x \var N)})} {\var A}} \to
+            \app{\const{of}} \app{(\app {\var M} {\var N})} {\var A} =
+            \ldots$
+          \end{enumerate}
+        \end{example}
+      \end{block}
+    \end{onlyenv}
+    \begin{onlyenv}<3>
+      \begin{block}
+        {Random access} to named, annotated subterms (slices) \\
+        \begin{itemize}
+        \item objects can contain metavariables $\mmeta, \mmmeta$
+        \item $\mr$ is a pair $\Delta, \mmeta$ where $\Delta :
+          (\mmeta\mapsto M : A)$
+        \item $\function{check}{\mr, M}$ returns $\mr \cup \function{slice}{M}$
+        \item $\funname{slice}$ by $\lambda$-lifting or MLTT
+        \end{itemize}
+        \begin{example}
+          \begin{math}
+            \function{check}{\mr,\ \const f\ \mmeta\ (\ulam x \const
+              b\ (\const c\ x))} = \mr \cup \left\{
+              \begin{aligned}
+                Y &: A\to B = \ulam x \const b\ (\const c\ x) \\
+                Z &: C = \const f\ X (\ulam x Y\ x)
+              \end{aligned}
+            \right.
+          \end{math}
+        \end{example}
+      \end{block}
+      \end{onlyenv}
+    \end{overlayarea}
 
-  \begin{example}
-    \vspace{-1.5em}
-    \small
-    \begin{align*}
-      \const{tm} &: \type. &
-      \const{tp} &: \type.\\
-      \const{app} &: \const{tm}\to \const{tm}\to \const{tm}.  &
-      \const{nat} &: \const{tp}.\\
-      \const{lam} &: (\const{tm}\to \const{tm})\to \const{tm}. &
-      \const{arr} &: \const{tp} \to \const{tp} \to \const{tp}. \\
-      \const{of} &: \const{tm} \to \const{tp} \to \type. \\
-      \const{of-app} &: \ldots &
-      \const{of-lam} &: \ldots
-    \end{align*}
-    \begin{align*}
-      \const{get} &: \prd A {\const{tp}} \prd M {\const{tm}}
-      \app{\const{of}}\app{\var M}{\var A} \to \var M \\
-      \const{infer} &:  \prd A {\const{tp}} \prd M {\const{tm}}
-      \app{\const{of}}\app{\var{M}}{\var{A}} = \\
-      & \qquad \mathbf{fun}\ (r : \const{repo}) (e : \const{env}) (a :
-      \const{term}) (m : \const{term}) \to \\ & \qquad\quad \mathbf{match}\ m\
-      \mathbf{with} \ldots
-    \end{align*}
-  \end{example}
 \end{frame}
 
 \begin{frame}{A logical framework for incremental type-checking}
   \begin{examples}
 
-    \begin{description}
+    \begin{description}[$\delta_{42} = $]
     \item[$\delta_0 = $]
-      \const{infer} \const{int} (\textbf{let} \textit{f x} = \textit{x} + 1
-      \textbf{in} \textit{f} 3 / 2)
+      \const{infer} (“\textbf{let} \textit{f x} = \textit{x} + 1
+      \textbf{in} \textit{f} 3 / 2”)
       \pause
       {\footnotesize
         \begin{align*}
-          \mathcal D_1 &: (x:\mathrm{int}\vdash x+1 : int) = \ldots \\
-          \mathcal D_2 &: (f:\mathrm{int}\to\mathrm{int}\vdash f\ 3\ /\ 2
-          : int) = \ldots \\
-          \mathcal D_3 &: (\vdash \mathbf{let}\ \mathit{f\ x} = \mathit{x}
-          + 1\ \mathbf{in}\ \mathit{f}\ 3\ /\ 2 : int) =
-          \mathsf{of\_let}\ \ldots \mathcal D_1\ \mathcal D_2 \\
+          \mmeta &: \textcolor{gray}{\prd x {\const{tm}} {\const{of}}\ x\ \const{int}
+          \to \const{of}\ (\text{“}x+1”)\ \const{int}} = \ulam x \ulam d
+          \const{of-app}\ \ldots\\
+          \mmmeta &: \textcolor{gray}{\prd f {\const{tm}} \const{of}\ f\
+          (\const{int}\To\const{int}) \to \const{of}\ (\text{“}f\ 3\ /\ 2”)\
+          \const{int}} = \ulam f \ulam d \const{of-app}\ \ldots\\
+          \mmmmeta &: \textcolor{gray}{\const{of}\ (\text{“}\mathbf{let}\ \var f\ \var x = \var
+          x + 1\ \mathbf{in}\ f\ 3\ /\ 2”)\ \const{int}} =
+          \const{of-let}\ \ldots\ (\const{of-lam}\ \ldots\ \mmeta) \mmmeta
         \end{align*}}
       \pause
   \item[$\delta_1 = $]
     $
-    \mathsf{infer}\ \mathsf{int}\ (\mathbf{let}\ f\ x\ = (\mathsf{get}\ \mathcal D_1) * 2\
-    \mathbf{in}\ (\mathsf{get}\ \mathcal D_2))
+    \const{infer}\ (\text{“}\mathbf{let}\ f\ x\ = (\const{get}\ \mmeta) * 2\
+    \mathbf{in}\ (\const{get}\ \mmmeta)\text{”})
     $
-      % \begin{tabular}{r|l}
-      % \textcolor{greenish}{initial term} &
-      % \textsf{\large\textbf{let} f x = x + 1
-      %   \textbf{in} f 3 / 2} \\[2em]\pause
-      % \textcolor{greenish}{easy interleave} &
-      % \textsf{\large\textbf{let} f x = \alert{2 *} (x + 1) \textbf{in}
-      %   f 3 / 2} \\[2em]\pause
-      % \textcolor{greenish}{env interleave} &
-      % \textsf{\large\textbf{let} f x =
-      %   (\alert{\textbf{let} y = true \textbf{in}} x + 1) \textbf{in}
-      %   f 3 / 2} \\[2em]\pause
-      % \textcolor{greenish}{type change} &
-      % \textsf{\large\textbf{let} f x = x \alert{$>$} 1 \textbf{in} \only<5>{\alert}{f 3 / 2}}
-    % \end{tabular}
+    \pause
+    {\footnotesize
+      \begin{align*}
+        & \hspace{-1em}\text{\it [all of the above, plus:]} \\
+        \mmeta' &: \textcolor{gray}{\prd x {\const{tm}} {\const{of}}\ x\ \const{int}
+        \to \const{of}\ (\text{“}(x+1)*2”)\ \const{int}} = \ulam x \ulam d
+        (\const{of-app}\ \ldots \alert\mmeta)\\
+        \mmmmeta' &: \textcolor{gray}{\const{of}\ (\text{“}\mathbf{let}\ \var f\ \var x =
+        (\var x + 1) * 2\ \mathbf{in}\ f\ 3\ /\ 2”)\ \const{int}} =
+        \const{of-let}\ldots(\const{of-lam}\ldots\alert{\mmeta'}) \mmmeta
+      \end{align*}
+    }
+    \pause
+  \item[$\delta_2 =$] \ldots
     \end{description}
   \end{examples}
 \end{frame}
 
 \begin{frame}{Conclusion}
-  
-\end{frame}
+  Incrementally type-checking higher-order terms:
+  \begin{itemize}
+  \item has numerous applications
+  \item is non-trivial
+  \item requires justification
+  \end{itemize}
+  \vspace{1em}
 
+  Our proposal is:
+  \begin{itemize}
+  \item to separate:
+    \begin{itemize}
+    \item derivation synthesis
+    \item derivation reuse
+    \end{itemize}
+  \item a generic delta/justification language
+  \item based on subterm reuse
+  \end{itemize}
+\end{frame}
 
 \end{document}
