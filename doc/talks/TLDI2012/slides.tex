@@ -10,6 +10,7 @@
 \usepackage{natbib}
 \usepackage{listings}
 \usepackage{tikz}
+\usepackage{pdfsync}
 
 \usepackage{../../macros}
 
@@ -89,7 +90,7 @@
       \begin{itemize}
       \item very large term
       \item dependent types (conversion)
-      \item type inference (\eg\ \sysname{ML}, unification)
+      \item type inference (\eg\ \sysname{Haskell}, unification)
       \end{itemize}
     \end{example}
   \end{block}
@@ -137,157 +138,6 @@
 
 \subsection{Why is it interesting?}
 
-\begin{frame}{}
-  \begin{center}
-    {\centering\huge Applications}
-  \end{center}
-\end{frame}
-
-\begin{frame}[fragile]{Expected instances of this problem}
-  \begin{block}{Module system}
-    We can model \emph{separate module typing} by incrementally
-    modifying a term:
-
-    \begin{overlayarea}{\textwidth}{13em}
-    \small
-    \begin{columns}
-      \begin{column}{0.4\textwidth}
-        \begin{lstlisting}
-module M = struct
-  let a : int = 2 + 2
-  let b : int -> bool =
-    fun x -> x = 4
-end
-        \end{lstlisting}
-\pause
-        \begin{lstlisting}
-module N = struct
-  let c : bool = M.a = 4
-  let d : int = M.b 4
-end
-        \end{lstlisting}
-      \end{column}
-      \begin{column}{1mm}
-        \rule{.1mm}{4cm}
-      \end{column}
-\pause
-      \begin{column}{0.5\textwidth}
-        \begin{onlyenv}<3>
-        \begin{lstlisting}
-let M.a : int = 2 + 2 in
-  let M.b : int -> bool =
-    fun x -> x = 4 in
-    ()
-        \end{lstlisting}
-        \vspace{2.4em}
-        \end{onlyenv}
-        \begin{onlyenv}<4->
-        \begin{lstlisting}
-let M.a : int = 2 + 2 in
-  let M.b : int -> bool =
-    fun x -> x = 4 in
-    let M.c : bool = M.a = 4 in
-      let M.d : int = M.b 4 in
-        ()
-        \end{lstlisting}
-        \end{onlyenv}
-      \end{column}
-    \end{columns}
-    \end{overlayarea}
-    \begin{visibleenv}<5>
-      \begin{remark}
-        If definition of \textsf{M.a} changes {\footnotesize (but not its type)}, no need to recheck the rest
-      \end{remark}
-    \end{visibleenv}
-  \end{block}
-\end{frame}
-
-\begin{frame}[fragile]{Expected instances of this problem}
-  \begin{block}{Interactive toplevel}
-    We can model a \emph{\textbf{typing} interactive toplevel} by
-    incrementally modifying a term:
-    \begin{overlayarea}{\textwidth}{10em}
-    \begin{columns}
-      \begin{column}{0.47\textwidth}
-        \begin{lstlisting}[escapechar=\%]
-# let a = 2 + 2 ;;
-val a : int% \textcolor{gray}{= 4} %
-        \end{lstlisting}
-\pause
-        \begin{lstlisting}[escapechar=\%]
-# let b = fun x -> x = a ;;
-val b : int -> bool % \textcolor{gray}{= fun} %
-        \end{lstlisting}
-      \end{column}
-      \begin{column}{.1mm}
-        \rule{.1mm}{3cm}
-      \end{column}
-      \begin{column}{0.44\textwidth}
-        \begin{onlyenv}<3>
-          \begin{lstlisting}
-let a = 2 + 2 in
-  a
-          \end{lstlisting}
-          \vspace{1.2em}
-        \end{onlyenv}
-        \begin{onlyenv}<4->
-          \begin{lstlisting}
-let a = 2 + 2 in
-  let b = fun x -> x = a in
-    b
-          \end{lstlisting}
-        \end{onlyenv}
-      \end{column}
-    \end{columns}
-    \end{overlayarea}
-    \begin{visibleenv}<5>
-      \begin{remarks}
-        \begin{itemize}
-        \item {\bf The interaction model of most ITP} (\sysname{Coq},
-          \sysname{Matita}\ldots)
-        \item If definition of \textsf{a} changes, no need to recheck \textsf{b}
-        \end{itemize}
-      \end{remarks}
-    \end{visibleenv}
-  \end{block}
-\end{frame}
-
-\begin{frame}{Expected instances of this problem}
-  \begin{block}{Refactoring tools}
-    % spec/semantics-preserving
-    We can see \emph{refactoring} as a type-preserving modification
-    $\alert f$ of a term, \ie\ a \emph{metatheorem} with statement:
-    $$ \funname{refactor_{\mathit{\alert f}}}\ :\quad \vdash M : A \quad\text{implies}\quad \vdash \alert f(M) : A $$
-  \end{block}
-  \begin{examples}
-    \begin{itemize}
-    \item $\alpha$-conversion (renaming)
-    \item $\beta$-contraction/expansion (inlining/factoring)
-    \item add argument to function with default value
-    \item remove dead code
-    \item \ldots
-    \end{itemize}
-  \end{examples}
-\end{frame}
-
-\begin{frame}{Expected instances of this problem}
-  \begin{block}{Typed version control}
-    Design a syntax- and type-aware version control system, \ie:
-
-    \begin{itemize}
-    \item stores typed AST, not text
-    \item well-typing ensured and incrementally checked
-    \end{itemize}
-
-    Advantages:
-    \begin{itemize}
-    \item semantic deltas easier to read\\
-      {\small (as opposed to textual \sysname{diff}s)}
-    \item $\funname{merge}$ statically well-typed, more precise
-    \end{itemize}
-  \end{block}
-\end{frame}
-
 \begin{frame}[fragile]{\textcolor{greenish}{Examples}}
     \begin{center}
       \begin{tabular}{r|l}
@@ -305,6 +155,22 @@ let a = 2 + 2 in
       {\large\textbf{let} \textit{f x} = \textit{x} \alert{$>$} 1 \textbf{in} \only<5>{\alert}{\textit{f} 3 / 2}}
     \end{tabular}
     \end{center}
+\end{frame}
+
+\begin{frame}{Expected instances of this problem}
+  \begin{enumerate}[<+->][Typed version ]
+  \item[Module systems] and \emph{separate module typing} can be
+    modeled by incrementally replacing a subterm under a context
+  \item[Interactive toplevel] for typing, with global undo (\sysname{Coq},
+    \sysname{Matita}, \ldots) (\emph{idem.})
+  \item[Refactoring tools] can be seen as type-preserving
+    modifications of a term (renaming, inlining, factoring\ldots),
+    \ie\ metatheorems with statement:
+    $$ \funname{refactor_{\mathit{\alert f}}}\ :\quad \vdash M : A \quad\text{implies}\quad \vdash \alert f(M) : A $$
+  \item[Typed version control] would store \emph{typed} AST, not
+    text. Semantic \sysname{diff}s more readable, make
+    $\funname{merge}$ more precise, well-typedness ensured
+  \end{enumerate}
 \end{frame}
 
 \subsection{Why is it hard?}
@@ -512,7 +378,7 @@ let rec check env t =
           (tc.apex), align=left] {\Huge\textsf{put}\\[3em]\ };
         \end{pgfonlayer}
 
-        \node(D) [below left=2em and -3.5em of delta] {$\mr : (\vdash M : A)$};
+        \node(D) [below left=2em and -1.2em of delta] {$\mr : (\vdash M : A)$};
         \node (D') [right=2em of tc] {$\mmr : (\vdash M' : B)$};
 
         \path[->]
@@ -541,7 +407,7 @@ let rec check env t =
   \emph{derivations} as \emph{objects} and \emph{metatheorem
     statements} as \emph{families}. \pause Extend with:
   \begin{overlayarea}\textwidth{18em}
-    \begin{onlyenv}<2>
+    \begin{onlyenv}<3>
       \begin{block}{Interpreted functions} taking \& producing objects (tactics) \\
         {\footnotesize any OCaml function producing LF objects, output
           verified by \textsf{check}}
@@ -571,7 +437,7 @@ let rec check env t =
         \end{example}
       \end{block}
     \end{onlyenv}
-    \begin{onlyenv}<3>
+    \begin{onlyenv}<2>
       \begin{block}
         {Random access} to named, annotated subterms (slices) \\
         \begin{itemize}
@@ -662,5 +528,162 @@ let rec check env t =
   \item based on subterm reuse
   \end{itemize}
 \end{frame}
+
+\appendix
+\newcounter{finalframe}
+\setcounter{finalframe}{\value{framenumber}}
+
+\begin{frame}{}
+  \begin{center}
+    \huge Backup slides
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Expected instances of this problem}
+  \begin{block}{Module system}
+    We can model \emph{separate module typing} by incrementally
+    modifying a term:
+
+    \begin{overlayarea}{\textwidth}{13em}
+    \small
+    \begin{columns}
+      \begin{column}{0.4\textwidth}
+        \begin{lstlisting}
+module M = struct
+  let a : int = 2 + 2
+  let b : int -> bool =
+    fun x -> x = 4
+end
+        \end{lstlisting}
+\pause
+        \begin{lstlisting}
+module N = struct
+  let c : bool = M.a = 4
+  let d : int = M.b 4
+end
+        \end{lstlisting}
+      \end{column}
+      \begin{column}{1mm}
+        \rule{.1mm}{4cm}
+      \end{column}
+\pause
+      \begin{column}{0.5\textwidth}
+        \begin{onlyenv}<3>
+        \begin{lstlisting}
+let M.a : int = 2 + 2 in
+  let M.b : int -> bool =
+    fun x -> x = 4 in
+    ()
+        \end{lstlisting}
+        \vspace{2.4em}
+        \end{onlyenv}
+        \begin{onlyenv}<4->
+        \begin{lstlisting}
+let M.a : int = 2 + 2 in
+  let M.b : int -> bool =
+    fun x -> x = 4 in
+    let M.c : bool = M.a = 4 in
+      let M.d : int = M.b 4 in
+        ()
+        \end{lstlisting}
+        \end{onlyenv}
+      \end{column}
+    \end{columns}
+    \end{overlayarea}
+    \begin{visibleenv}<5>
+      \begin{remark}
+        If definition of \textsf{M.a} changes {\footnotesize (but not its type)}, no need to recheck the rest
+      \end{remark}
+    \end{visibleenv}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Expected instances of this problem}
+  \begin{block}{Interactive toplevel}
+    We can model a \emph{\textbf{typing} interactive toplevel} by
+    incrementally modifying a term:
+    \begin{overlayarea}{\textwidth}{10em}
+    \begin{columns}
+      \begin{column}{0.47\textwidth}
+        \begin{lstlisting}[escapechar=\%]
+# let a = 2 + 2 ;;
+val a : int% \textcolor{gray}{= 4} %
+        \end{lstlisting}
+\pause
+        \begin{lstlisting}[escapechar=\%]
+# let b = fun x -> x = a ;;
+val b : int -> bool % \textcolor{gray}{= fun} %
+        \end{lstlisting}
+      \end{column}
+      \begin{column}{.1mm}
+        \rule{.1mm}{3cm}
+      \end{column}
+      \begin{column}{0.44\textwidth}
+        \begin{onlyenv}<3>
+          \begin{lstlisting}
+let a = 2 + 2 in
+  a
+          \end{lstlisting}
+          \vspace{1.2em}
+        \end{onlyenv}
+        \begin{onlyenv}<4->
+          \begin{lstlisting}
+let a = 2 + 2 in
+  let b = fun x -> x = a in
+    b
+          \end{lstlisting}
+        \end{onlyenv}
+      \end{column}
+    \end{columns}
+    \end{overlayarea}
+    \begin{visibleenv}<5>
+      \begin{remarks}
+        \begin{itemize}
+        \item {\bf The interaction model of most ITP} (\sysname{Coq},
+          \sysname{Matita}\ldots)
+        \item If definition of \textsf{a} changes, no need to recheck \textsf{b}
+        \end{itemize}
+      \end{remarks}
+    \end{visibleenv}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Expected instances of this problem}
+  \begin{block}{Refactoring tools}
+    % spec/semantics-preserving
+    We can see \emph{refactoring} as a type-preserving modification
+    $\alert f$ of a term, \ie\ a \emph{metatheorem} with statement:
+    $$ \funname{refactor_{\mathit{\alert f}}}\ :\quad \vdash M : A \quad\text{implies}\quad \vdash \alert f(M) : A $$
+  \end{block}
+  \begin{examples}
+    \begin{itemize}
+    \item $\alpha$-conversion (renaming)
+    \item $\beta$-contraction/expansion (inlining/factoring)
+    \item add argument to function with default value
+    \item remove dead code
+    \item \ldots
+    \end{itemize}
+  \end{examples}
+\end{frame}
+
+\begin{frame}{Expected instances of this problem}
+  \begin{block}{Typed version control}
+    Design a syntax- and type-aware version control system, \ie:
+
+    \begin{itemize}
+    \item stores typed AST, not text
+    \item well-typing ensured and incrementally checked
+    \end{itemize}
+
+    Advantages:
+    \begin{itemize}
+    \item semantic deltas easier to read\\
+      {\small (as opposed to textual \sysname{diff}s)}
+    \item $\funname{merge}$ statically well-typed, more precise
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\setcounter{framenumber}{\value{finalframe}}
 
 \end{document}
