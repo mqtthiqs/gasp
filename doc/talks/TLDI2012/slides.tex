@@ -11,11 +11,11 @@
 \usepackage{listings}
 \usepackage{tikz}
 \usepackage{pdfsync}
-
+\usepackage{bussproofs}
 \usepackage{../../macros}
 
 \usetikzlibrary{automata, positioning, shapes.geometric, shapes.misc,
-  chains, backgrounds, fit}
+  chains, backgrounds, fit, decorations.pathmorphing}
 
 \tikzset{
   state/.style={
@@ -88,13 +88,13 @@
     \end{itemize}
     \begin{example}
       \begin{itemize}
-      \item very large term
-      \item dependent types (conversion)
       \item type inference (\eg\ \sysname{Haskell}, unification)
+      \item dependent types (conversion, esp. reflection)
+      \item very large term
       \end{itemize}
     \end{example}
   \end{block}
-
+  \pause
   \begin{center}
     \large \emph{\ldots but is called repeatedly with \emph{almost} the same input}
   \end{center}
@@ -114,13 +114,18 @@
         \centering
         \begin{tikzpicture}[node distance=2em, >=latex, hv
           path/.style={to path={-| (\tikztotarget)}}, vh
-          path/.style={to path={|- (\tikztotarget)}} ]
-          \node (term) {$\delta$}; \node (repo) [below=of
-          term]{$\mr$}; \node[state, tribox] (tc) [right=of term]
-          {$\mathsf{check}$}; 
+          path/.style={to path={|- (\tikztotarget)}}
+          ]
+          \node[state, tribox] (tc) {$\mathsf{check}$};
+          \node (term) [left=1cm of tc.north west] {$\delta$};
+          \node (repo) [left=1cm of tc.south west] {$\mr$};
           \node (repo2) [right=of tc] {$\mmr$};
-          \path[->] (term) edge node {} (tc) (tc) edge node {} (repo2)
-          (repo) edge [in=-90, out=0, hv path] node {} (tc) ;
+
+          \path[->]
+          (term) edge (tc.north west)
+          (repo) edge (tc.south west)
+          (tc) edge (repo2)
+          ;
         \end{tikzpicture}
     \end{block}
     \pause
@@ -138,6 +143,12 @@
 
 \subsection{Why is it interesting?}
 
+\newcommand{\cfbox}[2]{%
+    \colorlet{currentcolor}{.}%
+    {\color{#1}%
+    \fbox{\color{currentcolor}#2}}%
+}
+
 \begin{frame}[fragile]{\textcolor{greenish}{Examples}}
     \begin{center}
       \begin{tabular}{r|l}
@@ -152,20 +163,21 @@
         (\alert{\textbf{let} \textit{y} = true \textbf{in}} \textit{x} + 1) \textbf{in}
         \textit{f} 3 / 2} \\[2em]\pause
       \textcolor{greenish}{type change} &
-      {\large\textbf{let} \textit{f x} = \textit{x} \alert{$>$} 1 \textbf{in} \only<5>{\alert}{\textit{f} 3 / 2}}
+        {\large\textbf{let} \textit{f x} = \textit{x} \alert{$>$} 1
+          \textbf{in} \cfbox{red}{\textit{f} 3 / 2}}
     \end{tabular}
     \end{center}
 \end{frame}
 
 \begin{frame}{Expected instances of this problem}
-  \begin{enumerate}[<+->][Typed version ]
+  \begin{enumerate}[<+->][Typed vers ion ]
   \item[Module systems] and \emph{separate module typing} can be
     modeled by incrementally replacing a subterm under a context
   \item[Interactive toplevel] for typing, with global undo (\sysname{Coq},
     \sysname{Matita}, \ldots) (\emph{idem.})
   \item[Refactoring tools] can be seen as type-preserving
     modifications of a term (renaming, inlining, factoring\ldots),
-    \ie\ metatheorems with statement:
+    \ie\ \emph{metatheorems} with statement:
     $$ \funname{refactor_{\mathit{\alert f}}}\ :\quad \vdash M : A \quad\text{implies}\quad \vdash \alert f(M) : A $$
   \item[Typed version control] would store \emph{typed} AST, not
     text. Semantic \sysname{diff}s more readable, make
@@ -173,78 +185,155 @@
   \end{enumerate}
 \end{frame}
 
+\begin{frame}{Our proposal}
+
+  { \large \centering
+    A \emph{language-independent} backend that verifies and stores pieces of
+    derivations based on \emph{sharing}
+  }
+  \vspace{1em}
+
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}
+      \node[draw=yellow!50!black, fill=yellow!30, rounded corners] (input) {
+        \begin{tabular}{l}
+        syntax \\
+        typing rules\\
+        checker {\small (untrusted)}
+      \end{tabular}
+      } ;
+
+      \node[draw=yellow!50!black, fill=yellow!30, rounded corners, right=of input] (output) {
+        \begin{tabular}{l}
+        incremental checker \\
+        version control \\
+        \ldots
+      \end{tabular}
+    } ;
+
+    \path[->]
+    (input) edge [draw=yellow!50!black, thick, decorate, decoration=snake] (output)
+    ;
+  \end{tikzpicture}
+\end{figure}
+\end{frame}
+
 \subsection{Why is it hard?}
 
 \begin{frame}[fragile]{Incremental computation}
-  \begin{block}{Memoization}\vspace{0.5em}
-    \begin{overlayarea}{\textwidth}{.7\textheight}
-    \begin{onlyenv}<1-2>
-      A \only<2>{\alert{memoizing} }type-checker:
-      \begin{overlayarea}{\textwidth}{10em}
-        \begin{onlyenv}<1>
-          \begin{lstlisting}
-
+  A type-checker:
+{\small
+  \begin{lstlisting}
 let rec check env t =
   match t with
   | ... -> ... None
   | ... -> ... Some a
-          \end{lstlisting}
-        \end{onlyenv}
+  \end{lstlisting}
+}
+
+  \vspace{2em}
+
+  \only<2>{\vspace{-0.6ex}}
+
+  \begin{overlayarea}{\textwidth}{6em}
+    \begin{tikzpicture}[>=latex, node distance=1em]
+      \node[state, tribox] (tc) {$\mathsf{check}$};
+
+      \node (term) [fill=yellow!30, rounded corners, left=of tc,
+      align=left] {
+        \small $\mathbf{let}\ f\ x = x+1$\\[-0.1em]
+        \small $\mathbf{in}\ f\ 2\ / \ 3$};
+
+      \path[->] (term) edge (tc) ;
+
+      \pause
+
+      \node (D) [trapezium, trapezium angle=-50, right=of tc,
+      fill=yellow!30, rounded corners] {
         \begin{onlyenv}<2>
-          \begin{lstlisting}
+          \begin{minipage}{0.7\linewidth}
+            \tiny
+            \begin{prooftree}
+              \AxiomC{$[\vdash x : \mathsf{int}]$} \AxiomC{$\vdash 1 :
+                \mathsf{int}$} \BinaryInfC{$\vdash x + 1 :
+                \mathsf{int}$} \UnaryInfC{$\vdash\ulam x x+1 : \mathsf{int}$}
+              \AxiomC{$[\vdash f : \mathsf{int}]$} \AxiomC{$\vdash 2 :
+                \mathsf{int}$} \BinaryInfC{$\vdash f\ 2 :
+                \mathsf{int}$} \AxiomC{$\vdash 3 : \mathsf{int}$}
+              \BinaryInfC{$\vdash f\ 2\ /\ 3$} \BinaryInfC{$\vdash
+                \mathbf{let}\ f\ x = x+1\ \mathbf{in}\ f\ 2\ / \
+                3:\mathsf{int}$}
+            \end{prooftree}
+          \end{minipage}
+        \end{onlyenv}
+        \begin{onlyenv}<3> \textsf{true}
+        \end{onlyenv}
+      };
+
+      \path[->] (tc) edge (D) ;
+    \end{tikzpicture}
+  \end{overlayarea}
+
+  \only<2>{\vspace{0.6ex}}
+
+  \begin{itemize}
+  \item<2-> builds the derivation (on the stack)
+  \item<3-> conscientiously discards it
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Incremental computation}
+  \begin{block}{Memoization}
+    \vspace{0.5em}
+    A \alert{memoizing} type-checker:
+
+    \begin{lstlisting}
 let tbl : (env * tm, tp) Hashtbl.t = Hashtbl.create 13
 let rec check env t =
   try Hashtbl.find (env,t) tbl with Not_found ->
   match t with
     | ... -> ... None
     | ... -> ... Hashtbl.add tbl (env,t) a; Some a
-          \end{lstlisting}
-        \end{onlyenv}
-      \end{overlayarea}
-      \begin{overlayarea}{\textwidth}{3em}
-        \begin{beamercolorbox}{white}
-          \begin{onlyenv}<1>
-            \begin{itemize}
-            \item builds the derivation (on the stack)
-            \item discards it
-            \end{itemize}
-          \end{onlyenv}
-          \begin{onlyenv}<2>
-            \begin{itemize}
-            \item builds the derivation (as a global map $\funname{tbl}$)
-            \item reuses any subderivation if syntactically equal
-            \end{itemize}
-          \end{onlyenv}
-        \end{beamercolorbox}
-      \end{overlayarea}
-    \end{onlyenv}
+    \end{lstlisting}
 
-    \begin{onlyenv}<3->
-      \begin{enumerate}
-      \item<3->[\itplus] random access to all subderivations
-      \item<4->[\itminus] no reuse of derivations in compatible
-        environments \\
-        {\footnotesize what if I want \eg weakening or
-          permutation to be taken into account?}
-      \item<5->[\itminus] no reuse if refactored program ($\alpha$,
-        $\beta$-equivalence,\ldots) \\
-        {\footnotesize or complex recognition procedure, enlarging the
-          trusted base}
-      \item<6->[\itminus] {\large\it no justification for the added code} \\
-        {\footnotesize or painful proof of conservativity}
-      \end{enumerate}
+    \begin{itemize}
+    \item builds the derivation (as a global map $\funname{tbl}$)
+    \item reuses any subderivation if syntactically equal
+    \end{itemize}
+  \end{block}
+\end{frame}
 
-      \only<7->{
-        {\footnotesize Mixes two goals:}
+\begin{frame}{Incremental computation}
+  \begin{enumerate}[<+->]
+  \item[\itplus] random access to all subderivations
+  \item[\itminus] no reuse in compatible environment {\small (up to weakening,
+    permutation)}, or if refactored program {\small ($\alpha$,
+    $\beta$-equivalent,\ldots)} \\
+    {\footnotesize Only with complex recognition procedure, enlarging
+      the trusted base}
+  \item[\itminus] {\large\it no justification for the added code} \\
+    {\footnotesize or painful proof of conservativity}
+  \end{enumerate}
 
-        \begin{itemize}
-        \item {\large derivation synthesis} \footnotesize (the typing algorithm)
-        \item {\large object reuse} \footnotesize (sharing common subderivation)
-        \end{itemize}
-      }
-    \end{onlyenv}
-    \end{overlayarea}
-\end{block}
+  \begin{visibleenv}<4->
+    {\footnotesize Forgets specificity of type-checking:}
+    \begin{itemize}
+    \item {\large produces a derivation}
+    \item {\large we know a lot about them}
+    \end{itemize}
+  \end{visibleenv}
+
+  \begin{visibleenv}<5->
+    {\footnotesize Mixes two goals:}
+
+    \begin{itemize}
+    \item {\large derivation synthesis} \footnotesize (the typing
+      algorithm)
+    \item {\large object reuse} \footnotesize (sharing common
+      subderivation)
+    \end{itemize}
+  \end{visibleenv}
 \end{frame}
 
 % mémoization? -> besoin d'un certificat
@@ -255,44 +344,33 @@ let rec check env t =
     % view the derivation as the document we're editing
     % through a view (the program)
     % --> bijective
-
-    {\centering
     \begin{tikzpicture}[node distance=4em, auto, >=latex]
-      \node (D) {$\mathcal D$};
-      \node (checkout) [right=of D, state, tribox] {$\funname{get}$};
-      \node (M) [right=of checkout] {$M$};
-      \node (M') [below=of M] {$M'$};
-      \node (commit) [state, tribox, left=of M', shape border
-      rotate=180] {$\funname{put}$};
-      \node (D') [below=of D] {$\mathcal D'$};
+      \node (D) {$\mathcal D$}; \node (checkout) [right=of D,
+      state, tribox] {$\funname{get}$}; \node (M) [right=of
+      checkout] {$M$}; \node (M') [below=3em of M] {$M'$}; \node
+      (commit) [state, tribox, left=of M', shape border
+      rotate=180] {$\funname{put}$}; \node (D') [below=3em of D]
+      {$\mathcal D'$};
 
-      \path[->]
-      (D) edge (checkout)
-      (checkout) edge (M)
-      (M) edge [color=red, double] node [name=delta] {$\delta$} (M')
-      (commit) edge (D')
-      ;
+      \path[->] (D) edge (checkout) (checkout) edge (M) (M) edge
+      [color=red, double] node [name=delta] {$\delta$} (M')
+      (commit) edge (D') ;
 
-      \draw[->]
-      (D) |- ++(1,-1) -| (commit)
-      ;
+      \draw[->] (D) |- ++(1,-1) -| (commit) ;
 
-      \alt<3>{
-        \draw[->] [out=0, in=0, color=red] (delta) edge (commit);
-      }{
-        \draw[->] (M') edge (commit);
-      }
+      \alt<3>{ \draw[->] [out=0, in=0, color=red] (delta) edge
+        (commit); }{ \draw[->] (M') edge (commit); }
 
       \begin{pgfonlayer}{background}
-        \node [fill=yellow!30,fit=(D) (D'), label=above:Derivations, ellipse] {};
-        \node [fill=yellow!30,fit=(M) (M'), label=above:Programs, ellipse] {};
-        \node [fill=yellow!30,fit=(checkout) (commit),
-        label=above:Lens, ellipse, inner sep=0] {};
+        \node [fill=yellow!30,fit=(D) (D'), label=above:Derivations,
+        ellipse] {}; \node [fill=yellow!30,fit=(M) (M'),
+        label=above:Programs, ellipse] {}; \node
+        [fill=yellow!30,fit=(checkout) (commit), label=above:Lens,
+        ellipse, inner sep=0] {};
       \end{pgfonlayer}
 
     \end{tikzpicture}
-    }
-    \begin{overlayarea}{\textwidth}{10em}
+    \begin{overlayarea}{\textwidth}{12em}
       \begin{itemize}
       \item $\function{get}{\mathcal D}$ projects derivation $\mathcal
         D$ to a program $M$
@@ -321,12 +399,6 @@ let rec check env t =
       \end{itemize}
     \end{overlayarea}
   \end{block}
-\end{frame}
-
-\begin{frame}{}
-  \begin{center}
-    {\centering\huge Our proposal}
-  \end{center}
 \end{frame}
 
 \begin{frame}{What notion of delta?}
@@ -358,7 +430,7 @@ let rec check env t =
 
 
   \begin{block}{A certifying approach}
-    \vspace{0.5em}
+    \vspace{0.9em}
     {\centering
       \begin{tikzpicture}[
         auto, >=latex,
@@ -392,7 +464,7 @@ let rec check env t =
 
       \end{tikzpicture}
       }
-
+      \vspace{-.8em}
     \begin{itemize}
     \item[\textsf{infer}] synthesizes the derivation\\
       {\footnotesize complex, ad-hoc, untrusted}
@@ -525,8 +597,14 @@ let rec check env t =
     \item derivation reuse
     \end{itemize}
   \item a generic delta/justification language
-  \item based on subterm reuse
+  \item based on subterm sharing
   \end{itemize}
+
+  \pause
+  \vspace{1em}
+  \begin{center}
+    { \Large \it Thank you!}
+  \end{center}
 \end{frame}
 
 \appendix
