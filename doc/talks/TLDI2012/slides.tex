@@ -267,7 +267,7 @@ let rec check env t =
             \end{prooftree}
           \end{minipage}
         \end{onlyenv}
-        \begin{onlyenv}<3> \textsf{true}
+        \begin{onlyenv}<3> \textsf{Some int}
         \end{onlyenv}
       };
 
@@ -496,7 +496,7 @@ let rec check env t =
             {\const{tp}} {\app{\const{of}}\app{\var{M}}{\var{A}}}
             \to \const{tm}=$ \\
             {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
-              \const{env}) (m : \const{obj}) (d : \const{obj})\to m$}
+              \const{env}) (m : \const{obj}) (a, d : \const{obj})\to m$}
             \\[1em]
 
           \item[\const{inline} :] $\prd M {\const{tm}} \prd N
@@ -559,8 +559,9 @@ let rec check env t =
       \pause
   \item[$\delta_1 = $]
     $
-    \const{infer}\ (\text{“}\mathbf{let}\ f\ x\ = (\const{get}\ \mmeta) * 2\
-    \mathbf{in}\ (\const{get}\ \mmmeta)\text{”})
+    \const{infer}\ (\text{“}\mathbf{let}\, f\, x = (\const{get}\
+    (\mmeta\ x\ \_)) * 2\
+    \mathbf{in}\ (\const{get}\ (\mmmeta\ f\ \_))\text{”})
     $
     \pause
     {\footnotesize
