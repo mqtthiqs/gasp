@@ -132,7 +132,7 @@
 
     \begin{block}{Requirements}
       \begin{itemize}
-      \item if $\vdash \delta(\mr) : A$ then $\function{check}{\mr,
+      \item $\vdash \delta(\mr) : A$ iff $\function{check}{\mr,
           \delta} = \mmr$
       \item $\mathsf{check}$ computes $\mmr$ in less than $O(|\delta(\mr)|)$ \small\qquad (ideally
         $O(|\delta|)$)
@@ -171,7 +171,7 @@
 
 \begin{frame}{Expected instances of this problem}
   \begin{enumerate}[<+->][Typed vers ion ]
-  \item[Module systems] and \emph{separate module typing} can be
+  \item[Module systems] esp. \emph{separate module typing} can be
     modeled by incrementally replacing a subterm under a context
   \item[Interactive toplevel] for typing, with global undo (\sysname{Coq},
     \sysname{Matita}, \ldots) (\emph{idem.})
@@ -314,24 +314,21 @@ let rec check env t =
       the trusted base}
   \item[\itminus] {\large\it no justification for the added code} \\
     {\footnotesize or painful proof of conservativity}
+  \item[\itminus] {\footnotesize Mixes two goals:}
+    \begin{itemize}
+    \item<4-> {\large derivation synthesis} \footnotesize (the typing
+      algorithm)
+    \item<4-> {\large object reuse} \footnotesize (sharing common
+      subderivation)
+    \end{itemize}
+
   \end{enumerate}
 
-  \begin{visibleenv}<4->
+  \begin{visibleenv}<5->
     {\footnotesize Forgets specificity of type-checking:}
     \begin{itemize}
     \item {\large produces a derivation}
     \item {\large we know a lot about them}
-    \end{itemize}
-  \end{visibleenv}
-
-  \begin{visibleenv}<5->
-    {\footnotesize Mixes two goals:}
-
-    \begin{itemize}
-    \item {\large derivation synthesis} \footnotesize (the typing
-      algorithm)
-    \item {\large object reuse} \footnotesize (sharing common
-      subderivation)
     \end{itemize}
   \end{visibleenv}
 \end{frame}
@@ -484,6 +481,7 @@ let rec check env t =
         {\footnotesize any OCaml function producing LF objects, output
           verified by \textsf{check}}
         \begin{example}
+          \small
           \begin{enumerate}[inline]
           \item[\const{infer} :] $\prd M {\const{tm}}
             \compreh A {\const{tp}} {\app{\const{of}}\app{\var{M}}{\var{A}}} =$ \\
@@ -516,20 +514,20 @@ let rec check env t =
         \item objects can contain metavariables $\mmeta, \mmmeta$
         \item $\mr$ is a pair $\Delta, \mmeta$ where $\Delta :
           (\mmeta\mapsto M : A)$
-        \item $\function{check}{\mr, M}$ returns $\mr \cup \function{slice}{M}$
+        % \item $\function{check}{\mr, M}$ returns $\mr \cup \function{slice}{M}$
         \item $\funname{slice}$ by $\lambda$-lifting or CMTT
         \end{itemize}
-        \begin{example}
-          \begin{math}
-            \function{check}{\mr,\ \const f\ \mmeta\ (\ulam x \const
-              b\ (\const c\ x))} = \mr \cup \left\{
-              \begin{aligned}
-                Y &: A\to B = \ulam x \const b\ (\const c\ x) \\
-                Z &: C = \const f\ X (\ulam x Y\ x)
-              \end{aligned}
-            \right.
-          \end{math}
-        \end{example}
+        % \begin{example}
+        %   \begin{math}
+        %     \function{check}{\mr,\ \const f\ \mmeta\ (\ulam x \const
+        %       b\ (\const c\ x))} = \mr \cup \left\{
+        %       \begin{aligned}
+        %         Y &: A\to B = \ulam x \const b\ (\const c\ x) \\
+        %         Z &: C = \const f\ X (\ulam x Y\ x)
+        %       \end{aligned}
+        %     \right.
+        %   \end{math}
+        % \end{example}
       \end{block}
       \end{onlyenv}
     \end{overlayarea}
