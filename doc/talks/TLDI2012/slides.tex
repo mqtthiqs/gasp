@@ -217,6 +217,23 @@
     ;
   \end{tikzpicture}
 \end{figure}
+
+\begin{block}{Outline}
+  \begin{itemize}
+  \item a certifying architecture
+  \item a generic $
+    \begin{array}{l}
+      \text{delta}\\
+      \text{justification}
+    \end{array}
+    \times
+    \begin{array}{l}
+      \text{language} \\
+      \text{data structure}
+    \end{array}
+    $
+  \end{itemize}
+\end{block}
 \end{frame}
 
 \subsection{Why is it hard?}
@@ -316,10 +333,10 @@ let rec check env t =
     {\footnotesize or painful proof of conservativity}
   \item[\itminus] {\footnotesize Mixes two goals:}
     \begin{itemize}
-    \item<4-> {\large derivation synthesis} \footnotesize (the typing
-      algorithm)
-    \item<4-> {\large object reuse} \footnotesize (sharing common
-      subderivation)
+    \item<4-> derivation synthesis {\footnotesize (the typing
+      algorithm)}
+    \item<4-> object reuse {\footnotesize (sharing common
+      subderivation)}
     \end{itemize}
 
   \end{enumerate}
@@ -341,22 +358,23 @@ let rec check env t =
     % view the derivation as the document we're editing
     % through a view (the program)
     % --> bijective
-    \begin{tikzpicture}[node distance=4em, auto, >=latex]
-      \node (D) {$\mathcal D$}; \node (checkout) [right=of D,
-      state, tribox] {$\funname{get}$}; \node (M) [right=of
-      checkout] {$M$}; \node (M') [below=3em of M] {$M'$}; \node
-      (commit) [state, tribox, left=of M', shape border
-      rotate=180] {$\funname{put}$}; \node (D') [below=3em of D]
-      {$\mathcal D'$};
+    \begin{figure}
+      \centering
+      \begin{tikzpicture}[node distance=4em, auto, >=latex]
+        \node (D) {$\mathcal D$}; \node (checkout) [right=of D, state,
+        tribox] {$\funname{get}$}; \node (M) [right=of checkout]
+        {$M$}; \node (M') [below=3em of M] {$M'$}; \node (commit)
+        [state, tribox, left=of M', shape border rotate=180]
+        {$\funname{put}$}; \node (D') [below=3em of D] {$\mathcal
+          D'$};
 
-      \path[->] (D) edge (checkout) (checkout) edge (M) (M) edge
-      [color=red, double] node [name=delta] {$\delta$} (M')
-      (commit) edge (D') ;
+        \path[->] (D) edge (checkout) (checkout) edge (M) (M) edge
+        [color=red, double] node [name=delta] {$\delta$} (M') (commit)
+        edge (D') ;
 
-      \draw[->] (D) |- ++(1,-1) -| (commit) ;
+        \draw[->] (D) |- ++(1,-1) -| (commit) ;
 
-      \alt<3>{ \draw[->] [out=0, in=0, color=red] (delta) edge
-        (commit); }{ \draw[->] (M') edge (commit); }
+        \draw[->] [out=0, in=0, color=red] (delta) edge (commit);
 
       \begin{pgfonlayer}{background}
         \node [fill=yellow!30,fit=(D) (D'), label=above:Derivations,
@@ -367,34 +385,19 @@ let rec check env t =
       \end{pgfonlayer}
 
     \end{tikzpicture}
-    \begin{overlayarea}{\textwidth}{12em}
+  \end{figure}
       \begin{itemize}
       \item $\function{get}{\mathcal D}$ projects derivation $\mathcal
         D$ to a program $M$
-        \begin{onlyenv}<-2>
-        \item $\function{put}{\mathcal D, M'}$ checks $M'$ and returns
-          its derivation $\mathcal D'$ \pause
-          \begin{enumerate}
-          \item[\itplus] state-based approach
-          \item[\itminus] connection between $\mathcal D$ and $M'$ is
-            lost
-          \item[\itminus] in $O(|M'|)$, not $O(|\delta|)$
-          \end{enumerate}
-        \end{onlyenv}
-        \begin{onlyenv}<3->
-        \item $\function{put}{\mathcal D, \alert\delta}$ checks
-          $\alert{\delta}$ against $\alert{\mathcal D}$ and returns
-          $\mathcal D'$
-          \begin{enumerate}
-          \item[\itplus] \alert{change}-based approach
-          \item[\itplus] $\delta$ is the connection between $\mathcal
-            D$ and $\mathcal D'$
-          \item[\itplus] possibly in $O(|\delta|)$
-          \item[\itplus] justification for each change ($\mathcal D'$)
-          \end{enumerate}
-        \end{onlyenv}
+      \item $\function{put}{\mathcal D, \delta}$ checks
+        $\delta$ against $\mathcal D$ and returns
+        $\mathcal D'$
+        \begin{itemize}
+        \item the incremental type-checker
+        \item change-based approach
+        \item justification for each change ($\mathcal D'$)
+        \end{itemize}
       \end{itemize}
-    \end{overlayarea}
   \end{block}
 \end{frame}
 
@@ -408,15 +411,15 @@ let rec check env t =
       deltas into deltas
     \end{itemize}
 
-    $$ \delta \gequal \ldots \text{[syntax of $M$]} \ldots \gor
+    $$ \delta \gequal \ldots \text{[{\footnotesize syntax of $M$}]} \ldots \gor
     \mmeta \gor \function{f}{\vec\delta} $$
-
+    \vspace{1em}
     \pause
   \item A \textcolor{greenish}{repository} $\mr$ is a derivation
     $\mathcal D$ with named, annotated subderivations (\emph{slices})
     with random access:
     \begin{align*}
-      \mathcal D^* &\gequal \ldots\text{[syntax of $\mathcal D$]}\ldots
+      \mathcal D^* &\gequal \ldots\text{[{\footnotesize syntax of $\mathcal D$}]}\ldots
       \gor \mmeta \\
       \mr &\gequal \Delta, \mmeta \qquad\text{where}\quad\Delta : \mmeta\mapsto (\mathcal D^* : J)
     \end{align*}
@@ -480,21 +483,22 @@ let rec check env t =
       \begin{block}{Interpreted functions} taking \& producing objects (tactics) \\
         {\footnotesize any OCaml function producing LF objects, output
           verified by \textsf{check}}
-        \begin{example}
+        \begin{examples}
           \small
           \begin{enumerate}[inline]
           \item[\const{infer} :] $\prd M {\const{tm}}
-            \compreh A {\const{tp}} {\app{\const{of}}\app{\var{M}}{\var{A}}} =$ \\
-            {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
-              \const{env}) (m : \const{obj}) \to \mathbf{match}\ m\
-              \mathbf{with} \ldots$}
+            \compreh A {\const{tp}}
+            {\app{\const{of}}\app{\var{M}}{\var{A}}} = \ldots$ \\
+            % {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
+            %   \const{env}) (m : \const{obj}) \to \mathbf{match}\ m\
+            %   \mathbf{with} \ldots$}
             \\[1em]
 
           \item[\const{get} :] $\prd M {\const{tm}} \compreh A
             {\const{tp}} {\app{\const{of}}\app{\var{M}}{\var{A}}}
-            \to \const{tm}=$ \\
-            {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
-              \const{env}) (m : \const{obj}) (a, d : \const{obj})\to m$}
+            \to \const{tm}= \ldots$
+            % \\ {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
+            %   \const{env}) (m : \const{obj}) (a, d : \const{obj})\to m$}
             \\[1em]
 
           \item[\const{inline} :] $\prd M {\const{tm}} \prd N
@@ -504,7 +508,7 @@ let rec check env t =
             \app{\const{of}} \app{(\app {\var M} {\var N})} {\var A} =
             \ldots$
           \end{enumerate}
-        \end{example}
+        \end{examples}
       \end{block}
     \end{onlyenv}
     \begin{onlyenv}<2>
