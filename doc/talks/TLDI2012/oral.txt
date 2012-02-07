@@ -1,0 +1,85 @@
+
+Let me start by saying that although this is a small paper submission,
+the title doesn't start by the word 'towards'. This work is still in
+progress, but we would like to put the emphasis on the problem more
+than on the partial proposal made.
+
+--------------------
+
+The richly typed language we write programs in every day gives more
+and more importance to the interaction that happens between the
+programmer and the type-checker. Typing made me lazy: when I make a
+change to my OCaml programs or to my Coq proof, I usually rerun the
+checker on the whole project to see what impact this modification
+has. The richer, the more precise the type system is, the more I will
+need its help to elaborate my program, and this week's program shows
+that it will be more and more the case in the future. But the richer
+the type system is, the more expensive type-checking gets.
+
+--------------------
+
+For example type inference can be quite expensive, but even besides
+this, when the checker has to perform computations, especially when
+reflexively defining a decision procedure for example, or in any case
+when checking very large terms repeatedly, the time taken can hinder
+this interaction.
+
+But in all these cases, the type-checker is called repeatedly with
+almost the same input: a possibly large term where only a small part
+is changed. This naturally poses the question of how we can make
+type-checking incremental, and what we would gain from that.
+
+--------------------
+
+So given that I just checked the first version of my program and
+modified it, how to take advantage of the knowledge acquired from this
+previous check? Abstractly, this will involve reusing pieces of
+derivations, stored in what we call a repository, and to recheck only
+the modified part of my program (the delta) and potentially its impact
+on the rest of the program's well-typing.
+
+We want two things from this process: the first is of course that the
+incremental process gives exactly the same result as the batch one,
+that is if there exists a derivation, the incremental checker should
+issue a new repository (and not an error). Secondly, check should
+compute the resulting repository in a time less than the size of the
+whole term, ideally in the size of the delta..
+
+--------------------
+
+Let's go over some examples to see what kind of computation can be
+avoided and why.
+
+...
+
+Obviously this last modification is more complicated to treat and I
+only have some clues on how to do it, but notice that already the
+first two would bring an interesting feature to our compilers
+
+--------------------
+
+Having a way to communicate these local changes to a type-checker
+sheds a new light on existing tools and allows to imagine new ones.
+
+Separate module typing is one of them. Typing a module that depends on
+another is just a matter of putting the second in the typing
+environment of the first. This can be modeled by incrementally
+replacing a dummy subterm by another under the environment of all its
+definitions. Being able to retype, not at the granularity of files,
+but of any subexpression would be of great help.
+
+The underlying interaction of many proof assistants is based on an
+interactive toplevel that types definitions and put them in a global
+environment. This can be modeled the same way by incrementally
+constructing a term and rechecking it minimally.
+
+In a setting where types represent accurately the specification of
+your program, refactoring can be seen as a type-preserving
+modification, that is a metatheorem stating that if M has a type A,
+then the refactored M will also have type A.
+
+If the repository is able to maintain not just one but several
+previous versions of a term, then we are not far from having a typed
+version control, that stores typed ASTs, and where diffs are expressed
+in a semantic fashion, and well-typedness is statically ensured and
+incrementally checked.

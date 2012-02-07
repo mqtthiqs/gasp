@@ -492,17 +492,17 @@ let rec check env t =
             % {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
             %   \const{env}) (m : \const{obj}) \to \mathbf{match}\ m\
             %   \mathbf{with} \ldots$}
-            \\[1em]
+            % \\[1em]
 
           \item[\const{get} :] $\prd M {\const{tm}} \compreh A
             {\const{tp}} {\app{\const{of}}\app{\var{M}}{\var{A}}}
             \to \const{tm}= \ldots$
             % \\ {\small$\quad\mathbf{fun}\ (r : \const{repo}) (e :
             %   \const{env}) (m : \const{obj}) (a, d : \const{obj})\to m$}
-            \\[1em]
+            % \\[1em]
 
           \item[\const{inline} :] $\prd M {\const{tm}} \prd N
-            {\const{tm}\to\const{tm}} $\\ $\qquad \compreh A
+            {\const{tm}\to\const{tm}} $ $\qquad \compreh A
             {\const{tp}} {\app{\const{of}} \app{(\const{let}\ {\var
                   M}\ {(\ulam x \var N)})} {\var A}} \to
             \app{\const{of}} \app{(\app {\var M} {\var N})} {\var A} =
@@ -513,7 +513,7 @@ let rec check env t =
     \end{onlyenv}
     \begin{onlyenv}<2>
       \begin{block}
-        {Random access} to named, annotated subterms (slices) \\
+        {Random access} to named, annotated subterms (slices)
         \begin{itemize}
         \item objects can contain metavariables $\mmeta, \mmmeta$
         \item $\mr$ is a pair $\Delta, \mmeta$ where $\Delta :
