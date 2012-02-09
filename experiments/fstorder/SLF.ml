@@ -5,9 +5,7 @@ type term =
   | Ident of string
   | Meta of string
 
-type sign =
-  | Nil
-  | Cons of string * term * sign
+type sign = (string * term) list
 
 module Parser = struct
 
@@ -51,8 +49,8 @@ module Parser = struct
 
   EXTEND Gram
   sign:
-  [[ -> <:expr< SLF.Nil >>
-   | x = LIDENT; ":"; t = term; "."; s = sign -> <:expr< SLF.Cons ($str:x$, $t$, $s$) >>
+  [[ -> <:expr< [] >>
+   | x = LIDENT; ":"; t = term; "."; s = sign -> <:expr< [($str:x$, $t$) :: $s$] >>
    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
    ]];
   sign_eoi: [[ s = sign; `EOI -> s]];
@@ -103,7 +101,7 @@ module Printer = struct
   let term fmt t = pr_paren term term_prec 100 (<=) fmt t
 
   let rec sign fmt = function
-    | Nil -> ()
-    | Cons (x, t, s) -> fprintf fmt "@[%a : %a@].@,%a" str x term t sign s
+    | [] -> ()
+    | (x, t) :: s -> fprintf fmt "@[%a : %a@].@,%a" str x term t sign s
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
 end

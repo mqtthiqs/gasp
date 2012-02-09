@@ -166,10 +166,10 @@ module Printer = struct
   let sign fmt (s : Sign.t) =
     let l =
       Sign.MO.fold
-      (fun x a l -> SLF.Cons (Names.OConst.repr x, Unstrat.fam [] a, l)) (fst s)
+      (fun x a l -> (Names.OConst.repr x, Unstrat.fam [] a) :: l) (fst s)
       (Sign.MF.fold
-         (fun x k l -> SLF.Cons (Names.FConst.repr x, Unstrat.kind [] k, l)) (snd s)
-         SLF.Nil) in
+         (fun x k l -> (Names.FConst.repr x, Unstrat.kind [] k) :: l) (snd s)
+         []) in
     SLF.Printer.sign fmt l
 end
 

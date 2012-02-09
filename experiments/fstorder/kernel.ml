@@ -38,8 +38,8 @@ module Check = struct
 end
 
 let rec init s = function
-  | SLF.Nil -> s
-  | SLF.Cons (c, t, s') ->
+  | [] -> s
+  | (c, t) :: s' ->
     let repo = { Repo.sign = s;
                  Repo.ctx = Repo.Context.empty;
                  Repo.head = Names.Meta.make "DUMMY";

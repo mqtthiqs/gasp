@@ -5,9 +5,7 @@ type term =
   | Ident of string
   | Meta of string
 
-type sign =
-  | Nil
-  | Cons of string * term * sign
+type sign = (string * term) list
 
 module Parser : sig
   open Camlp4.PreCast
