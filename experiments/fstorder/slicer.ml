@@ -16,16 +16,20 @@ let init sign : Repo.t = {
   Repo.head = Meta.make "DUMMY";
 }
 
+let rec slice repo = function
+  | OApp (c, l) ->
+    let repo, l = List.fold_map slice repo l in
+    if Sign.slices c repo.Repo.sign
+    then
+      let repo = Kernel.push repo (OApp (c, l)) in
+      repo, OMeta (repo.Repo.head)
+    else repo, OApp (c, l)
+  | m -> repo, m
+
 let commit repo m =
-  let rec commit_rec repo = function
-    | OApp (c, l) when Sign.slices c repo.Repo.sign ->
-      let repo, l = List.fold_map commit_rec repo l in
-      let repo, x = Kernel.push repo (OApp (c, l)) in
-      repo, OMeta x
-    | m -> repo, m in
+  Format.printf "*** commit %a@." SLF.Printer.term m;
   let m = LF.Strat.obj repo.Repo.sign [] m in
-  let repo, m = commit_rec repo m in
-  let repo, x = Kernel.push repo m in
-  {repo with Repo.head = x}
+  let repo, m = slice repo m in
+  Kernel.push repo m
 
 let merge repo m = assert false

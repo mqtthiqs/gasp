@@ -52,13 +52,19 @@ let rec init s = function
         ignore (Check.kind repo LF.Env.empty k);
         init (LF.Sign.fadd (Names.FConst.make c) k s) s'
 
-let push repo m =
+let push =
   let gensym =
     let n = ref 0 in
     fun () -> incr n; string_of_int !n in
-  let a = Check.obj repo LF.Env.empty m in
-  let x = Names.Meta.make ("X"^gensym()) in
-  { repo with Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx }, x
+  fun repo m ->
+    (* Format.printf "* push %a in@.%a@." LF.Printer.obj m Repo.Printer.t_light repo; *)
+    let a = Check.obj repo LF.Env.empty m in
+    let x = Names.Meta.make ("X"^gensym()) in
+    let repo = { repo with
+      Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx;
+      Repo.head = x } in
+    (* Format.printf "* push => %a@." Repo.Printer.t_light repo; *)
+    repo
 
 let pull repo x =
   let rec aux ctx x =
