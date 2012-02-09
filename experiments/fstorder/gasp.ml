@@ -32,5 +32,5 @@ let repo = Slicer.commit stlc
   >>
 ;;
 
-Repo.Printer.t Format.std_formatter repo
+Format.printf "%a " Repo.Printer.t repo
 ;;

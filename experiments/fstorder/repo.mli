@@ -13,4 +13,5 @@ type t = {
 
 module Printer : sig
   val t : Format.formatter -> t -> unit
+  val t_light : Format.formatter -> t -> unit
 end
