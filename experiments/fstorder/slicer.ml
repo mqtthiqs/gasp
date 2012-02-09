@@ -16,17 +16,16 @@ let init sign : Repo.t = {
   Repo.head = Meta.make "DUMMY";
 }
 
-let rec commit_rec repo = function
-  | OApp (c, l) when Sign.slices c repo.Repo.sign ->
-    let repo, l = List.fold_map commit_rec repo l in
-    let repo, x = Kernel.push repo (OApp (c, l)) in
-    repo, OMeta x
-  | m -> repo, m
-
 let commit repo m =
+  let rec commit_rec repo = function
+    | OApp (c, l) when Sign.slices c repo.Repo.sign ->
+      let repo, l = List.fold_map commit_rec repo l in
+      let repo, x = Kernel.push repo (OApp (c, l)) in
+      repo, OMeta x
+    | m -> repo, m in
   let m = LF.Strat.obj repo.Repo.sign [] m in
   let repo, m = commit_rec repo m in
   let repo, x = Kernel.push repo m in
-  repo, x
+  {repo with Repo.head = x}
 
 let merge repo m = assert false

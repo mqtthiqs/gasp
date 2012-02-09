@@ -1,16 +1,14 @@
 open Names
 
-module Context : sig
-  type t
-  val empty : t
-  val find : Meta.t -> t -> LF.obj * LF.fam
-  val add : Meta.t -> LF.obj * LF.fam -> t -> t
-end = struct
+module Context = struct
+
   module M = Map.Make(Meta)
   type t = (LF.obj * LF.fam) M.t
   let empty = M.empty
   let find = M.find
   let add = M.add
+  let fold = M.fold
+
 end
 
 type t = {
@@ -19,10 +17,21 @@ type t = {
   head: Meta.t;
 }
 
-let load f : t =
-  let ch = open_in f in
-  Marshal.from_channel ch
+module Printer = struct
 
-let save f (r : t) =
-  let ch = open_out f in
-  Marshal.to_channel ch r
+  let context fmt c =
+    Context.fold
+      (fun x (m,a) () ->
+        Format.fprintf fmt "%a : %a = %a@."
+          Meta.print x
+          LF.Printer.fam a
+          LF.Printer.obj m
+      ) c ()
+
+  let t fmt {sign; ctx; head} =
+    Format.fprintf fmt "Signature:@ %a@.%a@.|-@ %a"
+      LF.Printer.sign sign
+      context ctx
+      Meta.print head
+
+end

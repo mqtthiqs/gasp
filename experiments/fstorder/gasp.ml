@@ -26,10 +26,11 @@ let stlc = Slicer.init
     is (cons B E) M A -> is E (lam M) A.
 >>
 
-let repo, x = Slicer.commit stlc
+let repo = Slicer.commit stlc
   <:obj<
     lam (lam (app (s z) z))
   >>
 ;;
 
-print_string "\n\tGasp!\n"
+Repo.Printer.t Format.std_formatter repo
+;;
