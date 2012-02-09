@@ -1,6 +1,7 @@
 _build
 gasp
 gasp.native
+gasp.byte
 *.vo
 *.glob
 *.aux
