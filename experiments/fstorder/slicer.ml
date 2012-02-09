@@ -13,12 +13,11 @@ let prelude : LF.Sign.t = Kernel.init LF.Sign.empty
 let init sign : Repo.t = {
   Repo.sign = Kernel.init prelude sign;
   Repo.ctx = Repo.Context.empty;
-  Repo.head = Meta.make "empty";
-  Repo.bound = OConstSet.empty
+  Repo.head = Meta.make "DUMMY";
 }
 
 let rec commit_rec repo = function
-  | OApp (c, l) when OConstSet.mem c repo.Repo.bound ->
+  | OApp (c, l) when Sign.slices c repo.Repo.sign ->
     let repo, l = List.fold_map commit_rec repo l in
     let repo, x = Kernel.push repo (OApp (c, l)) in
     repo, OMeta x

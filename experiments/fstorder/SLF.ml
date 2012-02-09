@@ -5,7 +5,7 @@ type term =
   | Ident of string
   | Meta of string
 
-type sign = (string * term) list
+type sign = (string * term * bool) list
 
 module Parser = struct
 
@@ -50,7 +50,10 @@ module Parser = struct
   EXTEND Gram
   sign:
   [[ -> <:expr< [] >>
-   | x = LIDENT; ":"; t = term; "."; s = sign -> <:expr< [($str:x$, $t$) :: $s$] >>
+   | x = ident; ":"; t = term; "."; s = sign ->
+     <:expr< [($str:x$, $t$, True) :: $s$] >>
+   | "#"; x = ident; ":"; t = term; "."; s = sign ->
+     <:expr< [($str:x$, $t$, False) :: $s$] >>
    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
    ]];
   sign_eoi: [[ s = sign; `EOI -> s]];
@@ -102,6 +105,7 @@ module Printer = struct
 
   let rec sign fmt = function
     | [] -> ()
-    | (x, t) :: s -> fprintf fmt "@[%a : %a@].@,%a" str x term t sign s
+    | (x, t, true) :: s -> fprintf fmt "@[%a : %a@].@,%a" str x term t sign s
+    | (x, t, false) :: s -> fprintf fmt "#@[%a : %a@].@,%a" str x term t sign s
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
 end

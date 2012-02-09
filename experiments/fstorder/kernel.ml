@@ -39,16 +39,15 @@ end
 
 let rec init s = function
   | [] -> s
-  | (c, t) :: s' ->
+  | (c, t, b) :: s' ->
     let repo = { Repo.sign = s;
                  Repo.ctx = Repo.Context.empty;
-                 Repo.head = Names.Meta.make "DUMMY";
-                 Repo.bound = Names.OConstSet.empty } in
+                 Repo.head = Names.Meta.make "DUMMY" } in
     match LF.Strat.term s [] t with
       | LF.Strat.Obj _ -> failwith "object in sign"
       | LF.Strat.Fam a ->
         ignore (Check.fam repo LF.Env.empty a);
-        init (LF.Sign.oadd (Names.OConst.make c) a s) s'
+        init (LF.Sign.oadd (Names.OConst.make c) (b, a) s) s'
       | LF.Strat.Kind k ->
         ignore (Check.kind repo LF.Env.empty k);
         init (LF.Sign.fadd (Names.FConst.make c) k s) s'

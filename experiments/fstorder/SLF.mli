@@ -5,7 +5,7 @@ type term =
   | Ident of string
   | Meta of string
 
-type sign = (string * term) list
+type sign = (string * term * bool) list
 
 module Parser : sig
   open Camlp4.PreCast

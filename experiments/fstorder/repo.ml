@@ -17,7 +17,6 @@ type t = {
   sign: LF.Sign.t;
   ctx: Context.t;
   head: Meta.t;
-  bound: OConstSet.t
 }
 
 let load f : t =

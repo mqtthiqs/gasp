@@ -24,16 +24,13 @@ end
 
 module Sign = struct
 
-  type entry =
-    | OConst of fam
-    | FConst of kind
-
   module MO = Map.Make(OConst)
   module MF = Map.Make(FConst)
 
-  type t = fam MO.t * kind MF.t
+  type t = (bool * fam) MO.t * kind MF.t
   let empty = MO.empty, MF.empty
-  let ofind x ((o, f):t) = MO.find x o
+  let slices x (o, f) = fst (MO.find x o)
+  let ofind x ((o, f):t) = snd (MO.find x o)
   let ffind x ((o, f):t) = MF.find x f
   let oadd x a ((o, f):t) = MO.add x a o, f
   let fadd x k ((o, f):t) = o, MF.add x k f
@@ -166,9 +163,9 @@ module Printer = struct
   let sign fmt (s : Sign.t) =
     let l =
       Sign.MO.fold
-      (fun x a l -> (Names.OConst.repr x, Unstrat.fam [] a) :: l) (fst s)
+      (fun x (b, a) l -> (Names.OConst.repr x, Unstrat.fam [] a, b) :: l) (fst s)
       (Sign.MF.fold
-         (fun x k l -> (Names.FConst.repr x, Unstrat.kind [] k) :: l) (snd s)
+         (fun x k l -> (Names.FConst.repr x, Unstrat.kind [] k, false) :: l) (snd s)
          []) in
     SLF.Printer.sign fmt l
 end

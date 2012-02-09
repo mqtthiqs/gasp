@@ -24,15 +24,12 @@ end
 
 module Sign : sig
 
-  type entry =
-    | OConst of fam
-    | FConst of kind
-
   type t
   val empty : t
+  val slices : OConst.t -> t -> bool
   val ofind : OConst.t -> t -> fam
   val ffind : FConst.t -> t -> kind
-  val oadd : OConst.t -> fam -> t -> t
+  val oadd : OConst.t -> bool * fam -> t -> t
   val fadd : FConst.t -> kind -> t -> t
 end
 
