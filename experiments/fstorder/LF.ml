@@ -165,7 +165,7 @@ module Printer = struct
       Sign.MO.fold
       (fun x (b, a) l -> (Names.OConst.repr x, Unstrat.fam [] a, b) :: l) (fst s)
       (Sign.MF.fold
-         (fun x k l -> (Names.FConst.repr x, Unstrat.kind [] k, false) :: l) (snd s)
+         (fun x k l -> (Names.FConst.repr x, Unstrat.kind [] k, true) :: l) (snd s)
          []) in
     SLF.Printer.sign fmt l
 end

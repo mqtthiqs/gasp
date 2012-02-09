@@ -34,7 +34,7 @@ module Parser = struct
       [ t = term; u = term -> <:expr<  SLF.App ($t$, $u$) >> ]
   | "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
-      | "#"; x = ident -> <:expr< SLF.Meta $str:x$ >>
+      | "?"; x = ident -> <:expr< SLF.Meta $str:x$ >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
   ];
@@ -94,7 +94,8 @@ module Printer = struct
     | Prod _ -> 30
 
   let term pp fmt = function
-    | Meta x | Ident x -> str fmt x
+    | Meta x -> fprintf fmt "?%s" x
+    | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
 	str x (pp (<=)) a (pp (<=)) b
     | Prod (None, a, b) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<=)) a (pp (<=)) b

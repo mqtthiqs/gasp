@@ -11,7 +11,7 @@ module Meta : NameSig = struct
   let compare = String.compare
   let make x = x
   let repr x = x
-  let print fmt x = Format.fprintf fmt "#%s" x
+  let print fmt x = Format.fprintf fmt "?%s" x
 end
 
 module OConst : NameSig = struct
