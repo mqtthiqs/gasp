@@ -43,13 +43,14 @@ let rec init s = function
     let repo = { Repo.sign = s;
                  Repo.ctx = Repo.Context.empty;
                  Repo.head = Names.Meta.make "DUMMY" } in
-    match LF.Strat.term s [] t with
-      | LF.Strat.Obj _ -> failwith "object in sign"
-      | LF.Strat.Fam a ->
-        ignore (Check.fam repo LF.Env.empty a);
+    match LF.Strat.term s [] t, b with
+      | LF.Strat.Obj _, _ -> failwith "object in sign"
+      | LF.Strat.Kind _, false -> failwith "kind cannot be non-sliceable"
+      | LF.Strat.Fam a, b ->
+        Check.fam repo LF.Env.empty a;
         init (LF.Sign.oadd (Names.OConst.make c) (b, a) s) s'
-      | LF.Strat.Kind k ->
-        ignore (Check.kind repo LF.Env.empty k);
+      | LF.Strat.Kind k, true ->
+        Check.kind repo LF.Env.empty k;
         init (LF.Sign.fadd (Names.FConst.make c) k s) s'
 
 let push =
