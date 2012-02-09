@@ -37,13 +37,31 @@ module Check = struct
 
 end
 
+let rec init s = function
+  | SLF.Nil -> s
+  | SLF.Cons (c, t, s') ->
+    let repo = { Repo.sign = s;
+                 Repo.ctx = Repo.Context.empty;
+                 Repo.head = Names.Meta.make "DUMMY";
+                 Repo.bound = Names.OConstSet.empty } in
+    match LF.Strat.term s [] t with
+      | LF.Strat.Obj _ -> failwith "object in sign"
+      | LF.Strat.Fam a ->
+        ignore (Check.fam repo LF.Env.empty a);
+        init (LF.Sign.oadd (Names.OConst.make c) a s) s'
+      | LF.Strat.Kind k ->
+        ignore (Check.kind repo LF.Env.empty k);
+        init (LF.Sign.fadd (Names.FConst.make c) k s) s'
+
 let push repo m =
   let gensym =
     let n = ref 0 in
     fun () -> incr n; string_of_int !n in
   let a = Check.obj repo LF.Env.empty m in
   let x = Names.Meta.make ("X"^gensym()) in
-  { repo with Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx }, LF.OMeta x
+  { repo with Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx }, x
 
-let rec pull repo x =
-   LF.Util.fold_meta (pull repo) (fst (Repo.Context.find x repo))
+let pull repo x =
+  let rec aux ctx x =
+    LF.Util.fold_meta (aux ctx) (fst (Repo.Context.find x ctx))
+  in aux repo.Repo.ctx x

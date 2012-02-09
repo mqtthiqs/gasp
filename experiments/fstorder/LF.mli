@@ -54,7 +54,6 @@ module Strat : sig
   val obj : Sign.t -> string option list -> term -> obj
   val fam : Sign.t -> string option list -> term -> fam
   val kind : Sign.t -> string option list -> term -> kind
-  val sign : Sign.t -> sign -> Sign.t
 end
 
 module Unstrat : sig

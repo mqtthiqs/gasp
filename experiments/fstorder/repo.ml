@@ -20,13 +20,6 @@ type t = {
   bound: OConstSet.t
 }
 
-let init sign : t = {
-  sign = sign;
-  ctx = Context.empty;
-  head = Meta.make "empty";
-  bound = OConstSet.empty
-}
-
 let load f : t =
   let ch = open_in f in
   Marshal.from_channel ch

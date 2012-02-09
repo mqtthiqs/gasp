@@ -70,13 +70,24 @@ module Strat = struct
   open Util
 
   let rec app sign env l = function
-    | Ident x -> OApp (OConst.make x, l)
+    | Ident x ->
+      begin
+        try ignore (List.index (Some x) env);
+            failwith ("stratification: "^x^" is a variable in function position")
+        with Not_found ->
+          try let x = OConst.make x in
+              ignore(Sign.ofind x sign); Obj (OApp (x, l))
+          with Not_found ->
+            let x = FConst.make x in
+            try ignore(Sign.ffind x sign); Fam (FApp (x, l))
+            with Not_found -> failwith ("stratification: not found "^FConst.repr x)
+      end
     | App (t, u) ->
       begin match term sign env u with
         | Obj u ->  app sign env (u :: l) t
-        | _ -> failwith "stratification error"
+        | _ -> failwith "stratification: argument is not an object"
       end
-    | _ -> failwith "app error"
+    | _ -> failwith "stratification: app error"
 
   and term sign env = function
     | Type -> Kind(KType)
@@ -84,9 +95,11 @@ module Strat = struct
       begin match term sign env a, term sign (x::env) b with
         | Fam a, Kind k -> Kind (KProd (x, a, k))
         | Fam a, Fam b -> Fam (FProd (x, a, b))
-        | _ -> failwith "stratification error"
+        | Kind _, _ -> failwith "stratification: prod argument is a kind"
+        | Fam _, Obj _ -> failwith "stratification: prod body is an obj"
+        | Obj _, _ -> failwith "stratification: prod argument is an obj"
       end
-    | App (t, u) as a -> Obj (app sign env [] a)
+    | App (t, u) as a -> app sign env [] a
     | Ident x ->
       begin try Obj (OVar (List.index (Some x) env))
         with Not_found ->
@@ -94,16 +107,10 @@ module Strat = struct
               ignore(Sign.ofind x sign); Obj (OApp (x, []))
           with Not_found ->
             let x = FConst.make x in
-            ignore(Sign.ffind x sign); Fam (FApp (x, []))
+            try ignore(Sign.ffind x sign); Fam (FApp (x, []))
+            with Not_found -> failwith ("stratification: not found "^FConst.repr x)
       end
     | Meta x -> Obj (OMeta (Meta.make x))
-
-  let rec sign s = function
-    | Nil -> s
-    | Cons (c, t, s') -> match term s [] t with
-        | Obj _ -> failwith "object in sign"
-        | Fam a -> sign (Sign.oadd (Names.OConst.make c) a s) s'
-        | Kind k -> sign (Sign.fadd (Names.FConst.make c) k s) s'
 
   let obj sign env t = match term sign env t with
     | Obj m -> m
