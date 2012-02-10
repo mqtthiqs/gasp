@@ -34,7 +34,7 @@ module Printer = struct
       Meta.print head
 
   let t fmt {sign; ctx; head} =
-    Format.fprintf fmt "Signature:@ %a@.Context:@ %a@.|-@ %a"
+    Format.fprintf fmt "Signature:@ %a@.Context:@ %a@.|- %a@."
       LF.Printer.sign sign
       context ctx
       Meta.print head

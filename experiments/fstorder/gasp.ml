@@ -6,7 +6,7 @@ let stlc = Slicer.init
 
   tm : type.
   lam : tm -> tm.
-  app : tm -> tm -> tm.
+  #app : tm -> tm -> tm.
   s : tm -> tm.
   z : tm.
 

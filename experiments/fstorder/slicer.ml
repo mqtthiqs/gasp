@@ -27,7 +27,7 @@ let rec slice repo = function
   | m -> repo, m
 
 let commit repo m =
-  Format.printf "*** commit %a@." SLF.Printer.term m;
+  (* Format.printf "*** commit %a@." SLF.Printer.term m; *)
   let m = LF.Strat.obj repo.Repo.sign [] m in
   let repo, m = slice repo m in
   Kernel.push repo m
