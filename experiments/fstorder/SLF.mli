@@ -1,6 +1,7 @@
 type term =
   | Type
   | Prod of string option * term * term
+  | Lam of string * term
   | App of term * term
   | Ident of string
   | Meta of string

@@ -1,6 +1,7 @@
 type term =
   | Type
   | Prod of string option * term * term
+  | Lam of string * term
   | App of term * term
   | Ident of string
   | Meta of string
@@ -30,6 +31,9 @@ module Parser = struct
       [ t = term; "->"; u = term -> <:expr< SLF.Prod(None, $t$, $u$) >> ]
   | "rarr" RIGHTA
       [ t = term; "<-"; u = term -> <:expr< SLF.Prod(None, $u$, $t$) >> ]
+  | "lam" RIGHTA
+      [ "["; id = ident; "]"; t = term ->
+      <:expr< SLF.Lam ($str:id$, $t$) >> ]
   | "app" LEFTA
       [ t = term; u = term -> <:expr<  SLF.App ($t$, $u$) >> ]
   | "simple"
@@ -90,6 +94,7 @@ module Printer = struct
 
   let term_prec = function
     | Type | Ident _ | Meta _ -> 0
+    | Lam _ -> 20
     | App _ -> 10
     | Prod _ -> 30
 
@@ -98,6 +103,7 @@ module Printer = struct
     | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
 	str x (pp (<=)) a (pp (<=)) b
+    | Lam (x, t) -> fprintf fmt "@[[%s]@ %a@]" x (pp (<=)) t
     | Prod (None, a, b) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<=)) a (pp (<=)) b
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" (pp (<=)) t (pp (<)) u
     | Type -> fprintf fmt "@[type@]"
