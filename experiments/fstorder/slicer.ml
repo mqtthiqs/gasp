@@ -4,10 +4,10 @@ open LF
 
 let prelude : LF.Sign.t = Kernel.init LF.Sign.empty
   <:sign<
-    version : type.
-    ancestors : type.
-    anil : ancestors.
-    acons : version -> ancestors -> ancestors.
+    (* version : type. *)
+    (* ancestors : type. *)
+    (* anil : ancestors. *)
+    (* acons : version -> ancestors -> ancestors. *)
   >>
 
 let init sign : Repo.t = {
@@ -16,20 +16,26 @@ let init sign : Repo.t = {
   Repo.head = Meta.make "DUMMY";
 }
 
-let rec slice repo = function
-  | OApp (c, l) ->
+let rec slice repo m =
+  Format.printf "** slice %a@." LF.Printer.obj m;
+  match m with
+  | OLam (x, m) ->
+    let repo, m = slice repo m in
+    repo, OLam (x, m)
+  | OApp (h, l) ->
     let repo, l = List.fold_map slice repo l in
-    if Sign.slices c repo.Repo.sign
-    then
-      let repo = Kernel.push repo (OApp (c, l)) in
-      repo, OMeta (repo.Repo.head)
-    else repo, OApp (c, l)
-  | m -> repo, m
+    begin match h with
+      | HConst c when Sign.slices c repo.Repo.sign ->
+        let repo = Kernel.push repo (h, l) in
+        repo, OMeta (repo.Repo.head)
+      | h -> repo, OApp (h, l)
+    end
+  | OMeta _ as m -> repo, m
 
 let commit repo m =
-  (* Format.printf "*** commit %a@." SLF.Printer.term m; *)
-  let m = LF.Strat.obj repo.Repo.sign [] m in
-  let repo, m = slice repo m in
-  Kernel.push repo m
-
-let merge repo m = assert false
+  Format.printf "*** commit %a@." SLF.Printer.term m;
+  match LF.Strat.obj repo.Repo.sign [] m with
+    | OApp (h, l) ->
+      let repo, m = slice repo (OApp (h, l)) in
+      Kernel.push repo (h, l)
+    | _ -> failwith "not an app"
