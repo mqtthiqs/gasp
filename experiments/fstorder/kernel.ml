@@ -4,6 +4,12 @@ module Check = struct
   open LF
   open Repo
 
+  let head repo env : head -> fam = function
+    | HVar x -> (try Env.find x env with _ ->
+      Format.printf "env: %a" Print.(pr_list pr_comma (LF.Printer.fam)) (Env.to_list env);
+      failwith ("Env.find: "^string_of_int x))
+    | HConst c -> Sign.ofind c repo.sign
+
   let rec obj repo env : obj * fam -> unit = function
     | OLam (x, m), FProd (_, a, b) -> obj repo (Env.add a env) (m, b)
     | OLam _, FApp _ -> failwith "not eta"
@@ -13,12 +19,6 @@ module Check = struct
     | OMeta x, a ->
       if snd (Repo.Context.find x repo.ctx) = a then () (* TODO eq *)
       else failwith "eq"
-
-  and head repo env : head -> fam = function
-    | HVar x -> (try Env.find x env with _ ->
-      Format.printf "env: %a" Print.(pr_list pr_comma (LF.Printer.fam)) (Env.to_list env);
-      failwith ("Env.find: "^string_of_int x))
-    | HConst c -> Sign.ofind c repo.sign
 
   and app repo env : spine * fam -> fam = function
     | [], (FApp _ as a) -> a
@@ -68,9 +68,9 @@ let push =
   let gensym =
     let n = ref 0 in
     fun () -> incr n; string_of_int !n in
-  fun repo (h, l) ->
+  fun repo env (h, l) ->
     Format.printf "* push %a in@.%a@." LF.Printer.obj (LF.OApp(h, l)) Repo.Printer.t_light repo;
-    let a = Check.app repo LF.Env.empty (h, l) in
+    let a = Check.app repo env (h, l) in
     let x = Names.Meta.make ("X"^gensym()) in
     let repo = { repo with
       Repo.ctx = Repo.Context.add x (LF.OApp (h, l), a) repo.Repo.ctx;
