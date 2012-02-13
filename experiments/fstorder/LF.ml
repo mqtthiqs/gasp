@@ -5,9 +5,15 @@ type fam =
   | FProd of string option * fam * fam
 
 and obj =
-  | OApp of OConst.t * obj list
-  | OVar of int
+  | OLam of string * obj
+  | OApp of head * spine
   | OMeta of Meta.t
+
+and spine = obj list
+
+and head =
+  | HVar of int
+  | HConst of OConst.t
 
 type kind =
   | KType
@@ -20,6 +26,7 @@ module Env = struct
   let empty = []
   let find x l = List.nth l x
   let add a l = (a :: l)
+  let to_list l = l
 end
 
 module Sign = struct
@@ -38,10 +45,14 @@ end
 
 module Subst = struct
 
-  let rec lift = function
-    | OApp (c, l) -> OApp (c, List.map lift l)
-    | OVar x -> OVar (x+1)
-    | m -> m
+  let rec lift k n = function
+    | OLam (x, m) -> OLam (x, lift (k+1) n m)
+    | OApp (h, l) -> OApp (head k n h, List.map (lift k n) l)
+    | OMeta _ as x -> x
+
+  and head k n = function
+    | HVar x -> if x < k then HVar x else HVar (x+n)
+    | HConst _ as c -> c
 
   let rec obj m = function
     | OApp (c, l) -> OApp (c, List.map (obj m) l)
@@ -49,11 +60,11 @@ module Subst = struct
 
   let rec fam m = function
     | FApp (c, l) -> FApp (c, List.map (obj m) l)
-    | FProd (x, a, b) -> FProd (x, fam m a, fam (lift m) b)
+    | FProd (x, a, b) -> FProd (x, fam m a, fam (lift 0 1 m) b)
 
   let rec kind m = function
     | KType -> KType
-    | KProd (x, a, k) -> KProd (x, fam m a, kind (lift m) k)
+    | KProd (x, a, k) -> KProd (x, fam m a, kind (lift 0 1 m) k)
 end
 
 module Strat = struct
@@ -69,57 +80,64 @@ module Strat = struct
   let rec app sign env l = function
     | Ident x ->
       begin
-        try ignore (List.index (Some x) env);
-            failwith ("stratification: "^x^" is a variable in function position")
+        try let i = List.index (Some x) env in
+            Obj (OApp (HVar i, l))
         with Not_found ->
           try let x = OConst.make x in
-              ignore(Sign.ofind x sign); Obj (OApp (x, l))
+              ignore (Sign.ofind x sign);
+              Obj (OApp (HConst x, l))
           with Not_found ->
             let x = FConst.make x in
             try ignore(Sign.ffind x sign); Fam (FApp (x, l))
-            with Not_found -> failwith ("stratification: not found "^FConst.repr x)
+            with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
     | App (t, u) ->
       begin match term sign env u with
         | Obj u ->  app sign env (u :: l) t
-        | _ -> failwith "stratification: argument is not an object"
+        | _ -> failwith "strat: argument is not an object"
       end
-    | _ -> failwith "stratification: app error"
+    | _ -> failwith "strat: app error"
 
   and term sign env = function
+    | Lam (x, t) ->
+      begin match term sign (Some x :: env) t with
+        | Obj m -> Obj (OLam (x, m))
+        | _ -> failwith "strat: lambda in not-an-obj"
+      end
     | Type -> Kind(KType)
-    | Prod(x, a, b) ->
+    | Prod (x, a, b) ->
       begin match term sign env a, term sign (x::env) b with
         | Fam a, Kind k -> Kind (KProd (x, a, k))
         | Fam a, Fam b -> Fam (FProd (x, a, b))
-        | Kind _, _ -> failwith "stratification: prod argument is a kind"
-        | Fam _, Obj _ -> failwith "stratification: prod body is an obj"
-        | Obj _, _ -> failwith "stratification: prod argument is an obj"
+        | Kind _, _ -> failwith "strat: prod argument is a kind"
+        | Fam _, Obj _ -> failwith "strat: prod body is an obj"
+        | Obj _, _ -> failwith "strat: prod argument is an obj"
       end
-    | App (t, u) as a -> app sign env [] a
+    | App (t, u) as a ->
+      app sign env [] a
     | Ident x ->
-      begin try Obj (OVar (List.index (Some x) env))
+      begin try Obj (OApp (HVar (List.index (Some x) env), []))
         with Not_found ->
           try let x = OConst.make x in
-              ignore(Sign.ofind x sign); Obj (OApp (x, []))
+              ignore(Sign.ofind x sign); Obj (OApp (HConst x, []))
           with Not_found ->
             let x = FConst.make x in
             try ignore(Sign.ffind x sign); Fam (FApp (x, []))
-            with Not_found -> failwith ("stratification: not found "^FConst.repr x)
+            with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
     | Meta x -> Obj (OMeta (Meta.make x))
 
   let obj sign env t = match term sign env t with
     | Obj m -> m
-    | _ -> failwith "stratification error"
+    | _ -> failwith "strat: not an obj"
 
   let fam sign env t = match term sign env t with
     | Fam a -> a
-    | _ -> failwith "stratification error"
+    | _ -> failwith "strat: not a fam"
 
   let kind sign env t = match term sign env t with
     | Kind k -> k
-    | _ -> failwith "stratification error"
+    | _ -> failwith "strat: not a kind"
 end
 
 module Unstrat = struct
@@ -127,14 +145,24 @@ module Unstrat = struct
   open SLF
 
   let rec obj env = function
-    | OApp (f, l) -> List.fold_left (fun t m -> App (t, obj env m)) (Ident (Names.OConst.repr f)) l
+    | OLam (x, m) -> Lam (x, obj (Some x :: env) m)
+    | OApp (h, l) -> List.fold_left
+      (fun t m -> App (t, obj env m)
+      ) (Ident (head env h)) l
     | OMeta x -> Meta (Names.Meta.repr x)
-    | OVar x -> match List.nth env x with
-        | Some x -> Ident x
+
+  and head env = function
+    | HConst c -> Names.OConst.repr c
+    | HVar x ->
+      try match Env.find x env with
+        | Some x -> x
         | None -> failwith "none"
+      with _ -> "_UNBOUND_REL_"^(string_of_int x)
 
   let rec fam env = function
-    | FApp (f, l) -> List.fold_left (fun t m -> App (t, obj env m)) (Ident (Names.FConst.repr f)) l
+    | FApp (f, l) -> List.fold_left
+      (fun t m -> App (t, obj env m)
+      ) (Ident (Names.FConst.repr f)) l
     | FProd (x, a, b) -> Prod (x, fam env a, fam (x :: env) b)
 
   let rec kind env = function
@@ -146,8 +174,8 @@ end
 module Util = struct
 
   let rec fold_meta f = function
-    | OApp (c, l) -> OApp (c, List.map (fold_meta f) l)
-    | OVar x -> OVar x
+    | OApp (h, l) -> OApp (h, List.map (fold_meta f) l)
+    | OLam (x, m) -> OLam (x, fold_meta f m)
     | OMeta x -> f x
 end
 

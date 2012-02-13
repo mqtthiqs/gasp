@@ -5,9 +5,15 @@ type fam =
   | FProd of string option * fam * fam
 
 and obj =
-  | OApp of OConst.t * obj list
-  | OVar of int
+  | OLam of string * obj
+  | OApp of head * spine
   | OMeta of Meta.t
+
+and spine = obj list
+
+and head =
+  | HVar of int
+  | HConst of OConst.t
 
 type kind =
   | KType
@@ -20,6 +26,7 @@ module Env : sig
   val empty : t
   val find : int -> t -> fam
   val add : fam -> t -> t
+  val to_list : t -> fam list
 end
 
 module Sign : sig
