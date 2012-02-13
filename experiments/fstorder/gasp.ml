@@ -74,5 +74,7 @@ Format.printf "LF: %a@." LF.Printer.obj m'
 let repo = Slicer.commit stlc m
 ;;
 
-(* Format.printf "%a " Repo.Printer.t repo *)
-(* ;; *)
+Format.printf "~~~> Repo: %a@." Repo.Printer.t repo
+;;
+
+Format.printf "~~~> Term: %a@." SLF.Printer.term (Slicer.checkout repo)
