@@ -78,4 +78,5 @@ module Printer : sig
   val kind : formatter -> kind -> unit
   val entity : formatter -> Strat.entity -> unit
   val sign : formatter -> Sign.t -> unit
+  val env : formatter -> Env.t -> unit
 end

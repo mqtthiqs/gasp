@@ -196,6 +196,9 @@ module Printer = struct
          (fun x k l -> (Names.FConst.repr x, Unstrat.kind [] k, true) :: l) (snd s)
          []) in
     SLF.Printer.sign fmt l
+
+  let env fmt e =
+    Print.pr_list Print.pr_comma fam fmt e
 end
 
 
