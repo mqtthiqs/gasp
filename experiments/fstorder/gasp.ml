@@ -63,12 +63,7 @@ let m =
 >>
 ;;
 
-let m' = match LF.Strat.term stlc.Repo.sign [] m with
-  | LF.Strat.Obj m -> m
-  | _ -> assert false
-;;
-
-Format.printf "LF: %a@." LF.Printer.obj m'
+Format.printf "~~~> Commit: %a@." SLF.Printer.term m
 ;;
 
 let repo = Slicer.commit stlc m
@@ -78,3 +73,4 @@ Format.printf "~~~> Repo: %a@." Repo.Printer.t repo
 ;;
 
 Format.printf "~~~> Term: %a@." SLF.Printer.term (Slicer.checkout repo)
+;;

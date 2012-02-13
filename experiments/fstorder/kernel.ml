@@ -95,5 +95,5 @@ let rec init s = function
         init (LF.Sign.fadd (Names.FConst.make c) k s) s'
 
 let push repo env (h, l) =
-  let repo, _, _ = Check.app repo env (h, l) in
-  repo
+  let repo, l, a = Check.app repo env (h, l) in
+  push repo env a (h, l)
