@@ -43,28 +43,44 @@ module Sign = struct
   let fadd x k ((o, f):t) = o, MF.add x k f
 end
 
-module Subst = struct
+module Lift = struct
 
-  let rec lift k n = function
-    | OLam (x, m) -> OLam (x, lift (k+1) n m)
-    | OApp (h, l) -> OApp (head k n h, List.map (lift k n) l)
-    | OMeta _ as x -> x
-
-  and head k n = function
+  let head k n = function
     | HVar x -> if x < k then HVar x else HVar (x+n)
     | HConst _ as c -> c
 
-  let rec obj m = function
-    | OApp (c, l) -> OApp (c, List.map (obj m) l)
-    | m -> m
+  let rec obj k n = function
+    | OLam (x, m) -> OLam (x, obj (k+1) n m)
+    | OApp (h, l) -> OApp (head k n h, List.map (obj k n) l)
+    | OMeta _ as x -> x
+
+end
+
+module Subst = struct
+
+  let head = function
+    | HVar n -> HVar (n-1)
+    | HConst c -> HConst c
+
+  let rec spine = function
+    | OLam (x, n), m :: l -> spine (obj m n, l)
+    | n, [] -> n
+    | _, _::_ -> assert false
+
+  and obj m = function
+    | OLam (x, n) -> OLam (x, obj (Lift.obj 0 1 m) n)
+    | OApp (HVar 0, l) -> spine (m, l)
+    | OApp (h, l) -> OApp (head h, List.map (obj m) l)
+    | OMeta _ -> failwith "substitution on metas not implemented"
 
   let rec fam m = function
     | FApp (c, l) -> FApp (c, List.map (obj m) l)
-    | FProd (x, a, b) -> FProd (x, fam m a, fam (lift 0 1 m) b)
+    | FProd (x, a, b) -> FProd (x, fam m a, fam (Lift.obj 0 1 m) b)
 
   let rec kind m = function
     | KType -> KType
-    | KProd (x, a, k) -> KProd (x, fam m a, kind (lift 0 1 m) k)
+    | KProd (x, a, k) -> KProd (x, fam m a, kind (Lift.obj 0 1 m) k)
+
 end
 
 module Strat = struct
