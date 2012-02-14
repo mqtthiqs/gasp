@@ -53,13 +53,13 @@ let stlc = Slicer.init
   is_app : {M:tm} {N:tm} {A:tp} {B:tp}
     is M (arr A B) -> is N A -> is (app M N) B.
   is_lam : {M:tm -> tm} {A:tp} {B:tp}
-    ({x : tm} is x B -> is (M x) A) -> is (lam ([a] M a)) A.
+    ({x : tm} is x B -> is (M x) A) -> is (lam [a] M a) A.
 >>
 ;;
 
 let m =
 <:obj<
-  lam ([x] lam ([y] app (app x y) y))
+  lam [x] lam [y] app (app x y) y
 >>
 ;;
 

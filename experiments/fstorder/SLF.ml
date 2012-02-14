@@ -14,15 +14,18 @@ module Parser = struct
 
   let ident = Gram.Entry.mk "ident"
   let term = Gram.Entry.mk "term"
+  let term1 = Gram.Entry.mk "term1"
+  let term2 = Gram.Entry.mk "term2"
   let term_eoi = Gram.Entry.mk "term_eoi"
 
   EXTEND Gram
 
   ident:
-    [ [ x = LIDENT -> x
-      | x = UIDENT -> x ]];
+  [ [ x = LIDENT -> x
+    | x = UIDENT -> x ]
+  ];
 
-  term :
+  term:
   [ "prd" RIGHTA
       [ "type" -> <:expr< SLF.Type >>
       | "{"; id = ident; ":"; t = term; "}"; u = term ->
@@ -31,17 +34,32 @@ module Parser = struct
       [ t = term; "->"; u = term -> <:expr< SLF.Prod(None, $t$, $u$) >> ]
   | "rarr" RIGHTA
       [ t = term; "<-"; u = term -> <:expr< SLF.Prod(None, $u$, $t$) >> ]
-  | "lam" RIGHTA
-      [ "["; id = ident; "]"; t = term ->
-      <:expr< SLF.Lam ($str:id$, $t$) >> ]
-  | "app" LEFTA
-      [ t = term; u = term -> <:expr<  SLF.App ($t$, $u$) >> ]
-  | "simple"
+  | "term1"
+      [ t = term1 -> t ]
+  ];
+
+  term1:
+  [ "app" LEFTA
+      [ t = term1; u = term2 -> <:expr<  SLF.App ($t$, $u$) >> ]
+  | "term2"
+      [ t = term2 -> t ]
+  ];
+
+  term2:
+  [ "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
       | "?"; x = ident -> <:expr< SLF.Meta $str:x$ >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
+  | "lam"
+      [ "["; id = ident; "]"; t = term1 ->
+      <:expr< SLF.Lam ($str:id$, $t$) >> ]
   ];
+
+  (* term1 : *)
+  (* [ *)
+
+  (* ]; *)
 
   term_eoi:
       [[ t = term; `EOI -> t ]];
