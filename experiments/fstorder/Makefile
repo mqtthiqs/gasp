@@ -8,7 +8,7 @@ OCAMLBUILD=ocamlbuild ${OCAMLBUILD_OPT}
 all: ${TARGET}
 
 ${TARGET}:
-	@${OCAMLBUILD} ${TARGET}.byte
+	@${OCAMLBUILD} ${TARGET}.cma ${TARGET}.top
 
 clean:
 	@${OCAMLBUILD} -clean
