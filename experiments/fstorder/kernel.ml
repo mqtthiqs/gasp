@@ -12,7 +12,6 @@ let push =
     let n = ref 0 in
     fun () -> incr n; string_of_int !n in
   fun repo env a (h, l) ->
-    Format.printf "* push %a |- @[%a@] in @[%a@]" LF.Printer.env env LF.Printer.obj (LF.OApp(h, l)) Repo.Printer.t_light repo;
     let x = Names.Meta.make ("X"^gensym()) in
     let repo = { repo with
       Repo.ctx = Repo.Context.add x (LF.OApp (h, l), a) repo.Repo.ctx;
@@ -50,10 +49,7 @@ end
 module Check = struct
 
   let head repo env : head -> fam * bool = function
-    | HVar x -> (try Env.find x env with _ ->
-      Format.printf "env: %a" Print.(pr_list pr_comma (LF.Printer.fam)) (Env.to_list env);
-      failwith ("Env.find: "^string_of_int x)),
-      false
+    | HVar x -> Env.find x env, false
     | HConst c -> Sign.ofind c repo.sign, Sign.slices c repo.sign
 
   let rec obj repo env : obj * fam -> Repo.t * obj = function

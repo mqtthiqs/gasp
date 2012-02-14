@@ -232,5 +232,6 @@ module Parser = struct
   let _ =
     Syntax.Quotation.add "obj" Syntax.Quotation.DynAst.expr_tag expand_obj_quot;
     Syntax.Quotation.add "sign" Syntax.Quotation.DynAst.expr_tag expand_sign_quot;
+    Syntax.Quotation.default := "obj";;
 
 end

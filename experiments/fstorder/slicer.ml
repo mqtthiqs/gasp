@@ -17,7 +17,6 @@ let init sign : Repo.t = {
 }
 
 let commit repo m =
-  Format.printf "*** commit %a@." SLF.Printer.term m;
   match LF.Strat.obj repo.Repo.sign [] m with
     | OApp (h, l) -> Kernel.push repo LF.Env.empty (h, l)
     | _ -> failwith "not an app"
