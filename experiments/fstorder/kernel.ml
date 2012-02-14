@@ -19,6 +19,34 @@ let push =
       Repo.head = x } in
     repo
 
+module Conv = struct
+
+  let head = function
+    | HVar i1, HVar i2 when i1 = i2 -> ()
+    | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 -> ()
+    | _ -> failwith "not convertible"
+
+  let rec spine = function
+    | [], [] -> ()
+    | m1 :: l1, m2 :: l2 -> obj (m1, m2); spine (l1, l2)
+    | _ -> failwith "not convertible"
+
+  and obj = function
+    | OLam (_, m1), OLam (_,m2) -> obj (m1, m2)
+    | OApp (h1, l1), OApp (h2, l2) -> head (h1, h2); spine (l1, l2)
+    | OMeta x1, OMeta x2 when Names.Meta.compare x1 x2 = 0 -> ()
+    | OMeta _, _ | _, OMeta _ -> failwith "not implemented"
+    | _ -> failwith "not convertible"
+
+  let rec fam = function
+    | FProd (_, a1, b1), FProd (_, a2, b2) ->
+      fam (a1, a2); fam (b1, b2)
+    | FApp (c1, l1), FApp (c2, l2) ->
+      if Names.FConst.compare c1 c2 <> 0 then failwith "not convertible";
+      spine (l1, l2)
+    | _ -> failwith "not convertible"
+end
+
 module Check = struct
 
   let head repo env : head -> fam * bool = function
@@ -36,15 +64,14 @@ module Check = struct
     | OApp (h, l), a ->
       let b, slices = head repo env h in
       let repo, l, a' = app repo env (l, b) in
-      if a <> a' then failwith "type mismatch"; (* TODO eq *)
+      Conv.fam (a, a');
       if slices then
         let repo = push repo env a (h, l) in
         repo, OMeta (repo.head)
       else
         repo, OApp (h, l)
     | OMeta x as m, a ->
-      if snd (Repo.Context.find x repo.ctx) <> a (* TODO eq *)
-      then failwith "eq";
+      Conv.fam (snd (Repo.Context.find x repo.ctx), a);
       repo, m
 
   and app repo env : spine * fam -> Repo.t * spine * fam = function
