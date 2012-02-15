@@ -1,33 +1,82 @@
-let s =
-<:raw_sign<
-nat : type.
-bla : nat -> type.
-bla_x : {X : nat} bla X.
+#use "load.ml"
 
-(* nat : type. *)
-(* z : nat. *)
-(* s : nat -> nat. *)
+(* First-order STLC *)
+let stlc = Slicer.init
+<:sign<
+  tp : type.
+  base : tp.
+  arr : tp -> tp -> tp.
 
-(* bla : nat -> type. *)
-(* bla_x : {X : nat} bla X -> bla X. *)
+  tm : type.
+  lam : tm -> tm.
+  #app : tm -> tm -> tm.
+  s : tm -> tm.
+  z : tm.
 
-(* nt : nat -> type. *)
-(* nt_z : nt z. *)
-(* nt_s : {X : nat} {Y : nt (s X)} nt X. *)
+  env : type.
+  nil : env.
+  cons : tp -> env -> env.
 
-(* plus : nat -> nat -> nat -> type. *)
-(* p_z : {Y : nat} plus z Y Y. *)
-(* p_s : {X : nat} {Y : nat} {Z : nat} plus (s X) Y (s Z) *)
-(*        <- plus X Y Z. *)
+  is : env -> tm -> tp -> type.
 
-(* acker : nat -> nat -> nat -> type. *)
+  is_weak : {E:env} {M:tm} {A:tp} {B:tp}
+    is E M B -> is (cons A E) (s M) B.
+  is_var : {E:env} {M:tm} {A:tp}
+    is (cons A E) z A.
+  is_app : {E:env} {M:tm} {N:tm} {A:tp} {B:tp}
+    is E M (arr A B) -> is E N A -> is E (app M N) B.
+  is_lam : {E:env} {M:tm} {A:tp} {B:tp}
+    is (cons B E) M A -> is E (lam M) A.
+>>
+;;
 
-(* a_1   : {Y : nat} acker z Y (s Y). *)
-(* a_2   : {X : nat} {Z : nat} acker (s X) z Z  *)
-(*      <- acker X (s z) Z. *)
-(* a_3   : {X : nat} {Y : nat} {Z : nat} {Z' : nat} acker (s X) (s Y) Z *)
-(*      <- acker (s X) Y Z' *)
-(*      <- acker X Z' Z.   *)
->>;;
+let repo = Slicer.commit stlc
+  <:obj<
+    lam (lam (app (s z) z))
+  >>
+;;
 
-let s = LF.Strat.sign LF.Sign.empty s;;
+(* HOAS STLC *)
+let stlc = Slicer.init
+<:sign<
+  tp : type.
+  #base : tp.
+  arr : tp -> tp -> tp.
+
+  tm : type.
+  lam : (tm -> tm) -> tm.
+  app : tm -> tm -> tm.
+
+  is : tm -> tp -> type.
+
+  is_app : {M:tm} {N:tm} {A:tp} {B:tp}
+    is M (arr A B) -> is N A -> is (app M N) B.
+  is_lam : {M:tm -> tm} {A:tp} {B:tp}
+    ({x : tm} is x B -> is (M x) A) -> is (lam [a] M a) (arr A B).
+>>
+;;
+
+(* a term *)
+
+let m =
+<:obj<
+  lam [x] lam [y] app (app x y) y
+>>
+;;
+
+let repo = Slicer.commit stlc m
+;;
+
+let m = Slicer.checkout repo
+;;
+
+(* a derivation *)
+
+#trace Kernel.Check.obj
+#trace LF.Subst.fam
+
+let repo = Slicer.commit stlc
+<:obj<
+  is_lam ([x] x) base base ([x] [H] H)
+>>
+;;

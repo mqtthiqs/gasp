@@ -1,13 +1,12 @@
 type term =
   | Type
   | Prod of string option * term * term
+  | Lam of string * term
   | App of term * term
   | Ident of string
   | Meta of string
 
-type sign =
-  | Nil
-  | Cons of string * term * sign
+type sign = (string * term * bool) list
 
 module Parser = struct
 
@@ -15,15 +14,18 @@ module Parser = struct
 
   let ident = Gram.Entry.mk "ident"
   let term = Gram.Entry.mk "term"
+  let term1 = Gram.Entry.mk "term1"
+  let term2 = Gram.Entry.mk "term2"
   let term_eoi = Gram.Entry.mk "term_eoi"
 
   EXTEND Gram
 
   ident:
-    [ [ x = LIDENT -> x
-      | x = UIDENT -> x ]];
+  [ [ x = LIDENT -> x
+    | x = UIDENT -> x ]
+  ];
 
-  term :
+  term:
   [ "prd" RIGHTA
       [ "type" -> <:expr< SLF.Type >>
       | "{"; id = ident; ":"; t = term; "}"; u = term ->
@@ -32,14 +34,32 @@ module Parser = struct
       [ t = term; "->"; u = term -> <:expr< SLF.Prod(None, $t$, $u$) >> ]
   | "rarr" RIGHTA
       [ t = term; "<-"; u = term -> <:expr< SLF.Prod(None, $u$, $t$) >> ]
-  | "app" LEFTA
-      [ t = term; u = term -> <:expr<  SLF.App ($t$, $u$) >> ]
-  | "simple"
+  | "term1"
+      [ t = term1 -> t ]
+  ];
+
+  term1:
+  [ "app" LEFTA
+      [ t = term1; u = term2 -> <:expr<  SLF.App ($t$, $u$) >> ]
+  | "term2"
+      [ t = term2 -> t ]
+  ];
+
+  term2:
+  [ "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
-      | "#"; x = ident -> <:expr< SLF.Meta $str:x$ >>
+      | "?"; x = ident -> <:expr< SLF.Meta $str:x$ >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
+  | "lam"
+      [ "["; id = ident; "]"; t = term1 ->
+      <:expr< SLF.Lam ($str:id$, $t$) >> ]
   ];
+
+  (* term1 : *)
+  (* [ *)
+
+  (* ]; *)
 
   term_eoi:
       [[ t = term; `EOI -> t ]];
@@ -51,8 +71,11 @@ module Parser = struct
 
   EXTEND Gram
   sign:
-  [[ -> <:expr< SLF.Nil >>
-   | x = LIDENT; ":"; t = term; "."; s = sign -> <:expr< SLF.Cons ($str:x$, $t$, $s$) >>
+  [[ -> <:expr< [] >>
+   | x = ident; ":"; t = term; "."; s = sign ->
+     <:expr< [($str:x$, $t$, True) :: $s$] >>
+   | "#"; x = ident; ":"; t = term; "."; s = sign ->
+     <:expr< [($str:x$, $t$, False) :: $s$] >>
    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
    ]];
   sign_eoi: [[ s = sign; `EOI -> s]];
@@ -89,13 +112,16 @@ module Printer = struct
 
   let term_prec = function
     | Type | Ident _ | Meta _ -> 0
+    | Lam _ -> 20
     | App _ -> 10
     | Prod _ -> 30
 
   let term pp fmt = function
-    | Meta x | Ident x -> str fmt x
+    | Meta x -> fprintf fmt "?%s" x
+    | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
 	str x (pp (<=)) a (pp (<=)) b
+    | Lam (x, t) -> fprintf fmt "@[[%s]@ %a@]" x (pp (<=)) t
     | Prod (None, a, b) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<=)) a (pp (<=)) b
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" (pp (<=)) t (pp (<)) u
     | Type -> fprintf fmt "@[type@]"
@@ -103,7 +129,8 @@ module Printer = struct
   let term fmt t = pr_paren term term_prec 100 (<=) fmt t
 
   let rec sign fmt = function
-    | Nil -> ()
-    | Cons (x, t, s) -> fprintf fmt "@[%a : %a@].@,%a" str x term t sign s
+    | [] -> ()
+    | (x, t, true) :: s -> fprintf fmt "@[%a : %a@].@,%a" str x term t sign s
+    | (x, t, false) :: s -> fprintf fmt "#@[%a : %a@].@,%a" str x term t sign s
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
 end

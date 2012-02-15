@@ -1,13 +1,12 @@
 type term =
   | Type
   | Prod of string option * term * term
+  | Lam of string * term
   | App of term * term
   | Ident of string
   | Meta of string
 
-type sign =
-  | Nil
-  | Cons of string * term * sign
+type sign = (string * term * bool) list
 
 module Parser : sig
   open Camlp4.PreCast

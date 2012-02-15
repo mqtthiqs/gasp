@@ -5,9 +5,15 @@ type fam =
   | FProd of string option * fam * fam
 
 and obj =
-  | OApp of OConst.t * obj list
-  | OVar of int
+  | OLam of string * obj
+  | OApp of head * spine
   | OMeta of Meta.t
+
+and spine = obj list
+
+and head =
+  | HVar of int
+  | HConst of OConst.t
 
 type kind =
   | KType
@@ -20,19 +26,17 @@ module Env : sig
   val empty : t
   val find : int -> t -> fam
   val add : fam -> t -> t
+  val to_list : t -> fam list
 end
 
 module Sign : sig
 
-  type entry =
-    | OConst of fam
-    | FConst of kind
-
   type t
   val empty : t
+  val slices : OConst.t -> t -> bool
   val ofind : OConst.t -> t -> fam
   val ffind : FConst.t -> t -> kind
-  val oadd : OConst.t -> fam -> t -> t
+  val oadd : OConst.t -> bool * fam -> t -> t
   val fadd : FConst.t -> kind -> t -> t
 end
 
@@ -54,7 +58,6 @@ module Strat : sig
   val obj : Sign.t -> string option list -> term -> obj
   val fam : Sign.t -> string option list -> term -> fam
   val kind : Sign.t -> string option list -> term -> kind
-  val sign : Sign.t -> sign -> Sign.t
 end
 
 module Unstrat : sig
@@ -75,4 +78,5 @@ module Printer : sig
   val kind : formatter -> kind -> unit
   val entity : formatter -> Strat.entity -> unit
   val sign : formatter -> Sign.t -> unit
+  val env : formatter -> Env.t -> unit
 end

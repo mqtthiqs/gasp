@@ -1,10 +1,5 @@
-let sign = <:sign<
-  tree : type.
-  leaf : tree.
-  node : tree -> tree -> tree.
->>
+let version = "0.1"
+;;
 
-let repo = Slicer.commit (Repo.init Slicer.prelude)
-  <:obj<
-    node leaf leaf
-  >>
+Format.printf "\n\tGasp version %s\n" version
+;;

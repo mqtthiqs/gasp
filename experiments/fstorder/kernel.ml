@@ -1,31 +1,91 @@
 
+open LF
+open Repo
+
+let pull repo x =
+  let rec aux ctx x =
+    LF.Util.fold_meta (aux ctx) (fst (Repo.Context.find x ctx))
+  in aux repo.Repo.ctx x
+
+let push =
+  let gensym =
+    let n = ref 0 in
+    fun () -> incr n; string_of_int !n in
+  fun repo env a (h, l) ->
+    let x = Names.Meta.make ("X"^gensym()) in
+    let repo = { repo with
+      Repo.ctx = Repo.Context.add x (LF.OApp (h, l), a) repo.Repo.ctx;
+      Repo.head = x } in
+    repo
+
+module Conv = struct
+
+  let head = function
+    | HVar i1, HVar i2 when i1 = i2 -> ()
+    | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 -> ()
+    | _ -> failwith "not convertible"
+
+  let rec spine = function
+    | [], [] -> ()
+    | m1 :: l1, m2 :: l2 -> obj (m1, m2); spine (l1, l2)
+    | _ -> failwith "not convertible"
+
+  and obj = function
+    | OLam (_, m1), OLam (_,m2) -> obj (m1, m2)
+    | OApp (h1, l1), OApp (h2, l2) -> head (h1, h2); spine (l1, l2)
+    | OMeta x1, OMeta x2 when Names.Meta.compare x1 x2 = 0 -> ()
+    | OMeta _, _ | _, OMeta _ -> failwith "not implemented"
+    | _ -> failwith "not convertible"
+
+  let rec fam = function
+    | FProd (_, a1, b1), FProd (_, a2, b2) ->
+      fam (a1, a2); fam (b1, b2)
+    | FApp (c1, l1), FApp (c2, l2) ->
+      if Names.FConst.compare c1 c2 <> 0 then failwith "not convertible";
+      spine (l1, l2)
+    | _ -> failwith "not convertible"
+end
+
 module Check = struct
 
-  open LF
-  open Repo
+  let head repo env : head -> fam * bool = function
+    | HVar x -> Env.find x env, false
+    | HConst c -> Sign.ofind c repo.sign, Sign.slices c repo.sign
 
-  let rec obj repo env = function
-    | OApp (c, l) -> app repo env (l, Sign.ofind c repo.sign)
-    | OVar x -> Env.find x env
-    | OMeta x -> snd (Repo.Context.find x repo.ctx)
+  let rec obj repo env : obj * fam -> Repo.t * obj = function
+    | OLam (x, m), FProd (_, a, b) ->
+      let repo, m = obj repo (Env.add a env) (m, b) in
+      repo, OLam (x, m)
+    | OLam _, FApp _ -> failwith "not eta"
+    | OApp (h, l), a ->
+      let b, slices = head repo env h in
+      let repo, l, a' = app repo env (l, b) in
+      Conv.fam (a, a');
+      if slices then
+        let repo = push repo env a (h, l) in
+        repo, OMeta (repo.head)
+      else
+        repo, OApp (h, l)
+    | OMeta x as m, a ->
+      Conv.fam (snd (Repo.Context.find x repo.ctx), a);
+      repo, m
 
-  and app repo env = function
-    | [], (FApp _ as a) -> a
-    | [], _ -> failwith "not eta-expanded"
+  and app repo env : spine * fam -> Repo.t * spine * fam = function
+    | [], (FApp _ as a) -> repo, [], a
     | m :: l, FProd (_, a, b) ->
-      if obj repo env m = a           (* TODO eq *)
-      then app repo env (l, Subst.fam m b)
-      else failwith "type mismatch"
+      let repo, m = obj repo env (m, a) in
+      let repo, l, a = app repo env (l, Subst.fam m b) in
+      repo, m :: l, a
+    | [], _ -> failwith "not eta-expanded"
     | _ :: _, FApp _ -> failwith "non-functional application"
 
-  and fapp repo env = function
+  and fapp repo env : spine * kind -> unit = function
     | [], KType -> ()
     | _ :: _, KType -> failwith "non-functional application"
     | [], _ -> failwith "not eta-expanded"
     | m :: l, KProd (_, a, k) ->
-      if obj repo env m = a           (* TODO eq *)
-      then fapp repo env (l, Subst.kind m k)
-      else failwith "type mismatch"
+      let _ = obj repo env (m, a) in
+      fapp repo env (l, Subst.kind m k)
 
   let rec fam repo env = function
     | FApp (c, l) -> fapp repo env (l, Sign.ffind c repo.sign)
@@ -35,15 +95,28 @@ module Check = struct
     | KType -> ()
     | KProd (_, a, k) -> fam repo env a; kind repo (Env.add a env) k
 
+  let app repo env (h, l) =
+    let a, _ = head repo env h in
+    app repo env (l, a)
+
 end
 
-let push repo m =
-  let gensym =
-    let n = ref 0 in
-    fun () -> incr n; string_of_int !n in
-  let a = Check.obj repo LF.Env.empty m in
-  let x = Names.Meta.make ("X"^gensym()) in
-  { repo with Repo.ctx = Repo.Context.add x (m, a) repo.Repo.ctx }, LF.OMeta x
+let rec init s = function
+  | [] -> s
+  | (c, t, b) :: s' ->
+    let repo = { Repo.sign = s;
+                 Repo.ctx = Repo.Context.empty;
+                 Repo.head = Names.Meta.make "DUMMY" } in
+    match LF.Strat.term s [] t, b with
+      | LF.Strat.Obj _, _ -> failwith "object in sign"
+      | LF.Strat.Kind _, false -> failwith "kind cannot be non-sliceable"
+      | LF.Strat.Fam a, b ->
+        Check.fam repo LF.Env.empty a;
+        init (LF.Sign.oadd (Names.OConst.make c) (b, a) s) s'
+      | LF.Strat.Kind k, true ->
+        Check.kind repo LF.Env.empty k;
+        init (LF.Sign.fadd (Names.FConst.make c) k s) s'
 
-let rec pull repo x =
-   LF.Util.fold_meta (pull repo) (fst (Repo.Context.find x repo))
+let push repo env (h, l) =
+  let repo, l, a = Check.app repo env (h, l) in
+  push repo env a (h, l)
