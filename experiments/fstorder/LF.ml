@@ -211,27 +211,27 @@ end
 
 module Subst = struct
 
-  let head = function
-    | HVar n -> HVar (n-1)
+  let head k = function
+    | HVar n -> if n < k then HVar n else HVar (n-1)
     | HConst c -> HConst c
 
-  let rec spine = function
-    | OLam (x, n), m :: l -> spine (obj m n, l)
+  let rec spine k = function
+    | OLam (x, n), m :: l -> spine k (obj k m n, l)
     | n, [] -> n
     | _, _::_ -> assert false
 
-  and obj m = function
-    | OLam (x, n) -> OLam (x, obj (Lift.obj 0 1 m) n)
-    | OApp (HVar 0, l) -> spine (m, l)
-    | OApp (h, l) -> OApp (head h, List.map (obj m) l)
-    | OMeta _ -> failwith "substitution on metas not implemented"
+  and obj k m = function
+    | OLam (x, n) -> OLam (x, obj (k+1) m n)
+    | OApp (HVar p, l) when k=p -> spine k (m, l)
+    | OApp (h, l) -> OApp (head k h, List.map (obj k m) l)
+    | OMeta x -> OMeta x                (* TODO subst on meta *)
 
-  let rec fam m = function
-    | FApp (c, l) -> FApp (c, List.map (obj m) l)
-    | FProd (x, a, b) -> FProd (x, fam m a, fam (Lift.obj 0 1 m) b)
+  let rec fam k m = function
+    | FApp (c, l) -> FApp (c, List.map (obj k m) l)
+    | FProd (x, a, b) -> FProd (x, fam k m a, fam (k+1) m b)
 
-  let rec kind m = function
+  let rec kind k m = function
     | KType -> KType
-    | KProd (x, a, k) -> KProd (x, fam m a, kind (Lift.obj 0 1 m) k)
+    | KProd (x, a, b) -> KProd (x, fam k m a, kind (k+1) m b)
 
 end

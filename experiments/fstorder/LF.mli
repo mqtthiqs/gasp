@@ -30,7 +30,6 @@ module Env : sig
 end
 
 module Sign : sig
-
   type t
   val empty : t
   val slices : OConst.t -> t -> bool
@@ -41,9 +40,9 @@ module Sign : sig
 end
 
 module Subst : sig
-  val obj : obj -> obj -> obj
-  val fam : obj -> fam -> fam
-  val kind : obj -> kind -> kind
+  val obj : int -> obj -> obj -> obj
+  val fam : int -> obj -> fam -> fam
+  val kind : int -> obj -> kind -> kind
 end
 
 module Strat : sig

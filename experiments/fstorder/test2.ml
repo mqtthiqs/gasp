@@ -1,7 +1,13 @@
 #use "load.ml"
 
+let catch2 f x y =
+  try f x y
+  with Kernel.Conv.Not_conv (m1, m2) as e ->
+    Format.printf "Not convertible @[%a@] <> @[%a@]@."
+      LF.Printer.obj m1 LF.Printer.obj m2; raise e
+
 (* HOAS STLC *)
-let stlc = Slicer.init
+let repo = Slicer.init
 <:sign<
   tp : type.
   #base : tp.
@@ -17,33 +23,45 @@ let stlc = Slicer.init
     is M (arr A B) -> is N A -> is (app M N) B.
   is_lam : {M:tm -> tm} {A:tp} {B:tp}
     ({x : tm} is x B -> is (M x) A) -> is (lam [a] M a) (arr A B).
+  sorry : {M : tm} {A: tp} is M A.
 >>
 ;;
 
 (* a term *)
 
-(* let m = *)
-(* << *)
-(*   lam [x] lam [y] app (app x y) y *)
-(* >> *)
-(* ;; *)
+let m =
+<<
+  lam [x] lam [y] app (app x y) y
+>>
+;;
 
-(* let repo = Slicer.commit stlc m *)
-(* ;; *)
+let repo = Slicer.commit repo m
+;;
 
-(* let m = Slicer.checkout repo *)
-(* ;; *)
+let m = Slicer.checkout repo
+;;
 
 (* a derivation *)
 
-#trace Kernel.Check.obj
-#trace LF.Subst.fam
-#trace LF.Subst.obj
-#trace LF.Subst.kind
-
-let repo = Slicer.commit stlc
+let repo = Slicer.commit repo
 <<
   is_lam ([x] x) base base ([x] [H] H)
+>>
+;;
+
+let repo = Slicer.commit repo
+<<
+  is_lam ([x] app x x) base base
+  [x] [H] sorry (app x x) base
+>>
+;;
+
+let repo = catch2 Slicer.commit repo
+<<
+  is_lam ([x] lam [y] y) (arr base base) base
+  ([x] [H1]
+      is_lam ([y] x) base base ([y] [H2] H2)
+  )
 >>
 ;;
 

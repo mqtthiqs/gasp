@@ -20,22 +20,24 @@ let push =
 
 module Conv = struct
 
+  exception Not_conv of obj * obj
+
   let head = function
     | HVar i1, HVar i2 when i1 = i2 -> ()
     | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 -> ()
-    | _ -> failwith "not convertible"
+    | h1, h2 -> raise (Not_conv (OApp (h1, []), OApp (h2, [])))
 
   let rec spine = function
     | [], [] -> ()
     | m1 :: l1, m2 :: l2 -> obj (m1, m2); spine (l1, l2)
-    | _ -> failwith "not convertible"
+    | l1, l2 -> let h = HConst (Names.OConst.make "@") in raise (Not_conv (OApp (h, l1), OApp (h, l2)))
 
   and obj = function
     | OLam (_, m1), OLam (_,m2) -> obj (m1, m2)
     | OApp (h1, l1), OApp (h2, l2) -> head (h1, h2); spine (l1, l2)
     | OMeta x1, OMeta x2 when Names.Meta.compare x1 x2 = 0 -> ()
     | OMeta _, _ | _, OMeta _ -> failwith "not implemented"
-    | _ -> failwith "not convertible"
+    | m1, m2 -> raise (Not_conv (m1, m2))
 
   let rec fam = function
     | FProd (_, a1, b1), FProd (_, a2, b2) ->
@@ -74,7 +76,7 @@ module Check = struct
     | [], (FApp _ as a) -> repo, [], a
     | m :: l, FProd (_, a, b) ->
       let repo, m = obj repo env (m, a) in
-      let repo, l, a = app repo env (l, Subst.fam m b) in
+      let repo, l, a = app repo env (l, Subst.fam 0 m b) in
       repo, m :: l, a
     | [], _ -> failwith "not eta-expanded"
     | _ :: _, FApp _ -> failwith "non-functional application"
@@ -85,7 +87,7 @@ module Check = struct
     | [], _ -> failwith "not eta-expanded"
     | m :: l, KProd (_, a, k) ->
       let _ = obj repo env (m, a) in
-      fapp repo env (l, Subst.kind m k)
+      fapp repo env (l, Subst.kind 0 m k)
 
   let rec fam repo env = function
     | FApp (c, l) -> fapp repo env (l, Sign.ffind c repo.sign)
