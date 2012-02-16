@@ -2,9 +2,10 @@
 
 let catch2 f x y =
   try f x y
-  with Kernel.Conv.Not_conv (m1, m2) as e ->
-    Format.printf "Not convertible @[%a@] <> @[%a@]@."
-      LF.Printer.obj m1 LF.Printer.obj m2; raise e
+  with Kernel.Conv.Not_conv (repo, m1, m2) as e ->
+    Format.printf "Not convertible: @[%a@] <> @[%a@] in @[%a@]@."
+      LF.Printer.obj m1 LF.Printer.obj m2 Repo.Printer.t repo;
+    raise e
 
 (* HOAS STLC *)
 let repo = Slicer.init
@@ -29,13 +30,10 @@ let repo = Slicer.init
 
 (* a term *)
 
-let m =
+let repo = Slicer.commit repo
 <<
   lam [x] lam [y] app (app x y) y
 >>
-;;
-
-let repo = Slicer.commit repo m
 ;;
 
 let m = Slicer.checkout repo
@@ -56,7 +54,7 @@ let repo = Slicer.commit repo
 >>
 ;;
 
-let repo = catch2 Slicer.commit repo
+let repo = Slicer.commit repo
 <<
   is_lam ([x] lam [y] y) (arr base base) base
   ([x] [H1]
