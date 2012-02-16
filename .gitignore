@@ -18,3 +18,11 @@ myocamlbuild_config.ml
 experiments/alagit/tests/*.ga.out
 tests/*.gasp
 _gasp
+.DS_Store
+*.bbl
+*.dvi
+*.pdfsync
+*.synctex.gz
+*.thm
+*.blg
+
