@@ -1,3 +1,4 @@
+open Util
 open Names
 
 type fam =
@@ -7,9 +8,10 @@ type fam =
 and obj =
   | OLam of string * obj
   | OApp of head * spine
-  | OMeta of Meta.t
+  | OMeta of Meta.t * subst
 
 and spine = obj list
+and subst = obj list
 
 and head =
   | HVar of int
@@ -101,7 +103,7 @@ module Strat = struct
             try ignore(Sign.ffind x sign); Fam (FApp (x, []))
             with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
-    | Meta x -> Obj (OMeta (Meta.make x))
+    | Meta x -> Obj (OMeta (Meta.make x, [])) (* TODO: lire l'env des metas *)
 
   let obj sign env t = match term sign env t with
     | Obj m -> m
@@ -125,7 +127,7 @@ module Unstrat = struct
     | OApp (h, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
       ) (Ident (head env h)) l
-    | OMeta x -> Meta (Names.Meta.repr x)
+    | OMeta (x, _) -> Meta (Names.Meta.repr x) (* TODO ecrire l'env *)
 
   and head env = function
     | HConst c -> Names.OConst.repr c
@@ -152,7 +154,7 @@ module Util = struct
   let rec fold_meta f = function
     | OApp (h, l) -> OApp (h, List.map (fold_meta f) l)
     | OLam (x, m) -> OLam (x, fold_meta f m)
-    | OMeta x -> f x
+    | OMeta (x, l) -> f x               (* TODO l *)
 end
 
 module Printer = struct
@@ -224,7 +226,9 @@ module Subst = struct
     | OLam (x, n) -> OLam (x, obj (k+1) m n)
     | OApp (HVar p, l) when k=p -> spine k (m, l)
     | OApp (h, l) -> OApp (head k h, List.map (obj k m) l)
-    | OMeta x -> OMeta x                (* TODO subst on meta *)
+    | OMeta (x, l) ->
+      let l = List.replace_index k m l in
+      OMeta (x, List.map (obj k m) l)                (* TODO subst on meta *)
 
   let rec fam k m = function
     | FApp (c, l) -> FApp (c, List.map (obj k m) l)

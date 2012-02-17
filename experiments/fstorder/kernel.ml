@@ -1,4 +1,4 @@
-
+open Util
 open LF
 open Repo
 
@@ -16,7 +16,7 @@ let push =
     let repo = { repo with
       Repo.ctx = Repo.Context.add x (LF.OApp (h, l), a) repo.Repo.ctx;
       Repo.head = x } in
-    repo
+    repo, List.length (Env.to_list env)
 
 module Conv = struct
 
@@ -37,7 +37,7 @@ module Conv = struct
   and obj repo = function
     | OLam (_, m1), OLam (_,m2) -> obj repo (m1, m2)
     | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
-    | OMeta x1, OMeta x2 when Names.Meta.compare x1 x2 = 0 -> ()
+    | OMeta (x1, l1), OMeta (x2, l2) when Names.Meta.compare x1 x2 = 0 -> spine repo (l1, l2)
     | (OMeta _ as m1), m2 | m1, (OMeta _ as m2) ->
       Format.printf "not implemented";
       raise (Not_conv (repo, m1, m2))
@@ -68,12 +68,14 @@ module Check = struct
       let repo, l, a' = app repo env (l, b) in
       Conv.fam repo (a, a');
       if slices then
-        let repo = push repo env a (h, l) in
-        repo, OMeta (repo.head)
+        let repo, n = push repo env a (h, l) in
+        let s = List.map (fun i -> OApp (HVar i, [])) (List.count 0 n) in
+        repo, OMeta (repo.head, s)
       else
         repo, OApp (h, l)
-    | OMeta x as m, a ->
-      Conv.fam repo (snd (Repo.Context.find x repo.ctx), a);
+    | OMeta (x, s) as m, a ->
+      let b = snd (Repo.Context.find x repo.ctx) in (* TODO subst de s ds b *)
+      Conv.fam repo (a, b);
       repo, m
 
   and app repo env : spine * fam -> Repo.t * spine * fam = function

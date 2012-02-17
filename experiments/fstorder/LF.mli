@@ -7,9 +7,10 @@ type fam =
 and obj =
   | OLam of string * obj
   | OApp of head * spine
-  | OMeta of Meta.t
+  | OMeta of Meta.t * subst
 
 and spine = obj list
+and subst = obj list
 
 and head =
   | HVar of int
