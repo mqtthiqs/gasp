@@ -3,7 +3,7 @@ open Names
 module Context = struct
 
   module M = Map.Make(Meta)
-  type t = (LF.obj * LF.fam) M.t
+  type t = (LF.Env.t * LF.obj * LF.fam) M.t
   let empty = M.empty
   let find = M.find
   let add = M.add
@@ -21,8 +21,9 @@ module Printer = struct
 
   let context fmt c =
     Context.fold
-      (fun x (m,a) () ->
-        Format.fprintf fmt "%a : %a = %a@."
+      (fun x (e, m, a) () ->
+        Format.fprintf fmt "%a ⊢ %a : %a = %a@."
+          LF.Printer.env e
           Meta.print x
           LF.Printer.fam a
           LF.Printer.obj m

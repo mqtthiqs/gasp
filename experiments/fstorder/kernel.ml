@@ -4,7 +4,8 @@ open Repo
 
 let pull repo x =
   let rec aux ctx x =
-    LF.Util.fold_meta (aux ctx) (fst (Repo.Context.find x ctx))
+    let e, m, a = Repo.Context.find x ctx in
+    LF.Util.fold_meta (aux ctx) m
   in aux repo.Repo.ctx x
 
 let push =
@@ -14,7 +15,7 @@ let push =
   fun repo env a (h, l) ->
     let x = Names.Meta.make ("X"^gensym()) in
     let repo = { repo with
-      Repo.ctx = Repo.Context.add x (LF.OApp (h, l), a) repo.Repo.ctx;
+      Repo.ctx = Repo.Context.add x (env, LF.OApp (h, l), a) repo.Repo.ctx;
       Repo.head = x } in
     repo, List.length (Env.to_list env)
 
@@ -55,7 +56,7 @@ end
 module Check = struct
 
   let head repo env : head -> fam * bool = function
-    | HVar x -> Env.find x env, false
+    | HVar x -> (try Env.find x env with _ -> failwith(string_of_int x)), false
     | HConst c -> Sign.ofind c repo.sign, Sign.slices c repo.sign
 
   let rec obj repo env : obj * fam -> Repo.t * obj = function
@@ -74,7 +75,7 @@ module Check = struct
       else
         repo, OApp (h, l)
     | OMeta (x, s) as m, a ->
-      let b = snd (Repo.Context.find x repo.ctx) in (* TODO subst de s ds b *)
+      let e, _, b = Repo.Context.find x repo.ctx in (* TODO subst de s ds b *)
       Conv.fam repo (a, b);
       repo, m
 

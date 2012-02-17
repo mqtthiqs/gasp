@@ -1,8 +1,8 @@
 module Context : sig
   type t
   val empty : t
-  val find : Names.Meta.t -> t -> LF.obj * LF.fam
-  val add : Names.Meta.t -> LF.obj * LF.fam -> t -> t
+  val find : Names.Meta.t -> t -> LF.Env.t * LF.obj * LF.fam
+  val add : Names.Meta.t -> LF.Env.t * LF.obj * LF.fam -> t -> t
 end
 
 type t = {
