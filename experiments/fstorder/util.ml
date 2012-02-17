@@ -3,7 +3,6 @@ module List : sig
 
   val index : 'a -> 'a list -> int
   val fold_map : ('b -> 'a -> 'b * 'c) -> 'b -> 'a list -> 'b * 'c list
-  val replace_index : int -> 'a -> 'a list -> 'a list
   val count : int -> int -> int list
 
 end = struct
@@ -23,10 +22,6 @@ end = struct
       (acc, y :: ys)) (init, []) xs
   in
   acc, List.rev ys
-
-  let rec replace_index i x0 = function
-    | [] -> raise (Invalid_argument "replace_index")
-    | x :: xs -> if i=0 then x0 :: xs else x :: replace_index (i-1) x0 xs
 
   let count i n =
     let rec aux i = if i=n then [] else i :: aux (i+1) in

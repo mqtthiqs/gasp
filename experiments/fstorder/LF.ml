@@ -223,9 +223,7 @@ module Subst = struct
     | OLam (x, n) -> OLam (x, obj (k+1) m n)
     | OApp (HVar p, l) when k=p -> spine k (m, l)
     | OApp (h, l) -> OApp (head k h, List.map (obj k m) l)
-    | OMeta (x, l) ->
-      let l = List.replace_index k m l in
-      OMeta (x, List.map (obj k m) l)                (* TODO subst on meta *)
+    | OMeta (x, s) -> OMeta (x, List.map (obj k m) s)
 
   let rec fam k m = function
     | FApp (c, l) -> FApp (c, List.map (obj k m) l)
