@@ -4,7 +4,7 @@ type term =
   | Lam of string * term
   | App of term * term
   | Ident of string
-  | Meta of string
+  | Meta of string * term list
 
 type sign = (string * term * bool) list
 

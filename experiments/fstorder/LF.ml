@@ -77,12 +77,8 @@ module Strat = struct
     | _ -> failwith "strat: app error"
 
   and term sign env = function
-    | Lam (x, t) ->
-      begin match term sign (Some x :: env) t with
-        | Obj m -> Obj (OLam (x, m))
-        | _ -> failwith "strat: lambda in not-an-obj"
-      end
-    | Type -> Kind(KType)
+    | Lam (x, t) -> Obj (OLam (x, obj sign (Some x :: env) t))
+    | Type -> Kind KType
     | Prod (x, a, b) ->
       begin match term sign env a, term sign (x::env) b with
         | Fam a, Kind k -> Kind (KProd (x, a, k))
@@ -91,8 +87,7 @@ module Strat = struct
         | Fam _, Obj _ -> failwith "strat: prod body is an obj"
         | Obj _, _ -> failwith "strat: prod argument is an obj"
       end
-    | App (t, u) as a ->
-      app sign env [] a
+    | App _ as a -> app sign env [] a
     | Ident x ->
       begin try Obj (OApp (HVar (List.index (Some x) env), []))
         with Not_found ->
@@ -103,9 +98,11 @@ module Strat = struct
             try ignore(Sign.ffind x sign); Fam (FApp (x, []))
             with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
-    | Meta x -> Obj (OMeta (Meta.make x, [])) (* TODO: lire l'env des metas *)
+    | Meta (x, s) ->
+      let s = List.map (obj sign env) s in
+      Obj (OMeta (Meta.make x, s))
 
-  let obj sign env t = match term sign env t with
+  and obj sign env t = match term sign env t with
     | Obj m -> m
     | _ -> failwith "strat: not an obj"
 
@@ -127,7 +124,7 @@ module Unstrat = struct
     | OApp (h, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
       ) (Ident (head env h)) l
-    | OMeta (x, _) -> Meta (Names.Meta.repr x) (* TODO ecrire l'env *)
+    | OMeta (x, s) -> Meta (Names.Meta.repr x, List.map (obj env) s)
 
   and head env = function
     | HConst c -> Names.OConst.repr c
@@ -176,7 +173,7 @@ module Printer = struct
     SLF.Printer.sign fmt l
 
   let env fmt e =
-    Print.pr_list Print.pr_comma fam fmt e
+    Format.fprintf fmt "[%a]" (Print.pr_list Print.pr_comma fam) e
 end
 
 

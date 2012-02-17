@@ -4,7 +4,7 @@ type term =
   | Lam of string * term
   | App of term * term
   | Ident of string
-  | Meta of string
+  | Meta of string * term list
 
 type sign = (string * term * bool) list
 
@@ -48,7 +48,8 @@ module Parser = struct
   term2:
   [ "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
-      | "?"; x = ident -> <:expr< SLF.Meta $str:x$ >>
+      | "?"; x = ident -> <:expr< SLF.Meta ($str:x$, []) >>
+      | "?"; x = ident; "["; s = LIST0 term SEP ";"; "]" -> <:expr< SLF.Meta ($str:x$, s) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
   | "lam"
@@ -117,7 +118,8 @@ module Printer = struct
     | Prod _ -> 30
 
   let term pp fmt = function
-    | Meta x -> fprintf fmt "?%s" x
+    | Meta (x, []) -> fprintf fmt "?%s" x
+    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (pr_list pr_comma (pp (<=))) s
     | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
 	str x (pp (<=)) a (pp (<=)) b
