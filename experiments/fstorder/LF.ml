@@ -132,7 +132,7 @@ module Unstrat = struct
       try match Env.find x env with
         | Some x -> x
         | None -> failwith "none"
-      with _ -> "_UNBOUND_REL_"^(string_of_int x)
+      with _ -> "_REL_"^(string_of_int x)
 
   let rec fam env = function
     | FApp (f, l) -> List.fold_left
@@ -173,7 +173,7 @@ module Printer = struct
     SLF.Printer.sign fmt l
 
   let env fmt e =
-    Format.fprintf fmt "[%a]" (Print.pr_list Print.pr_comma fam) e
+    Format.fprintf fmt "@[%a@]" (Print.pr_list Print.pr_comma fam) e
 end
 
 
