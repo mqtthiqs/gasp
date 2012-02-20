@@ -47,6 +47,10 @@ let repo = Slicer.commit repo
 >>
 ;;
 
+#trace Kernel.Check.obj
+#trace LF.Subst.obj
+#trace LF.Subst.fam
+
 let repo = Slicer.commit repo
 <<
   is_lam ([x] app x x) base base
@@ -57,9 +61,7 @@ let repo = Slicer.commit repo
 let repo = Slicer.commit repo
 <<
   is_lam ([x] lam [y] y) (arr base base) base
-  ([x] [H1]
-      is_lam ([y] x) base base ([y] [H2] H2)
-  )
+  [x] [H1] is_lam ([y] x) base base ([y] [H2] H2)
 >>
 ;;
 
