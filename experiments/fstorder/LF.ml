@@ -233,4 +233,9 @@ module Subst = struct
     | KType -> KType
     | KProd (x, a, b) -> KProd (x, fam k m a, kind (k+1) m b)
 
+  let obj k m n =
+    let r = obj k m n in
+    Format.printf "** subst %d (%a) (%a) = %a" k Printer.obj m Printer.obj n Printer.obj r;
+    r
+
 end
