@@ -55,18 +55,13 @@ module Parser = struct
   [ "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
       | "?"; x = ident -> <:expr< SLF.Meta ($str:x$, []) >>
-      | "?"; x = ident; "["; s = LIST0 term SEP ";"; "]" -> <:expr< SLF.Meta ($str:x$, s) >>
+      | "?"; x = ident; "["; s = LIST0 term SEP ";"; "]" -> <:expr< SLF.Meta ($str:x$, $list:s$) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
   | "lam"
       [ "["; id = binder; "]"; t = term1 ->
       <:expr< SLF.Lam ($id$, $t$) >> ]
   ];
-
-  (* term1 : *)
-  (* [ *)
-
-  (* ]; *)
 
   term_eoi:
       [[ t = term; `EOI -> t ]];
