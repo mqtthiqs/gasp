@@ -215,7 +215,7 @@ module Lift = struct
   let rec obj k n = function
     | OLam (x, m) -> OLam (x, obj (k+1) n m)
     | OApp (h, l) -> OApp (head k n h, List.map (obj k n) l)
-    | OMeta _ as x -> x
+    | OMeta (x, s) -> OMeta (x, List.map (obj k n) s)
 
 end
 
@@ -226,8 +226,8 @@ module Subst = struct
     | HConst c -> HConst c
 
   let rec spine k = function
-    | OLam (x, n), m :: l -> spine k (obj k m n, l)
-    | n, [] -> n
+    | OLam (x, n), m :: l -> spine k (obj 0 m n, l)
+    | n, [] -> Lift.obj 0 k n
     | _, _::_ -> assert false
 
   and obj k m = function
@@ -244,9 +244,9 @@ module Subst = struct
     | KType -> KType
     | KProd (x, a, b) -> KProd (x, fam k m a, kind (k+1) m b)
 
-  let obj k m n =
-    let r = obj k m n in
-    Format.printf "** subst %d (%a) (%a) = %a" k Printer.obj m Printer.obj n Printer.obj r;
+  let fam k m n =
+    let r = fam k m n in
+    Format.printf "** subst %d (%a) (%a) = %a@." k Printer.obj m Printer.fam n Printer.fam r;
     r
 
 end
