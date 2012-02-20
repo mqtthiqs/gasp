@@ -4,11 +4,11 @@ val init : LF.Sign.t -> SLF.sign -> LF.Sign.t
 
 module Conv : sig
   exception Not_conv of Repo.t * LF.obj * LF.obj
+  (* debugging only *)
+  val obj : Repo.t -> LF.obj * LF.obj -> unit
 end
 
 (* debugging only *)
 module Check : sig
-
   val obj : Repo.t -> LF.Env.t -> LF.obj * LF.fam -> Repo.t * LF.obj
-
 end

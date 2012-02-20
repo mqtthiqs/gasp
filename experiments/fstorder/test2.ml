@@ -48,6 +48,7 @@ let repo = Slicer.commit repo
 ;;
 
 #trace Kernel.Check.obj
+#trace Kernel.Conv.obj
 #trace LF.Subst.obj
 #trace LF.Subst.fam
 

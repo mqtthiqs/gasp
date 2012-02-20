@@ -40,8 +40,7 @@ module Conv = struct
     | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
     | OMeta (x1, l1), OMeta (x2, l2) when Names.Meta.compare x1 x2 = 0 -> spine repo (l1, l2)
     | (OMeta _ as m1), m2 | m1, (OMeta _ as m2) ->
-      Format.printf "not implemented";
-      raise (Not_conv (repo, m1, m2))
+      raise (Not_conv (repo, m1, m2))   (* TODO comparaison MV *)
     | m1, m2 -> raise (Not_conv (repo, m1, m2))
 
   let rec fam repo = function
