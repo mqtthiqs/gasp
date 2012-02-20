@@ -5,7 +5,7 @@ type fam =
   | FProd of string option * fam * fam
 
 and obj =
-  | OLam of string * obj
+  | OLam of string option * obj
   | OApp of head * spine
   | OMeta of Meta.t * subst
 

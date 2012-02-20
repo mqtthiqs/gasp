@@ -1,7 +1,7 @@
 type term =
   | Type
   | Prod of string option * term * term
-  | Lam of string * term
+  | Lam of string option * term
   | App of term * term
   | Ident of string
   | Meta of string * term list
@@ -13,6 +13,7 @@ module Parser = struct
   open Camlp4.PreCast
 
   let ident = Gram.Entry.mk "ident"
+  let binder = Gram.Entry.mk "ident"
   let term = Gram.Entry.mk "term"
   let term1 = Gram.Entry.mk "term1"
   let term2 = Gram.Entry.mk "term2"
@@ -25,11 +26,16 @@ module Parser = struct
     | x = UIDENT -> x ]
   ];
 
+  binder:
+  [ [ x = ident -> <:expr< Some $str:x$ >>
+    | "_" -> <:expr< None >> ]
+  ];
+
   term:
   [ "prd" RIGHTA
       [ "type" -> <:expr< SLF.Type >>
-      | "{"; id = ident; ":"; t = term; "}"; u = term ->
-      <:expr< SLF.Prod(Some($str:id$), $t$, $u$) >> ]
+      | "{"; id = binder; ":"; t = term; "}"; u = term ->
+      <:expr< SLF.Prod($id$, $t$, $u$) >> ]
   | "arr" RIGHTA
       [ t = term; "->"; u = term -> <:expr< SLF.Prod(None, $t$, $u$) >> ]
   | "rarr" RIGHTA
@@ -53,8 +59,8 @@ module Parser = struct
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
   | "lam"
-      [ "["; id = ident; "]"; t = term1 ->
-      <:expr< SLF.Lam ($str:id$, $t$) >> ]
+      [ "["; id = binder; "]"; t = term1 ->
+      <:expr< SLF.Lam ($id$, $t$) >> ]
   ];
 
   (* term1 : *)
@@ -123,7 +129,8 @@ module Printer = struct
     | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
 	str x (pp (<=)) a (pp (<=)) b
-    | Lam (x, t) -> fprintf fmt "@[[%s]@ %a@]" x (pp (<=)) t
+    | Lam (Some x, t) -> fprintf fmt "@[[%s]@ %a@]" x (pp (<=)) t
+    | Lam (None, t) -> fprintf fmt "@[[_]@ %a@]" (pp (<=)) t
     | Prod (None, a, b) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<=)) a (pp (<=)) b
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" (pp (<=)) t (pp (<)) u
     | Type -> fprintf fmt "@[type@]"

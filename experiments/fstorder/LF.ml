@@ -6,7 +6,7 @@ type fam =
   | FProd of string option * fam * fam
 
 and obj =
-  | OLam of string * obj
+  | OLam of string option * obj
   | OApp of head * spine
   | OMeta of Meta.t * subst
 
@@ -77,7 +77,7 @@ module Strat = struct
     | _ -> failwith "strat: app error"
 
   and term sign env = function
-    | Lam (x, t) -> Obj (OLam (x, obj sign (Some x :: env) t))
+    | Lam (x, t) -> Obj (OLam (x, obj sign (x :: env) t))
     | Type -> Kind KType
     | Prod (x, a, b) ->
       begin match term sign env a, term sign (x::env) b with
@@ -120,7 +120,7 @@ module Unstrat = struct
   open SLF
 
   let rec obj env = function
-    | OLam (x, m) -> Lam (x, obj (Some x :: env) m)
+    | OLam (x, m) -> Lam (x, obj (x :: env) m)
     | OApp (h, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
       ) (Ident (head env h)) l
