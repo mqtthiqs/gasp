@@ -26,8 +26,8 @@ module Env : sig
   type t
   val empty : t
   val find : int -> t -> fam
-  val add : fam -> t -> t
-  val to_list : t -> fam list
+  val add : string option -> fam -> t -> t
+  val to_list : t -> (string option * fam) list
 end
 
 module Sign : sig
@@ -73,6 +73,9 @@ end
 
 module Printer : sig
   open Format
+  val eobj : string option list -> formatter -> obj -> unit
+  val efam : string option list -> formatter -> fam -> unit
+  val ekind : string option list -> formatter -> kind -> unit
   val obj : formatter -> obj -> unit
   val fam : formatter -> fam -> unit
   val kind : formatter -> kind -> unit

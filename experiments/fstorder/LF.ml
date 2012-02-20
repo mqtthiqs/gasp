@@ -24,10 +24,10 @@ type kind =
 type env = fam list
 
 module Env = struct
-  type t = fam list
+  type t = (string option * fam) list
   let empty = []
-  let find x l = List.nth l x
-  let add a l = (a :: l)
+  let find x l = snd (List.nth l x)
+  let add x a l = ((x, a) :: l)
   let to_list l = l
 end
 
@@ -129,9 +129,9 @@ module Unstrat = struct
   and head env = function
     | HConst c -> Names.OConst.repr c
     | HVar x ->
-      try match Env.find x env with
+      try match List.nth env x with
         | Some x -> x
-        | None -> failwith "none"
+        | None -> assert false
       with _ -> "_REL_"^(string_of_int x)
 
   let rec fam env = function
@@ -155,9 +155,14 @@ module Util = struct
 end
 
 module Printer = struct
-  let obj fmt m = SLF.Printer.term fmt (Unstrat.obj [] m)
-  let fam fmt a = SLF.Printer.term fmt (Unstrat.fam [] a)
-  let kind fmt k = SLF.Printer.term fmt (Unstrat.kind [] k)
+  let eobj e fmt m = SLF.Printer.term fmt (Unstrat.obj e m)
+  let efam e fmt a = SLF.Printer.term fmt (Unstrat.fam e a)
+  let ekind e fmt k = SLF.Printer.term fmt (Unstrat.kind e k)
+
+  let obj fmt m = eobj [] fmt m
+  let fam fmt m = efam [] fmt m
+  let kind fmt m = ekind [] fmt m
+
   let entity fmt = function
     | Strat.Kind k -> kind fmt k
     | Strat.Fam a -> fam fmt a
@@ -173,7 +178,13 @@ module Printer = struct
     SLF.Printer.sign fmt l
 
   let env fmt e =
-    Format.fprintf fmt "@[%a@]" (Print.pr_list Print.pr_comma fam) e
+    let rec aux fmt = function
+      | [] -> ()
+      | [Some x,a] -> Format.fprintf fmt "@[%s@ :@ %a@]" x fam a
+      | [None,a] -> Format.fprintf fmt "@[_@ :@ %a@]" fam a
+      | (x,a) :: e -> Format.fprintf fmt "%a,@ %a" aux [x,a] aux e
+    in
+    Format.fprintf fmt "@[%a@]" aux e
 end
 
 

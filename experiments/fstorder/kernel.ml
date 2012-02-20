@@ -61,7 +61,7 @@ module Check = struct
 
   let rec obj repo env : obj * fam -> Repo.t * obj = function
     | OLam (x, m), FProd (_, a, b) ->
-      let repo, m = obj repo (Env.add a env) (m, b) in
+      let repo, m = obj repo (Env.add x a env) (m, b) in
       repo, OLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
     | OApp (h, l), a ->
@@ -98,11 +98,11 @@ module Check = struct
 
   let rec fam repo env = function
     | FApp (c, l) -> fapp repo env (l, Sign.ffind c repo.sign)
-    | FProd (_, a, b) -> fam repo env a; fam repo (Env.add a env) b
+    | FProd (x, a, b) -> fam repo env a; fam repo (Env.add x a env) b
 
   let rec kind repo env = function
     | KType -> ()
-    | KProd (_, a, k) -> fam repo env a; kind repo (Env.add a env) k
+    | KProd (x, a, k) -> fam repo env a; kind repo (Env.add x a env) k
 
   let app repo env (h, l) =
     let a, _ = head repo env h in

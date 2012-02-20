@@ -22,11 +22,12 @@ module Printer = struct
   let context fmt c =
     Context.fold
       (fun x (e, m, a) () ->
+        let e', _ = List.split (LF.Env.to_list e) in
         Format.fprintf fmt "%a ⊢ %a : %a = %a@."
           LF.Printer.env e
           Meta.print x
-          LF.Printer.fam a
-          LF.Printer.obj m
+          (LF.Printer.efam e') a
+          (LF.Printer.eobj e') m
       ) c ()
 
   let t_light fmt {sign; ctx; head} =
