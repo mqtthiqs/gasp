@@ -3,7 +3,7 @@ Toploop.initialize_toplevel_env ();;
 #load "dynlink.cma"
 #load "camlp4o.cma"
 #directory "_build"
-#load "gasp.cma"
+#load "LF.cma"
 
 #install_printer SLF.Printer.term
 #install_printer SLF.Printer.sign
