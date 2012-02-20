@@ -3,6 +3,6 @@
 <SLF.ml{,i}> : package(camlp4.extend), package(camlp4.quotations), syntax(camlp4o)
 <LF.ml> : package(camlp4.quotations), syntax(camlp4o), pa(SLF.cma)
 <slicer.ml> : package(camlp4.quotations), syntax(camlp4o), pa(LF.cma)
-<gasp.ml> : package(camlp4.quotations), syntax(camlp4o), pa(LF.cma)
+<test*.ml> : package(camlp4.quotations), syntax(camlp4o), pa(LF.cma)
 
-<gasp.{byte,native,top}> : package(camlp4.lib)
+<*.{byte,native,top}> : package(camlp4.lib)

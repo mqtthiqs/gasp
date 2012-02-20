@@ -5,13 +5,13 @@ TARGET=gasp
 OCAMLBUILD_OPT=-use-ocamlfind -classic-display
 OCAMLBUILD=ocamlbuild ${OCAMLBUILD_OPT}
 
-all: ${TARGET}
+all:: ${TARGET}
 
-${TARGET}:
+${TARGET}::
 	@${OCAMLBUILD} ${TARGET}.cma ${TARGET}.top
 
-clean:
+clean::
 	@${OCAMLBUILD} -clean
 
-%:
+%::
 	@$(OCAMLBUILD) $@
