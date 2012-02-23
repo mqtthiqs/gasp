@@ -28,6 +28,7 @@ module Env : sig
   val find : int -> t -> fam
   val add : string option -> fam -> t -> t
   val to_list : t -> (string option * fam) list
+  val names_of : t -> string option list
 end
 
 module Sign : sig

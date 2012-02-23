@@ -29,6 +29,8 @@ module Env = struct
   let find x l = snd (List.nth l x)
   let add x a l = ((x, a) :: l)
   let to_list l = l
+  let names_of env = fst (List.split (to_list env))
+
 end
 
 module Sign = struct
@@ -178,13 +180,16 @@ module Printer = struct
     SLF.Printer.sign fmt l
 
   let env fmt e =
-    let rec aux fmt = function
+    let open Format in
+    let var fmt = function
+      | Some x -> fprintf fmt "%s" x
+      | None -> fprintf fmt "_" in
+    let rec aux (l:Env.t) fmt = function
       | [] -> ()
-      | [Some x,a] -> Format.fprintf fmt "@[%s@ :@ %a@]" x fam a
-      | [None,a] -> Format.fprintf fmt "@[_@ :@ %a@]" fam a
-      | (x,a) :: e -> Format.fprintf fmt "%a,@ %a" aux [x,a] aux e
+      | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" var x (efam (Env.names_of l)) a
+      | (x,a) :: e -> fprintf fmt "%a,@ %a" (aux l) [x, a] (aux ((x, a) :: l)) e
     in
-    Format.fprintf fmt "@[%a@]" aux e
+    Format.fprintf fmt "@[%a@]" (aux []) (List.rev e)
 end
 
 
