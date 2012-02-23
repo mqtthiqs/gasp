@@ -217,6 +217,10 @@ module Lift = struct
     | OApp (h, l) -> OApp (head k n h, List.map (obj k n) l)
     | OMeta (x, s) -> OMeta (x, List.map (obj k n) s)
 
+  let rec fam k n = function
+    | FProd (x, a, b) -> FProd (x, fam k n a, fam (k+1) n b)
+    | FApp (c, l) -> FApp (c, List.map (obj k n) l)
+
 end
 
 module Subst = struct

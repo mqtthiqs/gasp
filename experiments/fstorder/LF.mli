@@ -40,6 +40,11 @@ module Sign : sig
   val fadd : FConst.t -> kind -> t -> t
 end
 
+module Lift : sig
+  val obj : int -> int -> obj -> obj
+  val fam : int -> int -> fam -> fam
+end
+
 module Subst : sig
   val spine : obj * spine -> obj
   val obj : int -> obj -> obj -> obj
