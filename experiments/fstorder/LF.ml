@@ -247,11 +247,11 @@ module Subst = struct
 
   let rec fam k m = function
     | FApp (c, l) -> FApp (c, List.map (obj k m) l)
-    | FProd (x, a, b) -> FProd (x, fam k m a, fam (k+1) m b)
+    | FProd (x, a, b) -> FProd (x, fam k m a, fam (k+1) (Lift.obj 0 1 m) b)
 
   let rec kind k m = function
     | KType -> KType
-    | KProd (x, a, b) -> KProd (x, fam k m a, kind (k+1) m b)
+    | KProd (x, a, b) -> KProd (x, fam k m a, kind (k+1) (Lift.obj 0 1 m) b)
 
   let fam k m n =
     let r = fam k m n in
