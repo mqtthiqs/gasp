@@ -134,7 +134,7 @@ module Unstrat = struct
       try match List.nth env x with
         | Some x -> x
         | None -> assert false
-      with _ -> "_REL_"^(string_of_int x)
+      with Failure "nth" -> "_REL_"^(string_of_int x)
 
   let rec fam env = function
     | FApp (f, l) -> List.fold_left
