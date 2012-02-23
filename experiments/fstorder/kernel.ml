@@ -55,7 +55,10 @@ end
 module Check = struct
 
   let head repo env : head -> fam * bool = function
-    | HVar x -> (try Env.find x env with _ -> failwith(string_of_int x)), false
+    | HVar x ->
+      let a = try Env.find x env with _ -> failwith(string_of_int x) in
+      let a = Lift.fam 0 (x+1) a in
+      a, false
     | HConst c -> Sign.ofind c repo.sign, Sign.slices c repo.sign
 
   let rec obj repo env : obj * fam -> Repo.t * obj = function

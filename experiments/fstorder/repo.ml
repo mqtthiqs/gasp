@@ -22,7 +22,7 @@ module Printer = struct
   let context fmt c =
     Context.fold
       (fun x (e, m, a) () ->
-        let e', _ = List.split (LF.Env.to_list e) in
+        let e' = LF.Env.names_of e in
         Format.fprintf fmt "%a ⊢ %a : %a = %a@."
           LF.Printer.env e
           Meta.print x
