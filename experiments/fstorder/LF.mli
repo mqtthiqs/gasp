@@ -41,6 +41,7 @@ module Sign : sig
 end
 
 module Subst : sig
+  val spine : obj * spine -> obj
   val obj : int -> obj -> obj -> obj
   val fam : int -> obj -> fam -> fam
   val kind : int -> obj -> kind -> kind

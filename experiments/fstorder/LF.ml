@@ -225,14 +225,14 @@ module Subst = struct
     | HVar n -> if n < k then HVar n else HVar (n-1)
     | HConst c -> HConst c
 
-  let rec spine k = function
-    | OLam (x, n), m :: l -> spine k (obj 0 m n, l)
-    | n, [] -> Lift.obj 0 k n
+  let rec spine = function
+    | OLam (x, n), m :: l -> spine (obj 0 m n, l)
+    | n, [] -> n
     | _, _::_ -> assert false
 
   and obj k m = function
-    | OLam (x, n) -> OLam (x, obj (k+1) m n)
-    | OApp (HVar p, l) when k=p -> spine k (m, l)
+    | OLam (x, n) -> OLam (x, obj (k+1) (Lift.obj 0 1 m) n)
+    | OApp (HVar p, l) when k=p -> spine (m, l)
     | OApp (h, l) -> OApp (head k h, List.map (obj k m) l)
     | OMeta (x, s) -> OMeta (x, List.map (obj k m) s)
 
