@@ -21,35 +21,35 @@ let push =
 
 module Conv = struct
 
-  exception Not_conv of Repo.t * obj * obj
+  exception Not_conv_obj of Repo.t * obj * obj
+  exception Not_conv_fam of Repo.t * fam * fam
 
   let head repo = function
     | HVar i1, HVar i2 when i1 = i2 -> ()
     | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 -> ()
-    | h1, h2 -> raise (Not_conv (repo, OApp (h1, []), OApp (h2, [])))
+    | h1, h2 -> raise (Not_conv_obj (repo, OApp (h1, []), OApp (h2, [])))
 
   let rec spine repo = function
     | [], [] -> ()
     | m1 :: l1, m2 :: l2 -> obj repo (m1, m2); spine repo (l1, l2)
     | l1, l2 ->
       let h = HConst (Names.OConst.make "@") in
-      raise (Not_conv (repo, OApp (h, l1), OApp (h, l2)))
+      raise (Not_conv_obj (repo, OApp (h, l1), OApp (h, l2)))
 
   and obj repo = function
     | OLam (_, m1), OLam (_,m2) -> obj repo (m1, m2)
     | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
     | OMeta (x1, l1), OMeta (x2, l2) when Names.Meta.compare x1 x2 = 0 -> spine repo (l1, l2)
     | (OMeta _ as m1), m2 | m1, (OMeta _ as m2) ->
-      raise (Not_conv (repo, m1, m2))   (* TODO comparaison MV *)
-    | m1, m2 -> raise (Not_conv (repo, m1, m2))
+      raise (Not_conv_obj (repo, m1, m2))   (* TODO comparaison MV *)
+    | m1, m2 -> raise (Not_conv_obj (repo, m1, m2))
 
   let rec fam repo = function
     | FProd (_, a1, b1), FProd (_, a2, b2) ->
       fam repo (a1, a2); fam repo (b1, b2)
-    | FApp (c1, l1), FApp (c2, l2) ->
-      if Names.FConst.compare c1 c2 <> 0 then failwith "not convertible";
+    | FApp (c1, l1), FApp (c2, l2) when Names.FConst.compare c1 c2 = 0 ->
       spine repo (l1, l2)
-    | _ -> failwith "not convertible"
+    | a1, a2 -> raise (Not_conv_fam (repo, a1, a2))
 end
 
 module Check = struct
