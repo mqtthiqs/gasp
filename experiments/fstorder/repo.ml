@@ -17,6 +17,8 @@ type t = {
   head: Meta.t;
 }
 
+let empty = {sign = LF.Sign.empty; ctx = Context.empty; head = Meta.make "DUMMY"}
+
 module Printer = struct
 
   let context fmt c =
