@@ -239,11 +239,16 @@ module Subst = struct
     | n, [] -> n
     | _, _::_ -> assert false
 
-  and obj k m = function
+  and obj' k m = function
     | OLam (x, n) -> OLam (x, obj (k+1) (Lift.obj 0 1 m) n)
     | OApp (HVar p, l) when k=p -> spine (m, l)
     | OApp (h, l) -> OApp (head k h, List.map (obj k m) l)
     | OMeta (x, s) -> OMeta (x, List.map (obj k m) s)
+
+  and obj k m n =
+    let r = obj' k m n in
+    (* Format.printf "** subst %d (%a) (%a) = @[%a@]@." k Printer.obj m Printer.obj n Printer.obj r; *)
+    r
 
   let rec fam k m = function
     | FApp (c, l) -> FApp (c, List.map (obj k m) l)
@@ -255,7 +260,7 @@ module Subst = struct
 
   let fam k m n =
     let r = fam k m n in
-    Format.printf "** subst %d (%a) (%a) = %a@." k Printer.obj m Printer.fam n Printer.fam r;
+    (* Format.printf "** subst %d (%a) (%a) = %a@." k Printer.obj m Printer.fam n Printer.fam r; *)
     r
 
 end

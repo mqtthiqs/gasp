@@ -61,7 +61,7 @@ module Check = struct
       a, false
     | HConst c -> Sign.ofind c repo.sign, Sign.slices c repo.sign
 
-  let rec obj repo env : obj * fam -> Repo.t * obj = function
+  let rec obj' repo env : obj * fam -> Repo.t * obj = function
     | OLam (x, m), FProd (y, a, b) ->
       let x = match x, y with
         | None, Some x -> Some x
@@ -83,6 +83,12 @@ module Check = struct
       let e, _, b = Repo.Context.find x repo.ctx in (* TODO subst de s ds b *)
       Conv.fam repo (a, b);
       repo, m
+
+  and obj repo env (m, a) =
+    (* let e = LF.Env.names_of env in *)
+    (* Format.printf "** obj @[%a@] ⊢ @[%a@] : @[%a@]@." LF.Printer.env env *)
+    (*   (LF.Printer.eobj e) m (LF.Printer.efam e) a; *)
+    obj' repo env (m, a)
 
   and app repo env : spine * fam -> Repo.t * spine * fam = function
     | [], (FApp _ as a) -> repo, [], a

@@ -19,7 +19,7 @@ let repo = Slicer.init
   is_app : {M:tm} {N:tm} {A:tp} {B:tp}
     is M (arr A B) -> is N A -> is (app M N) B.
   is_lam : {M:tm -> tm} {A:tp} {B:tp}
-    ({x : tm} is x B -> is (M x) A) -> is (lam [a] M a) (arr A B).
+    ({t : tm} is t B -> is (M t) A) -> is (lam [u] M u) (arr A B).
   sorry : {M : tm} {A: tp} is M A.
 >>
 ;;
@@ -41,21 +41,21 @@ test_commit repo
 (* some derivations *)
 test_commit repo
 <<
-  is_lam ([x] x) base base ([x] [H] H)
+  is_lam ([x] x) base base ([_] [H] H)
 >>
 ;;
 
 test_commit repo
 <<
   is_lam ([x] app x x) base base
-  [x] [H] sorry (app x x) base
+  [x] [_] sorry (app x x) base
 >>
 ;;
 
 test_commit repo
 <<
-  is_lam ([x] lam [y] y) (arr base base) base
-  [x] [H1] is_lam ([y] x) base base ([y] [H2] H2)
+  is_lam ([_] lam [x] x) (arr base base) base
+  [_] [H1] is_lam ([y] y) base base ([_] [H2] H2)
 >>
 ;;
 
