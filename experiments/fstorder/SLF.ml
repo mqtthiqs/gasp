@@ -13,7 +13,8 @@ module Parser = struct
   open Camlp4.PreCast
 
   let ident = Gram.Entry.mk "ident"
-  let binder = Gram.Entry.mk "ident"
+  let binder = Gram.Entry.mk "binder"
+  let subst = Gram.Entry.mk "subst"
   let term = Gram.Entry.mk "term"
   let term1 = Gram.Entry.mk "term1"
   let term2 = Gram.Entry.mk "term2"
@@ -55,7 +56,7 @@ module Parser = struct
   [ "simple"
       [ x = ident -> <:expr< SLF.Ident $str:x$ >>
       | "?"; x = ident -> <:expr< SLF.Meta ($str:x$, []) >>
-      | "?"; x = ident; "["; s = LIST0 term SEP ";"; "]" -> <:expr< SLF.Meta ($str:x$, $list:s$) >>
+      | "?"; x = ident; "["; s = subst; "]" -> <:expr< SLF.Meta ($str:x$, $s$) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
       | "("; t = term; ")" -> t ]
   | "lam"
@@ -65,6 +66,12 @@ module Parser = struct
 
   term_eoi:
       [[ t = term; `EOI -> t ]];
+
+  subst:
+  [ [ -> <:expr< [] >>
+    | t = term -> <:expr< [$t$] >>
+    | t = term; ";"; s = subst -> <:expr< [$t$ :: $s$] >> ]
+  ];
 
   END;;
 
