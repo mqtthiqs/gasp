@@ -62,7 +62,10 @@ module Check = struct
     | HConst c -> Sign.ofind c repo.sign, Sign.slices c repo.sign
 
   let rec obj repo env : obj * fam -> Repo.t * obj = function
-    | OLam (x, m), FProd (_, a, b) ->
+    | OLam (x, m), FProd (y, a, b) ->
+      let x = match x, y with
+        | None, Some x -> Some x
+        | _ -> x in
       let repo, m = obj repo (Env.add x a env) (m, b) in
       repo, OLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
