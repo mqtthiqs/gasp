@@ -133,7 +133,7 @@ module Unstrat = struct
     | HVar x ->
       try match List.nth env x with
         | Some x -> x
-        | None -> assert false
+        | None -> "___"^(string_of_int x)
       with Failure "nth" -> "_REL_"^(string_of_int x)
 
   let rec fam env = function
