@@ -28,3 +28,15 @@ end = struct
     aux i
 
 end
+
+let ($) a b = a b
+let (<$) f g x = f (g x)
+let ($>) f g x = g (f x)
+
+let id x = x
+
+module Prod = struct
+
+  let map f g = fun (x, y) -> f x, g y
+
+end
