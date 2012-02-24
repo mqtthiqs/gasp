@@ -1,12 +1,14 @@
 open Util
 open LF
-open Repo
 
 let pull repo x =
-  let rec aux ctx x =
+  let rec aux ctx x s =
     let e, m, a = Repo.Context.find x ctx in
-    LF.Util.fold_meta (aux ctx) m
-  in aux repo.Repo.ctx x
+    assert (List.length (Env.to_list e) = List.length s);
+    (* TODO: substituer *)
+    (* let m = Subst.objs 0 s m in *)
+    LF.Util.map_meta (aux ctx) m
+  in aux repo.Repo.ctx x []
 
 let push =
   let gensym =
@@ -39,9 +41,19 @@ module Conv = struct
   and obj repo = function
     | OLam (_, m1), OLam (_,m2) -> obj repo (m1, m2)
     | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
-    | OMeta (x1, l1), OMeta (x2, l2) when Names.Meta.compare x1 x2 = 0 -> spine repo (l1, l2)
+    | OMeta (x1, s1), OMeta (x2, s2) ->
+      if Names.Meta.compare x1 x2 = 0 then spine repo (s1, s2) else
+        let e1, m1, a1 = Repo.Context.find x1 repo.Repo.ctx in
+        let e2, m2, a2 = Repo.Context.find x2 repo.Repo.ctx in
+        assert (List.length (Env.to_list e1) = List.length s1);
+        assert (List.length (Env.to_list e2) = List.length s2);
+        (* TODO substituer *)
+        (* let m1 = Subst.objs 0 s1 m1 in *)
+        (* let m2 = Subst.objs 0 s2 m2 in *)
+        obj repo (m1, m2)
+
     | (OMeta _ as m1), m2 | m1, (OMeta _ as m2) ->
-      raise (Not_conv_obj (repo, m1, m2))   (* TODO comparaison MV *)
+      raise (Not_conv_obj (repo, m1, m2))
     | m1, m2 -> raise (Not_conv_obj (repo, m1, m2))
 
   let rec fam repo = function
@@ -62,7 +74,7 @@ module Check = struct
       let a = try Env.find x env with _ -> failwith(string_of_int x) in
       let a = Lift.fam 0 (x+1) a in
       a, false
-    | HConst c -> Sign.ofind c repo.sign, Sign.slices c repo.sign
+    | HConst c -> Sign.ofind c repo.Repo.sign, Sign.slices c repo.Repo.sign
 
   let rec obj' repo env : obj * fam -> Repo.t * obj = function
     | OLam (x, m), FProd (y, a, b) ->
@@ -79,11 +91,11 @@ module Check = struct
       if slices then
         let repo, n = push repo env a (h, l) in
         let s = List.map (fun i -> OApp (HVar i, [])) (List.count 0 n) in
-        repo, OMeta (repo.head, s)
+        repo, OMeta (repo.Repo.head, s)
       else
         repo, OApp (h, l)
     | OMeta (x, s) as m, a ->
-      let e, _, b = Repo.Context.find x repo.ctx in (* TODO subst de s ds b *)
+      let e, _, b = Repo.Context.find x repo.Repo.ctx in (* TODO subst de s ds b *)
       Conv.fam repo (a, b);
       repo, m
 
@@ -113,7 +125,7 @@ module Check = struct
 
   let rec fam repo env : fam -> Repo.t * fam = function
     | FApp (c, l) ->
-      let repo, l = fapp repo env (l, Sign.ffind c repo.sign) in
+      let repo, l = fapp repo env (l, Sign.ffind c repo.Repo.sign) in
       repo, FApp (c, l)
     | FProd (x, a, b) ->
       let repo, a = fam repo env a in
