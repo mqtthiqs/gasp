@@ -70,7 +70,7 @@ module Parser = struct
   subst:
   [ [ -> <:expr< [] >>
     | t = term -> <:expr< [$t$] >>
-    | t = term; ";"; s = subst -> <:expr< [$t$ :: $s$] >> ]
+    | s = subst; ";"; t = term -> <:expr< [$t$ :: $s$] >> ]
   ];
 
   END;;
@@ -127,13 +127,13 @@ module Printer = struct
 
   let term pp fmt = function
     | Meta (x, []) -> fprintf fmt "?%s" x
-    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (pr_list pr_comma (pp (<=))) s
+    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (pr_list pr_comma (pp (<=))) (List.rev s)
     | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
-	str x (pp (<=)) a (pp (<=)) b
+	str x (pp (<)) a (pp (<=)) b
     | Lam (Some x, t) -> fprintf fmt "@[[%s]@ %a@]" x (pp (<=)) t
     | Lam (None, t) -> fprintf fmt "@[[_]@ %a@]" (pp (<=)) t
-    | Prod (None, a, b) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<=)) a (pp (<=)) b
+    | Prod (None, a, b) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<)) a (pp (<=)) b
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" (pp (<=)) t (pp (<)) u
     | Type -> fprintf fmt "@[type@]"
       
