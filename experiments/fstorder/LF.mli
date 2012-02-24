@@ -27,6 +27,7 @@ module Env : sig
   val empty : t
   val find : int -> t -> fam
   val add : string option -> fam -> t -> t
+  val length : t -> int
   val to_list : t -> (string option * fam) list
   val names_of : t -> string option list
 end
@@ -75,7 +76,7 @@ module Unstrat : sig
 end
 
 module Util : sig
-  val fold_meta : (Meta.t -> obj) -> obj -> obj
+  val map_meta : (Meta.t -> subst -> obj) -> obj -> obj
 end
 
 module Printer : sig

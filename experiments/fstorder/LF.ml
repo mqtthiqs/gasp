@@ -26,6 +26,7 @@ type env = fam list
 module Env = struct
   type t = (string option * fam) list
   let empty = []
+  let length = List.length
   let find x l = snd (List.nth l x)
   let add x a l = ((x, a) :: l)
   let to_list l = l
@@ -148,15 +149,8 @@ module Unstrat = struct
 
 end
 
-module Util = struct
-
-  let rec fold_meta f = function
-    | OApp (h, l) -> OApp (h, List.map (fold_meta f) l)
-    | OLam (x, m) -> OLam (x, fold_meta f m)
-    | OMeta (x, l) -> f x               (* TODO l *)
-end
-
 module Printer = struct
+
   let eobj e fmt m = SLF.Printer.term fmt (Unstrat.obj e m)
   let efam e fmt a = SLF.Printer.term fmt (Unstrat.fam e a)
   let ekind e fmt k = SLF.Printer.term fmt (Unstrat.kind e k)
@@ -250,17 +244,26 @@ module Subst = struct
     (* Format.printf "** subst %d (%a) (%a) = @[%a@]@." k Printer.obj m Printer.obj n Printer.obj r; *)
     r
 
-  let rec fam k m = function
+  let rec fam' k m = function
     | FApp (c, l) -> FApp (c, List.map (obj k m) l)
     | FProd (x, a, b) -> FProd (x, fam k m a, fam (k+1) (Lift.obj 0 1 m) b)
+
+  and fam k m n =
+    let r = fam' k m n in
+    (* Format.printf "** subst %d (%a) (%a) = %a@." k Printer.obj m Printer.fam n Printer.fam r; *)
+    r
 
   let rec kind k m = function
     | KType -> KType
     | KProd (x, a, b) -> KProd (x, fam k m a, kind (k+1) (Lift.obj 0 1 m) b)
 
-  let fam k m n =
-    let r = fam k m n in
-    (* Format.printf "** subst %d (%a) (%a) = %a@." k Printer.obj m Printer.fam n Printer.fam r; *)
-    r
+end
+
+module Util = struct
+
+  let rec map_meta f = function
+    | OApp (h, l) -> OApp (h, List.map (map_meta f) l)
+    | OLam (x, m) -> OLam (x, map_meta f m)
+    | OMeta (x, s) -> f x s
 
 end
