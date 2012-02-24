@@ -54,6 +54,9 @@ end
 
 module Check = struct
 
+  exception Non_functional_fapp of Repo.t * Env.t * spine
+  exception Non_functional_app of Repo.t * Env.t * spine * fam
+
   let head repo env : head -> fam * bool = function
     | HVar x ->
       let a = try Env.find x env with _ -> failwith(string_of_int x) in
@@ -97,23 +100,32 @@ module Check = struct
       let repo, l, a = app repo env (l, Subst.fam 0 m b) in
       repo, m :: l, a
     | [], _ -> failwith "not eta-expanded"
-    | _ :: _, FApp _ -> failwith "non-functional application"
+    | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
-  and fapp repo env : spine * kind -> unit = function
-    | [], KType -> ()
-    | _ :: _, KType -> failwith "non-functional application"
+  and fapp repo env : spine * kind -> Repo.t * spine = function
+    | [], KType -> repo, []
+    | _ :: _ as l, KType -> raise (Non_functional_fapp (repo, env, l))
     | [], _ -> failwith "not eta-expanded"
     | m :: l, KProd (_, a, k) ->
-      let _ = obj repo env (m, a) in
-      fapp repo env (l, Subst.kind 0 m k)
+      let repo, m = obj repo env (m, a) in
+      let repo, l = fapp repo env (l, Subst.kind 0 m k) in
+      repo, m :: l
 
-  let rec fam repo env = function
-    | FApp (c, l) -> fapp repo env (l, Sign.ffind c repo.sign)
-    | FProd (x, a, b) -> fam repo env a; fam repo (Env.add x a env) b
+  let rec fam repo env : fam -> Repo.t * fam = function
+    | FApp (c, l) ->
+      let repo, l = fapp repo env (l, Sign.ffind c repo.sign) in
+      repo, FApp (c, l)
+    | FProd (x, a, b) ->
+      let repo, a = fam repo env a in
+      let repo, b = fam repo (Env.add x a env) b in
+      repo, FProd (x, a, b)
 
-  let rec kind repo env = function
-    | KType -> ()
-    | KProd (x, a, k) -> fam repo env a; kind repo (Env.add x a env) k
+  let rec kind repo env : kind -> Repo.t * kind = function
+    | KType -> repo, KType
+    | KProd (x, a, k) ->
+      let repo, a = fam repo env a in
+      let repo, k = kind repo (Env.add x a env) k in
+      repo, KProd (x, a, k)
 
   let app repo env (h, l) =
     let a, _ = head repo env h in
@@ -121,21 +133,20 @@ module Check = struct
 
 end
 
-let rec init s = function
-  | [] -> s
+let rec init repo = function
+  | [] -> repo
   | (c, t, b) :: s' ->
-    let repo = { Repo.sign = s;
-                 Repo.ctx = Repo.Context.empty;
-                 Repo.head = Names.Meta.make "DUMMY" } in
-    match LF.Strat.term s [] t, b with
+    match LF.Strat.term repo.Repo.sign [] t, b with
       | LF.Strat.Obj _, _ -> failwith "object in sign"
       | LF.Strat.Kind _, false -> failwith "kind cannot be non-sliceable"
       | LF.Strat.Fam a, b ->
-        Check.fam repo LF.Env.empty a;
-        init (LF.Sign.oadd (Names.OConst.make c) (b, a) s) s'
+        let repo, a = Check.fam repo LF.Env.empty a in
+        let repo = {repo with Repo.sign = LF.Sign.oadd (Names.OConst.make c) (b, a) repo.Repo.sign} in
+        init repo s'
       | LF.Strat.Kind k, true ->
-        Check.kind repo LF.Env.empty k;
-        init (LF.Sign.fadd (Names.FConst.make c) k s) s'
+        let repo, k = Check.kind repo LF.Env.empty k in
+        let repo = {repo with Repo.sign = LF.Sign.fadd (Names.FConst.make c) k repo.Repo.sign} in
+        init repo s'
 
 let push repo env (h, l) =
   let repo, l, a = Check.app repo env (h, l) in

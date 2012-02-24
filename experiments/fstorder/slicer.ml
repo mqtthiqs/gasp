@@ -2,7 +2,7 @@ open Util
 open Names
 open LF
 
-let prelude : LF.Sign.t = Kernel.init LF.Sign.empty
+let prelude : Repo.t = Kernel.init Repo.empty
   <:sign<
     (* version : type. *)
     (* ancestors : type. *)
@@ -10,11 +10,7 @@ let prelude : LF.Sign.t = Kernel.init LF.Sign.empty
     (* acons : version -> ancestors -> ancestors. *)
   >>
 
-let init sign : Repo.t = {
-  Repo.sign = Kernel.init prelude sign;
-  Repo.ctx = Repo.Context.empty;
-  Repo.head = Meta.make "DUMMY";
-}
+let init sign : Repo.t = Kernel.init prelude sign
 
 let commit repo m =
   match LF.Strat.obj repo.Repo.sign [] m with
