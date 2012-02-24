@@ -4,11 +4,7 @@ type fam =
   | FApp of FConst.t * obj list
   | FProd of string option * fam * fam
 
-and obj =
-  | OLam of string option * obj
-  | OApp of head * spine
-  | OMeta of Meta.t * subst
-
+and obj
 and spine = obj list
 and subst = obj list
 
@@ -20,7 +16,14 @@ type kind =
   | KType
   | KProd of string option * fam * kind
 
-type env = fam list
+type cobj =
+  | OLam of string option * obj
+  | OApp of head * spine
+  | OMeta of Meta.t * subst
+
+val inj : cobj -> obj
+val prj : obj -> cobj
+val (~~) : (cobj -> cobj) -> obj -> obj
 
 module Env : sig
   type t
@@ -48,7 +51,7 @@ module Lift : sig
 end
 
 module Subst : sig
-  val spine : obj * spine -> obj
+  val spine : obj * spine -> cobj
   val obj : int -> obj -> obj -> obj
   val fam : int -> obj -> fam -> fam
   val kind : int -> obj -> kind -> kind

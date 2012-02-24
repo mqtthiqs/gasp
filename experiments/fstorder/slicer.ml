@@ -12,8 +12,7 @@ let prelude : Repo.t = Kernel.init Repo.empty
 
 let init sign : Repo.t = Kernel.init prelude sign
 
-let commit repo m =
-  match LF.Strat.obj repo.Repo.sign [] m with
+let commit repo = LF.Strat.obj repo.Repo.sign [] $> prj $> function
     | OApp (h, l) -> fst (Kernel.push repo LF.Env.empty (h, l))
     | _ -> failwith "not an app"
 

@@ -6,9 +6,9 @@ type fam =
   | FProd of string option * fam * fam
 
 and obj =
-  | OLam of string option * obj
-  | OApp of head * spine
-  | OMeta of Meta.t * subst
+  | XLam of string option * obj
+  | XApp of head * spine
+  | XMeta of Meta.t * subst
 
 and spine = obj list
 and subst = obj list
@@ -21,7 +21,24 @@ type kind =
   | KType
   | KProd of string option * fam * kind
 
-type env = fam list
+type cobj =
+  | OLam of string option * obj
+  | OApp of head * spine
+  | OMeta of Meta.t * subst
+
+let inj = function
+  | OLam (x, t) -> XLam (x, t)
+  | OApp (h, l) -> XApp (h, l)
+  | OMeta (x, s) -> XMeta (x, s)
+
+let prj = function
+  | XLam (x, t) -> OLam (x, t)
+  | XApp (h, l) -> OApp (h, l)
+  | XMeta (x, s) -> OMeta (x, s)
+
+let (~~) f = prj $> f $> inj
+
+(* After this point, it is forbidden to use X constructors *)
 
 module Env = struct
   type t = (string option * fam) list
@@ -62,11 +79,11 @@ module Strat = struct
     | Ident x ->
       begin
         try let i = List.index (Some x) env in
-            Obj (OApp (HVar i, l))
+            Obj (inj $ OApp (HVar i, l))
         with Not_found ->
           try let x = OConst.make x in
               ignore (Sign.ofind x sign);
-              Obj (OApp (HConst x, l))
+              Obj (inj $ OApp (HConst x, l))
           with Not_found ->
             let x = FConst.make x in
             try ignore(Sign.ffind x sign); Fam (FApp (x, l))
@@ -80,7 +97,7 @@ module Strat = struct
     | _ -> failwith "strat: app error"
 
   and term sign env = function
-    | Lam (x, t) -> Obj (OLam (x, obj sign (x :: env) t))
+    | Lam (x, t) -> Obj (inj $ OLam (x, obj sign (x :: env) t))
     | Type -> Kind KType
     | Prod (x, a, b) ->
       begin match term sign env a, term sign (x::env) b with
@@ -92,10 +109,10 @@ module Strat = struct
       end
     | App _ as a -> app sign env [] a
     | Ident x ->
-      begin try Obj (OApp (HVar (List.index (Some x) env), []))
+      begin try Obj (inj $ OApp (HVar (List.index (Some x) env), []))
         with Not_found ->
           try let x = OConst.make x in
-              ignore(Sign.ofind x sign); Obj (OApp (HConst x, []))
+              ignore(Sign.ofind x sign); Obj (inj $ OApp (HConst x, []))
           with Not_found ->
             let x = FConst.make x in
             try ignore(Sign.ffind x sign); Fam (FApp (x, []))
@@ -103,7 +120,7 @@ module Strat = struct
       end
     | Meta (x, s) ->
       let s = List.map (obj sign env) s in
-      Obj (OMeta (Meta.make x, s))
+      Obj (inj $ OMeta (Meta.make x, s))
 
   and obj sign env t = match term sign env t with
     | Obj m -> m
@@ -122,7 +139,7 @@ module Unstrat = struct
 
   open SLF
 
-  let rec obj env = function
+  let rec obj env = prj $> function
     | OLam (x, m) -> Lam (x, obj (x :: env) m)
     | OApp (h, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
@@ -211,7 +228,7 @@ module Lift = struct
     | HVar x -> if x < k then HVar x else HVar (x+n)
     | HConst _ as c -> c
 
-  let rec obj k n = function
+  let rec obj k n = ~~ function
     | OLam (x, m) -> OLam (x, obj (k+1) n m)
     | OApp (h, l) -> OApp (head k n h, List.map (obj k n) l)
     | OMeta (x, s) -> OMeta (x, List.map (obj k n) s)
@@ -228,12 +245,12 @@ module Subst = struct
     | HVar n -> if n < k then HVar n else HVar (n-1)
     | HConst c -> HConst c
 
-  let rec spine = function
+  let rec spine (m, s) = match prj m, s with
     | OLam (x, n), m :: l -> spine (obj 0 m n, l)
     | n, [] -> n
     | _, _::_ -> assert false
 
-  and obj' k m = function
+  and obj' k m = ~~ function
     | OLam (x, n) -> OLam (x, obj (k+1) (Lift.obj 0 1 m) n)
     | OApp (HVar p, l) when k=p -> spine (m, l)
     | OApp (h, l) -> OApp (head k h, List.map (obj k m) l)
@@ -261,9 +278,9 @@ end
 
 module Util = struct
 
-  let rec map_meta f = function
+  let rec map_meta f = ~~ function
     | OApp (h, l) -> OApp (h, List.map (map_meta f) l)
     | OLam (x, m) -> OLam (x, map_meta f m)
-    | OMeta (x, s) -> f x s
+    | OMeta (x, s) -> prj $ f x s
 
 end
