@@ -6,6 +6,7 @@
 #trace LF.Subst.kind
 #trace LF.Subst.spine
 #trace LF.Lift.obj
+;;
 
 let repo = Slicer.init
 <:sign<

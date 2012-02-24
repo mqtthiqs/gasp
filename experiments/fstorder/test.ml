@@ -1,4 +1,5 @@
 #use "load.ml"
+;;
 
 (* First-order STLC *)
 let stlc = Slicer.init
