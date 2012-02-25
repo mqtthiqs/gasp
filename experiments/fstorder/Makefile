@@ -8,10 +8,10 @@ OCAMLBUILD=ocamlbuild ${OCAMLBUILD_OPT}
 all: ${TARGET}
 
 ${TARGET}:
-	${OCAMLBUILD} ${TARGET}.otarget
+	@${OCAMLBUILD} ${TARGET}.otarget
 
 clean:
-	${OCAMLBUILD} -clean
+	@${OCAMLBUILD} -clean
 
 %:
-	$(OCAMLBUILD) $@
+	@$(OCAMLBUILD) $@

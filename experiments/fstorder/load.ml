@@ -1,5 +1,3 @@
-Toploop.initialize_toplevel_env ();;
-
 #load "dynlink.cma"
 #load "camlp4o.cma"
 #directory "_build"
