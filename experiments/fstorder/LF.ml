@@ -227,25 +227,6 @@ module Printer = struct
     Format.fprintf fmt "@[%a@]" (aux []) (List.rev e)
 end
 
-
-module Parser = struct
-
-  open Camlp4.PreCast
-  open Camlp4.PreCast
-
-  let expand_obj_quot loc a s : (* LF.obj *) Ast.expr =
-    SLF.Parser.expand_term_quot loc a s
-
-  let expand_sign_quot loc a s : (* LF.sign *) Ast.expr =
-    SLF.Parser.expand_sign_quot loc a s
-
-  let _ =
-    Syntax.Quotation.add "obj" Syntax.Quotation.DynAst.expr_tag expand_obj_quot;
-    Syntax.Quotation.add "sign" Syntax.Quotation.DynAst.expr_tag expand_sign_quot;
-    Syntax.Quotation.default := "obj";;
-
-end
-
 module Lift = struct
 
   let rec obj k n m =

@@ -107,9 +107,9 @@ module Parser = struct
     res
 
   let _ =
-    add "raw_term" DynAst.expr_tag expand_term_quot;
-    add "raw_sign" DynAst.expr_tag expand_sign_quot;
-
+    add "term" DynAst.expr_tag expand_term_quot;
+    add "sign" DynAst.expr_tag expand_sign_quot;
+    default := "term";
 end
 
 module Printer = struct
