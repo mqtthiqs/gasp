@@ -1,4 +1,4 @@
-#use "load.ml"
+#use "../load.ml"
 ;;
 
 (* First-order STLC *)

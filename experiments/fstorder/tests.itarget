@@ -1,0 +1,3 @@
+tests/stlc.byte
+tests/fo.byte
+test/subst.byte

@@ -16,3 +16,6 @@ Toploop.initialize_toplevel_env ();;
 #install_printer LF.Printer.env
 
 #install_printer Repo.Printer.t_light
+;;
+
+open Util
