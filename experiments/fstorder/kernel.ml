@@ -5,8 +5,7 @@ let pull repo x =
   let rec aux ctx x s =
     let e, m, a = Repo.Context.find x ctx in
     assert (List.length (Env.to_list e) = List.length s);
-    (* TODO: substituer *)
-    (* let m = Subst.objs 0 s m in *)
+    let m = Subst.obj s m in
     LF.Util.map_meta (aux ctx) m
   in aux repo.Repo.ctx x []
 
@@ -47,9 +46,8 @@ module Conv = struct
         let e2, m2, a2 = Repo.Context.find x2 repo.Repo.ctx in
         assert (List.length (Env.to_list e1) = List.length s1);
         assert (List.length (Env.to_list e2) = List.length s2);
-        (* TODO substituer *)
-        (* let m1 = Subst.objs 0 s1 m1 in *)
-        (* let m2 = Subst.objs 0 s2 m2 in *)
+        let m1 = Subst.obj s1 m1 in
+        let m2 = Subst.obj s2 m2 in
         obj repo (m1, m2)
 
     | (OMeta _ as m1), m2 | m1, (OMeta _ as m2) ->
@@ -96,7 +94,8 @@ module Check = struct
       else
         repo, OApp (h, l)
     | OMeta (x, s) as m, a ->
-      let e, _, b = Repo.Context.find x repo.Repo.ctx in (* TODO subst de s ds b *)
+      let e, _, b = Repo.Context.find x repo.Repo.ctx in
+      let b = Subst.fam s b in
       Conv.fam repo (a, b);
       repo, m
     end $> Prod.map id inj
@@ -111,7 +110,7 @@ module Check = struct
     | [], (FApp _ as a) -> repo, [], a
     | m :: l, FProd (_, a, b) ->
       let repo, m = obj repo env (m, a) in
-      let repo, l, a = app repo env (l, Subst.fam 0 m b) in
+      let repo, l, a = app repo env (l, Subst.fam [m] b) in
       repo, m :: l, a
     | [], _ -> failwith "not eta-expanded"
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
@@ -122,7 +121,7 @@ module Check = struct
     | [], _ -> failwith "not eta-expanded"
     | m :: l, KProd (_, a, k) ->
       let repo, m = obj repo env (m, a) in
-      let repo, l = fapp repo env (l, Subst.kind 0 m k) in
+      let repo, l = fapp repo env (l, Subst.kind [m] k) in
       repo, m :: l
 
   let rec fam repo env : fam -> Repo.t * fam = function

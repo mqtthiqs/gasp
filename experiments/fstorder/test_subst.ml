@@ -32,11 +32,17 @@ let repo = Slicer.commit repo
 let test_subst m n p =
   let p = LF.Strat.obj repo.Repo.sign [] p in
   let m = LF.Strat.obj repo.Repo.sign [] m in
-  let n = match LF.Strat.obj repo.Repo.sign [] n with
+  let n = match LF.prj (LF.Strat.obj repo.Repo.sign [] n) with
     | LF.OLam (_, n) -> n
     | _ -> assert false in
-  let q = LF.Subst.obj 0 m n in
+  let q = LF.Subst.obj [m] n in
   Kernel.Conv.obj repo (p, q)
+;;
+
+test_subst
+<< a >>
+<< [X] X >>
+<< a >>
 ;;
 
 test_subst

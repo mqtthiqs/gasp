@@ -51,10 +51,9 @@ module Lift : sig
 end
 
 module Subst : sig
-  val spine : obj * spine -> cobj
-  val obj : int -> obj -> obj -> obj
-  val fam : int -> obj -> fam -> fam
-  val kind : int -> obj -> kind -> kind
+  val obj : obj list -> obj -> obj
+  val fam : obj list -> fam -> fam
+  val kind : obj list -> kind -> kind
 end
 
 module Strat : sig

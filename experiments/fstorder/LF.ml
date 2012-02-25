@@ -1,5 +1,10 @@
 open Util
 open Names
+open Esubst
+
+type head =
+  | HVar of int
+  | HConst of OConst.t
 
 type fam =
   | FApp of FConst.t * obj list
@@ -9,13 +14,10 @@ and obj =
   | XLam of string option * obj
   | XApp of head * spine
   | XMeta of Meta.t * subst
+  | XClos of obj subs * obj
 
 and spine = obj list
 and subst = obj list
-
-and head =
-  | HVar of int
-  | HConst of OConst.t
 
 type kind =
   | KType
@@ -31,14 +33,36 @@ let inj = function
   | OApp (h, l) -> XApp (h, l)
   | OMeta (x, s) -> XMeta (x, s)
 
+module ESubst = struct
+
+  let rec clos = function
+    | s, m when is_subs_id s -> m
+    | s, XClos (s', m) -> XClos (comp clos s s', m)
+    | s, m -> XClos (s, m)
+
+  let rec obj s = function
+    | XClos (s', m) -> obj (comp clos s s') m
+    | XMeta (x, l) -> OMeta (x, List.map (fun m -> clos (s, m)) l)
+    | XLam (x, m) -> OLam (x, clos (subs_lift s, m))
+    | XApp (HConst c, l) -> OApp (HConst c, List.map (fun m -> clos (s, m)) l)
+    | XApp (HVar n, l) -> match expand_rel (n+1) s with
+        | Inl (k, m) -> spine (obj (subs_shft (k, subs_id 0)) m, l)
+        | Inr (k, _) -> OApp (HVar (k-1), List.map (fun m -> clos (s, m)) l)
+
+  and spine = function
+    | OLam (x, n), m :: l -> spine (obj (subs_cons ([|m|], subs_id 0)) n, l)
+    | n, [] -> n
+    | _, _::_ -> assert false
+
+end
+
 let prj = function
   | XLam (x, t) -> OLam (x, t)
   | XApp (h, l) -> OApp (h, l)
   | XMeta (x, s) -> OMeta (x, s)
+  | XClos (s, m) -> ESubst.obj s m
 
 let (~~) f = prj $> f $> inj
-
-(* After this point, it is forbidden to use X constructors *)
 
 module Env = struct
   type t = (string option * fam) list
@@ -224,14 +248,9 @@ end
 
 module Lift = struct
 
-  let head k n = function
-    | HVar x -> if x < k then HVar x else HVar (x+n)
-    | HConst _ as c -> c
-
-  let rec obj k n = ~~ function
-    | OLam (x, m) -> OLam (x, obj (k+1) n m)
-    | OApp (h, l) -> OApp (head k n h, List.map (obj k n) l)
-    | OMeta (x, s) -> OMeta (x, List.map (obj k n) s)
+  let rec obj k n m =
+    let s = subs_liftn (pred k) (subs_shft (n, subs_id 0)) in
+    ESubst.clos (s, m)
 
   let rec fam k n = function
     | FProd (x, a, b) -> FProd (x, fam k n a, fam (k+1) n b)
@@ -241,38 +260,34 @@ end
 
 module Subst = struct
 
-  let head k = function
-    | HVar n -> if n < k then HVar n else HVar (n-1)
-    | HConst c -> HConst c
+  let obj l m =
+    let s = subs_cons (Array.of_list (List.rev l), subs_id 0) in
+    ESubst.clos (s, m)
 
-  let rec spine (m, s) = match prj m, s with
-    | OLam (x, n), m :: l -> spine (obj 0 m n, l)
-    | n, [] -> n
-    | _, _::_ -> assert false
-
-  and obj' k m = ~~ function
-    | OLam (x, n) -> OLam (x, obj (k+1) (Lift.obj 0 1 m) n)
-    | OApp (HVar p, l) when k=p -> spine (m, l)
-    | OApp (h, l) -> OApp (head k h, List.map (obj k m) l)
-    | OMeta (x, s) -> OMeta (x, List.map (obj k m) s)
-
-  and obj k m n =
-    let r = obj' k m n in
-    (* Format.printf "** subst %d (%a) (%a) = @[%a@]@." k Printer.obj m Printer.obj n Printer.obj r; *)
+  let obj l m =
+    let r = obj l m in
+    (* Format.printf "** subst [%a] (%a) = @[%a@]@." (Print.pr_list Print.pr_comma Printer.obj) l Printer.obj m Printer.obj r; *)
     r
 
-  let rec fam' k m = function
-    | FApp (c, l) -> FApp (c, List.map (obj k m) l)
-    | FProd (x, a, b) -> FProd (x, fam k m a, fam (k+1) (Lift.obj 0 1 m) b)
+  let rec fam s = function
+    | FApp (c, l) -> FApp (c, List.map (ESubst.obj s $> inj) l)
+    | FProd (x, a, b) -> FProd (x, fam s a, fam (subs_lift s) b)
 
-  and fam k m n =
-    let r = fam' k m n in
-    (* Format.printf "** subst %d (%a) (%a) = %a@." k Printer.obj m Printer.fam n Printer.fam r; *)
-    r
-
-  let rec kind k m = function
+  let rec kind s = function
     | KType -> KType
-    | KProd (x, a, b) -> KProd (x, fam k m a, kind (k+1) (Lift.obj 0 1 m) b)
+    | KProd (x, a, k) -> KProd (x, fam s a, kind (subs_lift s) k)
+
+  let fam l m =
+    let s = subs_cons (Array.of_list (List.rev l), subs_id 0) in
+    let r = fam s m in
+    (* Format.printf "** subst [%a] (%a) = @[%a@]@." (Print.pr_list Print.pr_comma Printer.obj) l Printer.fam m Printer.fam r; *)
+    r
+
+  let kind l m =
+    let s = subs_cons (Array.of_list (List.rev l), subs_id 0) in
+    let r = kind s m in
+    (* Format.printf "** subst [%a] (%a) = @[%a@]@." (Print.pr_list Print.pr_comma Printer.obj) l Printer.kind m Printer.kind r; *)
+    r
 
 end
 

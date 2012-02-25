@@ -29,7 +29,8 @@ let test_commit repo m =
   let repo = Slicer.commit repo m in
   let m = LF.Strat.obj repo.Repo.sign [] m in
   let n = LF.Strat.obj repo.Repo.sign [] (Slicer.checkout repo) in
-  Kernel.Conv.obj repo (m, n)
+  Kernel.Conv.obj repo (m, n);
+  repo
 ;;
 
 (* a term *)
@@ -50,6 +51,13 @@ test_commit repo
 <<
   is_lam ([x] app x x) base base
   [x] [_] sorry (app x x) base
+>>
+;;
+
+test_commit repo
+<<
+  is_lam ([_] lam [x] x) (arr base base) base
+  [_] [H1] is_lam ([y] y) base base ([_] [H2] H2)
 >>
 ;;
 
