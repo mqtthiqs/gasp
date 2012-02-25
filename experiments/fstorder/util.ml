@@ -35,6 +35,10 @@ let ($>) f g x = g (f x)
 
 let id x = x
 
+type ('a, 'b) union =
+  | Inl of 'a
+  | Inr of 'b
+
 module Prod = struct
 
   let map f g = fun (x, y) -> f x, g y
