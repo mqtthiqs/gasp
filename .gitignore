@@ -1,8 +1,12 @@
-_build
 gasp
-gasp.native
-gasp.byte
-gasp.top
+_log
+_build
+*.native
+*.byte
+*.d.native
+*.p.byte
+*.top
+*.otarget
 *.vo
 *.glob
 *.aux
@@ -15,7 +19,6 @@ gasp.top
 *.pdf
 userInput.ml
 myocamlbuild_config.ml
-experiments/alagit/tests/*.ga.out
 tests/*.gasp
 _gasp
 .DS_Store
