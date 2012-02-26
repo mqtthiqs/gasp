@@ -83,12 +83,23 @@ module ExprParser = struct
   let sign = Gram.Entry.mk "sign"
   let sign_eoi = Gram.Entry.mk "sign_eoi"
 
+  let rec build_patt = function
+    | [] -> <:patt@here< [] >>
+    | x :: xs -> <:patt@here< [$lid:x$ :: $build_patt xs$] >>
+
+  let rec fun_telescope err l e = function
+    | <:expr< SLF.Prod (Some $str:x$, $_$, $xs$) >> -> fun_telescope err (x :: l) e xs
+    | <:expr< Prod (None, $_$, $xs$) >> -> fun_telescope err ("__bla" :: l) e xs
+    | _ -> <:expr@here< fun [ $build_patt (List.rev l)$ -> $e$ | _ -> failwith ("Match failure: "^ $str:err$ ) ] >>
+
   EXTEND Gram
 
   sign:
   [[ -> <:expr< [] >>
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
-     <:expr< [($str:x$, $t$, SLF.Defined $e$) :: $s$] >>
+     <:expr< let rec $lid:x$ = $fun_telescope x [] e t$
+             in [($str:x$, $t$, SLF.Defined $lid:x$) :: $s$]
+     >>
    | x = ident; ":"; t = term; "."; s = sign ->
      <:expr< [($str:x$, $t$, SLF.Sliceable) :: $s$] >>
    | "#"; x = ident; ":"; t = term; "."; s = sign ->
@@ -166,24 +177,6 @@ module PattParser = struct
     | s = subst; ";"; t = term -> <:patt< [$t$ :: $s$] >> ]
   ];
 
-  END;;
-
-  let sign = Gram.Entry.mk "sign"
-  let sign_eoi = Gram.Entry.mk "sign_eoi"
-
-  EXTEND Gram
-
-  sign:
-  [[ -> <:patt< [] >>
-   | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
-     <:patt< [($str:x$, $t$, SLF.Defined $e$) :: $s$] >>
-   | x = ident; ":"; t = term; "."; s = sign ->
-     <:patt< [($str:x$, $t$, SLF.Sliceable) :: $s$] >>
-   | "#"; x = ident; ":"; t = term; "."; s = sign ->
-     <:patt< [($str:x$, $t$, SLF.Non_sliceable) :: $s$] >>
-   | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
-   ]];
-  sign_eoi: [[ s = sign; `EOI -> <:patt< ($s$ : SLF.sign) >>]];
   END;;
 
 end
