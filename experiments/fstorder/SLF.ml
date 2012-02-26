@@ -13,7 +13,7 @@ type entry_type =
 
 type sign = (string * term * entry_type) list
 
-module Parser = struct
+module ExprParser = struct
 
   open Camlp4.PreCast
 
@@ -98,26 +98,129 @@ module Parser = struct
   sign_eoi: [[ s = sign; `EOI -> <:expr< ($s$ : SLF.sign) >>]];
   END;;
 
-  open Syntax.Quotation
+end
 
-  let expand_term_quot loc _ s =
+
+module PattParser = struct
+
+  open Camlp4.PreCast
+
+  let ident = Gram.Entry.mk "ident"
+  let binder = Gram.Entry.mk "binder"
+  let subst = Gram.Entry.mk "subst"
+  let term = Gram.Entry.mk "term"
+  let term1 = Gram.Entry.mk "term1"
+  let term2 = Gram.Entry.mk "term2"
+  let term_eoi = Gram.Entry.mk "term_eoi"
+
+  EXTEND Gram
+
+  ident:
+  [ [ x = LIDENT -> x
+    | x = UIDENT -> x ]
+  ];
+
+  binder:
+  [ [ x = ident -> <:patt< Some $str:x$ >>
+    | "_" -> <:patt< None >> ]
+  ];
+
+  term:
+  [ "prd" RIGHTA
+      [ "type" -> <:patt< SLF.Type >>
+      | "{"; id = binder; ":"; t = term; "}"; u = term ->
+      <:patt< SLF.Prod($id$, $t$, $u$) >> ]
+  | "arr" RIGHTA
+      [ t = term; "->"; u = term -> <:patt< SLF.Prod(None, $t$, $u$) >> ]
+  | "rarr" RIGHTA
+      [ t = term; "<-"; u = term -> <:patt< SLF.Prod(None, $u$, $t$) >> ]
+  | "term1"
+      [ t = term1 -> t ]
+  ];
+
+  term1:
+  [ "app" LEFTA
+      [ t = term1; u = term2 -> <:patt<  SLF.App ($t$, $u$) >> ]
+  | "term2"
+      [ t = term2 -> t ]
+  ];
+
+  term2:
+  [ "simple"
+      [ x = ident -> <:patt< SLF.Ident $str:x$ >>
+      | "?"; x = ident -> <:patt< SLF.Meta ($str:x$, []) >>
+      | "?"; x = ident; "["; s = subst; "]" -> <:patt< SLF.Meta ($str:x$, $s$) >>
+      | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
+      | "("; t = term; ")" -> t ]
+  | "lam"
+      [ "["; id = binder; "]"; t = term1 ->
+      <:patt< SLF.Lam ($id$, $t$) >> ]
+  ];
+
+  term_eoi:
+      [[ t = term; `EOI -> t ]];
+
+  subst:
+  [ [ -> <:patt< [] >>
+    | t = term -> <:patt< [$t$] >>
+    | s = subst; ";"; t = term -> <:patt< [$t$ :: $s$] >> ]
+  ];
+
+  END;;
+
+  let sign = Gram.Entry.mk "sign"
+  let sign_eoi = Gram.Entry.mk "sign_eoi"
+
+  EXTEND Gram
+
+  sign:
+  [[ -> <:patt< [] >>
+   | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
+     <:patt< [($str:x$, $t$, SLF.Defined $e$) :: $s$] >>
+   | x = ident; ":"; t = term; "."; s = sign ->
+     <:patt< [($str:x$, $t$, SLF.Sliceable) :: $s$] >>
+   | "#"; x = ident; ":"; t = term; "."; s = sign ->
+     <:patt< [($str:x$, $t$, SLF.Non_sliceable) :: $s$] >>
+   | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
+   ]];
+  sign_eoi: [[ s = sign; `EOI -> <:patt< ($s$ : SLF.sign) >>]];
+  END;;
+
+end
+
+
+module Quotations = struct
+
+  open Camlp4.PreCast
+  open Camlp4.PreCast.Syntax.Quotation
+
+  let expand_expr_term loc _ s =
     let q = !Camlp4_config.antiquotations in
     Camlp4_config.antiquotations := true;
-    let res = Gram.parse_string term_eoi loc s in
+    let res = Gram.parse_string ExprParser.term_eoi loc s in
     Camlp4_config.antiquotations := q;
     res
 
-  let expand_sign_quot loc _ s =
+  let expand_patt_term loc _ s =
     let q = !Camlp4_config.antiquotations in
     Camlp4_config.antiquotations := true;
-    let res = Gram.parse_string sign_eoi loc s in
+    let res = Gram.parse_string PattParser.term_eoi loc s in
+    Camlp4_config.antiquotations := q;
+    res
+
+  let expand_expr_sign loc _ s =
+    let q = !Camlp4_config.antiquotations in
+    Camlp4_config.antiquotations := true;
+    let res = Gram.parse_string ExprParser.sign_eoi loc s in
     Camlp4_config.antiquotations := q;
     res
 
   let _ =
-    add "term" DynAst.expr_tag expand_term_quot;
-    add "sign" DynAst.expr_tag expand_sign_quot;
+    add "term" DynAst.patt_tag expand_patt_term;
+    add "term" DynAst.expr_tag expand_expr_term;
+    add "sign" DynAst.expr_tag expand_expr_sign;
     default := "term";
+
 end
 
 module Printer = struct
