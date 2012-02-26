@@ -13,12 +13,6 @@ type entry_type =
 
 type sign = (string * term * entry_type) list
 
-module Parser : sig
-  open Camlp4.PreCast
-  val expand_term_quot : Ast.expr Syntax.Quotation.expand_fun
-  val expand_sign_quot : Ast.expr Syntax.Quotation.expand_fun
-end
-
 module Printer : sig
   open Format
   val term : formatter -> term -> unit
