@@ -20,6 +20,18 @@ let push =
       Repo.head = x } in
     repo, List.length (Env.to_list env)
 
+let is_defined repo c = match Sign.ofind c repo.Repo.sign with
+  | _, Defined f -> true
+  | _ -> false
+
+let interpret repo c l = match Sign.ofind c repo.Repo.sign with
+  | _, Defined f ->
+    let r = f l in
+    Format.printf "evalué: %a = %a@." LF.Printer.obj (inj $ OApp (HConst c, l)) LF.Printer.obj r;
+    r
+  | _ -> assert false
+
+
 module Conv = struct
 
   exception Not_conv_obj of Repo.t * obj * obj
@@ -37,8 +49,10 @@ module Conv = struct
       let h = HConst (Names.OConst.make "@") in
       raise (Not_conv_obj (repo, inj $ OApp (h, l1), inj $ OApp (h, l2)))
 
-  and obj repo = Prod.map prj prj $> function
+  and obj repo (m1, m2) = match prj m1, prj m2 with
     | OLam (_, m1), OLam (_,m2) -> obj repo (m1, m2)
+    | OApp (HConst c, l), _ when is_defined repo c -> obj repo (interpret repo c l, m2)
+    | _, OApp (HConst c, l) when is_defined repo c-> obj repo (m1, interpret repo c l)
     | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
     | OMeta (x1, s1), OMeta (x2, s2) ->
       if Names.Meta.compare x1 x2 = 0 then spine repo (s1, s2) else
