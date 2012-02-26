@@ -38,10 +38,9 @@ end
 module Sign : sig
   type t
   val empty : t
-  val slices : OConst.t -> t -> bool
-  val ofind : OConst.t -> t -> fam
+  val ofind : OConst.t -> t -> bool * fam * (obj list -> obj) option
   val ffind : FConst.t -> t -> kind
-  val oadd : OConst.t -> bool * fam -> t -> t
+  val oadd : OConst.t -> bool * fam * (obj list -> obj) option -> t -> t
   val fadd : FConst.t -> kind -> t -> t
 end
 
@@ -68,6 +67,7 @@ module Strat : sig
   val obj : Sign.t -> string option list -> term -> obj
   val fam : Sign.t -> string option list -> term -> fam
   val kind : Sign.t -> string option list -> term -> kind
+  val fn : Sign.t -> (term list -> term) -> obj list -> obj
 end
 
 module Unstrat : sig
@@ -75,6 +75,7 @@ module Unstrat : sig
   val obj : string option list -> obj -> term
   val fam : string option list -> fam -> term
   val kind : string option list -> kind -> term
+  val fn : Sign.t -> (obj list -> obj) -> term list -> term
 end
 
 module Util : sig

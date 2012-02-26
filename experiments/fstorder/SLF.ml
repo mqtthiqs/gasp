@@ -6,7 +6,7 @@ type term =
   | Ident of string
   | Meta of string * term list
 
-type sign = (string * term * bool) list
+type sign = (string * term * bool * (term list -> term) option) list
 
 module Parser = struct
 
@@ -77,14 +77,26 @@ module Parser = struct
 
   let sign = Gram.Entry.mk "sign"
   let sign_eoi = Gram.Entry.mk "sign_eoi"
+  let ident_sharp = Gram.Entry.mk "ident_sharp"
+  let expr_opt = Gram.Entry.mk "expr_opt"
 
   EXTEND Gram
+  ident_sharp:
+  [[
+    x = ident -> x, <:expr< True >>
+  | "#"; x = ident -> x, <:expr< False >>
+  ]];
+
+  expr_opt:
+  [[
+    -> <:expr< None >>
+  | e = term -> <:expr< Some e >>
+  ]];
+
   sign:
   [[ -> <:expr< [] >>
-   | x = ident; ":"; t = term; "."; s = sign ->
-     <:expr< [($str:x$, $t$, True) :: $s$] >>
-   | "#"; x = ident; ":"; t = term; "."; s = sign ->
-     <:expr< [($str:x$, $t$, False) :: $s$] >>
+   | (x, b) = ident_sharp; ":"; t = term; "="; e = expr_opt; "."; s = sign ->
+     <:expr< [($str:x$, $t$, $b$, $e$) :: $s$] >>
    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
    ]];
   sign_eoi: [[ s = sign; `EOI -> s]];
@@ -139,9 +151,12 @@ module Printer = struct
       
   let term fmt t = pr_paren term term_prec 100 (<=) fmt t
 
+  let sharp b fmt x = if b then fprintf fmt "@[#%a@]" str x else fprintf fmt "@[%a@]" str x
+  let code fmt f = fprintf fmt "..."
+
   let rec sign fmt = function
     | [] -> ()
-    | (x, t, true) :: s -> fprintf fmt "@[%a : %a@].@,%a" str x term t sign s
-    | (x, t, false) :: s -> fprintf fmt "#@[%a : %a@].@,%a" str x term t sign s
+    | (x, t, b, Some f) :: s -> fprintf fmt "@[%a : %a = @[%a@]@].@,%a" (sharp b) x term t sign s code f
+    | (x, t, b, None) :: s -> fprintf fmt "@[%a : %a@].@,%a" (sharp b) x term t sign s
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
 end

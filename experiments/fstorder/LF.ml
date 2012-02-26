@@ -80,16 +80,27 @@ module Sign = struct
   module MO = Map.Make(OConst)
   module MF = Map.Make(FConst)
 
-  type t = (bool * fam) MO.t * kind MF.t
+  type t = (bool * fam * (obj list -> obj) option) MO.t * kind MF.t
   let empty = MO.empty, MF.empty
-  let slices x (o, f) = fst (MO.find x o)
-  let ofind x ((o, f):t) = snd (MO.find x o)
+  let ofind x ((o, f):t) = MO.find x o
   let ffind x ((o, f):t) = MF.find x f
   let oadd x a ((o, f):t) = MO.add x a o, f
   let fadd x k ((o, f):t) = o, MF.add x k f
 end
 
-module Strat = struct
+module rec Strat : sig
+  type entity =
+    | Kind of kind
+    | Fam of fam
+    | Obj of obj
+
+  open SLF
+  val term : Sign.t -> string option list -> term -> entity
+  val obj : Sign.t -> string option list -> term -> obj
+  val fam : Sign.t -> string option list -> term -> fam
+  val kind : Sign.t -> string option list -> term -> kind
+  val fn : Sign.t -> (term list -> term) -> obj list -> obj
+end = struct
 
   type entity =
     | Kind of kind
@@ -157,9 +168,21 @@ module Strat = struct
   let kind sign env t = match term sign env t with
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
+
+  let fn s (f : term list -> term) (l : obj list) : obj =
+    let l = List.map (Unstrat.obj []) l in
+    obj s [] (f l)
+
 end
 
-module Unstrat = struct
+and Unstrat : sig
+  open SLF
+  val obj : string option list -> obj -> term
+  val fam : string option list -> fam -> term
+  val kind : string option list -> kind -> term
+  val fn : Sign.t -> (obj list -> obj) -> term list -> term
+  val sign : Sign.t -> SLF.sign
+end = struct
 
   open SLF
 
@@ -188,6 +211,16 @@ module Unstrat = struct
     | KType -> Type
     | KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
 
+  let fn s (f : obj list -> obj) (l : term list) : term =
+    let l = List.map (Strat.obj s []) l in
+    obj [] (f l)
+
+  let sign (s : Sign.t) =
+      Sign.MO.fold
+      (fun x (b, a, f) l -> (Names.OConst.repr x, fam [] a, b, Option.map (fn s) f) :: l) (fst s)
+      (Sign.MF.fold
+         (fun x k l -> (Names.FConst.repr x, kind [] k, true, None) :: l) (snd s)
+         [])
 end
 
 module Printer = struct
@@ -206,12 +239,7 @@ module Printer = struct
     | Strat.Obj m -> obj fmt m
 
   let sign fmt (s : Sign.t) =
-    let l =
-      Sign.MO.fold
-      (fun x (b, a) l -> (Names.OConst.repr x, Unstrat.fam [] a, b) :: l) (fst s)
-      (Sign.MF.fold
-         (fun x k l -> (Names.FConst.repr x, Unstrat.kind [] k, true) :: l) (snd s)
-         []) in
+    let l = Unstrat.sign s in
     SLF.Printer.sign fmt l
 
   let env fmt e =

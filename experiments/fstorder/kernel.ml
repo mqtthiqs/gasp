@@ -67,12 +67,12 @@ module Check = struct
   exception Non_functional_fapp of Repo.t * Env.t * spine
   exception Non_functional_app of Repo.t * Env.t * spine * fam
 
-  let head repo env : head -> fam * bool = function
+  let head repo env : head -> bool * fam * (obj list -> obj) option = function
     | HVar x ->
       let a = try Env.find x env with _ -> failwith(string_of_int x) in
       let a = Lift.fam 0 (x+1) a in
-      a, false
-    | HConst c -> Sign.ofind c repo.Repo.sign, Sign.slices c repo.Repo.sign
+      false, a, None
+    | HConst c -> Sign.ofind c repo.Repo.sign
 
   let rec obj' repo env : obj * fam -> Repo.t * obj = Prod.map prj id $>
     begin function
@@ -84,7 +84,7 @@ module Check = struct
       repo, OLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
     | OApp (h, l), a ->
-      let b, slices = head repo env h in
+      let slices, b, fn = head repo env h in
       let repo, l, a' = app repo env (l, b) in
       Conv.fam repo (a, a');
       if slices then
@@ -141,20 +141,21 @@ module Check = struct
       repo, KProd (x, a, k)
 
   let app repo env (h, l) =
-    let a, _ = head repo env h in
+    let _, a, _ = head repo env h in
     app repo env (l, a)
 
 end
 
 let rec init repo = function
   | [] -> repo
-  | (c, t, b) :: s' ->
+  | (c, t, b, f) :: s' ->
     match LF.Strat.term repo.Repo.sign [] t, b with
       | LF.Strat.Obj _, _ -> failwith "object in sign"
       | LF.Strat.Kind _, false -> failwith "kind cannot be non-sliceable"
       | LF.Strat.Fam a, b ->
+        let f = Option.map (LF.Strat.fn repo.Repo.sign) f in
         let repo, a = Check.fam repo LF.Env.empty a in
-        let repo = {repo with Repo.sign = LF.Sign.oadd (Names.OConst.make c) (b, a) repo.Repo.sign} in
+        let repo = {repo with Repo.sign = LF.Sign.oadd (Names.OConst.make c) (b, a, f) repo.Repo.sign} in
         init repo s'
       | LF.Strat.Kind k, true ->
         let repo, k = Check.kind repo LF.Env.empty k in
