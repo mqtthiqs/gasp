@@ -1,11 +1,5 @@
-module List : sig
-  include module type of List
+module List = struct
 
-  val index : 'a -> 'a list -> int
-  val fold_map : ('b -> 'a -> 'b * 'c) -> 'b -> 'a list -> 'b * 'c list
-  val count : int -> int -> int list
-
-end = struct
   include List
 
   let index a =
