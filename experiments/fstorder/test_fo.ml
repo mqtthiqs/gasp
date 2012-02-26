@@ -32,7 +32,7 @@ let stlc = Slicer.init
 ;;
 
 let repo = Slicer.commit stlc
-  <:obj<
+  <<
     lam (lam (app (s z) z))
   >>
 ;;

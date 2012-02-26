@@ -21,6 +21,11 @@ type cobj =
   | OApp of head * spine
   | OMeta of Meta.t * subst
 
+type entry_type =
+  | Sliceable
+  | Non_sliceable
+  | Defined of (obj list -> obj)
+
 val inj : cobj -> obj
 val prj : obj -> cobj
 val (~~) : (cobj -> cobj) -> obj -> obj
@@ -38,9 +43,9 @@ end
 module Sign : sig
   type t
   val empty : t
-  val ofind : OConst.t -> t -> bool * fam * (obj list -> obj) option
+  val ofind : OConst.t -> t -> fam * entry_type
   val ffind : FConst.t -> t -> kind
-  val oadd : OConst.t -> bool * fam * (obj list -> obj) option -> t -> t
+  val oadd : OConst.t -> fam * entry_type -> t -> t
   val fadd : FConst.t -> kind -> t -> t
 end
 
@@ -62,12 +67,11 @@ module Strat : sig
     | Fam of fam
     | Obj of obj
 
-  open SLF
-  val term : Sign.t -> string option list -> term -> entity
-  val obj : Sign.t -> string option list -> term -> obj
-  val fam : Sign.t -> string option list -> term -> fam
-  val kind : Sign.t -> string option list -> term -> kind
-  val fn : Sign.t -> (term list -> term) -> obj list -> obj
+  val term : Sign.t -> string option list -> SLF.term -> entity
+  val obj : Sign.t -> string option list -> SLF.term -> obj
+  val fam : Sign.t -> string option list -> SLF.term -> fam
+  val kind : Sign.t -> string option list -> SLF.term -> kind
+  val entry_type : Sign.t -> SLF.entry_type -> entry_type
 end
 
 module Unstrat : sig

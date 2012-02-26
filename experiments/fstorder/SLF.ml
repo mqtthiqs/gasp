@@ -6,7 +6,12 @@ type term =
   | Ident of string
   | Meta of string * term list
 
-type sign = (string * term * bool * (term list -> term) option) list
+type entry_type =
+  | Sliceable
+  | Non_sliceable
+  | Defined of (term list -> term)
+
+type sign = (string * term * entry_type) list
 
 module Parser = struct
 
@@ -77,29 +82,20 @@ module Parser = struct
 
   let sign = Gram.Entry.mk "sign"
   let sign_eoi = Gram.Entry.mk "sign_eoi"
-  let ident_sharp = Gram.Entry.mk "ident_sharp"
-  let expr_opt = Gram.Entry.mk "expr_opt"
 
   EXTEND Gram
-  ident_sharp:
-  [[
-    x = ident -> x, <:expr< True >>
-  | "#"; x = ident -> x, <:expr< False >>
-  ]];
-
-  expr_opt:
-  [[
-    -> <:expr< None >>
-  | e = term -> <:expr< Some e >>
-  ]];
 
   sign:
   [[ -> <:expr< [] >>
-   | (x, b) = ident_sharp; ":"; t = term; "="; e = expr_opt; "."; s = sign ->
-     <:expr< [($str:x$, $t$, $b$, $e$) :: $s$] >>
+   | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
+     <:expr< [($str:x$, $t$, SLF.Defined $e$) :: $s$] >>
+   | x = ident; ":"; t = term; "."; s = sign ->
+     <:expr< [($str:x$, $t$, SLF.Sliceable) :: $s$] >>
+   | "#"; x = ident; ":"; t = term; "."; s = sign ->
+     <:expr< [($str:x$, $t$, SLF.Non_sliceable) :: $s$] >>
    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
    ]];
-  sign_eoi: [[ s = sign; `EOI -> s]];
+  sign_eoi: [[ s = sign; `EOI -> <:expr< ($s$ : SLF.sign) >>]];
   END;;
 
   open Syntax.Quotation
@@ -152,11 +148,12 @@ module Printer = struct
   let term fmt t = pr_paren term term_prec 100 (<=) fmt t
 
   let sharp b fmt x = if b then fprintf fmt "@[#%a@]" str x else fprintf fmt "@[%a@]" str x
-  let code fmt f = fprintf fmt "..."
+  let code fmt f = fprintf fmt "<fun>"
 
   let rec sign fmt = function
     | [] -> ()
-    | (x, t, b, Some f) :: s -> fprintf fmt "@[%a : %a = @[%a@]@].@,%a" (sharp b) x term t sign s code f
-    | (x, t, b, None) :: s -> fprintf fmt "@[%a : %a@].@,%a" (sharp b) x term t sign s
+    | (x, t, Sliceable) :: s -> fprintf fmt "@[%a : %a.@]@,%a" str x term t sign s
+    | (x, t, Non_sliceable) :: s -> fprintf fmt "@[#%a : %a.@]@,%a" str x term t sign s
+    | (x, t, Defined f) :: s -> fprintf fmt "@[%a : %a = %a@].@,%a" str x term t code f sign s
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
 end

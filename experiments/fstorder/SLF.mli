@@ -6,7 +6,12 @@ type term =
   | Ident of string
   | Meta of string * term list
 
-type sign = (string * term * bool * (term list -> term) option) list
+type entry_type =
+  | Sliceable
+  | Non_sliceable
+  | Defined of (term list -> term)
+
+type sign = (string * term * entry_type) list
 
 module Parser : sig
   open Camlp4.PreCast

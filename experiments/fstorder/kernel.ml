@@ -67,11 +67,11 @@ module Check = struct
   exception Non_functional_fapp of Repo.t * Env.t * spine
   exception Non_functional_app of Repo.t * Env.t * spine * fam
 
-  let head repo env : head -> bool * fam * (obj list -> obj) option = function
+  let head repo env : head -> fam * entry_type = function
     | HVar x ->
       let a = try Env.find x env with _ -> failwith(string_of_int x) in
       let a = Lift.fam 0 (x+1) a in
-      false, a, None
+      a, Non_sliceable
     | HConst c -> Sign.ofind c repo.Repo.sign
 
   let rec obj' repo env : obj * fam -> Repo.t * obj = Prod.map prj id $>
@@ -84,15 +84,18 @@ module Check = struct
       repo, OLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
     | OApp (h, l), a ->
-      let slices, b, fn = head repo env h in
+      let b, e = head repo env h in
       let repo, l, a' = app repo env (l, b) in
       Conv.fam repo (a, a');
-      if slices then
-        let repo, n = push repo env a (h, l) in
-        let s = List.map (fun i -> inj $ OApp (HVar i, [])) (List.count 0 n) in
-        repo, OMeta (repo.Repo.head, s)
-      else
-        repo, OApp (h, l)
+      begin match e with
+        | Sliceable ->
+          let repo, n = push repo env a (h, l) in
+          let s = List.map (fun i -> inj $ OApp (HVar i, [])) (List.count 0 n) in
+          repo, OMeta (repo.Repo.head, s)
+        | Non_sliceable ->
+          repo, OApp (h, l)
+        | _ -> assert false
+      end
     | OMeta (x, s) as m, a ->
       let e, _, b = Repo.Context.find x repo.Repo.ctx in
       let b = Subst.fam s b in
@@ -141,26 +144,26 @@ module Check = struct
       repo, KProd (x, a, k)
 
   let app repo env (h, l) =
-    let _, a, _ = head repo env h in
+    let a, _ = head repo env h in
     app repo env (l, a)
 
 end
 
 let rec init repo = function
   | [] -> repo
-  | (c, t, b, f) :: s' ->
-    match LF.Strat.term repo.Repo.sign [] t, b with
-      | LF.Strat.Obj _, _ -> failwith "object in sign"
-      | LF.Strat.Kind _, false -> failwith "kind cannot be non-sliceable"
-      | LF.Strat.Fam a, b ->
-        let f = Option.map (LF.Strat.fn repo.Repo.sign) f in
+  | (c, t, e) :: s' ->
+    match LF.Strat.term repo.Repo.sign [] t, e with
+      | LF.Strat.Fam a, e ->
+        let e = LF.Strat.entry_type repo.Repo.sign e in
         let repo, a = Check.fam repo LF.Env.empty a in
-        let repo = {repo with Repo.sign = LF.Sign.oadd (Names.OConst.make c) (b, a, f) repo.Repo.sign} in
+        let repo = {repo with Repo.sign = LF.Sign.oadd (Names.OConst.make c) (a, e) repo.Repo.sign} in
         init repo s'
-      | LF.Strat.Kind k, true ->
+      | LF.Strat.Kind k, SLF.Sliceable ->
         let repo, k = Check.kind repo LF.Env.empty k in
         let repo = {repo with Repo.sign = LF.Sign.fadd (Names.FConst.make c) k repo.Repo.sign} in
         init repo s'
+      | LF.Strat.Obj _, _ -> failwith "object in sign"
+      | LF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
 
 let push repo env (h, l) =
   let repo, l, a = Check.app repo env (h, l) in

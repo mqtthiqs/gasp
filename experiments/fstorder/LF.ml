@@ -28,6 +28,11 @@ type cobj =
   | OApp of head * spine
   | OMeta of Meta.t * subst
 
+type entry_type =
+  | Sliceable
+  | Non_sliceable
+  | Defined of (obj list -> obj)
+
 let inj = function
   | OLam (x, t) -> XLam (x, t)
   | OApp (h, l) -> XApp (h, l)
@@ -80,7 +85,7 @@ module Sign = struct
   module MO = Map.Make(OConst)
   module MF = Map.Make(FConst)
 
-  type t = (bool * fam * (obj list -> obj) option) MO.t * kind MF.t
+  type t = (fam * entry_type) MO.t * kind MF.t
   let empty = MO.empty, MF.empty
   let ofind x ((o, f):t) = MO.find x o
   let ffind x ((o, f):t) = MF.find x f
@@ -94,12 +99,11 @@ module rec Strat : sig
     | Fam of fam
     | Obj of obj
 
-  open SLF
-  val term : Sign.t -> string option list -> term -> entity
-  val obj : Sign.t -> string option list -> term -> obj
-  val fam : Sign.t -> string option list -> term -> fam
-  val kind : Sign.t -> string option list -> term -> kind
-  val fn : Sign.t -> (term list -> term) -> obj list -> obj
+  val term : Sign.t -> string option list -> SLF.term -> entity
+  val obj : Sign.t -> string option list -> SLF.term -> obj
+  val fam : Sign.t -> string option list -> SLF.term -> fam
+  val kind : Sign.t -> string option list -> SLF.term -> kind
+  val entry_type : Sign.t -> SLF.entry_type -> entry_type
 end = struct
 
   type entity =
@@ -107,11 +111,10 @@ end = struct
     | Fam of fam
     | Obj of obj
 
-  open SLF
   open Util
 
   let rec app sign env l = function
-    | Ident x ->
+    | SLF.Ident x ->
       begin
         try let i = List.index (Some x) env in
             Obj (inj $ OApp (HVar i, l))
@@ -124,7 +127,7 @@ end = struct
             try ignore(Sign.ffind x sign); Fam (FApp (x, l))
             with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
-    | App (t, u) ->
+    | SLF.App (t, u) ->
       begin match term sign env u with
         | Obj u ->  app sign env (u :: l) t
         | _ -> failwith "strat: argument is not an object"
@@ -132,9 +135,9 @@ end = struct
     | _ -> failwith "strat: app error"
 
   and term sign env = function
-    | Lam (x, t) -> Obj (inj $ OLam (x, obj sign (x :: env) t))
-    | Type -> Kind KType
-    | Prod (x, a, b) ->
+    | SLF.Lam (x, t) -> Obj (inj $ OLam (x, obj sign (x :: env) t))
+    | SLF.Type -> Kind KType
+    | SLF.Prod (x, a, b) ->
       begin match term sign env a, term sign (x::env) b with
         | Fam a, Kind k -> Kind (KProd (x, a, k))
         | Fam a, Fam b -> Fam (FProd (x, a, b))
@@ -142,8 +145,8 @@ end = struct
         | Fam _, Obj _ -> failwith "strat: prod body is an obj"
         | Obj _, _ -> failwith "strat: prod argument is an obj"
       end
-    | App _ as a -> app sign env [] a
-    | Ident x ->
+    | SLF.App _ as a -> app sign env [] a
+    | SLF.Ident x ->
       begin try Obj (inj $ OApp (HVar (List.index (Some x) env), []))
         with Not_found ->
           try let x = OConst.make x in
@@ -153,7 +156,7 @@ end = struct
             try ignore(Sign.ffind x sign); Fam (FApp (x, []))
             with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
-    | Meta (x, s) ->
+    | SLF.Meta (x, s) ->
       let s = List.map (obj sign env) s in
       Obj (inj $ OMeta (Meta.make x, s))
 
@@ -169,9 +172,14 @@ end = struct
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
 
-  let fn s (f : term list -> term) (l : obj list) : obj =
+  let fn s (f : SLF.term list -> SLF.term) (l : obj list) : obj =
     let l = List.map (Unstrat.obj []) l in
     obj s [] (f l)
+
+  let entry_type s = function
+    | SLF.Sliceable -> Sliceable
+    | SLF.Non_sliceable -> Non_sliceable
+    | SLF.Defined f -> Defined (fn s f)
 
 end
 
@@ -184,14 +192,12 @@ and Unstrat : sig
   val sign : Sign.t -> SLF.sign
 end = struct
 
-  open SLF
-
   let rec obj env = prj $> function
-    | OLam (x, m) -> Lam (x, obj (x :: env) m)
+    | OLam (x, m) -> SLF.Lam (x, obj (x :: env) m)
     | OApp (h, l) -> List.fold_left
-      (fun t m -> App (t, obj env m)
-      ) (Ident (head env h)) l
-    | OMeta (x, s) -> Meta (Names.Meta.repr x, List.map (obj env) s)
+      (fun t m -> SLF.App (t, obj env m)
+      ) (SLF.Ident (head env h)) l
+    | OMeta (x, s) -> SLF.Meta (Names.Meta.repr x, List.map (obj env) s)
 
   and head env = function
     | HConst c -> Names.OConst.repr c
@@ -203,23 +209,28 @@ end = struct
 
   let rec fam env = function
     | FApp (f, l) -> List.fold_left
-      (fun t m -> App (t, obj env m)
-      ) (Ident (Names.FConst.repr f)) l
-    | FProd (x, a, b) -> Prod (x, fam env a, fam (x :: env) b)
+      (fun t m -> SLF.App (t, obj env m)
+      ) (SLF.Ident (Names.FConst.repr f)) l
+    | FProd (x, a, b) -> SLF.Prod (x, fam env a, fam (x :: env) b)
 
   let rec kind env = function
-    | KType -> Type
-    | KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
+    | KType -> SLF.Type
+    | KProd (x, a, b) -> SLF.Prod (x, fam env a, kind (x :: env) b)
 
-  let fn s (f : obj list -> obj) (l : term list) : term =
+  let fn s (f : obj list -> obj) (l : SLF.term list) : SLF.term =
     let l = List.map (Strat.obj s []) l in
     obj [] (f l)
 
+  let entry_type s = function
+    | Sliceable -> SLF.Sliceable
+    | Non_sliceable -> SLF.Non_sliceable
+    | Defined f -> SLF.Defined (fn s f)
+
   let sign (s : Sign.t) =
       Sign.MO.fold
-      (fun x (b, a, f) l -> (Names.OConst.repr x, fam [] a, b, Option.map (fn s) f) :: l) (fst s)
+      (fun x (a, e) l -> (Names.OConst.repr x, fam [] a, entry_type s e) :: l) (fst s)
       (Sign.MF.fold
-         (fun x k l -> (Names.FConst.repr x, kind [] k, true, None) :: l) (snd s)
+         (fun x k l -> (Names.FConst.repr x, kind [] k, SLF.Sliceable) :: l) (snd s)
          [])
 end
 
