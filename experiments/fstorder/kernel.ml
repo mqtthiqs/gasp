@@ -108,7 +108,10 @@ module Check = struct
           repo, OMeta (repo.Repo.head, s)
         | Non_sliceable ->
           repo, OApp (h, l)
-        | _ -> assert false
+        | Defined f ->
+          let r = f l in
+          let repo, m = obj repo env (r, a) in
+          repo, prj m
       end
     | OMeta (x, s) as m, a ->
       let e, _, b = Repo.Context.find x repo.Repo.ctx in
