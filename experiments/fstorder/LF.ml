@@ -28,11 +28,6 @@ type cobj =
   | OApp of head * spine
   | OMeta of Meta.t * subst
 
-type entry_type =
-  | Sliceable
-  | Non_sliceable
-  | Defined of (obj list -> obj)
-
 let inj = function
   | OLam (x, t) -> XLam (x, t)
   | OApp (h, l) -> XApp (h, l)
@@ -76,20 +71,6 @@ module Env = struct
   let to_list l = l
   let names_of env = fst (List.split (to_list env))
 
-end
-
-module Sign = struct
-
-  module MO = Map.Make(OConst)
-  module MF = Map.Make(FConst)
-
-  type t = (fam * entry_type) MO.t * kind MF.t
-  let empty = MO.empty, MF.empty
-  let ofind x ((o, f):t) = MO.find x o
-  let ffind x ((o, f):t) = MF.find x f
-  let oadd x a ((o, f):t) = MO.add x a o, f
-  let fadd x k ((o, f):t) = o, MF.add x k f
-  let fold f1 f2 ((o, f):t) (acc : 'a) : 'a = MO.fold f1 o (MF.fold f2 f acc)
 end
 
 module Printer = struct

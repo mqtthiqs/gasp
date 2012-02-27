@@ -9,7 +9,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (term list -> term)
+  | Defined of (Struct.Repo.t -> term list -> term)
 
 type sign = (string * term * entry_type) list
 
@@ -97,7 +97,7 @@ module ExprParser = struct
   sign:
   [[ -> <:expr< [] >>
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
-     <:expr< let rec $lid:x$ = $fun_telescope x [] e t$
+     <:expr< let rec $lid:x$ = fun repo -> $fun_telescope x [] e t$
              in [($str:x$, $t$, SLF.Defined $lid:x$) :: $s$]
      >>
    | x = ident; ":"; t = term; "."; s = sign ->
@@ -225,15 +225,16 @@ module rec Strat : sig
     | Fam of LF.fam
     | Obj of LF.obj
 
-  val term : LF.Sign.t -> string option list -> term -> entity
-  val obj : LF.Sign.t -> string option list -> term -> LF.obj
-  val fam : LF.Sign.t -> string option list -> term -> LF.fam
-  val kind : LF.Sign.t -> string option list -> term -> LF.kind
-  val entry_type : LF.Sign.t -> entry_type -> LF.entry_type
+  val term : Struct.Sign.t -> string option list -> term -> entity
+  val obj : Struct.Sign.t -> string option list -> term -> LF.obj
+  val fam : Struct.Sign.t -> string option list -> term -> LF.fam
+  val kind : Struct.Sign.t -> string option list -> term -> LF.kind
+  val entry_type : Struct.Sign.t -> entry_type -> Struct.Sign.entry_type
 end = struct
 
   open Util
   open Names
+  open Struct
 
   type entity =
     | Kind of LF.kind
@@ -247,11 +248,11 @@ end = struct
             Obj (LF.inj @@ LF.OApp (LF.HVar i, l))
         with Not_found ->
           try let x = OConst.make x in
-              ignore (LF.Sign.ofind x sign);
+              ignore (Sign.ofind x sign);
               Obj (LF.inj @@ LF.OApp (LF.HConst x, l))
           with Not_found ->
             let x = FConst.make x in
-            try ignore(LF.Sign.ffind x sign); Fam (LF.FApp (x, l))
+            try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
             with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
     | App (t, u) ->
@@ -277,10 +278,10 @@ end = struct
       begin try Obj (LF.inj @@ LF.OApp (LF.HVar (List.index (Some x) env), []))
         with Not_found ->
           try let x = OConst.make x in
-              ignore(LF.Sign.ofind x sign); Obj (LF.inj @@ LF.OApp (LF.HConst x, []))
+              ignore(Sign.ofind x sign); Obj (LF.inj @@ LF.OApp (LF.HConst x, []))
           with Not_found ->
             let x = FConst.make x in
-            try ignore(LF.Sign.ffind x sign); Fam (LF.FApp (x, []))
+            try ignore(Sign.ffind x sign); Fam (LF.FApp (x, []))
             with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
     | Meta (x, s) ->
@@ -299,14 +300,14 @@ end = struct
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
 
-  let fn s (f : term list -> term) (l : LF.obj list) : LF.obj =
+  let fn s (f : Struct.Repo.t -> term list -> term) repo (l : LF.obj list) : LF.obj =
     let l = List.map (Unstrat.obj []) l in
-    obj s [] (f l)
+    obj s [] (f repo l)
 
   let entry_type s = function
-    | Sliceable -> LF.Sliceable
-    | Non_sliceable -> LF.Non_sliceable
-    | Defined f -> LF.Defined (fn s f)
+    | Sliceable -> Sign.Sliceable
+    | Non_sliceable -> Sign.Non_sliceable
+    | Defined f -> Sign.Defined (fn s f)
 
 end
 
@@ -315,8 +316,7 @@ and Unstrat : sig
   val obj : string option list -> obj -> term
   val fam : string option list -> fam -> term
   val kind : string option list -> kind -> term
-  val fn : Sign.t -> (obj list -> obj) -> term list -> term
-  val sign : Sign.t -> sign
+  val sign : Struct.Sign.t -> sign
 end = struct
 
   open Util
@@ -346,17 +346,17 @@ end = struct
     | LF.KType -> Type
     | LF.KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
 
-  let fn s (f : LF.obj list -> LF.obj) (l : term list) : term =
+  let fn s (f : Struct.Repo.t -> LF.obj list -> LF.obj) repo (l : term list) : term =
     let l = List.map (Strat.obj s []) l in
-    obj [] (f l)
+    obj [] (f repo l)
 
   let entry_type s = function
-    | LF.Sliceable -> Sliceable
-    | LF.Non_sliceable -> Non_sliceable
-    | LF.Defined f -> Defined (fn s f)
+    | Struct.Sign.Sliceable -> Sliceable
+    | Struct.Sign.Non_sliceable -> Non_sliceable
+    | Struct.Sign.Defined f -> Defined (fn s f)
 
-  let sign (s : LF.Sign.t) =
-    LF.Sign.fold
+  let sign (s : Struct.Sign.t) =
+    Struct.Sign.fold
       (fun x (a, e) l -> (Names.OConst.repr x, fam [] a, entry_type s e) :: l)
       (fun x k l -> (Names.FConst.repr x, kind [] k, Sliceable) :: l)
       s []
@@ -414,7 +414,7 @@ module Printer = struct
     | Strat.Fam a -> fam fmt a
     | Strat.Obj m -> obj fmt m
 
-  let sign fmt (s : LF.Sign.t) =
+  let sign fmt (s : Struct.Sign.t) =
     let l = Unstrat.sign s in
     sign fmt l
 

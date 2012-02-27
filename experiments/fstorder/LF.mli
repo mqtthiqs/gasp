@@ -21,11 +21,6 @@ type cobj =
   | OApp of head * spine
   | OMeta of Meta.t * subst
 
-type entry_type =
-  | Sliceable
-  | Non_sliceable
-  | Defined of (obj list -> obj)
-
 val inj : cobj -> obj
 val prj : obj -> cobj
 
@@ -37,18 +32,6 @@ module Env : sig
   val length : t -> int
   val to_list : t -> (string option * fam) list
   val names_of : t -> string option list
-end
-
-module Sign : sig
-  type t
-  val empty : t
-  val ofind : OConst.t -> t -> fam * entry_type
-  val ffind : FConst.t -> t -> kind
-  val oadd : OConst.t -> fam * entry_type -> t -> t
-  val fadd : FConst.t -> kind -> t -> t
-  val fold :
-    (OConst.t -> fam * entry_type -> 'a -> 'a) ->
-    (FConst.t -> kind -> 'a -> 'a) -> t -> 'a -> 'a
 end
 
 module Lift : sig

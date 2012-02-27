@@ -1,4 +1,5 @@
 open LF
+open Struct
 
 val push : Repo.t -> Env.t -> head * spine -> Repo.t * int
 val pull : Repo.t -> Names.Meta.t -> obj

@@ -1,6 +1,7 @@
 open Util
 open Names
 open LF
+open Struct
 
 let prelude : Repo.t = Kernel.init Repo.empty
   <:sign<

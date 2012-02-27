@@ -27,8 +27,8 @@ let repo = Slicer.init
 
 let test_commit repo m =
   let repo = Slicer.commit repo m in
-  let m = SLF.Strat.obj repo.Repo.sign [] m in
-  let n = SLF.Strat.obj repo.Repo.sign [] (Slicer.checkout repo) in
+  let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
+  let n = SLF.Strat.obj repo.Struct.Repo.sign [] (Slicer.checkout repo) in
   Kernel.Conv.obj repo (m, n);
   repo
 ;;

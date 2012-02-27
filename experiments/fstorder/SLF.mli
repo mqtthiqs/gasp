@@ -9,7 +9,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (term list -> term)
+  | Defined of (Struct.Repo.t -> term list -> term)
 
 type sign = (string * term * entry_type) list
 
@@ -22,7 +22,7 @@ module Printer : sig
   val obj : formatter -> LF.obj -> unit
   val fam : formatter -> LF.fam -> unit
   val kind : formatter -> LF.kind -> unit
-  val sign : formatter -> LF.Sign.t -> unit
+  val sign : formatter -> Struct.Sign.t -> unit
   val env : formatter -> LF.Env.t -> unit
 end
 
@@ -33,17 +33,16 @@ module Strat : sig
     | Fam of LF.fam
     | Obj of LF.obj
 
-  val term : LF.Sign.t -> string option list -> term -> entity
-  val obj : LF.Sign.t -> string option list -> term -> LF.obj
-  val fam : LF.Sign.t -> string option list -> term -> LF.fam
-  val kind : LF.Sign.t -> string option list -> term -> LF.kind
-  val entry_type : LF.Sign.t -> entry_type -> LF.entry_type
+  val term : Struct.Sign.t -> string option list -> term -> entity
+  val obj : Struct.Sign.t -> string option list -> term -> LF.obj
+  val fam : Struct.Sign.t -> string option list -> term -> LF.fam
+  val kind : Struct.Sign.t -> string option list -> term -> LF.kind
+  val entry_type : Struct.Sign.t -> entry_type -> Struct.Sign.entry_type
 end
 
 module Unstrat : sig
   val obj : string option list -> LF.obj -> term
   val fam : string option list -> LF.fam -> term
   val kind : string option list -> LF.kind -> term
-  val fn : LF.Sign.t -> (LF.obj list -> LF.obj) -> term list -> term
 end
 

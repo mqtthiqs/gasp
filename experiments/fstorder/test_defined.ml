@@ -3,8 +3,8 @@
 
 let test_commit repo m n =
   let repo = Slicer.commit repo m in
-  let p = SLF.Strat.obj repo.Repo.sign [] (Slicer.checkout repo) in
-  let n = SLF.Strat.obj repo.Repo.sign [] n in
+  let p = SLF.Strat.obj repo.Struct.Repo.sign [] (Slicer.checkout repo) in
+  let n = SLF.Strat.obj repo.Struct.Repo.sign [] n in
   Kernel.Conv.obj repo (n, p);
   repo
 ;;
@@ -18,7 +18,7 @@ let repo = Slicer.init <:sign<
 
   plus : {m:nat} {n:nat} nat = $ match m with
     | << o >> -> n
-    | << s $m$ >> -> << s $plus [m; n]$ >>
+    | << s $m$ >> -> << s (plus $m$ $n$) >>
     | _ -> assert false
   $.
 
