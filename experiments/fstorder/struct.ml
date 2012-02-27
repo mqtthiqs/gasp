@@ -56,11 +56,6 @@ and Repo : sig
   }
 
   val empty : t
-
-  module Printer : sig
-    val t : Format.formatter -> t -> unit
-    val t_light : Format.formatter -> t -> unit
-  end
 end = struct
 
   type t = {
@@ -72,30 +67,6 @@ end = struct
   let empty = {sign = Sign.empty; ctx = Context.empty; head = Meta.make "DUMMY"}
 
   module Printer = struct
-
-    let context fmt c =
-      (* Context.fold *)
-      (*   (fun x (e, m, a) () -> *)
-      (*     let e' = LF.Env.names_of e in *)
-      (*     Format.fprintf fmt "%a ⊢ %a : %a = %a@." *)
-      (*       SLF.Printer.env e *)
-      (*       Meta.print x *)
-      (*       (SLF.Printer.efam e') a *)
-      (*       (SLF.Printer.eobj e') m *)
-      (*   ) c () *)
-      assert false
-
-    let t_light fmt {sign; ctx; head} =
-      Format.fprintf fmt "%a ⊢ %a@."
-        context ctx
-        Meta.print head
-
-    let t fmt {sign; ctx; head} =
-      (* Format.fprintf fmt "Signature:@ %a@.Context:@ %a@ ⊢ %a@." *)
-      (*   SLF.Printer.sign sign *)
-      (*   context ctx *)
-      (*   Meta.print head *)
-      assert false
   end
 
 end

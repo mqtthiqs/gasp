@@ -12,8 +12,9 @@
 #install_printer SLF.Printer.entity
 #install_printer SLF.Printer.sign
 #install_printer SLF.Printer.env
+#install_printer SLF.Printer.context
 
-#install_printer Repo.Printer.t_light
+#install_printer Names.Meta.print
 ;;
 
 open Util

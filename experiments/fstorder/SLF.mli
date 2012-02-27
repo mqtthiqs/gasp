@@ -24,6 +24,9 @@ module Printer : sig
   val kind : formatter -> LF.kind -> unit
   val sign : formatter -> Struct.Sign.t -> unit
   val env : formatter -> LF.Env.t -> unit
+  val context : formatter -> Struct.Context.t -> unit
+  val repo : formatter -> Struct.Repo.t -> unit
+  val repo_light : formatter -> Struct.Repo.t -> unit
 end
 
 module Strat : sig

@@ -1,3 +1,6 @@
+open Names
+open Struct
+
 type term =
   | Type
   | Prod of string option * term * term
@@ -9,7 +12,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (Struct.Repo.t -> term list -> term)
+  | Defined of (Repo.t -> term list -> term)
 
 type sign = (string * term * entry_type) list
 
@@ -225,11 +228,11 @@ module rec Strat : sig
     | Fam of LF.fam
     | Obj of LF.obj
 
-  val term : Struct.Sign.t -> string option list -> term -> entity
-  val obj : Struct.Sign.t -> string option list -> term -> LF.obj
-  val fam : Struct.Sign.t -> string option list -> term -> LF.fam
-  val kind : Struct.Sign.t -> string option list -> term -> LF.kind
-  val entry_type : Struct.Sign.t -> entry_type -> Struct.Sign.entry_type
+  val term : Sign.t -> string option list -> term -> entity
+  val obj : Sign.t -> string option list -> term -> LF.obj
+  val fam : Sign.t -> string option list -> term -> LF.fam
+  val kind : Sign.t -> string option list -> term -> LF.kind
+  val entry_type : Sign.t -> entry_type -> Sign.entry_type
 end = struct
 
   open Util
@@ -300,7 +303,7 @@ end = struct
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
 
-  let fn s (f : Struct.Repo.t -> term list -> term) repo (l : LF.obj list) : LF.obj =
+  let fn s (f : Repo.t -> term list -> term) repo (l : LF.obj list) : LF.obj =
     let l = List.map (Unstrat.obj []) l in
     obj s [] (f repo l)
 
@@ -316,7 +319,7 @@ and Unstrat : sig
   val obj : string option list -> obj -> term
   val fam : string option list -> fam -> term
   val kind : string option list -> kind -> term
-  val sign : Struct.Sign.t -> sign
+  val sign : Sign.t -> sign
 end = struct
 
   open Util
@@ -326,10 +329,10 @@ end = struct
     | LF.OApp (h, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
       ) (Ident (head env h)) l
-    | LF.OMeta (x, s) -> Meta (Names.Meta.repr x, List.map (obj env) s)
+    | LF.OMeta (x, s) -> Meta (Meta.repr x, List.map (obj env) s)
 
   and head env = function
-    | LF.HConst c -> Names.OConst.repr c
+    | LF.HConst c -> OConst.repr c
     | LF.HVar x ->
       try match List.nth env x with
         | Some x -> x
@@ -339,26 +342,26 @@ end = struct
   let rec fam env = function
     | LF.FApp (f, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
-      ) (Ident (Names.FConst.repr f)) l
+      ) (Ident (FConst.repr f)) l
     | LF.FProd (x, a, b) -> Prod (x, fam env a, fam (x :: env) b)
 
   let rec kind env = function
     | LF.KType -> Type
     | LF.KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
 
-  let fn s (f : Struct.Repo.t -> LF.obj list -> LF.obj) repo (l : term list) : term =
+  let fn s (f : Repo.t -> LF.obj list -> LF.obj) repo (l : term list) : term =
     let l = List.map (Strat.obj s []) l in
     obj [] (f repo l)
 
   let entry_type s = function
-    | Struct.Sign.Sliceable -> Sliceable
-    | Struct.Sign.Non_sliceable -> Non_sliceable
-    | Struct.Sign.Defined f -> Defined (fn s f)
+    | Sign.Sliceable -> Sliceable
+    | Sign.Non_sliceable -> Non_sliceable
+    | Sign.Defined f -> Defined (fn s f)
 
-  let sign (s : Struct.Sign.t) =
-    Struct.Sign.fold
-      (fun x (a, e) l -> (Names.OConst.repr x, fam [] a, entry_type s e) :: l)
-      (fun x k l -> (Names.FConst.repr x, kind [] k, Sliceable) :: l)
+  let sign (s : Sign.t) =
+    Sign.fold
+      (fun x (a, e) l -> (OConst.repr x, fam [] a, entry_type s e) :: l)
+      (fun x k l -> (FConst.repr x, kind [] k, Sliceable) :: l)
       s []
 end
 
@@ -414,7 +417,7 @@ module Printer = struct
     | Strat.Fam a -> fam fmt a
     | Strat.Obj m -> obj fmt m
 
-  let sign fmt (s : Struct.Sign.t) =
+  let sign fmt (s : Sign.t) =
     let l = Unstrat.sign s in
     sign fmt l
 
@@ -430,4 +433,20 @@ module Printer = struct
     in
     Format.fprintf fmt "@[%a@]" (aux LF.Env.empty) (List.rev (LF.Env.to_list e))
 
+    let context fmt c =
+      Context.fold
+        (fun x (e, m, a) () ->
+          let e' = LF.Env.names_of e in
+          Format.fprintf fmt "%a ⊢ %a : %a = %a@."
+            env e Meta.print x (efam e') a (eobj e') m
+        ) c ()
+
+    let repo_light fmt {Repo.sign; Repo.ctx; Repo.head} =
+      Format.fprintf fmt "%a ⊢ %a@."
+        context ctx
+        Meta.print head
+
+    let repo fmt {Repo.sign = s; Repo.ctx; Repo.head} =
+      Format.fprintf fmt "Signature:@ %a@.Context:@ %a@ ⊢ %a@."
+        sign s context ctx Meta.print head
 end
