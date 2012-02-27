@@ -3,8 +3,8 @@
 
 let test_commit repo m n =
   let repo = Slicer.commit repo m in
-  let p = LF.Strat.obj repo.Repo.sign [] (Slicer.checkout repo) in
-  let n = LF.Strat.obj repo.Repo.sign [] n in
+  let p = SLF.Strat.obj repo.Repo.sign [] (Slicer.checkout repo) in
+  let n = SLF.Strat.obj repo.Repo.sign [] n in
   Kernel.Conv.obj repo (n, p);
   repo
 ;;
@@ -14,7 +14,7 @@ let repo = Slicer.init <:sign<
   o : nat.
   s : nat -> nat.
 
-  deux : nat = s (s o).
+  two : nat = s (s o).
 
   plus : {m:nat} {n:nat} nat = $ match m with
     | << o >> -> n
@@ -26,18 +26,19 @@ let repo = Slicer.init <:sign<
   enat : nat -> exp.
   eplus : exp -> exp -> exp.
 
-  exec : {e : exp} nat = $ match e with
+  eval : {e : exp} nat = $ match e with
     | << enat $n$ >> -> n
-    | << eplus $e1$ $e2$ >> -> plus [exec [e1]; exec [e2]]
-    | _ -> assert false
+    | << eplus $e1$ $e2$ >> -> << plus (eval $e1$) (eval $e2$) >>
+    | << ?X[$s$] >> -> failwith "meta"
+    | << $a$ >> -> SLF.Printer.term Format.std_formatter a; failwith ("?")
   $.
 >>
 ;;
 
 test_commit repo <<
-  exec (eplus (enat (s (s o))) (enat (s (s o))))
+  s (eval (eplus (enat two) (enat two)))
 >> <<
-  s (s (s (s o)))
+  s (s (s (s (s o))))
 >>
 ;;
 

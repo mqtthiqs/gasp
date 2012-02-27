@@ -218,6 +218,150 @@ module Quotations = struct
 
 end
 
+module rec Strat : sig
+
+  type entity =
+    | Kind of LF.kind
+    | Fam of LF.fam
+    | Obj of LF.obj
+
+  val term : LF.Sign.t -> string option list -> term -> entity
+  val obj : LF.Sign.t -> string option list -> term -> LF.obj
+  val fam : LF.Sign.t -> string option list -> term -> LF.fam
+  val kind : LF.Sign.t -> string option list -> term -> LF.kind
+  val entry_type : LF.Sign.t -> entry_type -> LF.entry_type
+end = struct
+
+  open Util
+  open Names
+
+  type entity =
+    | Kind of LF.kind
+    | Fam of LF.fam
+    | Obj of LF.obj
+
+  let rec app sign env l = function
+    | Ident x ->
+      begin
+        try let i = List.index (Some x) env in
+            Obj (LF.inj @@ LF.OApp (LF.HVar i, l))
+        with Not_found ->
+          try let x = OConst.make x in
+              ignore (LF.Sign.ofind x sign);
+              Obj (LF.inj @@ LF.OApp (LF.HConst x, l))
+          with Not_found ->
+            let x = FConst.make x in
+            try ignore(LF.Sign.ffind x sign); Fam (LF.FApp (x, l))
+            with Not_found -> failwith ("strat: not found "^FConst.repr x)
+      end
+    | App (t, u) ->
+      begin match term sign env u with
+        | Obj u ->  app sign env (u :: l) t
+        | _ -> failwith "strat: argument is not an object"
+      end
+    | _ -> failwith "strat: app error"
+
+  and term sign env = function
+    | Lam (x, t) -> Obj (LF.inj @@ LF.OLam (x, obj sign (x :: env) t))
+    | Type -> Kind LF.KType
+    | Prod (x, a, b) ->
+      begin match term sign env a, term sign (x::env) b with
+        | Fam a, Kind k -> Kind (LF.KProd (x, a, k))
+        | Fam a, Fam b -> Fam (LF.FProd (x, a, b))
+        | Kind _, _ -> failwith "strat: prod argument is a kind"
+        | Fam _, Obj _ -> failwith "strat: prod body is an obj"
+        | Obj _, _ -> failwith "strat: prod argument is an obj"
+      end
+    | App _ as a -> app sign env [] a
+    | Ident x ->
+      begin try Obj (LF.inj @@ LF.OApp (LF.HVar (List.index (Some x) env), []))
+        with Not_found ->
+          try let x = OConst.make x in
+              ignore(LF.Sign.ofind x sign); Obj (LF.inj @@ LF.OApp (LF.HConst x, []))
+          with Not_found ->
+            let x = FConst.make x in
+            try ignore(LF.Sign.ffind x sign); Fam (LF.FApp (x, []))
+            with Not_found -> failwith ("strat: not found "^FConst.repr x)
+      end
+    | Meta (x, s) ->
+      let s = List.map (obj sign env) s in
+      Obj (LF.inj @@ LF.OMeta (Meta.make x, s))
+
+  and obj sign env t = match term sign env t with
+    | Obj m -> m
+    | _ -> failwith "strat: not an obj"
+
+  let fam sign env t = match term sign env t with
+    | Fam a -> a
+    | _ -> failwith "strat: not a fam"
+
+  let kind sign env t = match term sign env t with
+    | Kind k -> k
+    | _ -> failwith "strat: not a kind"
+
+  let fn s (f : term list -> term) (l : LF.obj list) : LF.obj =
+    let l = List.map (Unstrat.obj []) l in
+    obj s [] (f l)
+
+  let entry_type s = function
+    | Sliceable -> LF.Sliceable
+    | Non_sliceable -> LF.Non_sliceable
+    | Defined f -> LF.Defined (fn s f)
+
+end
+
+and Unstrat : sig
+  open LF
+  val obj : string option list -> obj -> term
+  val fam : string option list -> fam -> term
+  val kind : string option list -> kind -> term
+  val fn : Sign.t -> (obj list -> obj) -> term list -> term
+  val sign : Sign.t -> sign
+end = struct
+
+  open Util
+
+  let rec obj env = LF.prj @> function
+    | LF.OLam (x, m) -> Lam (x, obj (x :: env) m)
+    | LF.OApp (h, l) -> List.fold_left
+      (fun t m -> App (t, obj env m)
+      ) (Ident (head env h)) l
+    | LF.OMeta (x, s) -> Meta (Names.Meta.repr x, List.map (obj env) s)
+
+  and head env = function
+    | LF.HConst c -> Names.OConst.repr c
+    | LF.HVar x ->
+      try match List.nth env x with
+        | Some x -> x
+        | None -> "___"^(string_of_int x)
+      with Failure "nth" -> "_REL_"^(string_of_int x)
+
+  let rec fam env = function
+    | LF.FApp (f, l) -> List.fold_left
+      (fun t m -> App (t, obj env m)
+      ) (Ident (Names.FConst.repr f)) l
+    | LF.FProd (x, a, b) -> Prod (x, fam env a, fam (x :: env) b)
+
+  let rec kind env = function
+    | LF.KType -> Type
+    | LF.KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
+
+  let fn s (f : LF.obj list -> LF.obj) (l : term list) : term =
+    let l = List.map (Strat.obj s []) l in
+    obj [] (f l)
+
+  let entry_type s = function
+    | LF.Sliceable -> Sliceable
+    | LF.Non_sliceable -> Non_sliceable
+    | LF.Defined f -> Defined (fn s f)
+
+  let sign (s : LF.Sign.t) =
+    LF.Sign.fold
+      (fun x (a, e) l -> (Names.OConst.repr x, fam [] a, entry_type s e) :: l)
+      (fun x k l -> (Names.FConst.repr x, kind [] k, Sliceable) :: l)
+      s []
+end
+
 module Printer = struct
 
   open Print
@@ -253,5 +397,37 @@ module Printer = struct
     | (x, t, Sliceable) :: s -> fprintf fmt "@[%a : %a.@]@,%a" str x term t sign s
     | (x, t, Non_sliceable) :: s -> fprintf fmt "@[#%a : %a.@]@,%a" str x term t sign s
     | (x, t, Defined f) :: s -> fprintf fmt "@[%a : %a = %a@].@,%a" str x term t code f sign s
+
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
+
+
+  let eobj e fmt m = term fmt (Unstrat.obj e m)
+  let efam e fmt a = term fmt (Unstrat.fam e a)
+  let ekind e fmt k = term fmt (Unstrat.kind e k)
+
+  let obj fmt m = eobj [] fmt m
+  let fam fmt m = efam [] fmt m
+  let kind fmt m = ekind [] fmt m
+
+  let entity fmt = function
+    | Strat.Kind k -> kind fmt k
+    | Strat.Fam a -> fam fmt a
+    | Strat.Obj m -> obj fmt m
+
+  let sign fmt (s : LF.Sign.t) =
+    let l = Unstrat.sign s in
+    sign fmt l
+
+  let env fmt e =
+    let open Format in
+    let var fmt = function
+      | Some x -> fprintf fmt "%s" x
+      | None -> fprintf fmt "_" in
+    let rec aux (l:LF.Env.t) fmt = function
+      | [] -> ()
+      | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" var x (efam (LF.Env.names_of l)) a
+      | (x,a) :: e -> fprintf fmt "%a,@ %a" (aux l) [x, a] (aux (LF.Env.add x a l)) e
+    in
+    Format.fprintf fmt "@[%a@]" (aux LF.Env.empty) (List.rev (LF.Env.to_list e))
+
 end

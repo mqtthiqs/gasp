@@ -26,10 +26,10 @@ module Printer = struct
       (fun x (e, m, a) () ->
         let e' = LF.Env.names_of e in
         Format.fprintf fmt "%a ⊢ %a : %a = %a@."
-          LF.Printer.env e
+          SLF.Printer.env e
           Meta.print x
-          (LF.Printer.efam e') a
-          (LF.Printer.eobj e') m
+          (SLF.Printer.efam e') a
+          (SLF.Printer.eobj e') m
       ) c ()
 
   let t_light fmt {sign; ctx; head} =
@@ -39,7 +39,7 @@ module Printer = struct
 
   let t fmt {sign; ctx; head} =
     Format.fprintf fmt "Signature:@ %a@.Context:@ %a@ ⊢ %a@."
-      LF.Printer.sign sign
+      SLF.Printer.sign sign
       context ctx
       Meta.print head
 

@@ -67,8 +67,6 @@ let prj = function
   | XMeta (x, s) -> OMeta (x, s)
   | XClos (s, m) -> ESubst.obj s m
 
-let (~~) f = prj $> f $> inj
-
 module Env = struct
   type t = (string option * fam) list
   let empty = []
@@ -91,179 +89,10 @@ module Sign = struct
   let ffind x ((o, f):t) = MF.find x f
   let oadd x a ((o, f):t) = MO.add x a o, f
   let fadd x k ((o, f):t) = o, MF.add x k f
-end
-
-module rec Strat : sig
-  type entity =
-    | Kind of kind
-    | Fam of fam
-    | Obj of obj
-
-  val term : Sign.t -> string option list -> SLF.term -> entity
-  val obj : Sign.t -> string option list -> SLF.term -> obj
-  val fam : Sign.t -> string option list -> SLF.term -> fam
-  val kind : Sign.t -> string option list -> SLF.term -> kind
-  val entry_type : Sign.t -> SLF.entry_type -> entry_type
-end = struct
-
-  type entity =
-    | Kind of kind
-    | Fam of fam
-    | Obj of obj
-
-  open Util
-
-  let rec app sign env l = function
-    | SLF.Ident x ->
-      begin
-        try let i = List.index (Some x) env in
-            Obj (inj $ OApp (HVar i, l))
-        with Not_found ->
-          try let x = OConst.make x in
-              ignore (Sign.ofind x sign);
-              Obj (inj $ OApp (HConst x, l))
-          with Not_found ->
-            let x = FConst.make x in
-            try ignore(Sign.ffind x sign); Fam (FApp (x, l))
-            with Not_found -> failwith ("strat: not found "^FConst.repr x)
-      end
-    | SLF.App (t, u) ->
-      begin match term sign env u with
-        | Obj u ->  app sign env (u :: l) t
-        | _ -> failwith "strat: argument is not an object"
-      end
-    | _ -> failwith "strat: app error"
-
-  and term sign env = function
-    | SLF.Lam (x, t) -> Obj (inj $ OLam (x, obj sign (x :: env) t))
-    | SLF.Type -> Kind KType
-    | SLF.Prod (x, a, b) ->
-      begin match term sign env a, term sign (x::env) b with
-        | Fam a, Kind k -> Kind (KProd (x, a, k))
-        | Fam a, Fam b -> Fam (FProd (x, a, b))
-        | Kind _, _ -> failwith "strat: prod argument is a kind"
-        | Fam _, Obj _ -> failwith "strat: prod body is an obj"
-        | Obj _, _ -> failwith "strat: prod argument is an obj"
-      end
-    | SLF.App _ as a -> app sign env [] a
-    | SLF.Ident x ->
-      begin try Obj (inj $ OApp (HVar (List.index (Some x) env), []))
-        with Not_found ->
-          try let x = OConst.make x in
-              ignore(Sign.ofind x sign); Obj (inj $ OApp (HConst x, []))
-          with Not_found ->
-            let x = FConst.make x in
-            try ignore(Sign.ffind x sign); Fam (FApp (x, []))
-            with Not_found -> failwith ("strat: not found "^FConst.repr x)
-      end
-    | SLF.Meta (x, s) ->
-      let s = List.map (obj sign env) s in
-      Obj (inj $ OMeta (Meta.make x, s))
-
-  and obj sign env t = match term sign env t with
-    | Obj m -> m
-    | _ -> failwith "strat: not an obj"
-
-  let fam sign env t = match term sign env t with
-    | Fam a -> a
-    | _ -> failwith "strat: not a fam"
-
-  let kind sign env t = match term sign env t with
-    | Kind k -> k
-    | _ -> failwith "strat: not a kind"
-
-  let fn s (f : SLF.term list -> SLF.term) (l : obj list) : obj =
-    let l = List.map (Unstrat.obj []) l in
-    obj s [] (f l)
-
-  let entry_type s = function
-    | SLF.Sliceable -> Sliceable
-    | SLF.Non_sliceable -> Non_sliceable
-    | SLF.Defined f -> Defined (fn s f)
-
-end
-
-and Unstrat : sig
-  open SLF
-  val obj : string option list -> obj -> term
-  val fam : string option list -> fam -> term
-  val kind : string option list -> kind -> term
-  val fn : Sign.t -> (obj list -> obj) -> term list -> term
-  val sign : Sign.t -> SLF.sign
-end = struct
-
-  let rec obj env = prj $> function
-    | OLam (x, m) -> SLF.Lam (x, obj (x :: env) m)
-    | OApp (h, l) -> List.fold_left
-      (fun t m -> SLF.App (t, obj env m)
-      ) (SLF.Ident (head env h)) l
-    | OMeta (x, s) -> SLF.Meta (Names.Meta.repr x, List.map (obj env) s)
-
-  and head env = function
-    | HConst c -> Names.OConst.repr c
-    | HVar x ->
-      try match List.nth env x with
-        | Some x -> x
-        | None -> "___"^(string_of_int x)
-      with Failure "nth" -> "_REL_"^(string_of_int x)
-
-  let rec fam env = function
-    | FApp (f, l) -> List.fold_left
-      (fun t m -> SLF.App (t, obj env m)
-      ) (SLF.Ident (Names.FConst.repr f)) l
-    | FProd (x, a, b) -> SLF.Prod (x, fam env a, fam (x :: env) b)
-
-  let rec kind env = function
-    | KType -> SLF.Type
-    | KProd (x, a, b) -> SLF.Prod (x, fam env a, kind (x :: env) b)
-
-  let fn s (f : obj list -> obj) (l : SLF.term list) : SLF.term =
-    let l = List.map (Strat.obj s []) l in
-    obj [] (f l)
-
-  let entry_type s = function
-    | Sliceable -> SLF.Sliceable
-    | Non_sliceable -> SLF.Non_sliceable
-    | Defined f -> SLF.Defined (fn s f)
-
-  let sign (s : Sign.t) =
-      Sign.MO.fold
-      (fun x (a, e) l -> (Names.OConst.repr x, fam [] a, entry_type s e) :: l) (fst s)
-      (Sign.MF.fold
-         (fun x k l -> (Names.FConst.repr x, kind [] k, SLF.Sliceable) :: l) (snd s)
-         [])
+  let fold f1 f2 ((o, f):t) (acc : 'a) : 'a = MO.fold f1 o (MF.fold f2 f acc)
 end
 
 module Printer = struct
-
-  let eobj e fmt m = SLF.Printer.term fmt (Unstrat.obj e m)
-  let efam e fmt a = SLF.Printer.term fmt (Unstrat.fam e a)
-  let ekind e fmt k = SLF.Printer.term fmt (Unstrat.kind e k)
-
-  let obj fmt m = eobj [] fmt m
-  let fam fmt m = efam [] fmt m
-  let kind fmt m = ekind [] fmt m
-
-  let entity fmt = function
-    | Strat.Kind k -> kind fmt k
-    | Strat.Fam a -> fam fmt a
-    | Strat.Obj m -> obj fmt m
-
-  let sign fmt (s : Sign.t) =
-    let l = Unstrat.sign s in
-    SLF.Printer.sign fmt l
-
-  let env fmt e =
-    let open Format in
-    let var fmt = function
-      | Some x -> fprintf fmt "%s" x
-      | None -> fprintf fmt "_" in
-    let rec aux (l:Env.t) fmt = function
-      | [] -> ()
-      | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" var x (efam (Env.names_of l)) a
-      | (x,a) :: e -> fprintf fmt "%a,@ %a" (aux l) [x, a] (aux ((x, a) :: l)) e
-    in
-    Format.fprintf fmt "@[%a@]" (aux []) (List.rev e)
 end
 
 module Lift = struct
@@ -290,7 +119,7 @@ module Subst = struct
     r
 
   let rec fam s = function
-    | FApp (c, l) -> FApp (c, List.map (ESubst.obj s $> inj) l)
+    | FApp (c, l) -> FApp (c, List.map (ESubst.obj s @> inj) l)
     | FProd (x, a, b) -> FProd (x, fam s a, fam (subs_lift s) b)
 
   let rec kind s = function
@@ -313,9 +142,10 @@ end
 
 module Util = struct
 
-  let rec map_meta f = ~~ function
+  let rec map_meta f = prj @> begin function
     | OApp (h, l) -> OApp (h, List.map (map_meta f) l)
     | OLam (x, m) -> OLam (x, map_meta f m)
-    | OMeta (x, s) -> prj $ f x s
+    | OMeta (x, s) -> prj @@ f x s
+  end @> inj
 
 end

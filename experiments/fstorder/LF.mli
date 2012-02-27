@@ -28,7 +28,6 @@ type entry_type =
 
 val inj : cobj -> obj
 val prj : obj -> cobj
-val (~~) : (cobj -> cobj) -> obj -> obj
 
 module Env : sig
   type t
@@ -47,6 +46,9 @@ module Sign : sig
   val ffind : FConst.t -> t -> kind
   val oadd : OConst.t -> fam * entry_type -> t -> t
   val fadd : FConst.t -> kind -> t -> t
+  val fold :
+    (OConst.t -> fam * entry_type -> 'a -> 'a) ->
+    (FConst.t -> kind -> 'a -> 'a) -> t -> 'a -> 'a
 end
 
 module Lift : sig
@@ -60,41 +62,6 @@ module Subst : sig
   val kind : obj list -> kind -> kind
 end
 
-module Strat : sig
-
-  type entity =
-    | Kind of kind
-    | Fam of fam
-    | Obj of obj
-
-  val term : Sign.t -> string option list -> SLF.term -> entity
-  val obj : Sign.t -> string option list -> SLF.term -> obj
-  val fam : Sign.t -> string option list -> SLF.term -> fam
-  val kind : Sign.t -> string option list -> SLF.term -> kind
-  val entry_type : Sign.t -> SLF.entry_type -> entry_type
-end
-
-module Unstrat : sig
-  open SLF
-  val obj : string option list -> obj -> term
-  val fam : string option list -> fam -> term
-  val kind : string option list -> kind -> term
-  val fn : Sign.t -> (obj list -> obj) -> term list -> term
-end
-
 module Util : sig
   val map_meta : (Meta.t -> subst -> obj) -> obj -> obj
-end
-
-module Printer : sig
-  open Format
-  val eobj : string option list -> formatter -> obj -> unit
-  val efam : string option list -> formatter -> fam -> unit
-  val ekind : string option list -> formatter -> kind -> unit
-  val obj : formatter -> obj -> unit
-  val fam : formatter -> fam -> unit
-  val kind : formatter -> kind -> unit
-  val entity : formatter -> Strat.entity -> unit
-  val sign : formatter -> Sign.t -> unit
-  val env : formatter -> Env.t -> unit
 end
