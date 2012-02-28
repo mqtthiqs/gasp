@@ -27,6 +27,8 @@ module ExprParser = struct
   let term1 = Gram.Entry.mk "term1"
   let term2 = Gram.Entry.mk "term2"
   let term_eoi = Gram.Entry.mk "term_eoi"
+  let env = Gram.Entry.mk "env"
+  let env_eoi = Gram.Entry.mk "env_eoi"
 
   EXTEND Gram
 
@@ -37,8 +39,21 @@ module ExprParser = struct
 
   binder:
   [ [ x = ident -> <:expr< Some $str:x$ >>
-    | "_" -> <:expr< None >> ]
+    | "_" -> <:expr< None >>
+    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
+    ]
   ];
+
+  env:
+  [ [ -> <:expr< LF.Env.empty >>
+    | e = env; ";"; x = binder; ":"; t = term -> <:expr< LF.Env.add x t e >>
+    | x = binder; ":"; t = term -> <:expr< LF.Env.add x t LF.Env.empty >>
+    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
+    ]
+  ];
+
+  env_eoi:
+      [[ e = env; `EOI -> e ]];
 
   term:
   [ "prd" RIGHTA
@@ -86,21 +101,23 @@ module ExprParser = struct
   let sign = Gram.Entry.mk "sign"
   let sign_eoi = Gram.Entry.mk "sign_eoi"
 
-  let rec build_patt = function
-    | [] -> <:patt@here< [] >>
-    | x :: xs -> <:patt@here< [$lid:x$ :: $build_patt xs$] >>
+  (* let rec build_patt = function *)
+  (*   | [] -> <:patt@here< [] >> *)
+  (*   | x :: xs -> <:patt@here< [$lid:x$ :: $build_patt xs$] >> *)
 
-  let rec fun_telescope err l e = function
-    | <:expr< SLF.Prod (Some $str:x$, $_$, $xs$) >> -> fun_telescope err (x :: l) e xs
-    | <:expr< Prod (None, $_$, $xs$) >> -> fun_telescope err ("__bla" :: l) e xs
-    | _ -> <:expr@here< fun [ $build_patt (List.rev l)$ -> $e$ | _ -> failwith ("Match failure: "^ $str:err$ ) ] >>
+  (* let rec fun_telescope err l e = function *)
+  (*   | <:expr@_loc< SLF.Prod (Some $str:x$, $_$, $xs$) >> -> *)
+  (*     fun_telescope err (<:patt< $lid:x$ >> :: l) e xs *)
+  (*   | <:expr@_loc< Prod (None, $_$, $xs$) >> -> *)
+  (*     fun_telescope err (<:patt< _ >> :: l) e xs *)
+  (*   | _ -> <:expr@here< fun [ $build_patt (List.rev l)$ -> $e$ | _ -> failwith ("Match failure: "^ $str:err$ ) ] >> *)
 
   EXTEND Gram
 
   sign:
   [[ -> <:expr< [] >>
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
-     <:expr< let rec $lid:x$ = fun repo -> $fun_telescope x [] e t$
+     <:expr< let rec $lid:x$ = fun repo -> $e$
              in [($str:x$, $t$, SLF.Defined $lid:x$) :: $s$]
      >>
    | x = ident; ":"; t = term; "."; s = sign ->
@@ -136,7 +153,9 @@ module PattParser = struct
 
   binder:
   [ [ x = ident -> <:patt< Some $str:x$ >>
-    | "_" -> <:patt< None >> ]
+    | "_" -> <:patt< None >>
+    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
+    ]
   ];
 
   term:
@@ -199,6 +218,13 @@ module Quotations = struct
     Camlp4_config.antiquotations := q;
     res
 
+  let expand_env_term loc _ s =
+    let q = !Camlp4_config.antiquotations in
+    Camlp4_config.antiquotations := true;
+    let res = Gram.parse_string ExprParser.env_eoi loc s in
+    Camlp4_config.antiquotations := q;
+    res
+
   let expand_patt_term loc _ s =
     let q = !Camlp4_config.antiquotations in
     Camlp4_config.antiquotations := true;
@@ -214,6 +240,7 @@ module Quotations = struct
     res
 
   let _ =
+    add "env" DynAst.expr_tag expand_env_term;
     add "term" DynAst.patt_tag expand_patt_term;
     add "term" DynAst.expr_tag expand_expr_term;
     add "sign" DynAst.expr_tag expand_expr_sign;
