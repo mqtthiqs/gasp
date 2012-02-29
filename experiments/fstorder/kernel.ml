@@ -104,18 +104,17 @@ module Check = struct
       Conv.fam repo (a, a');
       begin match e with
         | Sign.Sliceable ->
-          Format.printf "sliceable: %a@." SLF.Printer.obj (inj @@ OApp(h,l));
           let repo, n = push repo env a (h, l) in
           let s = List.map (fun i -> inj @@ OApp (HVar i, [])) (List.count 0 n) in
           repo, OMeta (repo.Repo.head, s)
         | Sign.Non_sliceable ->
-          Format.printf "non-sliceable: %a@." SLF.Printer.obj (inj @@ OApp(h,l));
           repo, OApp (h, l)
         | Sign.Defined f ->
+          Format.printf "eval: %a " SLF.Printer.obj (inj @@ OApp (h, l));
           let r = f repo l in
-          Format.printf "evalué pr obj: %a = %a@." SLF.Printer.obj (inj @@ OApp (h, l)) SLF.Printer.obj r;
-          let repo, m = obj repo env (r, a) in
-          repo, prj m
+          Format.printf " = %a@." SLF.Printer.obj r;
+          let _, _ = obj repo env (r, a) in
+          repo, prj r
       end
     | OMeta (x, s) as m, a ->
       let e, _, b = Context.find x repo.Repo.ctx in
