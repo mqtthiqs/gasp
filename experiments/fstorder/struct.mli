@@ -1,6 +1,16 @@
 open Names
 open LF
 
+module Env : sig
+  type t
+  val empty : t
+  val find : int -> t -> fam
+  val add : string option -> fam -> t -> t
+  val length : t -> int
+  val to_list : t -> (string option * fam) list
+  val names_of : t -> string option list
+end
+
 module Context : sig
   type t
   val empty : t
@@ -25,7 +35,7 @@ and Sign : sig
   type  entry_type =
     | Sliceable
     | Non_sliceable
-    | Defined of (Repo.t -> obj list -> obj)
+    | Defined of (Env.t -> obj list -> obj)
 
   type t
   val empty : t

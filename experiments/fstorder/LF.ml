@@ -62,17 +62,6 @@ let prj = function
   | XMeta (x, s) -> OMeta (x, s)
   | XClos (s, m) -> ESubst.obj s m
 
-module Env = struct
-  type t = (string option * fam) list
-  let empty = []
-  let length = List.length
-  let find x l = snd (List.nth l x)
-  let add x a l = ((x, a) :: l)
-  let to_list l = l
-  let names_of env = fst (List.split (to_list env))
-
-end
-
 module Printer = struct
 end
 

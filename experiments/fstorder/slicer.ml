@@ -14,7 +14,7 @@ let prelude : Repo.t = Kernel.init Repo.empty
 let init sign : Repo.t = Kernel.init prelude sign
 
 let commit repo = SLF.Strat.obj repo.Repo.sign [] @> prj @> function
-    | OApp (h, l) -> fst (Kernel.push repo LF.Env.empty (h, l))
+    | OApp (h, l) -> fst (Kernel.push repo Env.empty (h, l))
     | _ -> failwith "not an app"
 
 let checkout repo =

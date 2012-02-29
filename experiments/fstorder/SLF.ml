@@ -453,17 +453,17 @@ module Printer = struct
     let var fmt = function
       | Some x -> fprintf fmt "%s" x
       | None -> fprintf fmt "_" in
-    let rec aux (l:LF.Env.t) fmt = function
+    let rec aux (l:Env.t) fmt = function
       | [] -> ()
-      | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" var x (efam (LF.Env.names_of l)) a
-      | (x,a) :: e -> fprintf fmt "%a,@ %a" (aux l) [x, a] (aux (LF.Env.add x a l)) e
+      | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" var x (efam (Env.names_of l)) a
+      | (x,a) :: e -> fprintf fmt "%a,@ %a" (aux l) [x, a] (aux (Env.add x a l)) e
     in
-    Format.fprintf fmt "@[%a@]" (aux LF.Env.empty) (List.rev (LF.Env.to_list e))
+    Format.fprintf fmt "@[%a@]" (aux Env.empty) (List.rev (Env.to_list e))
 
     let context fmt c =
       Context.fold
         (fun x (e, m, a) () ->
-          let e' = LF.Env.names_of e in
+          let e' = Env.names_of e in
           Format.fprintf fmt "%a ⊢ %a : %a = %a@."
             env e Meta.print x (efam e') a (eobj e') m
         ) c ()

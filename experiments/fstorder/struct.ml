@@ -1,9 +1,21 @@
 open Names
+open LF
+
+module Env = struct
+  type t = (string option * fam) list
+  let empty = []
+  let length = List.length
+  let find x l = snd (List.nth l x)
+  let add x a l = ((x, a) :: l)
+  let to_list l = l
+  let names_of env = fst (List.split (to_list env))
+
+end
 
 module Context = struct
 
   module M = Map.Make(Meta)
-  type t = (LF.Env.t * LF.obj * LF.fam) M.t
+  type t = (Env.t * obj * fam) M.t
   let empty = M.empty
   let find = M.find
   let add = M.add
@@ -17,7 +29,7 @@ module rec Sign : sig
   type  entry_type =
     | Sliceable
     | Non_sliceable
-    | Defined of (Repo.t -> obj list -> obj)
+    | Defined of (Env.t -> obj list -> obj)
 
   type t
   val empty : t
@@ -34,7 +46,7 @@ end = struct
   type entry_type =
     | Sliceable
     | Non_sliceable
-    | Defined of (Repo.t -> obj list -> obj)
+    | Defined of (Env.t -> obj list -> obj)
 
   module MO = Map.Make(Names.OConst)
   module MF = Map.Make(Names.FConst)

@@ -22,11 +22,11 @@ module Printer : sig
   val obj : formatter -> LF.obj -> unit
   val fam : formatter -> LF.fam -> unit
   val kind : formatter -> LF.kind -> unit
-  val sign : formatter -> Struct.Sign.t -> unit
-  val env : formatter -> LF.Env.t -> unit
-  val context : formatter -> Struct.Context.t -> unit
-  val repo : formatter -> Struct.Repo.t -> unit
-  val repo_light : formatter -> Struct.Repo.t -> unit
+  val sign : formatter -> Sign.t -> unit
+  val env : formatter -> Env.t -> unit
+  val context : formatter -> Context.t -> unit
+  val repo : formatter -> Repo.t -> unit
+  val repo_light : formatter -> Repo.t -> unit
 end
 
 module Strat : sig
@@ -36,11 +36,11 @@ module Strat : sig
     | Fam of LF.fam
     | Obj of LF.obj
 
-  val term : Struct.Sign.t -> string option list -> term -> entity
-  val obj : Struct.Sign.t -> string option list -> term -> LF.obj
-  val fam : Struct.Sign.t -> string option list -> term -> LF.fam
-  val kind : Struct.Sign.t -> string option list -> term -> LF.kind
-  val entry_type : Struct.Sign.t -> entry_type -> Struct.Sign.entry_type
+  val term : Sign.t -> string option list -> term -> entity
+  val obj : Sign.t -> string option list -> term -> LF.obj
+  val fam : Sign.t -> string option list -> term -> LF.fam
+  val kind : Sign.t -> string option list -> term -> LF.kind
+  val entry_type : Sign.t -> entry_type -> Sign.entry_type
 end
 
 module Unstrat : sig

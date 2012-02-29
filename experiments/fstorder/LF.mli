@@ -24,16 +24,6 @@ type cobj =
 val inj : cobj -> obj
 val prj : obj -> cobj
 
-module Env : sig
-  type t
-  val empty : t
-  val find : int -> t -> fam
-  val add : string option -> fam -> t -> t
-  val length : t -> int
-  val to_list : t -> (string option * fam) list
-  val names_of : t -> string option list
-end
-
 module Lift : sig
   val obj : int -> int -> obj -> obj
   val fam : int -> int -> fam -> fam
