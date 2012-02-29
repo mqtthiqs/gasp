@@ -294,10 +294,7 @@ end = struct
             try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
             with Not_found -> failwith ("strat: not found "^FConst.repr x)
       end
-    | App (t, u) ->
-      begin match term sign env u with
-        | Obj u ->  app sign env (u :: l) t
-        | _ -> failwith "strat: argument is not an object"
+    | App (t, u) -> app sign env (obj sign env u :: l) t
       end
     | _ -> failwith "strat: app error"
 
@@ -312,7 +309,7 @@ end = struct
         | Fam _, Obj _ -> failwith "strat: prod body is an obj"
         | Obj _, _ -> failwith "strat: prod argument is an obj"
       end
-    | App _ as a -> app sign env [] a
+    | App (t, u) -> app sign env [obj sign env u] t
     | Ident x ->
       begin try Obj (LF.inj @@ LF.OApp (LF.HVar (List.index (Some x) env), []))
         with Not_found ->
