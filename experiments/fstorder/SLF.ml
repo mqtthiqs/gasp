@@ -139,7 +139,6 @@ module ExprParser = struct
 
 end
 
-
 module PattParser = struct
 
   open Camlp4.PreCast
@@ -155,12 +154,14 @@ module PattParser = struct
   EXTEND Gram
 
   ident:
-  [ [ x = LIDENT -> x
-    | x = UIDENT -> x ]
+  [ [ x = LIDENT -> <:patt< $str:x$ >>
+    | x = UIDENT -> <:patt< $str:x$ >>
+    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
+    ]
   ];
 
   binder:
-  [ [ x = ident -> <:patt< Some $str:x$ >>
+  [ [ x = ident -> <:patt< Some $x$ >>
     | "_" -> <:patt< None >>
     | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
     ]
@@ -188,9 +189,9 @@ module PattParser = struct
 
   term2:
   [ "simple"
-      [ x = ident -> <:patt< SLF.Ident $str:x$ >>
-      | "?"; x = ident -> <:patt< SLF.Meta (x, []) >>
-      | "?"; x = ident; "["; s = subst; "]" -> <:patt< SLF.Meta (x, $s$) >>
+      [ x = ident -> <:patt< SLF.Ident $x$ >>
+      | "?"; x = ident -> <:patt< SLF.Meta ($x$, _) >>
+      | "?"; x = ident; "["; s = subst; "]" -> <:patt< SLF.Meta ($x$, $s$) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
       | "("; t = term; ")" -> t ]
   | "lam"
