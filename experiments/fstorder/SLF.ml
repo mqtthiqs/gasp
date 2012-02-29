@@ -101,23 +101,31 @@ module ExprParser = struct
   let sign = Gram.Entry.mk "sign"
   let sign_eoi = Gram.Entry.mk "sign_eoi"
 
-  (* let rec build_patt = function *)
-  (*   | [] -> <:patt@here< [] >> *)
-  (*   | x :: xs -> <:patt@here< [$lid:x$ :: $build_patt xs$] >> *)
+  let rec build_patt = function
+    | [] -> <:patt@here< [] >>
+    | x :: xs -> <:patt@here< [$lid:x$ :: $build_patt xs$] >>
 
-  (* let rec fun_telescope err l e = function *)
-  (*   | <:expr@_loc< SLF.Prod (Some $str:x$, $_$, $xs$) >> -> *)
-  (*     fun_telescope err (<:patt< $lid:x$ >> :: l) e xs *)
-  (*   | <:expr@_loc< Prod (None, $_$, $xs$) >> -> *)
-  (*     fun_telescope err (<:patt< _ >> :: l) e xs *)
-  (*   | _ -> <:expr@here< fun [ $build_patt (List.rev l)$ -> $e$ | _ -> failwith ("Match failure: "^ $str:err$ ) ] >> *)
+  let rec build_app f = function
+    | x :: xs -> <:expr@here< $build_app f xs$ $lid:x$ >>
+    | [] -> f
+
+  let rec fun_telescope i = function
+    | <:expr@_loc< SLF.Prod ($_$, $_$, $xs$) >> ->
+      ("__xxx"^string_of_int i) :: fun_telescope (succ i) xs
+    | _ -> []
 
   EXTEND Gram
 
   sign:
   [[ -> <:expr< [] >>
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
-     <:expr< let rec $lid:x$ = fun repo -> $e$
+     let names = fun_telescope 0 t in
+     <:expr<
+             let $lid:x$ = fun (repo:Struct.Repo.t) ->
+             let rec $lid:x$ = $e$ in
+             fun
+               [ $build_patt names$ -> $build_app <:expr<$lid:x$>> names$
+               | _ -> assert False ]
              in [($str:x$, $t$, SLF.Defined $lid:x$) :: $s$]
      >>
    | x = ident; ":"; t = term; "."; s = sign ->
