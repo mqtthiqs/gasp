@@ -124,7 +124,7 @@ module Check = struct
     end @> Prod.map id inj
 
   and obj repo env (m, a) =
-    let e = LF.Env.names_of env in
+    let e = Env.names_of env in
     Format.printf "** obj @[%a@] ⊢ @[%a@] : @[%a@]@." SLF.Printer.env env
       (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
     obj' repo env (m, a)
@@ -174,14 +174,14 @@ let rec init repo = function
   | (c, t, e) :: s' ->
     match SLF.Strat.term repo.Repo.sign [] t, e with
       | SLF.Strat.Fam a, e ->
-        let repo, a = Check.fam repo LF.Env.empty a in
+        let repo, a = Check.fam repo Env.empty a in
         (* Pour permettre la récursion dans les définitions de fonctions *)
         let repo = {repo with Repo.sign = Sign.oadd (Names.OConst.make c) (a, Sign.Non_sliceable) repo.Repo.sign} in
         let e = SLF.Strat.entry_type repo.Repo.sign e in
         let repo = {repo with Repo.sign = Sign.oadd (Names.OConst.make c) (a, e) repo.Repo.sign} in
         init repo s'
       | SLF.Strat.Kind k, SLF.Sliceable ->
-        let repo, k = Check.kind repo LF.Env.empty k in
+        let repo, k = Check.kind repo Env.empty k in
         let repo = {repo with Repo.sign = Sign.fadd (Names.FConst.make c) k repo.Repo.sign} in
         init repo s'
       | SLF.Strat.Obj _, _ -> failwith "object in sign"

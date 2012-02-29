@@ -1,3 +1,5 @@
+open Struct
+
 type term =
   | Type
   | Prod of string option * term * term
@@ -9,7 +11,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (Struct.Repo.t -> term list -> term)
+  | Defined of (Repo.t -> term list -> term)
 
 type sign = (string * term * entry_type) list
 

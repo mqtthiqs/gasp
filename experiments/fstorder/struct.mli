@@ -35,7 +35,7 @@ and Sign : sig
   type  entry_type =
     | Sliceable
     | Non_sliceable
-    | Defined of (Env.t -> obj list -> obj)
+    | Defined of (Repo.t -> obj list -> obj)
 
   type t
   val empty : t
