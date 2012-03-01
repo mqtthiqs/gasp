@@ -30,6 +30,7 @@ module Lift : sig
 end
 
 module Subst : sig
+  val spine : obj -> obj list -> obj
   val obj : obj list -> obj -> obj
   val fam : obj list -> fam -> fam
   val kind : obj list -> kind -> kind

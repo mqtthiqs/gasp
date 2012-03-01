@@ -79,6 +79,9 @@ end
 
 module Subst = struct
 
+  let spine m l =
+    inj @@ ESubst.spine (prj @@ m, l)
+
   let obj l m =
     let s = subs_cons (Array.of_list (List.rev l), subs_id 0) in
     ESubst.clos (s, m)
