@@ -51,7 +51,7 @@ module Conv = struct
       let h = HConst (Names.OConst.make "@") in
       raise (Not_conv_obj (repo, inj @@ OApp (h, l1), inj @@ OApp (h, l2)))
 
-  and obj repo (m1, m2) = match prj m1, prj m2 with
+  and obj' repo (m1, m2) = match prj m1, prj m2 with
     | OLam (_, m1), OLam (_,m2) -> obj repo (m1, m2)
     | OApp (HConst c, l), _ when is_defined repo c -> obj repo (interpret repo c l, m2)
     | _, OApp (HConst c, l) when is_defined repo c-> obj repo (m1, interpret repo c l)
@@ -69,6 +69,10 @@ module Conv = struct
     | (OMeta _ as m1), m2 | m1, (OMeta _ as m2) ->
       raise (Not_conv_obj (repo, inj m1, inj m2))
     | m1, m2 -> raise (Not_conv_obj (repo, inj m1, inj m2))
+
+  and obj repo (m1, m2) =
+    Format.printf "** conv %a == %a@." SLF.Printer.obj m1 SLF.Printer.obj m2;
+    obj' repo (m1, m2)
 
   let rec fam repo = function
     | FProd (_, a1, b1), FProd (_, a2, b2) ->
