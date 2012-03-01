@@ -2,3 +2,4 @@ test_stlc.byte
 test_fo.byte
 test_subst.byte
 test_defined.byte
+test_check.byte
