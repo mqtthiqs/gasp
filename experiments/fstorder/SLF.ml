@@ -1,10 +1,12 @@
 open Names
 open Struct
 
+type binder = string option
+
 type term =
   | Type
-  | Prod of string option * term * term
-  | Lam of string option * term
+  | Prod of binder * term * term
+  | Lam of binder * term
   | App of term * term
   | Ident of string
   | Meta of string * term list
@@ -45,9 +47,9 @@ module ExprParser = struct
   ];
 
   env:
-  [ [ -> <:expr< LF.Env.empty >>
-    | e = env; ";"; x = binder; ":"; t = term -> <:expr< LF.Env.add x t e >>
-    | x = binder; ":"; t = term -> <:expr< LF.Env.add x t LF.Env.empty >>
+  [ [ -> <:expr< [] >>
+    | e = env; ";"; x = binder; ":"; t = term -> <:expr< [($x$, $t$) :: $e$] >>
+    | x = binder; ":"; t = term -> <:expr< [($x$, $t$)] >>
     | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
     ]
   ];
@@ -264,11 +266,12 @@ module rec Strat : sig
     | Fam of LF.fam
     | Obj of LF.obj
 
-  val term : Sign.t -> string option list -> term -> entity
-  val obj : Sign.t -> string option list -> term -> LF.obj
-  val fam : Sign.t -> string option list -> term -> LF.fam
-  val kind : Sign.t -> string option list -> term -> LF.kind
+  val term : Sign.t -> binder list -> term -> entity
+  val obj : Sign.t -> binder list -> term -> LF.obj
+  val fam : Sign.t -> binder list -> term -> LF.fam
+  val kind : Sign.t -> binder list -> term -> LF.kind
   val entry_type : Sign.t -> entry_type -> Sign.entry_type
+  val env : Sign.t -> (binder * term) list -> Env.t
 end = struct
 
   open Util
@@ -295,7 +298,7 @@ end = struct
   let rec app sign env l = function
     | Ident x -> lookup sign env x l
     | App (t, u) -> app sign env (obj sign env u :: l) t
-    | _ -> failwith "strat: app error"
+    | t -> Obj (LF.Subst.spine (obj sign env t) l)
 
   and term sign env = function
     | Lam (x, t) -> Obj (LF.inj @@ LF.OLam (x, obj sign (x :: env) t))
@@ -335,13 +338,19 @@ end = struct
     | Non_sliceable -> Sign.Non_sliceable
     | Defined f -> Sign.Defined (fn s f)
 
+  let rec env sign = function
+    | [] -> Env.empty
+    | (x, t) :: e ->
+      let e = env sign e in
+      Env.add x (fam sign (Env.names_of e) t) e
+
 end
 
 and Unstrat : sig
   open LF
-  val obj : string option list -> obj -> term
-  val fam : string option list -> fam -> term
-  val kind : string option list -> kind -> term
+  val obj : binder list -> obj -> term
+  val fam : binder list -> fam -> term
+  val kind : binder list -> kind -> term
   val sign : Sign.t -> sign
 end = struct
 
