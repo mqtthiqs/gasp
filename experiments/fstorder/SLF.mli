@@ -44,7 +44,7 @@ module Strat : sig
   val obj : Sign.t -> binder list -> term -> LF.obj
   val fam : Sign.t -> binder list -> term -> LF.fam
   val kind : Sign.t -> binder list -> term -> LF.kind
-  val entry_type : Sign.t -> entry_type -> Sign.entry_type
+  val entry_type : entry_type -> Sign.entry_type
   val env : Sign.t -> (binder * term) list -> Env.t
 end
 

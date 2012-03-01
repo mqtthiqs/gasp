@@ -177,7 +177,7 @@ let rec init repo = function
         let repo, a = Check.fam repo Env.empty a in
         (* Pour permettre la récursion dans les définitions de fonctions *)
         let repo = {repo with Repo.sign = Sign.oadd (Names.OConst.make c) (a, Sign.Non_sliceable) repo.Repo.sign} in
-        let e = SLF.Strat.entry_type repo.Repo.sign e in
+        let e = SLF.Strat.entry_type e in
         let repo = {repo with Repo.sign = Sign.oadd (Names.OConst.make c) (a, e) repo.Repo.sign} in
         init repo s'
       | SLF.Strat.Kind k, SLF.Sliceable ->

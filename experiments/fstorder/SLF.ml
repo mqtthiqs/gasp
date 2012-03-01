@@ -270,7 +270,7 @@ module rec Strat : sig
   val obj : Sign.t -> binder list -> term -> LF.obj
   val fam : Sign.t -> binder list -> term -> LF.fam
   val kind : Sign.t -> binder list -> term -> LF.kind
-  val entry_type : Sign.t -> entry_type -> Sign.entry_type
+  val entry_type : entry_type -> Sign.entry_type
   val env : Sign.t -> (binder * term) list -> Env.t
 end = struct
 
@@ -329,14 +329,14 @@ end = struct
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
 
-  let fn s (f : Repo.t -> term list -> term) repo (l : LF.obj list) : LF.obj =
+  let fn (f : Repo.t -> term list -> term) repo (l : LF.obj list) : LF.obj =
     let l = List.map (Unstrat.obj []) l in
-    obj s [] (f repo l)
+    obj repo.Repo.sign [] (f repo l)
 
-  let entry_type s = function
+  let entry_type = function
     | Sliceable -> Sign.Sliceable
     | Non_sliceable -> Sign.Non_sliceable
-    | Defined f -> Sign.Defined (fn s f)
+    | Defined f -> Sign.Defined (fn f)
 
   let rec env sign = function
     | [] -> Env.empty
