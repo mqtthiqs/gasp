@@ -1,7 +1,7 @@
 open LF
 open Struct
 
-val push : Repo.t -> Env.t -> head * spine -> Repo.t * int
+val push : Repo.t -> Env.t -> head * spine -> Repo.t * subst
 val pull : Repo.t -> Names.Meta.t -> obj
 val init : Repo.t -> SLF.sign -> Repo.t
 

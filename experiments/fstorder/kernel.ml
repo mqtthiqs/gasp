@@ -19,7 +19,8 @@ let push =
     let repo = { repo with
       Repo.ctx = Context.add x (env, inj @@ LF.OApp (h, l), a) repo.Repo.ctx;
       Repo.head = x } in
-    repo, List.length (Env.to_list env)
+    let s = List.map_i 0 (fun i _ -> inj @@ OApp (HVar i, [])) (Env.to_list env) in
+    repo, s
 
 let is_defined repo c = match Sign.ofind c repo.Repo.sign with
   | _, Sign.Defined f -> true
@@ -104,8 +105,7 @@ module Check = struct
       Conv.fam repo (a, a');
       begin match e with
         | Sign.Sliceable ->
-          let repo, n = push repo env a (h, l) in
-          let s = List.map (fun i -> inj @@ OApp (HVar i, [])) (List.count 0 n) in
+          let repo, s = push repo env a (h, l) in
           repo, OMeta (repo.Repo.head, s)
         | Sign.Non_sliceable ->
           repo, OApp (h, l)
@@ -164,7 +164,7 @@ module Check = struct
       repo, KProd (x, a, k)
 
   let app repo env (h, l) =
-    let a, _ = head repo env h in
+    let a, _ = head repo env h in       (* TODO si c'est un defined? *)
     app repo env (l, a)
 
 end

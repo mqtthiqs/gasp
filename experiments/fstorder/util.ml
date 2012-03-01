@@ -21,6 +21,10 @@ module List = struct
     let rec aux i = if i=n then [] else i :: aux (i+1) in
     aux i
 
+  let rec map_i i f = function
+    | [] -> []
+    | x :: xs -> f i x :: map_i (succ i) f xs
+
 end
 
 let (@@) a b = a b
