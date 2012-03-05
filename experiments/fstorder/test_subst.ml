@@ -22,7 +22,7 @@ let repo = Slicer.init
 >>
 ;;
 
-let repo = Slicer.commit repo
+let repo = Slicer.commit repo Struct.Env.empty
 <<
   p a b
 >>

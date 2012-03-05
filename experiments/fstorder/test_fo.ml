@@ -31,7 +31,7 @@ let stlc = Slicer.init
 >>
 ;;
 
-let repo = Slicer.commit stlc
+let repo = Slicer.commit stlc Struct.Env.empty
   <<
     lam (lam (app (s z) z))
   >>

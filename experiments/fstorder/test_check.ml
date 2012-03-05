@@ -6,6 +6,11 @@ let equals repo a b =
   let b = SLF.Strat.obj repo.Struct.Repo.sign [] b in
   Kernel.Conv.obj repo (a, b)
 
+let reduce repo env m =
+  let env = SLF.Strat.env repo.Struct.Repo.sign env in
+  let repo = Slicer.commit repo env m in
+  Slicer.checkout repo
+
 let repo = Slicer.init
 <:sign<
 
@@ -29,44 +34,33 @@ let repo = Slicer.init
   get : {M : tm} inf M -> tm = $fun m _ -> m$.
 
   infer : {M : tm} inf M = $ function
-    | << lam $a$ [$x$] $m$ >> ->
-      begin match infer << ([$x$] m) (get x H) >> with
-        | << ex $_$ $b$ $d$ >> -> << is_lam ([$x$] $m$) $a$ $b$ [$x$] [H] $d$ >>
-        | _ -> assert false
+    | << lam $a$ $m$ >> ->
+      begin match reduce repo <:env< x:tm; h:is x $a$ >> << infer ($m$ (get x (ex x $a$ h))) >> with
+        | << [$x$] [$h$] ex $_$ $b$ $d$ >> ->
+          << is_lam ([$x$] $m$) $a$ $b$ ([$x$] [$h$] $d$) >>
       end
     | << app $m$ $n$ >> ->
-      begin match infer m with
-        | << ex $_$ (arr $a$ $b$) $d1$ >> ->
-          begin match infer n with
-            | << ex $_$ $a'$ $d2$ >> ->
-              equals repo a a';
-              << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
-            | _ -> assert false
-          end
-        | _ -> assert false
+      begin match reduce repo <:env< >> << infer $m$ >>, reduce repo <:env< >> << infer $n$ >> with
+        | << ex $_$ (arr $a$ $b$) $d1$ >>, << ex $_$ $a'$ $d2$ >> ->
+          equals repo a a';
+          << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
       end
-    | << get $x$ $h$ >> -> h
-    | m ->
-      SLF.Printer.term Format.std_formatter m;
-      assert false
+    | << get $x$ (ex $_$ $a$ $h$) >> -> h
+    | m -> reduce repo <:env< >> m
   $.
+
 >>
 ;;
 
-let test_commit repo m n =
-  let repo = Slicer.commit repo m in
+let test_commit repo m =
+  let repo = Slicer.commit repo Struct.Env.empty m in
   let p = SLF.Strat.obj repo.Struct.Repo.sign [] (Slicer.checkout repo) in
-  let n = SLF.Strat.obj repo.Struct.Repo.sign [] n in
-  Kernel.Conv.obj repo (n, p);
-  repo
+  Slicer.checkout repo
 ;;
 
 test_commit repo
 <<
   infer (lam (arr base base) [x] lam base [y] app x y)
->>
-<<
-  base
 >>
 ;;
 
