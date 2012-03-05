@@ -98,7 +98,7 @@ module Check = struct
     begin function
     | OLam (x, m), FProd (y, a, b) ->
       let x = match x, y with
-        | None, Some x -> Some x
+        | None, Some _ -> x
         | _ -> x in
       let repo, m = obj repo (Env.add x a env) (m, b) in
       repo, OLam (x, m)
