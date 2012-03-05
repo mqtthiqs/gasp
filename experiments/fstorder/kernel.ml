@@ -108,17 +108,27 @@ module Check = struct
       let repo, m, a' = app repo env (h, l) in
       Conv.fam repo (a, a');
       repo, m
-    | OMeta (x, s) as m, a ->
+    | OMeta (x, s), a ->
       let e, _, b = Context.find x repo.ctx in
+      let repo, s = subst repo env (s, Env.to_list e) in
       let b = Subst.fam s b in
       Conv.fam repo (a, b);
-      repo, inj @@ m
+      repo, inj @@ OMeta (x, s)
 
   and obj repo env (m, a) =
     let e = Env.names_of env in
     Format.printf "** obj @[%a@] ⊢ @[%a@] : @[%a@]@." SLF.Printer.env env
       (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
     obj' repo env (m, a)
+
+  and subst repo env : subst * ('a * fam) list -> repo * subst = function
+    | m :: s, (_, a) :: e ->
+      let repo, m = obj repo env (m, a) in
+      let repo, s = subst repo env (s, e) in
+      repo, m :: s
+
+    | [], [] -> repo, []
+    | _ -> failwith "subst"
 
   and app repo env (h, l) : repo * obj * fam =
     let a, e = head repo env h in
