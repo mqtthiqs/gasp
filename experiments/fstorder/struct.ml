@@ -83,3 +83,6 @@ end = struct
 
 end
     
+type env = Env.t
+type sign = Sign.t
+type repo = Repo.t

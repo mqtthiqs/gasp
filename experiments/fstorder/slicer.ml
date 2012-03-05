@@ -3,7 +3,7 @@ open Names
 open LF
 open Struct
 
-let prelude : Repo.t = Kernel.init Repo.empty
+let prelude : repo = Kernel.init Repo.empty
   <:sign<
     (* version : type. *)
     (* ancestors : type. *)
@@ -11,7 +11,7 @@ let prelude : Repo.t = Kernel.init Repo.empty
     (* acons : version -> ancestors -> ancestors. *)
   >>
 
-let init sign : Repo.t = Kernel.init prelude sign
+let init sign : repo = Kernel.init prelude sign
 
 let commit repo env = SLF.Strat.obj repo.Repo.sign (Env.names_of env) @> prj @> function
     | OApp (h, l) -> fst (Kernel.push repo env (h, l))

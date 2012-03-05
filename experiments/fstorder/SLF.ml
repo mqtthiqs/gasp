@@ -14,7 +14,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (Repo.t -> term list -> term)
+  | Defined of (repo -> term list -> term)
 
 type sign = (string * term * entry_type) list
 
@@ -123,7 +123,7 @@ module ExprParser = struct
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
      let names = fun_telescope 0 t in
      <:expr<
-             let $lid:x$ = fun (repo:Struct.Repo.t) ->
+             let $lid:x$ = fun (repo:Struct.repo) ->
              let rec $lid:x$ = $e$ in
              fun
                [ $build_patt names$ -> $build_app <:expr<$lid:x$>> names$
@@ -266,12 +266,12 @@ module rec Strat : sig
     | Fam of LF.fam
     | Obj of LF.obj
 
-  val term : Sign.t -> binder list -> term -> entity
-  val obj : Sign.t -> binder list -> term -> LF.obj
-  val fam : Sign.t -> binder list -> term -> LF.fam
-  val kind : Sign.t -> binder list -> term -> LF.kind
+  val term : Struct.sign -> binder list -> term -> entity
+  val obj : Struct.sign -> binder list -> term -> LF.obj
+  val fam : Struct.sign -> binder list -> term -> LF.fam
+  val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
-  val env : Sign.t -> (binder * term) list -> Env.t
+  val env : Struct.sign -> (binder * term) list -> env
 end = struct
 
   open Util
@@ -329,7 +329,7 @@ end = struct
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
 
-  let fn (f : Repo.t -> term list -> term) repo (l : LF.obj list) : LF.obj =
+  let fn (f : repo -> term list -> term) repo (l : LF.obj list) : LF.obj =
     let l = List.map (Unstrat.obj []) l in
     obj repo.Repo.sign [] (f repo l)
 
@@ -351,7 +351,7 @@ and Unstrat : sig
   val obj : binder list -> obj -> term
   val fam : binder list -> fam -> term
   val kind : binder list -> kind -> term
-  val sign : Sign.t -> sign
+  val sign : Struct.sign -> sign
 end = struct
 
   open Util
@@ -381,7 +381,7 @@ end = struct
     | LF.KType -> Type
     | LF.KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
 
-  let fn s (f : Repo.t -> LF.obj list -> LF.obj) repo (l : term list) : term =
+  let fn s (f : repo -> LF.obj list -> LF.obj) repo (l : term list) : term =
     let l = List.map (Strat.obj s []) l in
     obj [] (f repo l)
 
@@ -390,7 +390,7 @@ end = struct
     | Sign.Non_sliceable -> Non_sliceable
     | Sign.Defined f -> Defined (fn s f)
 
-  let sign (s : Sign.t) =
+  let sign (s : Struct.sign) =
     Sign.fold
       (fun x (a, e) l -> (OConst.repr x, fam [] a, entry_type s e) :: l)
       (fun x k l -> (FConst.repr x, kind [] k, Sliceable) :: l)
@@ -449,7 +449,7 @@ module Printer = struct
     | Strat.Fam a -> fam fmt a
     | Strat.Obj m -> obj fmt m
 
-  let sign fmt (s : Sign.t) =
+  let sign fmt (s : Struct.sign) =
     let l = Unstrat.sign s in
     sign fmt l
 
@@ -458,7 +458,7 @@ module Printer = struct
     let var fmt = function
       | Some x -> fprintf fmt "%s" x
       | None -> fprintf fmt "_" in
-    let rec aux (l:Env.t) fmt = function
+    let rec aux (l:env) fmt = function
       | [] -> ()
       | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" var x (efam (Env.names_of l)) a
       | (x,a) :: e -> fprintf fmt "%a,@ %a" (aux l) [x, a] (aux (Env.add x a l)) e

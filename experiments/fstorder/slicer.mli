@@ -1,5 +1,5 @@
 open Struct
 
-val init : SLF.sign -> Repo.t
-val commit : Repo.t -> Env.t -> SLF.term -> Repo.t
-val checkout : Repo.t -> SLF.term
+val init : SLF.sign -> repo
+val commit : repo -> env -> SLF.term -> repo
+val checkout : repo -> SLF.term

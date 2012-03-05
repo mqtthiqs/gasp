@@ -47,3 +47,7 @@ and Sign : sig
     (OConst.t -> fam * entry_type -> 'a -> 'a) ->
     (FConst.t -> kind -> 'a -> 'a) -> t -> 'a -> 'a
 end
+
+type env = Env.t
+type sign = Sign.t
+type repo = Repo.t

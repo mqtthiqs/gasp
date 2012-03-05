@@ -1,21 +1,21 @@
 open LF
 open Struct
 
-val push : Repo.t -> Env.t -> head * spine -> Repo.t * subst
-val pull : Repo.t -> Names.Meta.t -> obj
-val init : Repo.t -> SLF.sign -> Repo.t
+val push : repo -> env -> head * spine -> repo * subst
+val pull : repo -> Names.Meta.t -> obj
+val init : repo -> SLF.sign -> repo
 
 module Conv : sig
-  exception Not_conv_obj of Repo.t * obj * obj
-  exception Not_conv_fam of Repo.t * fam * fam
+  exception Not_conv_obj of repo * obj * obj
+  exception Not_conv_fam of repo * fam * fam
   (* debugging only *)
-  val obj : Repo.t -> obj * obj -> unit
+  val obj : repo -> obj * obj -> unit
 end
 
 (* debugging only *)
 module Check : sig
-  exception Non_functional_fapp of Repo.t * Env.t * spine
-  exception Non_functional_app of Repo.t * Env.t * spine * fam
+  exception Non_functional_fapp of repo * env * spine
+  exception Non_functional_app of repo * env * spine * fam
 
-  val obj : Repo.t -> Env.t -> obj * fam -> Repo.t * obj
+  val obj : repo -> env -> obj * fam -> repo * obj
 end

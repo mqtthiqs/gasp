@@ -13,7 +13,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (Repo.t -> term list -> term)
+  | Defined of (repo -> term list -> term)
 
 type sign = (string * term * entry_type) list
 
@@ -26,11 +26,11 @@ module Printer : sig
   val obj : formatter -> LF.obj -> unit
   val fam : formatter -> LF.fam -> unit
   val kind : formatter -> LF.kind -> unit
-  val sign : formatter -> Sign.t -> unit
-  val env : formatter -> Env.t -> unit
+  val sign : formatter -> Struct.sign -> unit
+  val env : formatter -> env -> unit
   val context : formatter -> Context.t -> unit
-  val repo : formatter -> Repo.t -> unit
-  val repo_light : formatter -> Repo.t -> unit
+  val repo : formatter -> repo -> unit
+  val repo_light : formatter -> repo -> unit
 end
 
 module Strat : sig
@@ -40,12 +40,12 @@ module Strat : sig
     | Fam of LF.fam
     | Obj of LF.obj
 
-  val term : Sign.t -> binder list -> term -> entity
-  val obj : Sign.t -> binder list -> term -> LF.obj
-  val fam : Sign.t -> binder list -> term -> LF.fam
-  val kind : Sign.t -> binder list -> term -> LF.kind
+  val term : Struct.sign -> binder list -> term -> entity
+  val obj : Struct.sign -> binder list -> term -> LF.obj
+  val fam : Struct.sign -> binder list -> term -> LF.fam
+  val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
-  val env : Sign.t -> (binder * term) list -> Env.t
+  val env : Struct.sign -> (binder * term) list -> env
 end
 
 module Unstrat : sig

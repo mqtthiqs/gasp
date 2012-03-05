@@ -1,6 +1,7 @@
 open Util
 open LF
 open Struct
+open Struct.Repo
 
 let pull repo x =
   let rec aux ctx x s =
@@ -8,7 +9,7 @@ let pull repo x =
     assert (List.length (Env.to_list e) = List.length s);
     let m = Subst.obj s m in
     LF.Util.map_meta (aux ctx) m
-  in aux repo.Repo.ctx x []
+  in aux repo.ctx x []
 
 let push =
   let gensym =
@@ -17,16 +18,16 @@ let push =
   fun repo env a (h, l) ->
     let x = Names.Meta.make ("X"^gensym()) in
     let repo = { repo with
-      Repo.ctx = Context.add x (env, inj @@ LF.OApp (h, l), a) repo.Repo.ctx;
-      Repo.head = x } in
+      ctx = Context.add x (env, inj @@ LF.OApp (h, l), a) repo.ctx;
+      head = x } in
     let s = List.map_i 0 (fun i _ -> inj @@ OApp (HVar i, [])) (Env.to_list env) in
     repo, s
 
-let is_defined repo c = match Sign.ofind c repo.Repo.sign with
+let is_defined repo c = match Sign.ofind c repo.sign with
   | _, Sign.Defined f -> true
   | _ -> false
 
-let interpret repo c l = match Sign.ofind c repo.Repo.sign with
+let interpret repo c l = match Sign.ofind c repo.sign with
   | _, Sign.Defined f ->
     let r = f repo l in
     Format.printf "evalué pr conv: %a = %a@." SLF.Printer.obj (inj @@ OApp (HConst c, l)) SLF.Printer.obj r;
@@ -36,8 +37,8 @@ let interpret repo c l = match Sign.ofind c repo.Repo.sign with
 
 module Conv = struct
 
-  exception Not_conv_obj of Repo.t * obj * obj
-  exception Not_conv_fam of Repo.t * fam * fam
+  exception Not_conv_obj of repo * obj * obj
+  exception Not_conv_fam of repo * fam * fam
 
   let head repo = function
     | HVar i1, HVar i2 when i1 = i2 -> ()
@@ -58,8 +59,8 @@ module Conv = struct
     | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
     | OMeta (x1, s1), OMeta (x2, s2) ->
       if Names.Meta.compare x1 x2 = 0 then spine repo (s1, s2) else
-        let e1, m1, a1 = Context.find x1 repo.Repo.ctx in
-        let e2, m2, a2 = Context.find x2 repo.Repo.ctx in
+        let e1, m1, a1 = Context.find x1 repo.ctx in
+        let e2, m2, a2 = Context.find x2 repo.ctx in
         assert (List.length (Env.to_list e1) = List.length s1);
         assert (List.length (Env.to_list e2) = List.length s2);
         let m1 = Subst.obj s1 m1 in
@@ -84,17 +85,17 @@ end
 
 module Check = struct
 
-  exception Non_functional_fapp of Repo.t * Env.t * spine
-  exception Non_functional_app of Repo.t * Env.t * spine * fam
+  exception Non_functional_fapp of repo * env * spine
+  exception Non_functional_app of repo * env * spine * fam
 
   let head repo env : head -> fam * Sign.entry_type = function
     | HVar x ->
       let a = try Env.find x env with _ -> failwith(string_of_int x) in
       let a = Lift.fam 0 (x+1) a in
       a, Sign.Non_sliceable
-    | HConst c -> Sign.ofind c repo.Repo.sign
+    | HConst c -> Sign.ofind c repo.sign
 
-  let rec obj' repo env : obj * fam -> Repo.t * obj = Prod.map prj id @>
+  let rec obj' repo env : obj * fam -> repo * obj = Prod.map prj id @>
     function
     | OLam (x, m), FProd (y, a, b) ->
       let x = match x, y with
@@ -108,7 +109,7 @@ module Check = struct
       Conv.fam repo (a, a');
       repo, m
     | OMeta (x, s) as m, a ->
-      let e, _, b = Context.find x repo.Repo.ctx in
+      let e, _, b = Context.find x repo.ctx in
       let b = Subst.fam s b in
       Conv.fam repo (a, b);
       repo, inj @@ m
@@ -119,13 +120,13 @@ module Check = struct
       (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
     obj' repo env (m, a)
 
-  and app repo env (h, l) : Repo.t * obj * fam =
+  and app repo env (h, l) : repo * obj * fam =
     let a, e = head repo env h in
     match e with
       | Sign.Sliceable ->
         let repo, l, a = spine repo env (l, a) in
         let repo, s = push repo env a (h, l) in
-        repo, inj @@ OMeta (repo.Repo.head, s), a
+        repo, inj @@ OMeta (repo.head, s), a
       | Sign.Non_sliceable ->
         let repo, l, a = spine repo env (l, a) in
         repo, inj @@ OApp (h, l), a
@@ -137,7 +138,7 @@ module Check = struct
         let repo, m = obj repo env (r, a) in
         repo, m, a
 
-  and spine repo env : spine * fam -> Repo.t * spine * fam = function
+  and spine repo env : spine * fam -> repo * spine * fam = function
     | [], (FApp _ as a) -> repo, [], a
     | m :: l, FProd (_, a, b) ->
       let repo, m = obj repo env (m, a) in
@@ -146,7 +147,7 @@ module Check = struct
     | [], _ -> failwith "not eta-expanded"
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
-  and fspine repo env : spine * kind -> Repo.t * spine = function
+  and fspine repo env : spine * kind -> repo * spine = function
     | [], KType -> repo, []
     | _ :: _ as l, KType -> raise (Non_functional_fapp (repo, env, l))
     | [], _ -> failwith "not eta-expanded"
@@ -155,16 +156,16 @@ module Check = struct
       let repo, l = fspine repo env (l, Subst.kind [m] k) in
       repo, m :: l
 
-  let rec fam repo env : fam -> Repo.t * fam = function
+  let rec fam repo env : fam -> repo * fam = function
     | FApp (c, l) ->
-      let repo, l = fspine repo env (l, Sign.ffind c repo.Repo.sign) in
+      let repo, l = fspine repo env (l, Sign.ffind c repo.sign) in
       repo, FApp (c, l)
     | FProd (x, a, b) ->
       let repo, a = fam repo env a in
       let repo, b = fam repo (Env.add x a env) b in
       repo, FProd (x, a, b)
 
-  let rec kind repo env : kind -> Repo.t * kind = function
+  let rec kind repo env : kind -> repo * kind = function
     | KType -> repo, KType
     | KProd (x, a, k) ->
       let repo, a = fam repo env a in
@@ -176,15 +177,15 @@ end
 let rec init repo = function
   | [] -> repo
   | (c, t, e) :: s' ->
-    match SLF.Strat.term repo.Repo.sign [] t, e with
+    match SLF.Strat.term repo.sign [] t, e with
       | SLF.Strat.Fam a, e ->
         let repo, a = Check.fam repo Env.empty a in
         let e = SLF.Strat.entry_type e in
-        let repo = {repo with Repo.sign = Sign.oadd (Names.OConst.make c) (a, e) repo.Repo.sign} in
+        let repo = {repo with sign = Sign.oadd (Names.OConst.make c) (a, e) repo.sign} in
         init repo s'
       | SLF.Strat.Kind k, SLF.Sliceable ->
         let repo, k = Check.kind repo Env.empty k in
-        let repo = {repo with Repo.sign = Sign.fadd (Names.FConst.make c) k repo.Repo.sign} in
+        let repo = {repo with sign = Sign.fadd (Names.FConst.make c) k repo.sign} in
         init repo s'
       | SLF.Strat.Obj _, _ -> failwith "object in sign"
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
@@ -195,5 +196,5 @@ let push repo env (h, l) =
   Format.printf "** push => %a in @[%a@]@." SLF.Printer.obj m SLF.Printer.repo_light repo;
   match prj m with
     | OApp (h, l) -> push repo env a (h, l)
-    | OMeta (x, s) -> {repo with Repo.head = x}, s
+    | OMeta (x, s) -> {repo with head = x}, s
     | OLam _ -> assert false
