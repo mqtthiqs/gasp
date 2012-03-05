@@ -11,6 +11,9 @@ let pull repo x =
     LF.Util.map_meta (aux ctx) m
   in aux repo.ctx x []
 
+(* —————————————————————————————————————— (X fresh)
+ * R, Γ ⊢ h l : A => R[Γ ⊢ ?X : A], id(Γ)
+ *)
 let push =
   let gensym =
     let n = ref 0 in
@@ -95,8 +98,14 @@ module Check = struct
       a, Sign.Non_sliceable
     | HConst c -> Sign.ofind c repo.sign
 
+  (* obj: check mode, returns the rewritten obj and the enlarged repo *)
   let rec obj' repo env : obj * fam -> repo * obj = Prod.map prj id @>
     function
+
+    (* R, Γ; x:A ⊢ m : B => R', m'
+     * ———————————————————————————————————
+     * R, Γ ⊢ λx. m : Πx:A. B => R', λx. m'
+     *)
     | OLam (x, m), FProd (y, a, b) ->
       let x = match x, y with
         | None, Some _ -> x
@@ -104,10 +113,20 @@ module Check = struct
       let repo, m = obj repo (Env.add x a env) (m, b) in
       repo, inj @@ OLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
+
+    (* R, Γ ⊢ h l => R', M', A'  R' ⊢ A ≡ A'
+     * ————————————————————————————————————
+     * R, Γ ⊢ h l : A => R', m'
+     *)
     | OApp (h, l), a ->
       let repo, m, a' = app repo env (h, l) in
       Conv.fam repo (a, a');
       repo, m
+
+    (* R(X) = (Δ ⊢ _ : A')  R ⊢ A ≡ A'[σ]  R, Γ ⊢ σ : Δ => R', σ'
+     * —————————————————————————————————————————————————————
+     * R, Γ ⊢ ?X[σ] : A => R', σ'
+     *)
     | OMeta (x, s), a ->
       let e, _, b = Context.find x repo.ctx in
       let repo, s = subst repo env (s, Env.to_list e) in
@@ -122,24 +141,50 @@ module Check = struct
     obj' repo env (m, a)
 
   and subst repo env : subst * ('a * fam) list -> repo * subst = function
+
+  (* R, Γ ⊢ m : A => R', m'  R', Γ ⊢ σ : Δ => R'', σ'
+   * —————————————————————————————————————————————————
+   * R, Γ ⊢ σ; m : Δ; (x:A) => R'', σ'; m'
+   *)
     | m :: s, (_, a) :: e ->
       let repo, m = obj repo env (m, a) in
       let repo, s = subst repo env (s, e) in
       repo, m :: s
 
+  (* ————————————————————
+   * R, Γ ⊢ · : · => R, ·
+   *)
     | [], [] -> repo, []
     | _ -> failwith "subst"
 
   and app repo env (h, l) : repo * obj * fam =
     let a, e = head repo env h in
     match e with
+
+        (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
+         * R', Γ ⊢ h l : C => R'', σ (push)
+         * ——————————————————————————————————————— (h sliceable)
+         * R, Γ ⊢ h l => R'', ?X[s], C
+         *)
       | Sign.Sliceable ->
         let repo, l, a = spine repo env (l, a) in
         let repo, s = push repo env a (h, l) in
         repo, inj @@ OMeta (repo.head, s), a
+
+      (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
+       * ——————————————————————————————————————— (h non sliceable)
+       * R, Γ ⊢ h l => R', h l', C
+       *)
       | Sign.Non_sliceable ->
         let repo, l, a = spine repo env (l, a) in
         repo, inj @@ OApp (h, l), a
+
+      (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => _, _, C
+       * R ⊢ f l ~~> m
+       * R, Γ ⊢ m : C => R', m'
+       * ——————————————————————————————————————— (h defined = f)
+       * R, Γ ⊢ h l => R', m', C
+       *)
       | Sign.Defined f ->
         (* check that arguments of this constants are well-typed *)
         let _, _, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
@@ -152,7 +197,17 @@ module Check = struct
         repo, m, a
 
   and spine repo env : spine * fam -> repo * spine * fam = function
+
+    (* ———————————————————————
+     * R, Γ, P ⊢ · => R, ·, P
+     *)
     | [], (FApp _ as a) -> repo, [], a
+
+    (* R, Γ ⊢ m : A => R', m'
+     * R', Γ, B[x/m'] ⊢ l => R, l', C
+     * ————————————————————————————————————
+     * R, Γ, Πx:A. B ⊢ m; l => R, m'; l', C
+     *)
     | m :: l, FProd (_, a, b) ->
       let repo, m = obj repo env (m, a) in
       let repo, l, a = spine repo env (l, Subst.fam [m] b) in
