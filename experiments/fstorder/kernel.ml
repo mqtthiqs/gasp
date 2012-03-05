@@ -95,43 +95,47 @@ module Check = struct
     | HConst c -> Sign.ofind c repo.Repo.sign
 
   let rec obj' repo env : obj * fam -> Repo.t * obj = Prod.map prj id @>
-    begin function
+    function
     | OLam (x, m), FProd (y, a, b) ->
       let x = match x, y with
         | None, Some _ -> x
         | _ -> x in
       let repo, m = obj repo (Env.add x a env) (m, b) in
-      repo, OLam (x, m)
+      repo, inj @@ OLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
     | OApp (h, l), a ->
-      let b, e = head repo env h in
-      let repo, l, a' = spine repo env (l, b) in
+      let repo, m, a' = app repo env (h, l) in
       Conv.fam repo (a, a');
-      begin match e with
-        | Sign.Sliceable ->
-          let repo, s = push repo env a (h, l) in
-          repo, OMeta (repo.Repo.head, s)
-        | Sign.Non_sliceable ->
-          repo, OApp (h, l)
-        | Sign.Defined f ->
-          Format.printf "eval: %a " SLF.Printer.obj (inj @@ OApp (h, l));
-          let r = f repo l in
-          Format.printf " = %a@." SLF.Printer.obj r;
-          let _, _ = obj repo env (r, a) in
-          repo, prj r
-      end
+      repo, m
     | OMeta (x, s) as m, a ->
       let e, _, b = Context.find x repo.Repo.ctx in
       let b = Subst.fam s b in
       Conv.fam repo (a, b);
-      repo, m
-    end @> Prod.map id inj
+      repo, inj @@ m
 
   and obj repo env (m, a) =
     let e = Env.names_of env in
     Format.printf "** obj @[%a@] ⊢ @[%a@] : @[%a@]@." SLF.Printer.env env
       (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
     obj' repo env (m, a)
+
+  and app repo env (h, l) : Repo.t * obj * fam =
+    let a, e = head repo env h in
+    match e with
+      | Sign.Sliceable ->
+        let repo, l, a = spine repo env (l, a) in
+        let repo, s = push repo env a (h, l) in
+        repo, inj @@ OMeta (repo.Repo.head, s), a
+      | Sign.Non_sliceable ->
+        let repo, l, a = spine repo env (l, a) in
+        repo, inj @@ OApp (h, l), a
+      | Sign.Defined f ->
+        Format.printf "eval: %a " SLF.Printer.obj (inj @@ OApp (h, l));
+        let r = f repo l in
+        Format.printf " = %a@." SLF.Printer.obj r;
+        let _, _, a = spine repo env (l, a) in
+        let repo, m = obj repo env (r, a) in
+        repo, m, a
 
   and spine repo env : spine * fam -> Repo.t * spine * fam = function
     | [], (FApp _ as a) -> repo, [], a
@@ -167,10 +171,6 @@ module Check = struct
       let repo, k = kind repo (Env.add x a env) k in
       repo, KProd (x, a, k)
 
-  let app repo env (h, l) =
-    let a, _ = head repo env h in       (* TODO si c'est un defined? *)
-    spine repo env (l, a)
-
 end
 
 let rec init repo = function
@@ -190,5 +190,10 @@ let rec init repo = function
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
 
 let push repo env (h, l) =
-  let repo, l, a = Check.app repo env (h, l) in
-  push repo env a (h, l)
+  Format.printf "** push %a@." SLF.Printer.obj (inj (OApp(h, l)));
+  let repo, m, a = Check.app repo env (h, l) in
+  Format.printf "** push => %a in @[%a@]@." SLF.Printer.obj m SLF.Printer.repo_light repo;
+  match prj m with
+    | OApp (h, l) -> push repo env a (h, l)
+    | OMeta (x, s) -> {repo with Repo.head = x}, s
+    | OLam _ -> assert false
