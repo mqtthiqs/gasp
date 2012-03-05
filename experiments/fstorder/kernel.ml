@@ -141,11 +141,14 @@ module Check = struct
         let repo, l, a = spine repo env (l, a) in
         repo, inj @@ OApp (h, l), a
       | Sign.Defined f ->
-        Format.printf "eval: %a " SLF.Printer.obj (inj @@ OApp (h, l));
-        let r = f repo l in
-        Format.printf " = %a@." SLF.Printer.obj r;
-        let _, _, a = spine repo env (l, a) in
-        let repo, m = obj repo env (r, a) in
+        (* check that arguments of this constants are well-typed *)
+        let _, _, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
+        Format.printf "*** eval: %a...@." SLF.Printer.obj (inj @@ OApp (h, l));
+        (* evaluate it *)
+        let m = f repo l in
+        Format.printf "*** eval: %a = %a@." SLF.Printer.obj (inj @@ OApp (h, l)) SLF.Printer.obj m;
+        (* check that the result is well-typed, and take the result into account *)
+        let repo, m = obj repo env (m, a) in
         repo, m, a
 
   and spine repo env : spine * fam -> repo * spine * fam = function
