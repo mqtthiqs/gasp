@@ -5,7 +5,7 @@ TARGET=gasp
 OCAMLBUILD_OPT=-use-ocamlfind -classic-display -j 5
 OCAMLBUILD=ocamlbuild ${OCAMLBUILD_OPT}
 
-all: ${TARGET} test
+all: ${TARGET}
 
 ${TARGET}:
 	@${OCAMLBUILD} ${TARGET}.otarget
@@ -16,7 +16,7 @@ clean:
 %:
 	@$(OCAMLBUILD) $@
 
-test:
+test: ${TARGET} tests.otarget
 	for test in `cat tests.itarget`; do \
 		echo "* TEST: $$test"; \
 		_build/$$test; \
