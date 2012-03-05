@@ -60,18 +60,12 @@ module Conv = struct
     | OApp (HConst c, l), _ when is_defined repo c -> obj repo (interpret repo c l, m2)
     | _, OApp (HConst c, l) when is_defined repo c-> obj repo (m1, interpret repo c l)
     | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
-    | OMeta (x1, s1), OMeta (x2, s2) ->
-      if Names.Meta.compare x1 x2 = 0 then spine repo (s1, s2) else
-        let e1, m1, a1 = Context.find x1 repo.ctx in
-        let e2, m2, a2 = Context.find x2 repo.ctx in
-        assert (List.length (Env.to_list e1) = List.length s1);
-        assert (List.length (Env.to_list e2) = List.length s2);
-        let m1 = Subst.obj s1 m1 in
-        let m2 = Subst.obj s2 m2 in
-        obj repo (m1, m2)
-
-    | (OMeta _ as m1), m2 | m1, (OMeta _ as m2) ->
-      raise (Not_conv_obj (repo, inj m1, inj m2))
+    | OMeta (x1, s1), OMeta (x2, s2) when Names.Meta.compare x1 x2 = 0 -> spine repo (s1, s2)
+    | OMeta (x, s), m | m, OMeta (x, s) ->
+        let e, m', _ = Context.find x repo.ctx in
+        assert (List.length (Env.to_list e) = List.length s);
+        let m' = Subst.obj s m' in
+        obj repo (inj m, m')
     | m1, m2 -> raise (Not_conv_obj (repo, inj m1, inj m2))
 
   and obj repo (m1, m2) =
