@@ -105,7 +105,7 @@ module Check = struct
     | OLam _, FApp _ -> failwith "not eta"
     | OApp (h, l), a ->
       let b, e = head repo env h in
-      let repo, l, a' = app repo env (l, b) in
+      let repo, l, a' = spine repo env (l, b) in
       Conv.fam repo (a, a');
       begin match e with
         | Sign.Sliceable ->
@@ -133,27 +133,27 @@ module Check = struct
       (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
     obj' repo env (m, a)
 
-  and app repo env : spine * fam -> Repo.t * spine * fam = function
+  and spine repo env : spine * fam -> Repo.t * spine * fam = function
     | [], (FApp _ as a) -> repo, [], a
     | m :: l, FProd (_, a, b) ->
       let repo, m = obj repo env (m, a) in
-      let repo, l, a = app repo env (l, Subst.fam [m] b) in
+      let repo, l, a = spine repo env (l, Subst.fam [m] b) in
       repo, m :: l, a
     | [], _ -> failwith "not eta-expanded"
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
-  and fapp repo env : spine * kind -> Repo.t * spine = function
+  and fspine repo env : spine * kind -> Repo.t * spine = function
     | [], KType -> repo, []
     | _ :: _ as l, KType -> raise (Non_functional_fapp (repo, env, l))
     | [], _ -> failwith "not eta-expanded"
     | m :: l, KProd (_, a, k) ->
       let repo, m = obj repo env (m, a) in
-      let repo, l = fapp repo env (l, Subst.kind [m] k) in
+      let repo, l = fspine repo env (l, Subst.kind [m] k) in
       repo, m :: l
 
   let rec fam repo env : fam -> Repo.t * fam = function
     | FApp (c, l) ->
-      let repo, l = fapp repo env (l, Sign.ffind c repo.Repo.sign) in
+      let repo, l = fspine repo env (l, Sign.ffind c repo.Repo.sign) in
       repo, FApp (c, l)
     | FProd (x, a, b) ->
       let repo, a = fam repo env a in
@@ -169,7 +169,7 @@ module Check = struct
 
   let app repo env (h, l) =
     let a, _ = head repo env h in       (* TODO si c'est un defined? *)
-    app repo env (l, a)
+    spine repo env (l, a)
 
 end
 
