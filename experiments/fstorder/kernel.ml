@@ -102,13 +102,20 @@ module Conv = struct
       (SLF.Printer.eobj e) m1 (SLF.Printer.eobj e) m2 (SLF.Printer.efam e) a;
     obj' repo env (m1, m2, a)
 
-  and fam repo env = function
+  and fam' repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
       fam repo env (a1, a2); fam repo (Env.add x a1 env) (b1, b2)
     | FApp (c1, l1), FApp (c2, l2) when Names.FConst.compare c1 c2 = 0 ->
       let k = Sign.ffind c1 repo.sign in
       fspine repo env (l1, l2, k)
     | a1, a2 -> raise (Not_conv_fam (repo, env, a1, a2))
+
+  and fam repo env (a1, a2) =
+    let e = Env.names_of env in
+    Format.printf "** conv fam %a ⊢ %a == %a : *@." SLF.Printer.env env
+      (SLF.Printer.efam e) a1 (SLF.Printer.efam e) a2;
+    fam' repo env (a1, a2)
+
 end
 
 module Check = struct
