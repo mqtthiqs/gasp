@@ -28,6 +28,7 @@ module Printer : sig
   val kind : formatter -> LF.kind -> unit
   val sign : formatter -> Struct.sign -> unit
   val env : formatter -> env -> unit
+  val senv : formatter -> (binder * term) list -> unit
   val context : formatter -> Context.t -> unit
   val repo : formatter -> repo -> unit
   val repo_light : formatter -> repo -> unit
@@ -52,5 +53,6 @@ module Unstrat : sig
   val obj : binder list -> LF.obj -> term
   val fam : binder list -> LF.fam -> term
   val kind : binder list -> LF.kind -> term
+  val env : env -> (binder * term) list
 end
 

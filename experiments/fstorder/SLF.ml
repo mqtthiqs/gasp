@@ -351,6 +351,7 @@ and Unstrat : sig
   val obj : binder list -> obj -> term
   val fam : binder list -> fam -> term
   val kind : binder list -> kind -> term
+  val env : env -> (binder * term) list
   val sign : Struct.sign -> sign
 end = struct
 
@@ -395,6 +396,12 @@ end = struct
       (fun x (a, e) l -> (OConst.repr x, fam [] a, entry_type s e) :: l)
       (fun x k l -> (FConst.repr x, kind [] k, Sliceable) :: l)
       s []
+
+  let env (e : env) : (binder * term) list =
+    let rec aux = function
+      | (x, a) :: e -> (x, fam (List.map fst e) a) :: aux e
+      | [] -> []
+    in aux (Env.to_list e)
 end
 
 module Printer = struct
@@ -452,17 +459,19 @@ module Printer = struct
     let l = Unstrat.sign s in
     sign fmt l
 
-  let env fmt e =
-    let open Format in
-    let var fmt = function
-      | Some x -> fprintf fmt "%s" x
-      | None -> fprintf fmt "_" in
-    let rec aux (l:env) fmt = function
+  let binder fmt = function
+    | Some x -> fprintf fmt "%s" x
+    | None -> fprintf fmt "_"
+
+  let senv fmt e =
+    let rec aux fmt = function
       | [] -> ()
-      | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" var x (efam (Env.names_of l)) a
-      | (x,a) :: e -> fprintf fmt "%a,@ %a" (aux l) [x, a] (aux (Env.add x a l)) e
+      | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" binder x term a
+      | (x,a) :: e -> fprintf fmt "%a,@ %a" aux [x, a] aux e
     in
-    Format.fprintf fmt "@[%a@]" (aux Env.empty) (List.rev (Env.to_list e))
+    Format.fprintf fmt "@[%a@]" aux (List.rev e)
+
+  let env fmt e = senv fmt (Unstrat.env e)
 
     let context fmt c =
       fprintf fmt "@,@[<v>";
