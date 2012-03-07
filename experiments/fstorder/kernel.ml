@@ -96,7 +96,9 @@ module Conv = struct
     | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2))
 
   and obj repo env (m1, m2, a) =
-    Format.printf "** conv %a == %a@." SLF.Printer.obj m1 SLF.Printer.obj m2;
+    let e = Env.names_of env in
+    Format.printf "** conv obj %a ⊢ %a == %a : %a@." SLF.Printer.env env
+      (SLF.Printer.eobj e) m1 (SLF.Printer.eobj e) m2 (SLF.Printer.efam e) a;
     obj' repo env (m1, m2, a)
 
   and fam repo env = function
