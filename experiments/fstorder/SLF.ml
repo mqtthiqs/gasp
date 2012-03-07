@@ -435,7 +435,6 @@ module Printer = struct
 
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
 
-
   let eobj e fmt m = term fmt (Unstrat.obj e m)
   let efam e fmt a = term fmt (Unstrat.fam e a)
   let ekind e fmt k = term fmt (Unstrat.kind e k)
@@ -466,19 +465,21 @@ module Printer = struct
     Format.fprintf fmt "@[%a@]" (aux Env.empty) (List.rev (Env.to_list e))
 
     let context fmt c =
+      fprintf fmt "@,@[<v>";
       Context.fold
         (fun x (e, m, a) () ->
           let e' = Env.names_of e in
-          Format.fprintf fmt "%a ⊢ %a : %a = %a@."
-            env e Meta.print x (efam e') a (eobj e') m
-        ) c ()
+          Format.fprintf fmt "%a[%a] : @[%a@] = @[%a@]@,"
+            Meta.print x env e (efam e') a (eobj e') m
+        ) c ();
+      fprintf fmt "@]"
 
     let repo_light fmt {Repo.sign; Repo.ctx; Repo.head} =
-      Format.fprintf fmt "%a ⊢ %a@."
+      Format.fprintf fmt "%a ⊢ %a@,"
         context ctx
         Meta.print head
 
     let repo fmt {Repo.sign = s; Repo.ctx; Repo.head} =
-      Format.fprintf fmt "Signature:@ %a@.Context:@ %a@ ⊢ %a@."
+      Format.fprintf fmt "Signature:@ %a@,Context:@ %a@ ⊢ %a@,"
         sign s context ctx Meta.print head
 end
