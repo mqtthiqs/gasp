@@ -40,44 +40,72 @@ let interpret repo c l = match Sign.ofind c repo.sign with
 
 module Conv = struct
 
-  exception Not_conv_obj of repo * obj * obj
-  exception Not_conv_fam of repo * fam * fam
+  exception Not_conv_obj of repo * env * obj * obj
+  exception Not_conv_fam of repo * env * fam * fam
 
-  let head repo = function
-    | HVar i1, HVar i2 when i1 = i2 -> ()
-    | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 -> ()
-    | h1, h2 -> raise (Not_conv_obj (repo, inj @@ OApp (h1, []), inj @@ OApp (h2, [])))
+  let head repo env = function
+    | HVar x, HVar y when x = y ->
+      let a = try Env.find x env with _ -> failwith(string_of_int x) in
+      Lift.fam 0 (x+1) a
+    | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 ->
+      fst (Sign.ofind c1 repo.sign)
+    | h1, h2 -> raise (Not_conv_obj (repo, env, inj @@ OApp (h1, []), inj @@ OApp (h2, [])))
 
-  let rec spine repo = function
-    | [], [] -> ()
-    | m1 :: l1, m2 :: l2 -> obj repo (m1, m2); spine repo (l1, l2)
-    | l1, l2 ->
+  let rec spine repo env = function
+    | [], [], (FApp _ as a) -> a
+    | m1 :: l1, m2 :: l2, FProd (x, a, b) ->
+      obj repo env (m1, m2, a);
+      spine repo env (l1, l2, Subst.fam [m1] b)
+    | l1, l2, a ->
       let h = HConst (Names.OConst.make "@") in
-      raise (Not_conv_obj (repo, inj @@ OApp (h, l1), inj @@ OApp (h, l2)))
+      raise (Not_conv_obj (repo, env, inj @@ OApp (h, l1), inj @@ OApp (h, l2)))
 
-  and obj' repo (m1, m2) = match prj m1, prj m2 with
-    | OLam (_, m1), OLam (_,m2) -> obj repo (m1, m2)
-    | OApp (HConst c, l), _ when is_defined repo c -> obj repo (interpret repo c l, m2)
-    | _, OApp (HConst c, l) when is_defined repo c-> obj repo (m1, interpret repo c l)
-    | OApp (h1, l1), OApp (h2, l2) -> head repo (h1, h2); spine repo (l1, l2)
-    | OMeta (x1, s1), OMeta (x2, s2) when Names.Meta.compare x1 x2 = 0 -> spine repo (s1, s2)
-    | OMeta (x, s), m | m, OMeta (x, s) ->
+  and fspine repo env = function
+    | [], [], KType -> ()
+    | m1 :: l1, m2 :: l2, KProd (x, a, b) ->
+      obj repo env (m1, m2, a);
+      fspine repo env (l1, l2, Subst.kind [m1] b)
+    | l1, l2, a ->
+      let h = HConst (Names.OConst.make "@") in
+      raise (Not_conv_obj (repo, env, inj @@ OApp (h, l1), inj @@ OApp (h, l2)))
+
+  and subst repo env = function
+    | [], [], [] -> ()
+    | m1 :: s1, m2 :: s2, (_, a) :: e ->
+      obj repo env (m1, m2, a);
+      subst repo env (s1, s2, e)
+    | _ -> failwith "subst"
+
+  and obj' repo env (m1, m2, a) = match prj m1, prj m2, a with
+    | OLam (_, m1), OLam (_,m2), FProd (x, a, b) -> obj repo (Env.add x a env) (m1, m2, b)
+    | OApp (HConst c, l), _, a when is_defined repo c -> obj repo env (interpret repo c l, m2, a)
+    | _, OApp (HConst c, l), a when is_defined repo c-> obj repo env (m1, interpret repo c l, a)
+    | OApp (h1, l1), OApp (h2, l2), c ->
+      let a = head repo env (h1, h2) in
+      let a = spine repo env (l1, l2, a) in
+      fam repo env (a, c)
+    | OMeta (x1, s1), OMeta (x2, s2), a when Names.Meta.compare x1 x2 = 0 ->
+      let e, _, a' = Context.find x1 repo.ctx in
+      subst repo env (s1, s2, Env.to_list e);
+      fam repo env (a, Subst.fam s1 a')
+    | OMeta (x, s), m, a | m, OMeta (x, s), a ->
         let e, m', _ = Context.find x repo.ctx in
         assert (List.length (Env.to_list e) = List.length s);
         let m' = Subst.obj s m' in
-        obj repo (inj m, m')
-    | m1, m2 -> raise (Not_conv_obj (repo, inj m1, inj m2))
+        obj repo env (inj m, m', a)
+    | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2))
 
-  and obj repo (m1, m2) =
+  and obj repo env (m1, m2, a) =
     Format.printf "** conv %a == %a@." SLF.Printer.obj m1 SLF.Printer.obj m2;
-    obj' repo (m1, m2)
+    obj' repo env (m1, m2, a)
 
-  let rec fam repo = function
-    | FProd (_, a1, b1), FProd (_, a2, b2) ->
-      fam repo (a1, a2); fam repo (b1, b2)
+  and fam repo env = function
+    | FProd (x, a1, b1), FProd (_, a2, b2) ->
+      fam repo env (a1, a2); fam repo (Env.add x a1 env) (b1, b2)
     | FApp (c1, l1), FApp (c2, l2) when Names.FConst.compare c1 c2 = 0 ->
-      spine repo (l1, l2)
-    | a1, a2 -> raise (Not_conv_fam (repo, a1, a2))
+      let k = Sign.ffind c1 repo.sign in
+      fspine repo env (l1, l2, k)
+    | a1, a2 -> raise (Not_conv_fam (repo, env, a1, a2))
 end
 
 module Check = struct
@@ -114,7 +142,7 @@ module Check = struct
      *)
     | OApp (h, l), a ->
       let repo, m, a' = app repo env (h, l) in
-      Conv.fam repo (a, a');
+      Conv.fam repo env (a, a');
       repo, m
 
     (* R(X) = (Δ ⊢ _ : A')  R ⊢ A ≡ A'[σ]  R, Γ ⊢ σ : Δ => R', σ'
@@ -125,7 +153,7 @@ module Check = struct
       let e, _, b = Context.find x repo.ctx in
       let repo, s = subst repo env (s, Env.to_list e) in
       let b = Subst.fam s b in
-      Conv.fam repo (a, b);
+      Conv.fam repo env (a, b);
       repo, inj @@ OMeta (x, s)
 
   and obj repo env (m, a) =
