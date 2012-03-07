@@ -2,6 +2,6 @@
 
 <SLF.ml{,i}> : package(camlp4.extend, camlp4.quotations, camlp4.metagenerator)
 <slicer.ml> : package(camlp4.quotations), pa(LF.cma)
-<test_*.ml> : package(camlp4.quotations), pa(LF.cma), dep(load.ml)
+<test_*.ml> : package(camlp4.quotations), pa(LF.cma), dep(load.ml), dep(tests.ml)
 
 <*.{byte,native,top}> : package(camlp4.lib)
