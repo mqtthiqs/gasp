@@ -1,10 +1,11 @@
 #use "load.ml"
 ;;
 
-let equals repo a b =
-  let a = SLF.Strat.obj repo.Struct.Repo.sign [] a in
-  let b = SLF.Strat.obj repo.Struct.Repo.sign [] b in
-  Kernel.Conv.obj repo (a, b)
+let equals repo env m n a =
+  let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
+  let n = SLF.Strat.obj repo.Struct.Repo.sign [] n in
+  let a = SLF.Strat.fam repo.Struct.Repo.sign [] a in
+  Kernel.Conv.obj repo env (m, n, a)
 
 let reduce repo env m =
   let env = SLF.Strat.env repo.Struct.Repo.sign env in
@@ -42,7 +43,7 @@ let repo = Slicer.init
     | << app $m$ $n$ >> ->
       begin match reduce repo <:env< >> << infer $m$ >>, reduce repo <:env< >> << infer $n$ >> with
         | << ex $_$ (arr $a$ $b$) $d1$ >>, << ex $_$ $a'$ $d2$ >> ->
-          equals repo a a';
+          equals repo Struct.Env.empty a a' << tp >>;
           << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
       end
     | << get $x$ (ex $_$ $a$ $h$) >> -> h
@@ -52,13 +53,7 @@ let repo = Slicer.init
 >>
 ;;
 
-let test_commit repo m =
-  let repo = Slicer.commit repo Struct.Env.empty m in
-  let p = SLF.Strat.obj repo.Struct.Repo.sign [] (Slicer.checkout repo) in
-  Slicer.checkout repo
-;;
-
-test_commit repo
+Tests.commit repo
 <<
   infer (lam (arr base base) [x] lam base [y] app x y)
 >>

@@ -1,14 +1,6 @@
 #use "load.ml"
 ;;
 
-let test_commit repo m n =
-  let repo = Slicer.commit repo Struct.Env.empty m in
-  let p = SLF.Strat.obj repo.Struct.Repo.sign [] (Slicer.checkout repo) in
-  let n = SLF.Strat.obj repo.Struct.Repo.sign [] n in
-  Kernel.Conv.obj repo (n, p);
-  repo
-;;
-
 let reduce repo env m =
   Format.printf "**** reduce: %a@." SLF.Printer.term m;
   let env = SLF.Strat.env repo.Struct.Repo.sign env in
@@ -40,21 +32,21 @@ let repo = Slicer.init <:sign<
 >>
 ;;
 
-test_commit repo <<
+Tests.commit_eq repo <<
   eval (enat o)
 >> <<
   o
 >>
 ;;
 
-test_commit repo <<
+Tests.commit_eq repo <<
   eval (eplus (enat o) (enat o))
 >> <<
   o
 >>
 ;;
 
-test_commit repo <<
+Tests.commit_eq repo <<
   eval (eplus (enat two) (enat two))
 >> <<
   s (s (s (s o)))

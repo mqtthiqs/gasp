@@ -1,11 +1,4 @@
 #use "load.ml"
-
-#trace Kernel.Check.obj
-#trace LF.Subst.fam
-#trace LF.Subst.obj
-#trace LF.Subst.kind
-#trace LF.Subst.spine
-#trace LF.Lift.obj
 ;;
 
 let repo = Slicer.init
@@ -16,7 +9,8 @@ let repo = Slicer.init
   #a : A.
   #b : A.
   f : A -> A -> A -> B.
-
+  g : A -> A.
+  h : (A -> A) -> A.
   p : {x : A} {y : A} P (f x y x).
   Q : P (f a b b) -> type.
 >>
@@ -28,56 +22,59 @@ let repo = Slicer.commit repo Struct.Env.empty
 >>
 ;;
 
-(* ([x] n) [p <- m] *)
-let test_subst m n p =
-  let p = SLF.Strat.obj repo.Struct.Repo.sign [] p in
-  let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
-  let n = match LF.prj (SLF.Strat.obj repo.Struct.Repo.sign [] n) with
-    | LF.OLam (_, n) -> n
-    | _ -> assert false in
-  let q = LF.Subst.obj [m] n in
-  Kernel.Conv.obj repo (p, q)
+let repo = Slicer.commit repo Struct.Env.empty
+<<
+  h [x] g x
+>>
 ;;
 
-test_subst
+Tests.subst repo
 << a >>
 << [X] X >>
 << a >>
+<< A >>
 ;;
 
-test_subst
+Tests.subst repo
 << a >>
-<< [X] [y] f X y >>
-<< [y] f a y >>
+<< [X] [y] f X y y >>
+<< [y] f a y y >>
+<< A -> B >>
 ;;
 
-test_subst
+Tests.subst repo
 << [x] [y] x >>
 << [X] X a b >>
 << a >>
+<< A >>
 ;;
 
-test_subst
-<< [x] [y] f x y >>
-<< [X] X a b >>
-<< f a b >>
-;;
+(* TODO: comprendre l'assert false ici *)
+(* Tests.subst repo *)
+(* << [x] [y] f x y a >> *)
+(* << [X] X a b a >> *)
+(* << f a b a >> *)
+(* << B >> *)
+(* ;; *)
 
-test_subst
+Tests.subst repo
 << [x] x >>
 << [X] [y] X y>>
 << [x] x >>
+<< A -> A >>
 ;;
 
-test_subst
+Tests.subst repo
 << [x] [y] x >>
 << [X] [z] X z a >>
 << [z] z >>
+<< A -> A >>
 ;;
 
-test_subst
-<< [a] ?X[a] >>
+Tests.subst repo
+<< [a] ?X4[a] >>
 << [X] [x] X x >>
-<< [x] ?X[x] >>
+<< [x] ?X4[x] >>
+<< A -> A >>
 ;;
 

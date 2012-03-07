@@ -1,10 +1,4 @@
 #use "load.ml"
-
-#trace Kernel.Check.obj
-#trace Kernel.Conv.obj
-#trace LF.Subst.obj
-#trace LF.Subst.fam
-#trace LF.Lift.fam
 ;;
 
 (* HOAS STLC *)
@@ -25,43 +19,35 @@ let repo = Slicer.init
 >>
 ;;
 
-let test_commit repo m =
-  let repo = Slicer.commit repo Struct.Env.empty m in
-  let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
-  let n = SLF.Strat.obj repo.Struct.Repo.sign [] (Slicer.checkout repo) in
-  Kernel.Conv.obj repo (m, n);
-  repo
-;;
-
 (* a term *)
-test_commit repo
+Tests.commit repo
 <<
   lam [x] lam [y] app (app x y) y
 >>
 ;;
 
 (* some derivations *)
-test_commit repo
+Tests.commit repo
 <<
   is_lam ([x] x) base base ([_] [H] H)
 >>
 ;;
 
-test_commit repo
+Tests.commit repo
 <<
   is_lam ([x] app x x) base base
   [x] [_] sorry (app x x) base
 >>
 ;;
 
-test_commit repo
+Tests.commit repo
 <<
   is_lam ([_] lam [x] x) (arr base base) base
   [_] [H1] is_lam ([y] y) base base ([_] [H2] H2)
 >>
 ;;
 
-test_commit repo
+Tests.commit repo
 <<
   is_lam ([_] lam [x] x) (arr base base) base
   [_] [H1] is_lam ([y] y) base base ([_] [H2] H2)

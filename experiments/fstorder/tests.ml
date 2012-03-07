@@ -24,6 +24,7 @@ let commit_eq repo m p =
 let subst repo m n p a =
   let p = SLF.Strat.obj repo.Struct.Repo.sign [] p in
   let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
+  let a = SLF.Strat.fam repo.Struct.Repo.sign [] a in
   let n = match LF.prj (SLF.Strat.obj repo.Struct.Repo.sign [] n) with
     | LF.OLam (_, n) -> n
     | _ -> assert false in
