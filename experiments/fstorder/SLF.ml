@@ -121,7 +121,7 @@ module ExprParser = struct
   sign:
   [[ -> <:expr< [] >>
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
-     let names = fun_telescope 0 t in
+     let names = List.rev (fun_telescope 0 t) in
      <:expr<
              let $lid:x$ = fun (repo:Struct.repo) (env:Struct.env) ->
              let rec $lid:x$ = $e$ in
