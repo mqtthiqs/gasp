@@ -84,10 +84,11 @@ module Conv = struct
       let a = head repo env (h1, h2) in
       let a = spine repo env (l1, l2, a) in
       fam repo env (a, c)
-    | OMeta (x1, s1), OMeta (x2, s2), a when Names.Meta.compare x1 x2 = 0 ->
-      let e, _, a' = Context.find x1 repo.ctx in
-      subst repo env (s1, s2, Env.to_list e);
-      fam repo env (a, Subst.fam s1 a')
+    (* TODO: fix subst et decommente *)
+    (* | OMeta (x1, s1), OMeta (x2, s2), a when Names.Meta.compare x1 x2 = 0 -> *)
+    (*   let e, _, a' = Context.find x1 repo.ctx in *)
+    (*   subst repo env (s1, s2, Env.to_list e); *)
+    (*   fam repo env (a, Subst.fam s1 a') *)
     | OMeta (x, s), m, a | m, OMeta (x, s), a ->
         let e, m', _ = Context.find x repo.ctx in
         assert (List.length (Env.to_list e) = List.length s);
