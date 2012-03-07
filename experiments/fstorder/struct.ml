@@ -29,7 +29,7 @@ module rec Sign : sig
   type  entry_type =
     | Sliceable
     | Non_sliceable
-    | Defined of (Repo.t -> obj list -> obj)
+    | Defined of (Repo.t -> Env.t -> obj list -> obj)
 
   type t
   val empty : t
@@ -46,7 +46,7 @@ end = struct
   type entry_type =
     | Sliceable
     | Non_sliceable
-    | Defined of (Repo.t -> obj list -> obj)
+    | Defined of (Repo.t -> Env.t -> obj list -> obj)
 
   module MO = Map.Make(Names.OConst)
   module MF = Map.Make(Names.FConst)

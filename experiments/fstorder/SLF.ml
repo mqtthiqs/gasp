@@ -14,7 +14,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (repo -> term list -> term)
+  | Defined of (repo -> env -> term list -> term)
 
 type sign = (string * term * entry_type) list
 
@@ -123,7 +123,7 @@ module ExprParser = struct
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
      let names = fun_telescope 0 t in
      <:expr<
-             let $lid:x$ = fun (repo:Struct.repo) ->
+             let $lid:x$ = fun (repo:Struct.repo) (env:Struct.env) ->
              let rec $lid:x$ = $e$ in
              fun
                [ $build_patt names$ -> $build_app <:expr<$lid:x$>> names$
@@ -329,9 +329,9 @@ end = struct
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
 
-  let fn (f : repo -> term list -> term) repo (l : LF.obj list) : LF.obj =
-    let l = List.map (Unstrat.obj []) l in
-    obj repo.Repo.sign [] (f repo l)
+  let fn (f : repo -> env -> term list -> term) repo env (l : LF.obj list) : LF.obj =
+    let l = List.map (Unstrat.obj (Env.names_of env)) l in
+    obj repo.Repo.sign (Env.names_of env) (f repo env l)
 
   let entry_type = function
     | Sliceable -> Sign.Sliceable
@@ -381,9 +381,9 @@ end = struct
     | LF.KType -> Type
     | LF.KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
 
-  let fn s (f : repo -> LF.obj list -> LF.obj) repo (l : term list) : term =
-    let l = List.map (Strat.obj s []) l in
-    obj [] (f repo l)
+  let fn s (f : repo -> env -> LF.obj list -> LF.obj) repo env (l : term list) : term =
+    let l = List.map (Strat.obj s (Env.names_of env)) l in
+    obj [] (f repo env l)
 
   let entry_type s = function
     | Sign.Sliceable -> Sliceable

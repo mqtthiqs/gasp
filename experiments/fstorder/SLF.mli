@@ -13,7 +13,7 @@ type term =
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (repo -> term list -> term)
+  | Defined of (repo -> env -> term list -> term)
 
 type sign = (string * term * entry_type) list
 

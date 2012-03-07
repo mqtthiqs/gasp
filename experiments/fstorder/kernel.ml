@@ -30,9 +30,9 @@ let is_defined repo c = match Sign.ofind c repo.sign with
   | _, Sign.Defined f -> true
   | _ -> false
 
-let interpret repo c l = match Sign.ofind c repo.sign with
+let interpret repo env c l = match Sign.ofind c repo.sign with
   | _, Sign.Defined f ->
-    let r = f repo l in
+    let r = f repo env l in
     Format.printf "evalué pr conv: %a = %a@." SLF.Printer.obj (inj @@ OApp (HConst c, l)) SLF.Printer.obj r;
     r
   | _ -> assert false
@@ -78,8 +78,8 @@ module Conv = struct
 
   and obj' repo env (m1, m2, a) = match prj m1, prj m2, a with
     | OLam (_, m1), OLam (_,m2), FProd (x, a, b) -> obj repo (Env.add x a env) (m1, m2, b)
-    | OApp (HConst c, l), _, a when is_defined repo c -> obj repo env (interpret repo c l, m2, a)
-    | _, OApp (HConst c, l), a when is_defined repo c-> obj repo env (m1, interpret repo c l, a)
+    | OApp (HConst c, l), _, a when is_defined repo c -> obj repo env (interpret repo env c l, m2, a)
+    | _, OApp (HConst c, l), a when is_defined repo c-> obj repo env (m1, interpret repo env c l, a)
     | OApp (h1, l1), OApp (h2, l2), c ->
       let a = head repo env (h1, h2) in
       let a = spine repo env (l1, l2, a) in
@@ -214,7 +214,7 @@ module Check = struct
         let _, _, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
         Format.printf "*** eval: %a...@." SLF.Printer.obj (inj @@ OApp (h, l));
         (* evaluate it *)
-        let m = f repo l in
+        let m = f repo env l in
         Format.printf "*** eval: %a = %a@." SLF.Printer.obj (inj @@ OApp (h, l)) SLF.Printer.obj m;
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
