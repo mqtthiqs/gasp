@@ -220,10 +220,10 @@ module Check = struct
       | Sign.Defined f ->
         (* check that arguments of this constants are well-typed *)
         let _, _, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
-        Format.printf "*** eval: %a...@." SLF.Printer.obj (inj @@ OApp (h, l));
+        Format.printf "*** eval: %a ⊢ %a...@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (inj @@ OApp (h, l));
         (* evaluate it *)
         let m = f repo env l in
-        Format.printf "*** eval: %a = %a@." SLF.Printer.obj (inj @@ OApp (h, l)) SLF.Printer.obj m;
+        Format.printf "*** eval: %a ⊢ %a = %a@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (inj @@ OApp (h, l)) SLF.Printer.obj m;
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
         repo, m, a
@@ -291,7 +291,7 @@ let rec init repo = function
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
 
 let push repo env (h, l) =
-  Format.printf "** push %a@." SLF.Printer.obj (inj (OApp(h, l)));
+  Format.printf "** push %a ⊢ %a@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (inj (OApp(h, l)));
   let repo, m, a = Check.app repo env (h, l) in
   Format.printf "** push => %a in @[%a@]@." SLF.Printer.obj m SLF.Printer.repo_light repo;
   match prj m with
