@@ -23,9 +23,14 @@ let rec pr_list sep pr fmt = function
   | x :: xs -> fprintf fmt "%a%a%a" pr x sep () (pr_list sep pr) xs
 
 let pr_comma fmt () = fprintf fmt ","
+let pr_semi fmt () = fprintf fmt ";"
 let pr_dot fmt () = fprintf fmt "."
 let pr_spc fmt () = fprintf fmt " "
 let pr_str fmt s = fprintf fmt "%s" s
+let pr_int fmt i = fprintf fmt "%d" i
 let pr_opt f fmt = function
   | None -> fprintf fmt "None"
   | Some x -> fprintf fmt "Some %a" f x
+let pr_opt_under f fmt = function
+  | None -> fprintf fmt "_"
+  | Some x -> fprintf fmt "%a" f x
