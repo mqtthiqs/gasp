@@ -12,16 +12,16 @@ let pull repo x =
   in aux repo.ctx x []
 
 (* —————————————————————————————————————— (X fresh)
- * R, Γ ⊢ h l : A => R[Γ ⊢ ?X : A], id(Γ)
+ * R, Γ ⊢ h l : A => R[Γ ⊢ ?X = h l : A], id(Γ)
  *)
 let push =
   let gensym =
     let n = ref 0 in
     fun () -> incr n; string_of_int !n in
-  fun repo env a (h, l) ->
+  fun repo env (h, l) a ->
     let x = Names.Meta.make ("X"^gensym()) in
     let repo = { repo with
-      ctx = Context.add x (env, inj @@ LF.OApp (h, l), a) repo.ctx;
+      ctx = Context.add x (env, inj @@ OApp (h, l), a) repo.ctx;
       head = x } in
     let s = List.map_i 0 (fun i _ -> inj @@ OApp (HVar i, [])) (Env.to_list env) in
     repo, s
@@ -200,7 +200,7 @@ module Check = struct
          *)
       | Sign.Sliceable ->
         let repo, l, a = spine repo env (l, a) in
-        let repo, s = push repo env a (h, l) in
+        let repo, s = push repo env (h, l) a in
         repo, inj @@ OMeta (repo.head, s), a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
@@ -295,6 +295,6 @@ let push repo env (h, l) =
   let repo, m, a = Check.app repo env (h, l) in
   Format.printf "** push => %a in @[%a@]@." SLF.Printer.obj m SLF.Printer.repo_light repo;
   match prj m with
-    | OApp (h, l) -> push repo env a (h, l)
+    | OApp (h, l) -> push repo env (h, l) a
     | OMeta (x, s) -> {repo with head = x}, s
     | OLam _ -> assert false
