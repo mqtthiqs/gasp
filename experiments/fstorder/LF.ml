@@ -2,16 +2,14 @@ open Util
 open Names
 open Esubst
 
+type binder = string option
+
 type head =
   | HVar of int
   | HConst of OConst.t
 
-type fam =
-  | FApp of FConst.t * obj list
-  | FProd of string option * fam * fam
-
-and obj =
-  | XLam of string option * obj
+type obj =
+  | XLam of binder * obj
   | XApp of head * spine
   | XMeta of Meta.t * subst
   | XClos of obj subs * obj
@@ -19,12 +17,16 @@ and obj =
 and spine = obj list
 and subst = obj list
 
+type fam =
+  | FApp of FConst.t * obj list
+  | FProd of binder * fam * fam
+
 type kind =
   | KType
-  | KProd of string option * fam * kind
+  | KProd of binder * fam * kind
 
 type cobj =
-  | OLam of string option * obj
+  | OLam of binder * obj
   | OApp of head * spine
   | OMeta of Meta.t * subst
 
@@ -120,5 +122,15 @@ module Util = struct
     | OLam (x, m) -> OLam (x, map_meta f m)
     | OMeta (x, s) -> prj @@ f x s
   end @> inj
+
+  let fv m =
+    let module S = Set.Make(struct type t=int let compare = Pervasives.compare end) in
+    let rec fv k s = prj @> function
+      | OApp (HVar i, l) when i >= k ->
+        List.fold_left (fv k) (S.add (i-k) s) l
+      | OApp (_, l) -> List.fold_left (fv k) s l
+      | OLam (x, m) -> fv (succ k) s m
+      | OMeta (x, l) -> List.fold_left (fv k) s l in
+    S.elements (fv 0 S.empty m)
 
 end
