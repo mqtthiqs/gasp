@@ -8,6 +8,7 @@ module Env = struct
   let find x l = snd (List.nth l x)
   let add x a l = ((x, a) :: l)
   let to_list l = l
+  let of_list l = l
   let names_of env = fst (List.split (to_list env))
 
 end

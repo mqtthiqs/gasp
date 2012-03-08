@@ -5,10 +5,11 @@ module Env : sig
   type t
   val empty : t
   val find : int -> t -> fam
-  val add : string option -> fam -> t -> t
+  val add : binder -> fam -> t -> t
   val length : t -> int
-  val to_list : t -> (string option * fam) list
-  val names_of : t -> string option list
+  val of_list : (binder * fam) list -> t
+  val to_list : t -> (binder * fam) list
+  val names_of : t -> binder list
 end
 
 module Context : sig
