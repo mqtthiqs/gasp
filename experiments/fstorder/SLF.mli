@@ -28,6 +28,8 @@ module Printer : sig
   val kind : formatter -> LF.kind -> unit
   val sign : formatter -> Struct.sign -> unit
   val env : formatter -> env -> unit
+  val esubst : binder list -> formatter -> LF.subst -> unit
+  val subst : formatter -> LF.subst -> unit
   val senv : formatter -> (binder * term) list -> unit
   val context : formatter -> Context.t -> unit
   val repo : formatter -> repo -> unit

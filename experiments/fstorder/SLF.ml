@@ -450,6 +450,9 @@ module Printer = struct
   let fam fmt m = efam [] fmt m
   let kind fmt m = ekind [] fmt m
 
+  let esubst e fmt s = fprintf fmt "@[[%a]@]" (Print.pr_list Print.pr_semi (eobj e)) s
+  let subst = esubst []
+
   let entity fmt = function
     | Strat.Kind k -> kind fmt k
     | Strat.Fam a -> fam fmt a
