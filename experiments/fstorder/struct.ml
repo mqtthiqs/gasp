@@ -87,3 +87,20 @@ end
 type env = Env.t
 type sign = Sign.t
 type repo = Repo.t
+
+module Renaming = struct
+
+  type t = int list
+
+  let dummy_var = 42
+
+
+  let inverse = List.transpose @> List.map @@ Option.default dummy_var
+
+  let subst_of env s = List.map
+    (fun x ->
+      if x <> dummy_var then LF.Util.eta_expand_var x (snd (List.nth env x))
+      else inj @@ OApp (HVar x, [])
+    ) s
+
+end

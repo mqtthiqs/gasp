@@ -52,3 +52,9 @@ end
 type env = Env.t
 type sign = Sign.t
 type repo = Repo.t
+
+module Renaming : sig
+  type t = int list
+  val inverse : t -> t
+  val subst_of : env -> t -> subst
+end
