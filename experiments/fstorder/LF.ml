@@ -35,6 +35,8 @@ let inj = function
   | OApp (h, l) -> XApp (h, l)
   | OMeta (x, s) -> XMeta (x, s)
 
+exception Not_eta of obj * spine
+
 module ESubst = struct
 
   let rec clos = function
@@ -53,8 +55,8 @@ module ESubst = struct
 
   and spine = function
     | OLam (x, n), m :: l -> spine (obj (subs_cons ([|m|], subs_id 0)) n, l)
-    | n, [] -> n
-    | _, _::_ -> assert false
+    | _ as n, [] -> n
+    | n, (_::_ as l) -> raise (Not_eta (inj n, l))
 
 end
 
@@ -70,6 +72,7 @@ end
 module Lift = struct
 
   let rec obj k n m =
+    assert (k >= 0 && n >= 0);
     let s = subs_liftn (pred k) (subs_shft (n, subs_id 0)) in
     ESubst.clos (s, m)
 
