@@ -49,13 +49,12 @@ Tests.subst repo
 << A >>
 ;;
 
-(* TODO: comprendre l'assert false ici *)
-(* Tests.subst repo *)
-(* << [x] [y] f x y a >> *)
-(* << [X] X a b a >> *)
-(* << f a b a >> *)
-(* << B >> *)
-(* ;; *)
+Tests.subst repo
+<< [x] [y] [z] f x y z >>
+<< [X] X a b a >>
+<< f a b a >>
+<< B >>
+;;
 
 Tests.subst repo
 << [x] x >>
