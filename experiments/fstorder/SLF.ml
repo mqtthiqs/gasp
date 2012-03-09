@@ -369,8 +369,8 @@ end = struct
     | LF.HVar x ->
       try match List.nth env x with
         | Some x -> x
-        | None -> "___"^(string_of_int x)
-      with Failure "nth" -> "_REL_"^(string_of_int x)
+        | None -> "_UNNAMED_"^(string_of_int x)
+      with Failure "nth" -> "_UNBOUND_"^(string_of_int x)
 
   let rec fam env = function
     | LF.FApp (f, l) -> List.fold_left
@@ -419,7 +419,7 @@ module Printer = struct
 
   let term pp fmt = function
     | Meta (x, []) -> fprintf fmt "?%s" x
-    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (pr_list pr_comma (pp (<=))) (List.rev s)
+    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (pr_list_rev pr_comma (pp (<=))) s
     | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
 	str x (pp (<)) a (pp (<=)) b
@@ -450,7 +450,7 @@ module Printer = struct
   let fam fmt m = efam [] fmt m
   let kind fmt m = ekind [] fmt m
 
-  let esubst e fmt s = fprintf fmt "@[[%a]@]" (Print.pr_list Print.pr_semi (eobj e)) s
+  let esubst e fmt s = fprintf fmt "@[[%a]@]" (Print.pr_list_rev Print.pr_semi (eobj e)) s
   let subst = esubst []
 
   let entity fmt = function
@@ -470,9 +470,9 @@ module Printer = struct
     let rec aux fmt = function
       | [] -> ()
       | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" binder x term a
-      | (x,a) :: e -> fprintf fmt "%a,@ %a" aux [x, a] aux e
+      | (x,a) :: e -> fprintf fmt "%a,@ %a" aux e aux [x, a]
     in
-    Format.fprintf fmt "@[%a@]" aux (List.rev e)
+    Format.fprintf fmt "@[%a@]" aux e
 
   let env fmt e = senv fmt (Unstrat.env e)
 
