@@ -22,6 +22,11 @@ let rec pr_list sep pr fmt = function
   | [x] -> pr fmt x
   | x :: xs -> fprintf fmt "%a%a%a" pr x sep () (pr_list sep pr) xs
 
+let rec pr_list_rev sep pr fmt = function
+  | [] -> ()
+  | [x] -> pr fmt x
+  | x :: xs -> fprintf fmt "%a%a%a" (pr_list sep pr) xs sep () pr x
+
 let pr_comma fmt () = fprintf fmt ","
 let pr_semi fmt () = fprintf fmt ";"
 let pr_dot fmt () = fprintf fmt "."

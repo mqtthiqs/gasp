@@ -14,6 +14,7 @@ val pr_paren :
   'a precedence -> level -> 'a level_printing_fun
 
 val pr_list : unit printing_fun -> 'a printing_fun -> 'a list printing_fun
+val pr_list_rev : unit printing_fun -> 'a printing_fun -> 'a list printing_fun
 
 val pr_comma : unit printing_fun
 val pr_semi : unit printing_fun
