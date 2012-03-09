@@ -136,4 +136,14 @@ module Util = struct
       | OMeta (x, l) -> List.fold_left (fv k) s l in
     S.elements (fv 0 S.empty m)
 
+
+  let eta_expand_var i a =
+    let rec exp i l = function
+      | FProd (x, a, b) ->
+        let l = List.map (Lift.obj 0 1) l in
+        let m = exp (succ i) (exp 0 [] a :: l) b in
+        inj @@ OLam (x, m)
+      | FApp _ -> inj @@ OApp (HVar i, l)
+    in exp i [] a
+
 end

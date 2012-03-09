@@ -41,4 +41,5 @@ end
 module Util : sig
   val map_meta : (Meta.t -> subst -> obj) -> obj -> obj
   val fv : obj -> int list
+  val eta_expand_var : int -> fam -> obj
 end
