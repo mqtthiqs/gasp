@@ -1,8 +1,9 @@
+open Util
 open Names
 open LF
 
 module Env = struct
-  type t = (string option * fam) list
+  type t = (binder * fam) list
   let empty = []
   let length = List.length
   let find x l = snd (List.nth l x)

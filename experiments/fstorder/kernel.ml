@@ -11,6 +11,27 @@ let pull repo x =
     LF.Util.map_meta (aux ctx) m
   in aux repo.ctx x []
 
+(* Γ ⊢ σ : Γ'  Γ ⊢ M ≡ M'[σ]  Γ ⊢ A ≡ A'[σ]
+ * ———————————————————————————————————————— (Δ minimal for M, σ renaming)
+ * (Γ ⊢ M : A) ~> (Γ' ⊢ M' : A'), σ
+ *)
+let strengthen env (h, l) a =
+  let fv = (LF.Util.fv (inj @@ OApp(h, l))) in
+  let subst = Renaming.subst_of env fv in  (* Γ ⊢ σ : Γ') *)
+  (* TODO: actually applying fv to the env is more than that... *)
+  let env' = Env.of_list (List.drop (Env.to_list env) fv) in
+  let subst' = Renaming.subst_of env' (Renaming.inverse fv) in (* Γ' ⊢ σ' : Γ *)
+  let l' = List.map (Subst.obj subst') l in (* M'=M[σ'] *)
+  let a' = Subst.fam subst' a in            (* A'=A[σ'] *)
+  env', (h, l'), a', subst
+
+let strengthen env (h, l) a =
+  let e = Env.names_of env in
+  Format.printf "**** strengthen %a ⊢ %a : %a@." SLF.Printer.env env (SLF.Printer.eobj e) (inj @@ OApp(h,l)) (SLF.Printer.efam e) a;
+  let env', (h, l), a, subst = strengthen env (h, l) a in
+  Format.printf "**** strengthen ==> %a ⊢ %a : %a, σ = (%a ⊢ %a)@." SLF.Printer.env env' (SLF.Printer.eobj (Env.names_of env')) (inj @@ OApp(h,l)) (SLF.Printer.efam (Env.names_of env')) a SLF.Printer.env env (SLF.Printer.esubst (Env.names_of env)) subst;
+  env', (h, l), a, subst
+
 (* —————————————————————————————————————— (X fresh)
  * R, Γ ⊢ h l : A => R[Γ ⊢ ?X = h l : A], id(Γ)
  *)
@@ -20,10 +41,10 @@ let push =
     fun () -> incr n; string_of_int !n in
   fun repo env (h, l) a ->
     let x = Names.Meta.make ("X"^gensym()) in
+    let env, (h, l), a, s = strengthen env (h, l) a in
     let repo = { repo with
       ctx = Context.add x (env, inj @@ OApp (h, l), a) repo.ctx;
       head = x } in
-    let s = List.map_i 0 (fun i _ -> inj @@ OApp (HVar i, [])) (Env.to_list env) in
     repo, s
 
 let is_defined repo c = match Sign.ofind c repo.sign with
