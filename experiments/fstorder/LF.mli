@@ -23,6 +23,8 @@ type cobj =
   | OApp of head * spine
   | OMeta of Meta.t * subst
 
+exception Not_eta of obj * spine
+
 val inj : cobj -> obj
 val prj : obj -> cobj
 
@@ -46,4 +48,10 @@ module Util : sig
   val map_meta : (Meta.t -> subst -> obj) -> obj -> obj
   val fv : obj -> int list
   val eta_expand_var : int -> fam -> obj
+end
+
+(* debug *)
+module ESubst : sig
+  val obj : obj Esubst.subs -> obj -> cobj
+  val spine : cobj * spine -> cobj
 end
