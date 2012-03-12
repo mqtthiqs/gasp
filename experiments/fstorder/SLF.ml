@@ -419,7 +419,7 @@ module Printer = struct
 
   let term pp fmt = function
     | Meta (x, []) -> fprintf fmt "?%s" x
-    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (pr_list_rev pr_comma (pp (<=))) s
+    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (list_rev comma (pp (<=))) s
     | Ident x -> str fmt x
     | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
 	str x (pp (<)) a (pp (<=)) b
@@ -429,7 +429,7 @@ module Printer = struct
     | App (t,u) -> fprintf fmt "@[%a@ %a@]" (pp (<=)) t (pp (<)) u
     | Type -> fprintf fmt "@[type@]"
       
-  let term fmt t = pr_paren term term_prec 100 (<=) fmt t
+  let term fmt t = paren term term_prec 100 (<=) fmt t
 
   let sharp b fmt x = if b then fprintf fmt "@[#%a@]" str x else fprintf fmt "@[%a@]" str x
   let code fmt f = fprintf fmt "<fun>"
@@ -450,7 +450,7 @@ module Printer = struct
   let fam fmt m = efam [] fmt m
   let kind fmt m = ekind [] fmt m
 
-  let esubst e fmt s = fprintf fmt "@[[%a]@]" (Print.pr_list_rev Print.pr_semi (eobj e)) s
+  let esubst e fmt s = fprintf fmt "@[[%a]@]" (list_rev semi (eobj e)) s
   let subst = esubst []
 
   let entity fmt = function

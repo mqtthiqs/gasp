@@ -11,31 +11,31 @@ type 'a precedence = 'a -> level
 
 let surround fmt f x = fprintf fmt "(@[%a@])" f x
 
-let rec pr_paren term (prec:'a precedence) oldl (rel:level_rel) fmt t = 
+let rec paren term (prec:'a precedence) oldl (rel:level_rel) fmt t = 
   let newl = prec t in
   if rel newl oldl
-  then term (pr_paren term prec newl) fmt t
-  else surround fmt (term (pr_paren term prec newl)) t
+  then term (paren term prec newl) fmt t
+  else surround fmt (term (paren term prec newl)) t
 
-let rec pr_list sep pr fmt = function
+let rec list sep pr fmt = function
   | [] -> ()
   | [x] -> pr fmt x
-  | x :: xs -> fprintf fmt "%a%a%a" pr x sep () (pr_list sep pr) xs
+  | x :: xs -> fprintf fmt "%a%a%a" pr x sep () (list sep pr) xs
 
-let rec pr_list_rev sep pr fmt = function
+let rec list_rev sep pr fmt = function
   | [] -> ()
   | [x] -> pr fmt x
-  | x :: xs -> fprintf fmt "%a%a%a" (pr_list sep pr) xs sep () pr x
+  | x :: xs -> fprintf fmt "%a%a%a" (list sep pr) xs sep () pr x
 
-let pr_comma fmt () = fprintf fmt ","
-let pr_semi fmt () = fprintf fmt ";"
-let pr_dot fmt () = fprintf fmt "."
-let pr_spc fmt () = fprintf fmt " "
-let pr_str fmt s = fprintf fmt "%s" s
-let pr_int fmt i = fprintf fmt "%d" i
-let pr_opt f fmt = function
+let comma fmt () = fprintf fmt ","
+let semi fmt () = fprintf fmt ";"
+let dot fmt () = fprintf fmt "."
+let spc fmt () = fprintf fmt " "
+let str fmt s = fprintf fmt "%s" s
+let int fmt i = fprintf fmt "%d" i
+let opt f fmt = function
   | None -> fprintf fmt "None"
   | Some x -> fprintf fmt "Some %a" f x
-let pr_opt_under f fmt = function
+let opt_under f fmt = function
   | None -> fprintf fmt "_"
   | Some x -> fprintf fmt "%a" f x
