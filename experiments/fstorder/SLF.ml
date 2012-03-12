@@ -285,11 +285,11 @@ end = struct
 
   let lookup sign env x l =
     try let i = List.index (Some x) env in
-        Obj (LF.inj @@ LF.OApp (LF.HVar i, l))
+        Obj (LF.mkApp (LF.HVar i, l))
     with Not_found ->
       try let x = OConst.make x in
           ignore (Sign.ofind x sign);
-          Obj (LF.inj @@ LF.OApp (LF.HConst x, l))
+          Obj (LF.mkApp (LF.HConst x, l))
       with Not_found ->
         let x = FConst.make x in
         try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
@@ -301,7 +301,7 @@ end = struct
     | t -> Obj (LF.Subst.spine (obj sign env t) l)
 
   and term sign env = function
-    | Lam (x, t) -> Obj (LF.inj @@ LF.OLam (x, obj sign (x :: env) t))
+    | Lam (x, t) -> Obj (LF.mkLam (x, obj sign (x :: env) t))
     | Type -> Kind LF.KType
     | Prod (x, a, b) ->
       begin match term sign env a, term sign (x::env) b with
@@ -315,7 +315,7 @@ end = struct
     | Ident x -> lookup sign env x []
     | Meta (x, s) ->
       let s = List.map (obj sign env) s in
-      Obj (LF.inj @@ LF.OMeta (Meta.make x, s))
+      Obj (LF.mkMeta (Meta.make x, s))
 
   and obj sign env t = match term sign env t with
     | Obj m -> m

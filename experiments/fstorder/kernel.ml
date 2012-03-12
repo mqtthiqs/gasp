@@ -16,7 +16,7 @@ let pull repo x =
  * (Γ ⊢ M : A) ~> (Γ' ⊢ M' : A'), σ
  *)
 let strengthen env (h, l) a =
-  let fv = (LF.Util.fv (inj @@ OApp(h, l))) in
+  let fv = (LF.Util.fv (mkApp(h, l))) in
   let subst = Renaming.subst_of env fv in  (* Γ ⊢ σ : Γ') *)
   let env' = Renaming.drop_env fv env in
   let subst' = Renaming.subst_of env' (Renaming.inverse fv) in (* Γ' ⊢ σ' : Γ *)
@@ -26,9 +26,9 @@ let strengthen env (h, l) a =
 
 let strengthen env (h, l) a =
   let e = Env.names_of env in
-  Format.printf "**** strengthen %a ⊢ %a : %a@." SLF.Printer.env env (SLF.Printer.eobj e) (inj @@ OApp(h,l)) (SLF.Printer.efam e) a;
+  Format.printf "**** strengthen %a ⊢ %a : %a@." SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h,l)) (SLF.Printer.efam e) a;
   let env', (h, l), a, subst = strengthen env (h, l) a in
-  Format.printf "**** strengthen ==> %a ⊢ %a : %a, σ = (%a ⊢ %a)@." SLF.Printer.env env' (SLF.Printer.eobj (Env.names_of env')) (inj @@ OApp(h,l)) (SLF.Printer.efam (Env.names_of env')) a SLF.Printer.env env (SLF.Printer.esubst (Env.names_of env)) subst;
+  Format.printf "**** strengthen ==> %a ⊢ %a : %a, σ = (%a ⊢ %a)@." SLF.Printer.env env' (SLF.Printer.eobj (Env.names_of env')) (mkApp(h,l)) (SLF.Printer.efam (Env.names_of env')) a SLF.Printer.env env (SLF.Printer.esubst (Env.names_of env)) subst;
   env', (h, l), a, subst
 
 (* —————————————————————————————————————— (X fresh)
@@ -42,7 +42,7 @@ let push =
     let x = Names.Meta.make ("X"^gensym()) in
     let env, (h, l), a, s = strengthen env (h, l) a in
     let repo = { repo with
-      ctx = Context.add x (env, inj @@ OApp (h, l), a) repo.ctx;
+      ctx = Context.add x (env, mkApp (h, l), a) repo.ctx;
       head = x } in
     repo, s
 
@@ -53,7 +53,7 @@ let is_defined repo c = match Sign.ofind c repo.sign with
 let interpret repo env c l = match Sign.ofind c repo.sign with
   | _, Sign.Defined f ->
     let r = f repo env l in
-    Format.printf "evalué pr conv: %a = %a@." SLF.Printer.obj (inj @@ OApp (HConst c, l)) SLF.Printer.obj r;
+    Format.printf "evalué pr conv: %a = %a@." SLF.Printer.obj (mkApp (HConst c, l)) SLF.Printer.obj r;
     r
   | _ -> assert false
 
@@ -69,7 +69,7 @@ module Conv = struct
       Lift.fam 0 (x+1) a
     | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 ->
       fst (Sign.ofind c1 repo.sign)
-    | h1, h2 -> raise (Not_conv_obj (repo, env, inj @@ OApp (h1, []), inj @@ OApp (h2, [])))
+    | h1, h2 -> raise (Not_conv_obj (repo, env, mkApp (h1, []), mkApp (h2, [])))
 
   let rec spine repo env = function
     | [], [], (FApp _ as a) -> a
@@ -78,7 +78,7 @@ module Conv = struct
       spine repo env (l1, l2, Subst.fam [m1] b)
     | l1, l2, a ->
       let h = HConst (Names.OConst.make "@") in
-      raise (Not_conv_obj (repo, env, inj @@ OApp (h, l1), inj @@ OApp (h, l2)))
+      raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2)))
 
   and fspine repo env = function
     | [], [], KType -> ()
@@ -87,7 +87,7 @@ module Conv = struct
       fspine repo env (l1, l2, Subst.kind [m1] b)
     | l1, l2, a ->
       let h = HConst (Names.OConst.make "@") in
-      raise (Not_conv_obj (repo, env, inj @@ OApp (h, l1), inj @@ OApp (h, l2)))
+      raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2)))
 
   and subst repo env = function
     | [], [], [] -> ()
@@ -163,7 +163,7 @@ module Check = struct
         | None, Some _ -> x
         | _ -> x in
       let repo, m = obj repo (Env.add x a env) (m, b) in
-      repo, inj @@ OLam (x, m)
+      repo, mkLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
 
     (* R, Γ ⊢ h l => R', M', A'  R' ⊢ A ≡ A'
@@ -184,7 +184,7 @@ module Check = struct
       let repo, s = subst repo env (s, Env.to_list e) in
       let b = Subst.fam s b in
       Conv.fam repo env (a, b);
-      repo, inj @@ OMeta (x, s)
+      repo, mkMeta (x, s)
 
   and obj repo env (m, a) =
     let e = Env.names_of env in
@@ -221,7 +221,7 @@ module Check = struct
       | Sign.Sliceable ->
         let repo, l, a = spine repo env (l, a) in
         let repo, s = push repo env (h, l) a in
-        repo, inj @@ OMeta (repo.head, s), a
+        repo, mkMeta (repo.head, s), a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
        * ——————————————————————————————————————— (h non sliceable)
@@ -229,7 +229,7 @@ module Check = struct
        *)
       | Sign.Non_sliceable ->
         let repo, l, a = spine repo env (l, a) in
-        repo, inj @@ OApp (h, l), a
+        repo, mkApp (h, l), a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => _, _, C
        * R ⊢ f l ~~> m
@@ -240,10 +240,10 @@ module Check = struct
       | Sign.Defined f ->
         (* check that arguments of this constants are well-typed *)
         let _, _, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
-        Format.printf "*** eval: %a ⊢ %a...@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (inj @@ OApp (h, l));
+        Format.printf "*** eval: %a ⊢ %a...@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
         (* evaluate it *)
         let m = f repo env l in
-        Format.printf "*** eval: %a ⊢ %a = %a@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (inj @@ OApp (h, l)) SLF.Printer.obj m;
+        Format.printf "*** eval: %a ⊢ %a = %a@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
         repo, m, a

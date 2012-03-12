@@ -68,6 +68,10 @@ let prj = function
   | XMeta (x, s) -> OMeta (x, s)
   | XClos (s, m) -> ESubst.obj s m
 
+let mkApp (x, t) = inj @@ OApp (x, t)
+let mkLam (x, t) = inj @@ OLam (x, t)
+let mkMeta (x, t) = inj @@ OMeta (x, t)
+
 module Printer = struct
 end
 
@@ -122,7 +126,7 @@ end
 
 module Lower = struct
 
-  let dummy_obj = inj @@ OApp (HConst (OConst.make "YOU_SHOULD_NOT_SEE_THIS"), [])
+  let dummy_obj = mkApp (HConst (OConst.make "YOU_SHOULD_NOT_SEE_THIS"), [])
 
   let fam n a =
     let s = List.make (fun _ -> dummy_obj) n in
@@ -154,8 +158,8 @@ module Util = struct
       | FProd (x, a, b) ->
         let l = List.map (Lift.obj 0 1) l in
         let m = exp (succ i) (exp 0 [] a :: l) b in
-        inj @@ OLam (x, m)
-      | FApp _ -> inj @@ OApp (HVar i, l)
+        mkLam (x, m)
+      | FApp _ -> mkApp (HVar i, l)
     in exp i [] a
 
 end

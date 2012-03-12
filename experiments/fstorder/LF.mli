@@ -28,6 +28,11 @@ exception Not_eta of obj * spine
 val inj : cobj -> obj
 val prj : obj -> cobj
 
+(* Direct constructors (sugar) *)
+val mkApp : head * spine -> obj
+val mkLam : binder * obj -> obj
+val mkMeta : Meta.t * subst -> obj
+
 module Lift : sig
   val obj : int -> int -> obj -> obj
   val fam : int -> int -> fam -> fam
