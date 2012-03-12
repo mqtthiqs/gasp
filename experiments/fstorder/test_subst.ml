@@ -77,3 +77,11 @@ Tests.subst repo
 << A -> A >>
 ;;
 
+try Tests.fail5
+Tests.subst repo
+<< [x] x x >>
+<< [y] y y >>
+<< [x] x >>
+<< A -> A >>
+with Tests.Failed (LF.Not_eta _) -> ()
+;;

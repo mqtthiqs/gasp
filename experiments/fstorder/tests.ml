@@ -31,3 +31,37 @@ let subst repo m n p a =
   let q = LF.Subst.obj [m] n in
   Kernel.Conv.obj repo Env.empty (p, q, a);
   p
+
+exception Did_not_fail
+exception Failed of exn
+
+let fail1 f x =
+  try ignore (f x); raise Did_not_fail
+  with
+    |  Did_not_fail -> raise Did_not_fail
+    | e -> raise (Failed e)
+
+let fail2 f x y =
+  try ignore (f x y); raise Did_not_fail
+  with
+    |  Did_not_fail -> raise Did_not_fail
+    | e -> raise (Failed e)
+
+let fail3 f x y z =
+  try ignore (f x y z); raise Did_not_fail
+  with
+    |  Did_not_fail -> raise Did_not_fail
+    | e -> raise (Failed e)
+
+let fail4 f x y z t =
+  try ignore (f x y z t); raise Did_not_fail
+  with
+    |  Did_not_fail -> raise Did_not_fail
+    | e -> raise (Failed e)
+
+let fail5 f x y z t u =
+  try ignore (f x y z t u); raise Did_not_fail
+  with
+    |  Did_not_fail -> raise Did_not_fail
+    | e -> raise (Failed e)
+
