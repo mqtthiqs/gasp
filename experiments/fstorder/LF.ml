@@ -49,9 +49,11 @@ module ESubst = struct
     | XMeta (x, l) -> OMeta (x, List.map (fun m -> clos (s, m)) l)
     | XLam (x, m) -> OLam (x, clos (subs_lift s, m))
     | XApp (HConst c, l) -> OApp (HConst c, List.map (fun m -> clos (s, m)) l)
-    | XApp (HVar n, l) -> match expand_rel (n+1) s with
+    | XApp (HVar n, l) ->
+      let l = List.map (fun m -> clos (s, m)) l in
+      match expand_rel (n+1) s with
         | Inl (k, m) -> spine (obj (subs_shft (k, subs_id 0)) m, l)
-        | Inr (k, _) -> OApp (HVar (k-1), List.map (fun m -> clos (s, m)) l)
+        | Inr (k, _) -> OApp (HVar (k-1), l)
 
   and spine = function
     | OLam (x, n), m :: l -> spine (obj (subs_cons ([|m|], subs_id 0)) n, l)
