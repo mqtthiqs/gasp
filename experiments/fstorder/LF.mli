@@ -31,6 +31,10 @@ module Lift : sig
   val fam : int -> int -> fam -> fam
 end
 
+module Lower : sig
+  val fam : int -> fam -> fam
+end
+
 module Subst : sig
   val spine : obj -> obj list -> obj
   val obj : obj list -> obj -> obj

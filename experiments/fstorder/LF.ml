@@ -118,6 +118,16 @@ module Subst = struct
 
 end
 
+module Lower = struct
+
+  let dummy_obj = inj @@ OApp (HConst (OConst.make "YOU_SHOULD_NOT_SEE_THIS"), [])
+
+  let fam n a =
+    let s = List.make (fun _ -> dummy_obj) n in
+    Subst.fam s a
+
+end
+
 module Util = struct
 
   let rec map_meta f = prj @> begin function
