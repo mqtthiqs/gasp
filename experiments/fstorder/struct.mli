@@ -57,4 +57,5 @@ module Renaming : sig
   type t = int list
   val inverse : t -> t
   val subst_of : env -> t -> subst
+  val drop_env : t -> env -> env
 end

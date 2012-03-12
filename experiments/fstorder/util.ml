@@ -32,13 +32,21 @@ module List = struct
       | x :: xs -> skip (x-j) (Some i :: inv (succ i) (x+1) xs)
     in inv 0 0 l
 
-  let drop xs is =
+  let make f n =
+    let rec aux i = if i=n then [] else f i :: aux (succ i) in
+    aux 0
+
+  let drop f xs is =
     let rec aux k = function
-      | [], [] -> []
-      | x :: xs, i :: is when i=k -> x :: aux (succ k) (xs, is)
-      | x :: xs, is -> aux (succ k) (xs, is)
+      | [], [] -> [], 0
+      | x :: xs, i :: is when i=k ->
+        let xs, s = aux (succ k) (xs, is) in
+        f s x :: xs, 0
+      | x :: xs, is ->
+        let xs, s = aux (succ k) (xs, is) in
+        xs, succ s
       | _ -> failwith "drop"
-    in aux 0 (xs, is)
+    in fst (aux 0 (xs, is))
 
 end
 

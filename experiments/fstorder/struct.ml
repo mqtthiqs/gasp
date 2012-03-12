@@ -95,7 +95,6 @@ module Renaming = struct
 
   let dummy_var = 42
 
-
   let inverse = List.transpose @> List.map @@ Option.default dummy_var
 
   let subst_of env s = List.map
@@ -103,5 +102,8 @@ module Renaming = struct
       if x <> dummy_var then LF.Util.eta_expand_var x (snd (List.nth env x))
       else inj @@ OApp (HVar x, [])
     ) s
+
+  let drop_env s (e : env) : env =
+    Env.of_list (List.drop (fun n (x, m) -> x, Lower.fam n m) (Env.to_list e) s)
 
 end
