@@ -4,14 +4,9 @@ open LF
 
 module Env = struct
   type t = (binder * fam) list
-  let empty = []
-  let length = List.length
   let find x l = snd (List.nth l x)
   let add x a l = ((x, a) :: l)
-  let to_list l = l
-  let of_list l = l
-  let names_of env = fst (List.split (to_list env))
-
+  let names_of env = fst (List.split env)
 end
 
 module Context = struct
@@ -104,6 +99,6 @@ module Renaming = struct
     ) s
 
   let drop_env s (e : env) : env =
-    Env.of_list (List.drop (fun n (x, m) -> x, Lower.fam n m) (Env.to_list e) s)
+    List.drop (fun n (x, m) -> x, Lower.fam n m) e s
 
 end

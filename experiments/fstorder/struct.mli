@@ -2,13 +2,9 @@ open Names
 open LF
 
 module Env : sig
-  type t
-  val empty : t
+  type t = (binder * fam) list
   val find : int -> t -> fam
   val add : binder -> fam -> t -> t
-  val length : t -> int
-  val of_list : (binder * fam) list -> t
-  val to_list : t -> (binder * fam) list
   val names_of : t -> binder list
 end
 

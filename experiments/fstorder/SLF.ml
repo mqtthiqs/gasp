@@ -339,10 +339,10 @@ end = struct
     | Defined f -> Sign.Defined (fn f)
 
   let rec env sign = function
-    | [] -> Env.empty
+    | [] -> []
     | (x, t) :: e ->
       let e = env sign e in
-      Env.add x (fam sign (Env.names_of e) t) e
+      (x, fam sign (Env.names_of e) t) :: e
 
 end
 
@@ -401,7 +401,7 @@ end = struct
     let rec aux = function
       | (x, a) :: e -> (x, fam (List.map fst e) a) :: aux e
       | [] -> []
-    in aux (Env.to_list e)
+    in aux e
 end
 
 module Printer = struct

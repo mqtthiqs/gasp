@@ -43,7 +43,7 @@ let repo = Slicer.init
     | << app $m$ $n$ >> ->
       begin match reduce repo <:env< >> << infer $m$ >>, reduce repo <:env< >> << infer $n$ >> with
         | << ex $_$ (arr $a$ $b$) $d1$ >>, << ex $_$ $a'$ $d2$ >> ->
-          equals repo Struct.Env.empty a a' << tp >>;
+          equals repo [] a a' << tp >>;
           << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
       end
     | << get $x$ (ex $_$ $a$ $h$) >> -> h

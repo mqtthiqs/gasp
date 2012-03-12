@@ -3,21 +3,21 @@ open Struct
 open Struct.Repo
 
 let commit repo m =
-  let repo = Slicer.commit repo Env.empty m in
+  let repo = Slicer.commit repo [] m in
   let _, _, a = Context.find repo.head repo.ctx in
   let m = Strat.obj repo.sign [] m in
   let n = Strat.obj repo.sign [] (Slicer.checkout repo) in
-  Kernel.Conv.obj repo Env.empty (m, n, a);
+  Kernel.Conv.obj repo [] (m, n, a);
   repo
 
 let commit_eq repo m p =
-  let repo = Slicer.commit repo Env.empty m in
+  let repo = Slicer.commit repo [] m in
   let _, _, a = Context.find repo.head repo.ctx in
   let m = Strat.obj repo.sign [] m in
   let p = Strat.obj repo.sign [] p in
   let n = Strat.obj repo.sign [] (Slicer.checkout repo) in
-  Kernel.Conv.obj repo Env.empty (m, n, a);
-  Kernel.Conv.obj repo Env.empty (m, p, a);
+  Kernel.Conv.obj repo [] (m, n, a);
+  Kernel.Conv.obj repo [] (m, p, a);
   repo
 
 (* ([x] n) [p <- m] *)
@@ -29,7 +29,7 @@ let subst repo m n p a =
     | LF.OLam (_, n) -> n
     | _ -> assert false in
   let q = LF.Subst.obj [m] n in
-  Kernel.Conv.obj repo Env.empty (p, q, a);
+  Kernel.Conv.obj repo [] (p, q, a);
   p
 
 exception Did_not_fail

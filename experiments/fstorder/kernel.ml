@@ -6,7 +6,7 @@ open Struct.Repo
 let pull repo x =
   let rec aux ctx x s =
     let e, m, a = Context.find x ctx in
-    assert (List.length (Env.to_list e) = List.length s);
+    assert (List.length e = List.length s);
     let m = Subst.obj s m in
     LF.Util.map_meta (aux ctx) m
   in aux repo.ctx x []
@@ -106,11 +106,11 @@ module Conv = struct
       fam repo env (a, c)
     | OMeta (x1, s1), OMeta (x2, s2), a when Names.Meta.compare x1 x2 = 0 ->
       let e, _, a' = Context.find x1 repo.ctx in
-      subst repo env (s1, s2, Env.to_list e);
+      subst repo env (s1, s2, e);
       fam repo env (a, Subst.fam s1 a')
     | OMeta (x, s), m, a | m, OMeta (x, s), a ->
         let e, m', _ = Context.find x repo.ctx in
-        assert (List.length (Env.to_list e) = List.length s);
+        assert (List.length e = List.length s);
         Format.printf "** subst %a %a@." SLF.Printer.obj m' SLF.Printer.subst s;
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
@@ -181,7 +181,7 @@ module Check = struct
      *)
     | OMeta (x, s), a ->
       let e, _, b = Context.find x repo.ctx in
-      let repo, s = subst repo env (s, Env.to_list e) in
+      let repo, s = subst repo env (s, e) in
       let b = Subst.fam s b in
       Conv.fam repo env (a, b);
       repo, mkMeta (x, s)
@@ -299,12 +299,12 @@ let rec init repo = function
   | (c, t, e) :: s' ->
     match SLF.Strat.term repo.sign [] t, e with
       | SLF.Strat.Fam a, e ->
-        let repo, a = Check.fam repo Env.empty a in
+        let repo, a = Check.fam repo [] a in
         let e = SLF.Strat.entry_type e in
         let repo = {repo with sign = Sign.oadd (Names.OConst.make c) (a, e) repo.sign} in
         init repo s'
       | SLF.Strat.Kind k, SLF.Sliceable ->
-        let repo, k = Check.kind repo Env.empty k in
+        let repo, k = Check.kind repo [] k in
         let repo = {repo with sign = Sign.fadd (Names.FConst.make c) k repo.sign} in
         init repo s'
       | SLF.Strat.Obj _, _ -> failwith "object in sign"

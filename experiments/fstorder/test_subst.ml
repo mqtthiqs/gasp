@@ -16,13 +16,13 @@ let repo = Slicer.init
 >>
 ;;
 
-let repo = Slicer.commit repo Struct.Env.empty
+let repo = Slicer.commit repo []
 <<
   p a b
 >>
 ;;
 
-let repo = Slicer.commit repo Struct.Env.empty
+let repo = Slicer.commit repo []
 <<
   h [x] g x
 >>
