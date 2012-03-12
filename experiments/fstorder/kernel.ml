@@ -18,8 +18,7 @@ let pull repo x =
 let strengthen env (h, l) a =
   let fv = (LF.Util.fv (inj @@ OApp(h, l))) in
   let subst = Renaming.subst_of env fv in  (* Γ ⊢ σ : Γ') *)
-  (* TODO: actually applying fv to the env is more than that... *)
-  let env' = Env.of_list (List.drop (Env.to_list env) fv) in
+  let env' = Renaming.drop_env fv env in
   let subst' = Renaming.subst_of env' (Renaming.inverse fv) in (* Γ' ⊢ σ' : Γ *)
   let l' = List.map (Subst.obj subst') l in (* M'=M[σ'] *)
   let a' = Subst.fam subst' a in            (* A'=A[σ'] *)
