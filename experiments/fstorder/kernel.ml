@@ -93,8 +93,8 @@ module Conv = struct
   and subst repo env = function
     | [], [], [] -> ()
     | m1 :: s1, m2 :: s2, (_, a) :: e ->
-      obj repo env (m1, m2, a);
-      subst repo env (s1, s2, e)
+      subst repo env (s1, s2, e);
+      obj repo env (m1, m2, Subst.fam s1 a)
     | _ -> failwith "subst"
 
   and obj' repo env (m1, m2, a) = match prj m1, prj m2, a with
@@ -105,14 +105,14 @@ module Conv = struct
       let a = head repo env (h1, h2) in
       let a = spine repo env (l1, l2, a) in
       fam repo env (a, c)
-    (* TODO: fix subst et decommente *)
-    (* | OMeta (x1, s1), OMeta (x2, s2), a when Names.Meta.compare x1 x2 = 0 -> *)
-    (*   let e, _, a' = Context.find x1 repo.ctx in *)
-    (*   subst repo env (s1, s2, Env.to_list e); *)
-    (*   fam repo env (a, Subst.fam s1 a') *)
+    | OMeta (x1, s1), OMeta (x2, s2), a when Names.Meta.compare x1 x2 = 0 ->
+      let e, _, a' = Context.find x1 repo.ctx in
+      subst repo env (s1, s2, Env.to_list e);
+      fam repo env (a, Subst.fam s1 a')
     | OMeta (x, s), m, a | m, OMeta (x, s), a ->
         let e, m', _ = Context.find x repo.ctx in
         assert (List.length (Env.to_list e) = List.length s);
+        Format.printf "** subst %a %a@." SLF.Printer.obj m' SLF.Printer.subst s;
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
     | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2))
@@ -195,13 +195,13 @@ module Check = struct
 
   and subst repo env : subst * ('a * fam) list -> repo * subst = function
 
-  (* R, Γ ⊢ m : A => R', m'  R', Γ ⊢ σ : Δ => R'', σ'
+  (* R, Γ ⊢ m : A[σ] => R', m'  R', Γ ⊢ σ : Δ => R'', σ'
    * —————————————————————————————————————————————————
    * R, Γ ⊢ σ; m : Δ; (x:A) => R'', σ'; m'
    *)
     | m :: s, (_, a) :: e ->
-      let repo, m = obj repo env (m, a) in
       let repo, s = subst repo env (s, e) in
+      let repo, m = obj repo env (m, Subst.fam s a) in
       repo, m :: s
 
   (* ————————————————————
