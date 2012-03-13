@@ -284,7 +284,7 @@ end = struct
     | Obj of LF.obj
 
   let lookup sign env x l =
-    try let i = List.index (Some x) env in
+    try let i = List.index ((=) (Some x)) env in
         Obj (LF.mkApp (LF.HVar i, l))
     with Not_found ->
       try let x = OConst.make x in
