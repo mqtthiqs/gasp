@@ -16,14 +16,5 @@ clean:
 %:
 	@$(OCAMLBUILD) $@
 
-test: ${TARGET} tests.otarget
-	for test in `cat tests.itarget`; do \
-		echo "* TEST: $$test"; \
-		_build/$$test; \
-		STATUS=$$?; \
-		if [ $$STATUS != 0 ]; then \
-			echo "* FAIL $$test"; \
-			exit $$STATUS; \
-		fi; \
-		echo "* SUCCESS: $$test"; \
-	done
+test:
+	@${OCAMLBUILD} tests.otarget
