@@ -18,7 +18,7 @@ and spine = obj list
 and subst = obj list
 
 type fam =
-  | FApp of FConst.t * obj list
+  | FApp of FConst.t * spine
   | FProd of binder * fam * fam
 
 type kind =
