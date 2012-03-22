@@ -421,12 +421,12 @@ module Printer = struct
     | Meta (x, []) -> fprintf fmt "?%s" x
     | Meta (x, s) -> fprintf fmt "?%s[%a]" x (list_rev comma (pp (<=))) s
     | Ident x -> str fmt x
-    | Prod (Some x,a,b) -> fprintf fmt "@[{%a@ :@ %a}@ %a@]"
-	str x (pp (<)) a (pp (<=)) b
-    | Lam (Some x, t) -> fprintf fmt "@[[%s]@ %a@]" x (pp (<=)) t
-    | Lam (None, t) -> fprintf fmt "@[[_]@ %a@]" (pp (<=)) t
-    | Prod (None, a, b) -> fprintf fmt "@[%a@ ->@ %a@]" (pp (<)) a (pp (<=)) b
-    | App (t,u) -> fprintf fmt "@[%a@ %a@]" (pp (<=)) t (pp (<)) u
+    | Prod (None, a, b) -> fprintf fmt "@[<hov 2>%a@ ->@ %a@]" (pp (<)) a (pp (<=)) b
+    | Prod (Some x,a,b) -> fprintf fmt "@[<hov 2>@[<h>{%a@ :@ %a}@]@ %a@]"
+	str x (pp (<=)) a (pp (<=)) b
+    | Lam (Some x, t) -> fprintf fmt "@[<hov 2>[%s]@ %a@]" x (pp (<=)) t
+    | Lam (None, t) -> fprintf fmt "@[<hov 2>[_]@ %a@]" (pp (<=)) t
+    | App (t,u) -> fprintf fmt "@[<hov 2>%a@ %a@]" (pp (<=)) t (pp (<)) u
     | Type -> fprintf fmt "@[type@]"
       
   let term fmt t = paren term term_prec 100 (<=) fmt t
@@ -436,9 +436,10 @@ module Printer = struct
 
   let rec sign fmt = function
     | [] -> ()
-    | (x, t, Sliceable) :: s -> fprintf fmt "@[%a : %a.@]@,%a" str x term t sign s
-    | (x, t, Non_sliceable) :: s -> fprintf fmt "@[#%a : %a.@]@,%a" str x term t sign s
-    | (x, t, Defined f) :: s -> fprintf fmt "@[%a : %a = %a@].@,%a" str x term t code f sign s
+    | [x, t, Sliceable] -> fprintf fmt "@[%a : %a.@]" str x term t
+    | [x, t, Non_sliceable] -> fprintf fmt "@[#%a : %a.@]" str x term t
+    | [x, t, Defined _] -> fprintf fmt "@[%a@ :@ %a@ =@ <fun>.@]" str x term t
+    | a :: s -> fprintf fmt "%a@,%a" sign [a] sign s
 
   let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
 
@@ -476,15 +477,15 @@ module Printer = struct
 
   let env fmt e = senv fmt (Unstrat.env e)
 
-    let context fmt c =
-      fprintf fmt "@,@[<v>";
-      Context.fold
-        (fun x (e, m, a) () ->
-          let e' = Env.names_of e in
-          Format.fprintf fmt "%a[%a] : @[%a@] = @[%a@]@,"
-            Meta.print x env e (efam e') a (eobj e') m
-        ) c ();
-      fprintf fmt "@]"
+  let context fmt c =
+    fprintf fmt "@[<v>";
+    Context.fold
+      (fun x (e, m, a) () ->
+        let e' = Env.names_of e in
+        Format.fprintf fmt "@[<hov 2>%a[%a]@ :@ @[%a@] = %a@].@,"
+          Meta.print x env e (efam e') a (eobj e') m
+      ) c ();
+    fprintf fmt "@]"
 
     let repo_light fmt {Repo.sign; Repo.ctx; Repo.head} =
       Format.fprintf fmt "%a ⊢ %a@,"
@@ -492,6 +493,6 @@ module Printer = struct
         Meta.print head
 
     let repo fmt {Repo.sign = s; Repo.ctx; Repo.head} =
-      Format.fprintf fmt "Signature:@ %a@,Context:@ %a@ ⊢ %a@,"
+      Format.fprintf fmt "{@ @[<v>@[<hov 2>sign@ =@ %a@];@ @[<hov 2>ctx@ =@ %a@];@ @[<hov 2>head = %a@]@]@ }"
         sign s context ctx Meta.print head
 end
