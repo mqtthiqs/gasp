@@ -1,11 +1,20 @@
 open Util
+open Names
 open LF
 open Struct
 open Struct.Repo
 
+exception Not_conv_obj of repo * env * obj * obj
+exception Not_conv_fam of repo * env * fam * fam
+exception Non_functional_fapp of repo * env * spine
+exception Non_functional_app of repo * env * spine * fam
+exception Unbound_meta of repo * Meta.t
+
 let pull repo x =
   let rec aux ctx x s =
-    let e, m, a = Context.find x ctx in
+    let e, m, a =
+      try Context.find x ctx
+      with Not_found -> raise (Unbound_meta (repo, x)) in
     assert (List.length e = List.length s);
     let m = Subst.obj s m in
     LF.Util.map_meta (aux ctx) m
@@ -39,7 +48,7 @@ let push =
     let n = ref 0 in
     fun () -> incr n; string_of_int !n in
   fun repo env (h, l) a ->
-    let x = Names.Meta.make ("X"^gensym()) in
+    let x = Meta.make ("X"^gensym()) in
     let env, (h, l), a, s = strengthen env (h, l) a in
     let repo = { repo with
       ctx = Context.add x (env, mkApp (h, l), a) repo.ctx;
@@ -60,14 +69,11 @@ let interpret repo env c l = match Sign.ofind c repo.sign with
 
 module Conv = struct
 
-  exception Not_conv_obj of repo * env * obj * obj
-  exception Not_conv_fam of repo * env * fam * fam
-
   let head repo env = function
     | HVar x, HVar y when x = y ->
       let a = try Env.find x env with _ -> failwith(string_of_int x) in
       Lift.fam 0 (x+1) a
-    | HConst c1, HConst c2 when Names.OConst.compare c1 c2 = 0 ->
+    | HConst c1, HConst c2 when OConst.compare c1 c2 = 0 ->
       fst (Sign.ofind c1 repo.sign)
     | h1, h2 -> raise (Not_conv_obj (repo, env, mkApp (h1, []), mkApp (h2, [])))
 
@@ -77,7 +83,7 @@ module Conv = struct
       obj repo env (m1, m2, a);
       spine repo env (l1, l2, Subst.fam [m1] b)
     | l1, l2, a ->
-      let h = HConst (Names.OConst.make "@") in
+      let h = HConst (OConst.make "@") in
       raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2)))
 
   and fspine repo env = function
@@ -86,7 +92,7 @@ module Conv = struct
       obj repo env (m1, m2, a);
       fspine repo env (l1, l2, Subst.kind [m1] b)
     | l1, l2, a ->
-      let h = HConst (Names.OConst.make "@") in
+      let h = HConst (OConst.make "@") in
       raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2)))
 
   and subst repo env = function
@@ -104,12 +110,16 @@ module Conv = struct
       let a = head repo env (h1, h2) in
       let a = spine repo env (l1, l2, a) in
       fam repo env (a, c)
-    | OMeta (x1, s1), OMeta (x2, s2), a when Names.Meta.compare x1 x2 = 0 ->
-      let e, _, a' = Context.find x1 repo.ctx in
+    | OMeta (x1, s1), OMeta (x2, s2), a when Meta.compare x1 x2 = 0 ->
+      let e, _, a' =
+        try Context.find x1 repo.ctx
+        with Not_found -> raise (Unbound_meta (repo, x1)) in
       subst repo env (s1, s2, e);
       fam repo env (a, Subst.fam s1 a')
     | OMeta (x, s), m, a | m, OMeta (x, s), a ->
-        let e, m', _ = Context.find x repo.ctx in
+        let e, m', _ =
+        try Context.find x repo.ctx
+        with Not_found -> raise (Unbound_meta (repo, x)) in
         assert (List.length e = List.length s);
         Format.printf "** subst %a %a@." SLF.Printer.obj m' SLF.Printer.subst s;
         let m' = Subst.obj s m' in
@@ -125,7 +135,7 @@ module Conv = struct
   and fam' repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
       fam repo env (a1, a2); fam repo (Env.add x a1 env) (b1, b2)
-    | FApp (c1, l1), FApp (c2, l2) when Names.FConst.compare c1 c2 = 0 ->
+    | FApp (c1, l1), FApp (c2, l2) when FConst.compare c1 c2 = 0 ->
       let k = Sign.ffind c1 repo.sign in
       fspine repo env (l1, l2, k)
     | a1, a2 -> raise (Not_conv_fam (repo, env, a1, a2))
@@ -140,8 +150,6 @@ end
 
 module Check = struct
 
-  exception Non_functional_fapp of repo * env * spine
-  exception Non_functional_app of repo * env * spine * fam
 
   let head repo env : head -> fam * Sign.entry_type = function
     | HVar x ->
@@ -180,7 +188,9 @@ module Check = struct
      * R, Γ ⊢ ?X[σ] : A => R', σ'
      *)
     | OMeta (x, s), a ->
-      let e, _, b = Context.find x repo.ctx in
+      let e, _, b =
+        try Context.find x repo.ctx
+        with Not_found -> raise (Unbound_meta (repo, x)) in
       let repo, s = subst repo env (s, e) in
       let b = Subst.fam s b in
       Conv.fam repo env (a, b);
@@ -301,11 +311,11 @@ let rec init repo = function
       | SLF.Strat.Fam a, e ->
         let repo, a = Check.fam repo [] a in
         let e = SLF.Strat.entry_type e in
-        let repo = {repo with sign = Sign.oadd (Names.OConst.make c) (a, e) repo.sign} in
+        let repo = {repo with sign = Sign.oadd (OConst.make c) (a, e) repo.sign} in
         init repo s'
       | SLF.Strat.Kind k, SLF.Sliceable ->
         let repo, k = Check.kind repo [] k in
-        let repo = {repo with sign = Sign.fadd (Names.FConst.make c) k repo.sign} in
+        let repo = {repo with sign = Sign.fadd (FConst.make c) k repo.sign} in
         init repo s'
       | SLF.Strat.Obj _, _ -> failwith "object in sign"
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"

@@ -1,21 +1,21 @@
 open LF
+open Names
 open Struct
 
+exception Not_conv_obj of repo * env * obj * obj
+exception Not_conv_fam of repo * env * fam * fam
+exception Non_functional_fapp of repo * env * spine
+exception Non_functional_app of repo * env * spine * fam
+exception Unbound_meta of repo * Meta.t
+
 val push : repo -> env -> head * spine -> repo * subst
-val pull : repo -> Names.Meta.t -> obj
+val pull : repo -> Meta.t -> obj
 val init : repo -> SLF.sign -> repo
 
+(****** debugging only ******)
 module Conv : sig
-  exception Not_conv_obj of repo * env * obj * obj
-  exception Not_conv_fam of repo * env * fam * fam
-  (* debugging only *)
   val obj : repo -> env -> obj * obj * fam -> unit
 end
-
-(* debugging only *)
 module Check : sig
-  exception Non_functional_fapp of repo * env * spine
-  exception Non_functional_app of repo * env * spine * fam
-
   val obj : repo -> env -> obj * fam -> repo * obj
 end
