@@ -1,3 +1,4 @@
+open Util
 open Names
 open Struct
 
@@ -488,11 +489,13 @@ module Printer = struct
     fprintf fmt "@]"
 
     let repo_light fmt {Repo.sign; Repo.ctx; Repo.head} =
-      Format.fprintf fmt "%a ⊢ %a@,"
+      Format.fprintf fmt
+        "{@ @[<v>@[<hov 2>ctx@ =@ %a@];@ @[<hov 2>head = %a@]@]@ }"
         context ctx
         Meta.print head
 
     let repo fmt {Repo.sign = s; Repo.ctx; Repo.head} =
-      Format.fprintf fmt "{@ @[<v>@[<hov 2>sign@ =@ %a@];@ @[<hov 2>ctx@ =@ %a@];@ @[<hov 2>head = %a@]@]@ }"
+      Format.fprintf fmt
+        "{@ @[<v>@[<hov 2>sign@ =@ %a@];@ @[<hov 2>ctx@ =@ %a@];@ @[<hov 2>head = %a@]@]@ }"
         sign s context ctx Meta.print head
 end

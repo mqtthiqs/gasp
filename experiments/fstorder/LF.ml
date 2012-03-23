@@ -72,9 +72,6 @@ let mkApp (x, t) = inj @@ OApp (x, t)
 let mkLam (x, t) = inj @@ OLam (x, t)
 let mkMeta (x, t) = inj @@ OMeta (x, t)
 
-module Printer = struct
-end
-
 module Lift = struct
 
   let rec obj k n m =
@@ -99,7 +96,7 @@ module Subst = struct
 
   let obj l m =
     let r = obj l m in
-    (* Format.printf "** subst [%a] (%a) = @[%a@]@." (Print.pr_list Print.pr_comma Printer.obj) l Printer.obj m Printer.obj r; *)
+    (* Debug.log "subst" "[%a] (%a) = @[%a@]@." (Print.list Print.comma SLF.Printer.obj) l SLF.Printer.obj m SLF.Printer.obj r; *)
     r
 
   let rec fam s = function
@@ -113,13 +110,13 @@ module Subst = struct
   let fam l m =
     let s = subs_cons (Array.of_list (List.rev l), subs_id 0) in
     let r = fam s m in
-    (* Format.printf "** subst [%a] (%a) = @[%a@]@." (Print.pr_list Print.pr_comma Printer.obj) l Printer.fam m Printer.fam r; *)
+    (* Debug.log "subst" "[%a] (%a) = @[%a@]@." (Print.pr_list Print.pr_comma Printer.obj) l Printer.fam m Printer.fam r; *)
     r
 
   let kind l m =
     let s = subs_cons (Array.of_list (List.rev l), subs_id 0) in
     let r = kind s m in
-    (* Format.printf "** subst [%a] (%a) = @[%a@]@." (Print.pr_list Print.pr_comma Printer.obj) l Printer.kind m Printer.kind r; *)
+    (* Debug.log "[%a] (%a) = @[%a@]@." (Print.list Print.comma SLF.Printer.obj) l Printer.kind m Printer.kind r; *)
     r
 
 end

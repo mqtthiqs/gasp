@@ -33,12 +33,12 @@ let strengthen env (h, l) a =
   let a' = Subst.fam subst' a in            (* A'=A[σ'] *)
   env', (h, l'), a', subst
 
-let strengthen env (h, l) a =
-  let e = Env.names_of env in
-  Format.printf "**** strengthen %a ⊢ %a : %a@." SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h,l)) (SLF.Printer.efam e) a;
-  let env', (h, l), a, subst = strengthen env (h, l) a in
-  Format.printf "**** strengthen ==> %a ⊢ %a : %a, σ = (%a ⊢ %a)@." SLF.Printer.env env' (SLF.Printer.eobj (Env.names_of env')) (mkApp(h,l)) (SLF.Printer.efam (Env.names_of env')) a SLF.Printer.env env (SLF.Printer.esubst (Env.names_of env)) subst;
-  env', (h, l), a, subst
+(* let strengthen env (h, l) a = *)
+(*   let e = Env.names_of env in *)
+(*   Debug.log_open "strengthen" "%a ⊢ %a : %a" SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h,l)) (SLF.Printer.efam e) a; *)
+(*   let env', (h, l), a, subst = strengthen env (h, l) a in *)
+(*   Debug.log_close "strengthen" "=> %a ⊢ %a : %a, σ = (%a ⊢ %a)" SLF.Printer.env env' (SLF.Printer.eobj (Env.names_of env')) (mkApp(h,l)) (SLF.Printer.efam (Env.names_of env')) a SLF.Printer.env env (SLF.Printer.esubst (Env.names_of env)) subst; *)
+(*   env', (h, l), a, subst *)
 
 (* —————————————————————————————————————— (X fresh)
  * R, Γ ⊢ h l : A => R[Γ ⊢ ?X = h l : A], id(Γ)
@@ -61,8 +61,9 @@ let is_defined repo c = match Sign.ofind c repo.sign with
 
 let interpret repo env c l = match Sign.ofind c repo.sign with
   | _, Sign.Defined f ->
-    let r = f repo env l in
-    Format.printf "evalué pr conv: %a = %a@." SLF.Printer.obj (mkApp (HConst c, l)) SLF.Printer.obj r;
+      Debug.log_open "eval conv" "%a" SLF.Printer.obj (mkApp (HConst c, l));
+      let r = f repo env l in
+      Debug.log_close "eval conv" "%a = %a" SLF.Printer.obj (mkApp (HConst c, l)) SLF.Printer.obj r;
     r
   | _ -> assert false
 
@@ -121,16 +122,18 @@ module Conv = struct
         try Context.find x repo.ctx
         with Not_found -> raise (Unbound_meta (repo, x)) in
         assert (List.length e = List.length s);
-        Format.printf "** subst %a %a@." SLF.Printer.obj m' SLF.Printer.subst s;
+        Debug.log "subst" "%a %a" SLF.Printer.obj m' SLF.Printer.subst s;
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
     | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2))
 
   and obj repo env (m1, m2, a) =
     let e = Env.names_of env in
-    Format.printf "** conv obj %a ⊢ %a == %a : %a@." SLF.Printer.env env
-      (SLF.Printer.eobj e) m1 (SLF.Printer.eobj e) m2 (SLF.Printer.efam e) a;
-    obj' repo env (m1, m2, a)
+    Debug.log_open "conv obj" "%a ⊢ %a ≡ %a : %a" SLF.Printer.env env (SLF.Printer.eobj e) m1 (SLF.Printer.eobj e) m2 (SLF.Printer.efam e) a;
+    let r = obj' repo env (m1, m2, a) in
+    Debug.close "conv obj";
+    r
+
 
   and fam' repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
@@ -142,9 +145,10 @@ module Conv = struct
 
   and fam repo env (a1, a2) =
     let e = Env.names_of env in
-    Format.printf "** conv fam %a ⊢ %a == %a : *@." SLF.Printer.env env
-      (SLF.Printer.efam e) a1 (SLF.Printer.efam e) a2;
-    fam' repo env (a1, a2)
+    Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" SLF.Printer.env env (SLF.Printer.efam e) a1 (SLF.Printer.efam e) a2;
+    let r = fam' repo env (a1, a2) in
+    Debug.close "conv_fam";
+    r
 
 end
 
@@ -198,9 +202,10 @@ module Check = struct
 
   and obj repo env (m, a) =
     let e = Env.names_of env in
-    Format.printf "** obj @[%a@] ⊢ @[%a@] : @[%a@]@." SLF.Printer.env env
-      (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
-    obj' repo env (m, a)
+    Debug.log_open "obj" "%a ⊢ %a : %a" SLF.Printer.env env (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
+    let r = obj' repo env (m, a) in
+    Debug.close "obj";
+    r
 
   and subst repo env : subst * ('a * fam) list -> repo * subst = function
 
@@ -249,11 +254,11 @@ module Check = struct
        *)
       | Sign.Defined f ->
         (* check that arguments of this constants are well-typed *)
-        let _, _, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
-        Format.printf "*** eval: %a ⊢ %a...@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
+        let repo, l, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
+        Debug.log_open "eval" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
         (* evaluate it *)
         let m = f repo env l in
-        Format.printf "*** eval: %a ⊢ %a = %a@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
+        Debug.log_close "eval" "%a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
         repo, m, a
@@ -321,9 +326,10 @@ let rec init repo = function
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
 
 let push repo env (h, l) =
-  Format.printf "** push %a ⊢ %a@." SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (inj (OApp(h, l)));
+  let e = Env.names_of env in
+  Debug.log_open "push" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h, l));
   let repo, m, a = Check.app repo env (h, l) in
-  Format.printf "** push => %a in @[%a@]@." SLF.Printer.obj m SLF.Printer.repo_light repo;
+  Debug.log_close "push" "%a = %a in %a" (SLF.Printer.eobj e) (mkApp(h, l)) SLF.Printer.obj m SLF.Printer.repo_light repo;
   match prj m with
     | OApp (h, l) -> push repo env (h, l) a
     | OMeta (x, s) -> {repo with head = x}, s

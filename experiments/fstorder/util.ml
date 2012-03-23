@@ -74,3 +74,56 @@ module Option = struct
     | Some y -> y
     | _ -> a
 end
+
+module Debug = struct
+
+  open Format
+
+  let tags = ref ["all"]
+
+  let active tag =
+    List.mem tag !tags
+    || List.mem "all" !tags
+
+  let formatter = formatter_of_out_channel stdout
+  let _ = pp_open_vbox formatter 0
+
+  let print_log tag fmt =
+    kfprintf (kfprintf (fun fmt -> pp_close_box fmt ())) fmt "* %s: @[" tag
+
+  let log tag =
+    if active tag
+    then kfprintf (print_log tag) formatter "@,"
+    else ikfprintf ignore formatter
+
+  let log_open tag =
+    if active tag
+    then kfprintf (print_log tag) formatter "@,@[<v 2>"
+    else ikfprintf ignore formatter
+
+  let log_close tag =
+    if active tag
+    then kfprintf (print_log tag) formatter "@]@,"
+    else ikfprintf ignore formatter
+
+  let close tag = if active tag then pp_close_box formatter ()
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
