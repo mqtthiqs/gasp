@@ -88,6 +88,13 @@ module Debug = struct
   let formatter = formatter_of_out_channel stdout
   let _ = pp_open_vbox formatter 0
 
+  let stack = ref []
+
+  let pop tag = function
+    | tag' :: stack -> if tag = tag' then stack
+      else failwith ("you must close tag "^tag'^" before closing "^tag)
+    | [] -> failwith ("cannot close "^tag^": logging stack empty")
+
   let print_log tag fmt =
     kfprintf (kfprintf (fun fmt -> pp_close_box fmt ())) fmt "* %s: @[" tag
 
@@ -98,15 +105,21 @@ module Debug = struct
 
   let log_open tag =
     if active tag
-    then kfprintf (print_log tag) formatter "@,@[<v 2>"
-    else ikfprintf ignore formatter
+    then begin
+      stack := tag :: !stack;
+      kfprintf (print_log tag) formatter "@,@[<v 2>"
+    end else ikfprintf ignore formatter
 
   let log_close tag =
     if active tag
-    then kfprintf (print_log tag) formatter "@]@,"
-    else ikfprintf ignore formatter
+    then begin
+      stack := pop tag !stack;
+      kfprintf (print_log tag) formatter "@]@,"
+    end else ikfprintf ignore formatter
 
-  let close tag = if active tag then pp_close_box formatter ()
+  let close tag = if active tag then
+      stack := pop tag !stack;
+      pp_close_box formatter ()
 
 end
 
