@@ -22,15 +22,21 @@ let commit_eq repo m p =
 
 (* ([x] n) [p <- m] *)
 let subst repo m n p a =
-  let p = SLF.Strat.obj repo.Struct.Repo.sign [] p in
-  let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
-  let a = SLF.Strat.fam repo.Struct.Repo.sign [] a in
-  let n = match LF.prj (SLF.Strat.obj repo.Struct.Repo.sign [] n) with
+  let p = SLF.Strat.obj repo.sign [] p in
+  let m = SLF.Strat.obj repo.sign [] m in
+  let a = SLF.Strat.fam repo.sign [] a in
+  let n = match LF.prj (SLF.Strat.obj repo.sign [] n) with
     | LF.OLam (_, n) -> n
     | _ -> assert false in
   let q = LF.Subst.obj [m] n in
   Kernel.Conv.obj repo [] (p, q, a);
   p
+
+let conv repo m n a =
+  let m = SLF.Strat.obj repo.sign [] m in
+  let n = SLF.Strat.obj repo.sign [] n in
+  let a = SLF.Strat.fam repo.sign [] a in
+  Kernel.Conv.obj repo [] (m, n, a)
 
 exception Did_not_fail
 exception Failed of exn

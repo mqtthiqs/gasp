@@ -32,6 +32,40 @@ let repo = Slicer.init <:sign<
 >>
 ;;
 
+Tests.conv repo <<
+  two
+>> <<
+  s (s o)
+>> << nat >>
+;;
+
+
+Tests.conv repo <<
+  plus o two
+>> <<
+  s (s o)
+>> << nat >>
+;;
+
+Tests.conv repo <<
+  plus two o
+>> <<
+  s (s o)
+>> << nat >>
+;;
+
+Tests.conv repo <<
+  plus two two
+>> <<
+  s (s (s (s o)))
+>>
+;;
+
+Tests.commit repo <<
+  plus two two
+>>
+;;
+
 Tests.commit_eq repo <<
   eval (enat o)
 >> <<
