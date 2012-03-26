@@ -147,7 +147,7 @@ module Conv = struct
     let e = Env.names_of env in
     Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" SLF.Printer.env env (SLF.Printer.efam e) a1 (SLF.Printer.efam e) a2;
     let r = fam' repo env (a1, a2) in
-    Debug.close "conv_fam";
+    Debug.close "conv fam";
     r
 
 end

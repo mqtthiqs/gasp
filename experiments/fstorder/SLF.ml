@@ -358,20 +358,20 @@ end = struct
 
   open Util
 
-  let rec obj env = LF.prj @> function
-    | LF.OLam (x, m) -> Lam (x, obj (x :: env) m)
-    | LF.OApp (h, l) -> List.fold_left
-      (fun t m -> App (t, obj env m)
-      ) (Ident (head env h)) l
-    | LF.OMeta (x, s) -> Meta (Meta.repr x, List.map (obj env) s)
-
-  and head env = function
+  let head env = function
     | LF.HConst c -> OConst.repr c
     | LF.HVar x ->
       try match List.nth env x with
         | Some x -> x
         | None -> "_UNNAMED_"^(string_of_int x)
       with Failure "nth" -> "_UNBOUND_"^(string_of_int x)
+
+  let rec obj env = LF.prj @> function
+    | LF.OLam (x, m) -> Lam (x, obj (x :: env) m)
+    | LF.OApp (h, l) -> List.fold_left
+      (fun t m -> App (t, obj env m)
+      ) (Ident (head env h)) l
+    | LF.OMeta (x, s) -> Meta (Meta.repr x, List.map (obj env) s)
 
   let rec fam env = function
     | LF.FApp (f, l) -> List.fold_left
@@ -407,8 +407,8 @@ end
 
 module Printer = struct
 
-  open Print
   open Format
+  open Print
 
   let str fmt s = fprintf fmt "%s" s
 
@@ -420,7 +420,7 @@ module Printer = struct
 
   let term pp fmt = function
     | Meta (x, []) -> fprintf fmt "?%s" x
-    | Meta (x, s) -> fprintf fmt "?%s[%a]" x (list_rev comma (pp (<=))) s
+    | Meta (x, s) -> fprintf fmt "?%s[@[%a@]]" x (list_rev semi (pp (fun _ _ -> true))) s
     | Ident x -> str fmt x
     | Prod (None, a, b) -> fprintf fmt "@[<hov 2>%a@ ->@ %a@]" (pp (<)) a (pp (<=)) b
     | Prod (Some x,a,b) -> fprintf fmt "@[<hov 2>@[<h>{%a@ :@ %a}@]@ %a@]"
