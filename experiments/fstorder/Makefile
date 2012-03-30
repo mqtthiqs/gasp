@@ -2,7 +2,7 @@ TARGET=gasp
 
 .PHONY: all clean
 
-OCAMLBUILD_OPT=-use-ocamlfind -classic-display -j 5
+OCAMLBUILD_OPT=-use-ocamlfind -classic-display #-j 5
 OCAMLBUILD=ocamlbuild ${OCAMLBUILD_OPT}
 
 all: ${TARGET}
@@ -16,5 +16,5 @@ clean:
 %:
 	@$(OCAMLBUILD) $@
 
-test:
+check:
 	@${OCAMLBUILD} tests.otarget
