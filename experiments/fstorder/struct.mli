@@ -20,7 +20,7 @@ module rec Repo : sig
   type t = {
     sign: Sign.t;
     ctx: Context.t;
-    head: Meta.t;
+    head: Meta.t * subst;
   }
 
   val empty : t

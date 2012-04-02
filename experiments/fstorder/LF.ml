@@ -136,7 +136,7 @@ module Util = struct
   let rec map_meta f = prj @> begin function
     | OApp (h, l) -> OApp (h, List.map (map_meta f) l)
     | OLam (x, m) -> OLam (x, map_meta f m)
-    | OMeta (x, s) -> prj @@ f x s
+    | OMeta (x, s) -> prj @@ f (x, s)
   end @> inj
 
   let fv m =

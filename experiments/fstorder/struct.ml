@@ -61,7 +61,7 @@ and Repo : sig
   type t = {
     sign: Sign.t;
     ctx: Context.t;
-    head: Meta.t;
+    head: Meta.t * subst;
   }
 
   val empty : t
@@ -70,10 +70,10 @@ end = struct
   type t = {
     sign: Sign.t;
     ctx: Context.t;
-    head: Meta.t;
+    head: Meta.t * subst;
   }
 
-  let empty = {sign = Sign.empty; ctx = Context.empty; head = Meta.make "DUMMY"}
+  let empty = {sign = Sign.empty; ctx = Context.empty; head = Meta.make "DUMMY", []}
 
   module Printer = struct
   end

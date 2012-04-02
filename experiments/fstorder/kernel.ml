@@ -11,14 +11,14 @@ exception Non_functional_app of repo * env * spine * fam
 exception Unbound_meta of repo * Meta.t
 
 let pull repo x =
-  let rec aux ctx x s =
+  let rec aux ctx (x, s) =
     let e, m, a =
       try Context.find x ctx
       with Not_found -> raise (Unbound_meta (repo, x)) in
     assert (List.length e = List.length s);
     let m = Subst.obj s m in
     LF.Util.map_meta (aux ctx) m
-  in aux repo.ctx x []
+  in aux repo.ctx x
 
 (* Γ ⊢ σ : Γ'  Γ ⊢ M ≡ M'[σ]  Γ ⊢ A ≡ A'[σ]
  * ———————————————————————————————————————— (Δ minimal for M, σ renaming)
@@ -52,8 +52,8 @@ let push =
     let env, (h, l), a, s = strengthen env (h, l) a in
     let repo = { repo with
       ctx = Context.add x (env, mkApp (h, l), a) repo.ctx;
-      head = x } in
-    repo, s
+      head = x, s } in
+    repo
 
 let is_defined repo c = match Sign.ofind c repo.sign with
   | _, Sign.Defined f -> true
@@ -239,8 +239,8 @@ module Check = struct
          *)
       | Sign.Sliceable ->
         let repo, l, a = spine repo env (l, a) in
-        let repo, s = push repo env (h, l) a in
-        repo, mkMeta (repo.head, s), a
+        let repo = push repo env (h, l) a in
+        repo, mkMeta (repo.head), a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
        * ——————————————————————————————————————— (h non sliceable)
@@ -333,11 +333,12 @@ let push repo env (h, l) =
   let repo, m, a = Check.app repo env (h, l) in
   match prj m with
     | OApp (h, l) -> push repo env (h, l) a
-    | OMeta (x, s) -> {repo with head = x}, s
+    | OMeta (x, s) -> {repo with head = x, s}
     | OLam _ -> assert false
+
 let push repo env (h, l) =
   let e = Env.names_of env in
   Debug.log_open "push" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h, l));
-  let repo, s = push repo env (h, l) in
+  let repo = push repo env (h, l) in
   Debug.log_close "push" "%a = %a" (SLF.Printer.eobj e) (mkApp(h, l)) SLF.Printer.repo_light repo;
-  repo, s
+  repo

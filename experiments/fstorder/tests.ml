@@ -5,7 +5,8 @@ open Struct.Repo
 
 let commit repo m =
   let repo = Slicer.commit repo [] m in
-  let _, _, a = Context.find repo.head repo.ctx in
+  let _, _, a = Context.find (fst repo.head) repo.ctx in
+  let a = LF.Subst.fam (snd repo.head) a in
   let m = Strat.obj repo.sign [] m in
   let n = Strat.obj repo.sign [] (Slicer.checkout repo) in
   Kernel.Conv.obj repo [] (m, n, a);
@@ -13,7 +14,8 @@ let commit repo m =
 
 let commit_eq repo m p =
   let repo = Slicer.commit repo [] m in
-  let _, _, a = Context.find repo.head repo.ctx in
+  let _, _, a = Context.find (fst repo.head) repo.ctx in
+  let a = LF.Subst.fam (snd repo.head) a in
   let m = Strat.obj repo.sign [] m in
   let p = Strat.obj repo.sign [] p in
   let n = Strat.obj repo.sign [] (Slicer.checkout repo) in
