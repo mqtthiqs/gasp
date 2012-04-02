@@ -1,7 +1,8 @@
 #load "dynlink.cma"
 #load "camlp4o.cma"
 #directory "_build"
-#load "LF.cma"
+#load "pa_SLF.cma"
+#load "pa_here.cma"
 
 #install_printer SLF.Printer.term
 #install_printer SLF.Printer.sign

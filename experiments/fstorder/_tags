@@ -1,7 +1,9 @@
-<*.ml{,i}> : annot, syntax(camlp4o), package(camlp4)
+<*.ml{,i}> : annot
 
-<SLF.ml{,i}> : package(camlp4.extend, camlp4.quotations, camlp4.metagenerator)
-<slicer.ml> : package(camlp4.quotations), pa(LF.cma)
-<test_*.ml> : package(camlp4.quotations), pa(LF.cma), dep(load.ml), dep(tests.ml)
+<pa_*.ml> : syntax(camlp4o), package(camlp4.extend, camlp4.quotations)
+<slicer.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF)
+
+<tests.ml> : package(camlp4)
+<test_*.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF), dep(load.ml), dep(tests.ml)
 
 <*.{byte,native,top}> : package(camlp4.lib)
