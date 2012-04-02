@@ -45,8 +45,8 @@ end = struct
     | Non_sliceable
     | Defined of (Repo.t -> Env.t -> obj list -> obj)
 
-  module MO = Map.Make(Names.OConst)
-  module MF = Map.Make(Names.FConst)
+  module MO = Map.Make(OConst)
+  module MF = Map.Make(FConst)
 
   type t = (fam * entry_type) MO.t * kind MF.t
   let empty = MO.empty, MF.empty
@@ -61,7 +61,7 @@ and Repo : sig
   type t = {
     sign: Sign.t;
     ctx: Context.t;
-    head: Names.Meta.t;
+    head: Meta.t;
   }
 
   val empty : t
