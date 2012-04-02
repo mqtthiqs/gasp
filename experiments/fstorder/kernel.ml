@@ -104,7 +104,12 @@ module Conv = struct
     | _ -> failwith "subst"
 
   and obj' repo env (m1, m2, a) = match prj m1, prj m2, a with
-    | OLam (_, m1), OLam (_,m2), FProd (x, a, b) -> obj repo (Env.add x a env) (m1, m2, b)
+    | OLam (x, m1), OLam (y,m2), FProd (z, a, b) ->
+        let x = match x, y, z with
+          | None, None, Some _ -> z
+          | None, Some _, _ -> y
+          | _ -> x in
+        obj repo (Env.add x a env) (m1, m2, b)
     | OApp (HConst c, l), _, a when is_defined repo c -> obj repo env (interpret repo env c l, m2, a)
     | _, OApp (HConst c, l), a when is_defined repo c-> obj repo env (m1, interpret repo env c l, a)
     | OApp (h1, l1), OApp (h2, l2), c ->
@@ -133,7 +138,6 @@ module Conv = struct
     let r = obj' repo env (m1, m2, a) in
     Debug.close "conv obj";
     r
-
 
   and fam' repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
@@ -172,7 +176,7 @@ module Check = struct
      *)
     | OLam (x, m), FProd (y, a, b) ->
       let x = match x, y with
-        | None, Some _ -> x
+        | None, Some _ -> y
         | _ -> x in
       let repo, m = obj repo (Env.add x a env) (m, b) in
       repo, mkLam (x, m)
@@ -326,11 +330,14 @@ let rec init repo = function
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
 
 let push repo env (h, l) =
-  let e = Env.names_of env in
-  Debug.log_open "push" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h, l));
   let repo, m, a = Check.app repo env (h, l) in
-  Debug.log_close "push" "%a = %a in %a" (SLF.Printer.eobj e) (mkApp(h, l)) SLF.Printer.obj m SLF.Printer.repo_light repo;
   match prj m with
     | OApp (h, l) -> push repo env (h, l) a
     | OMeta (x, s) -> {repo with head = x}, s
     | OLam _ -> assert false
+let push repo env (h, l) =
+  let e = Env.names_of env in
+  Debug.log_open "push" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h, l));
+  let repo, s = push repo env (h, l) in
+  Debug.log_close "push" "%a = %a" (SLF.Printer.eobj e) (mkApp(h, l)) SLF.Printer.repo_light repo;
+  repo, s
