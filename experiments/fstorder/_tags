@@ -4,6 +4,7 @@
 <slicer.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF)
 
 <tests.ml> : package(camlp4)
-<test_*.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF), dep(load.ml), dep(tests.ml)
+<test_*.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF), pa(here), \
+              dep(load.ml), dep(tests.ml)
 
 <*.{byte,native,top}> : package(camlp4.lib)
