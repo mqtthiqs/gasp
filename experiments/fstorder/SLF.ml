@@ -362,7 +362,7 @@ end = struct
     | LF.HConst c -> OConst.repr c
     | LF.HVar x ->
       try match List.nth env x with
-        | Some x -> x
+        | Some n -> n
         | None -> "_UNNAMED_"^(string_of_int x)
       with Failure "nth" -> "_UNBOUND_"^(string_of_int x)
 

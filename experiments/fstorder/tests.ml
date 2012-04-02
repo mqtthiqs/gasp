@@ -1,3 +1,4 @@
+open Util
 open SLF
 open Struct
 open Struct.Repo
@@ -37,6 +38,11 @@ let conv repo m n a =
   let n = SLF.Strat.obj repo.sign [] n in
   let a = SLF.Strat.fam repo.sign [] a in
   Kernel.Conv.obj repo [] (m, n, a)
+
+let match_failure loc repo env m =
+  Debug.flush();
+  Format.eprintf "Match failure: %a ⊢ %a in %a@." SLF.Printer.env env (SLF.Printer.term) m SLF.Printer.repo_light repo;
+  raise (Match_failure(Camlp4.PreCast.Loc.(file_name loc, start_line loc, start_bol loc)))
 
 exception Did_not_fail
 exception Failed of exn
