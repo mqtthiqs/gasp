@@ -50,16 +50,6 @@ module List = struct
 
 end
 
-let (@@) a b = a b
-let (<@) f g x = f (g x)
-let (@>) f g x = g (f x)
-
-let id x = x
-
-type ('a, 'b) union =
-  | Inl of 'a
-  | Inr of 'b
-
 module Prod = struct
 
   let map f g = fun (x, y) -> f x, g y
@@ -121,15 +111,19 @@ module Debug = struct
       stack := pop tag !stack;
       pp_close_box formatter ()
 
+  let flush = pp_print_newline formatter
+
 end
 
+let (@@) a b = a b
+let (<@) f g x = f (g x)
+let (@>) f g x = g (f x)
 
+let id x = x
 
-
-
-
-
-
+type ('a, 'b) union =
+  | Inl of 'a
+  | Inr of 'b
 
 
 
