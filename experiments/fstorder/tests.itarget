@@ -2,4 +2,5 @@ test_stlc.log
 test_fo.log
 test_subst.log
 test_defined.log
+test_uneval.log
 test_check.log
