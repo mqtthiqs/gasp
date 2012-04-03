@@ -59,4 +59,13 @@ Tests.commit repo
 >>
 ;;
 
+(* This should be no work at all *)
+Tests.commit repo
+<<
+  infer (get (lam [x] x)
+           (ex (lam [x] x) (arr base base)
+              (is_lam ([x] x) base base ([_] [H] H))))
+>>
+;;
+
 42
