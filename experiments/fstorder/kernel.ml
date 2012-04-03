@@ -264,8 +264,8 @@ module Check = struct
        *)
       | Sign.Defined f ->
         (* check that arguments of this constants are well-typed *)
-        let repo, l, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
-        (* evaluate it *)
+        let repo, _, a = spine repo env (l, a) in
+        (* evaluate it with the unreduced arguments *)
         let m = eval repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
