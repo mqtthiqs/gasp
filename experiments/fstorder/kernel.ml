@@ -346,3 +346,21 @@ let push repo env (h, l) =
   let repo = push repo env (h, l) in
   Debug.log_close "push" "%a = %a" (SLF.Printer.eobj e) (mkApp(h, l)) SLF.Printer.repo_light repo;
   repo
+
+let eval repo env = SLF.Strat.obj repo.sign (Env.names_of env) @> prj @> function
+  | OMeta (x, s) ->
+      let e, m, _ =
+        try Context.find x repo.ctx
+        with Not_found -> raise (Unbound_meta (repo, x)) in
+      assert (List.length e = List.length s);
+      SLF.Unstrat.obj (Env.names_of env) (Subst.obj s m)
+  | OApp (h, l) ->
+      let _, e = Check.head repo env h in
+      begin match e with
+        | Sign.Defined f ->
+            (* TODO do we have to check the l? *)
+            let m = f repo env l in
+            SLF.Unstrat.obj (Env.names_of env) m
+        | _ -> assert false
+      end
+  | _ -> assert false

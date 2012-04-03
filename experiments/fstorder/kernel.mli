@@ -11,6 +11,7 @@ exception Unbound_meta of repo * Meta.t
 val push : repo -> env -> head * spine -> repo
 val pull : repo -> Meta.t * subst -> obj
 val init : repo -> SLF.sign -> repo
+val eval : repo -> env -> SLF.term -> SLF.term
 
 (****** debugging only ******)
 module Conv : sig
