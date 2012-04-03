@@ -55,18 +55,13 @@ let push =
       head = x, s } in
     repo
 
-let is_defined repo c = match Sign.ofind c repo.sign with
-  | _, Sign.Defined f -> true
-  | _ -> false
+let eval repo env h f l = f repo env l
 
-let interpret repo env c l = match Sign.ofind c repo.sign with
-  | _, Sign.Defined f ->
-      Debug.log_open "eval conv" "%a" SLF.Printer.obj (mkApp (HConst c, l));
-      let r = f repo env l in
-      Debug.log_close "eval conv" "%a = %a" SLF.Printer.obj (mkApp (HConst c, l)) SLF.Printer.obj r;
-    r
-  | _ -> assert false
-
+let eval repo env h f l =
+  Debug.log_open "eval" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
+  let m = eval repo env h f l in
+  Debug.log_close "eval" "%a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
+  m
 
 module Conv = struct
 
@@ -110,12 +105,6 @@ module Conv = struct
           | None, Some _, _ -> y
           | _ -> x in
         obj repo (Env.add x a env) (m1, m2, b)
-    | OApp (HConst c, l), _, a when is_defined repo c -> obj repo env (interpret repo env c l, m2, a)
-    | _, OApp (HConst c, l), a when is_defined repo c-> obj repo env (m1, interpret repo env c l, a)
-    | OApp (h1, l1), OApp (h2, l2), c ->
-      let a = head repo env (h1, h2) in
-      let a = spine repo env (l1, l2, a) in
-      fam repo env (a, c)
     | OMeta (x1, s1), OMeta (x2, s2), a when Meta.compare x1 x2 = 0 ->
       let e, _, a' =
         try Context.find x1 repo.ctx
@@ -130,6 +119,23 @@ module Conv = struct
         Debug.log "subst" "%a %a" SLF.Printer.obj m' SLF.Printer.subst s;
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
+    | OApp (h1, l1), o2, a ->
+        let head_type = function
+          | HVar x -> Sign.Non_sliceable
+          | HConst c -> snd (Sign.ofind c repo.sign) in
+        begin match head_type h1 with
+          | Sign.Defined f -> obj' repo env (eval repo env h1 f l1, m2, a)
+          | Sign.Sliceable | Sign.Non_sliceable ->
+              match o2 with
+                | OMeta _ | OLam _ -> raise (Not_conv_obj (repo, env, m1, m2))
+                | OApp (h2, l2) ->
+                    match head_type h2 with
+                      | Sign.Defined f -> obj' repo env (m1, eval repo env h2 f l2, a)
+                      | Sign.Sliceable | Sign.Non_sliceable ->
+                          let a' = head repo env (h1, h2) in
+                          let a' = spine repo env (l1, l2, a') in
+                          fam repo env (a, a')
+        end
     | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2))
 
   and obj repo env (m1, m2, a) =
@@ -259,10 +265,8 @@ module Check = struct
       | Sign.Defined f ->
         (* check that arguments of this constants are well-typed *)
         let repo, l, a = spine repo env (l, a) in (* TODO et si A dépend du repo ignoré? *)
-        Debug.log_open "eval" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
         (* evaluate it *)
-        let m = f repo env l in
-        Debug.log_close "eval" "%a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
+        let m = eval repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
         repo, m, a
