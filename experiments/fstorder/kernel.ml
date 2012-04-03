@@ -347,6 +347,8 @@ let push repo env (h, l) =
   Debug.log_close "push" "%a = %a" (SLF.Printer.eobj e) (mkApp(h, l)) SLF.Printer.repo_light repo;
   repo
 
+exception Not_evaluable of repo * env * obj
+
 let eval repo env = SLF.Strat.obj repo.sign (Env.names_of env) @> prj @> function
   | OMeta (x, s) ->
       let e, m, _ =
@@ -361,6 +363,6 @@ let eval repo env = SLF.Strat.obj repo.sign (Env.names_of env) @> prj @> functio
             (* TODO do we have to check the l? *)
             let m = f repo env l in
             SLF.Unstrat.obj (Env.names_of env) m
-        | _ -> assert false
+        | _ -> raise (Not_evaluable (repo, env, mkApp(h, l)))
       end
-  | _ -> assert false
+  | m -> raise (Not_evaluable (repo, env, inj m))
