@@ -264,7 +264,7 @@ module Check = struct
        *)
       | Sign.Defined f ->
         (* check that arguments of this constants are well-typed *)
-        let repo, _, a = spine repo env (l, a) in
+        let repo, l, a = spine repo env (l, a) in
         (* evaluate it with the unreduced arguments *)
         let m = eval repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
@@ -366,3 +366,9 @@ let eval repo env = SLF.Strat.obj repo.sign (Env.names_of env) @> prj @> functio
         | _ -> raise (Not_evaluable (repo, env, mkApp(h, l)))
       end
   | m -> raise (Not_evaluable (repo, env, inj m))
+
+let eval repo env t =
+  Debug.log_open "eval" "%a" SLF.Printer.term t;
+  let t = eval repo env t in
+  Debug.log_close "eval" "=> %a" SLF.Printer.term t;
+  t
