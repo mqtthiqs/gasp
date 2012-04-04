@@ -1,6 +1,8 @@
 #use "load.ml"
 ;;
 
+open Util
+
 let equals repo env m n a =
   let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
   let n = SLF.Strat.obj repo.Struct.Repo.sign [] n in
@@ -30,27 +32,25 @@ let repo = Slicer.init
   get : {M : tm} inf M -> tm = $fun m _ -> m$.
 
   infer : {M : tm} inf M = $ fun m ->
-    let rec f = function
+    Debug.log_open "infer" "%a" SLF.Printer.term m;
+    let r = match m rec Kernel.eval repo env with
       | << lam $a$ $m$ >> ->
-          let rec f = function
+          begin match infer << $m$ (get x (ex x $a$ h)) >> rec Kernel.eval repo env with
             | << [$x$] [$h$] ex $_$ $b$ $d$ >> ->
                 << is_lam ([$x$] $m$) $a$ $b$ ([$x$] [$h$] $d$) >>
-            | default -> f (Kernel.eval repo env default)
-          in f (infer << $m$ (get x (ex x $a$ h)) >>)
+          end
       | << app $m$ $n$ >> ->
-          let rec f = function
+          begin match infer m rec Kernel.eval repo env with
             | << ex $_$ (arr $a$ $b$) $d1$ >> ->
-                let rec f = function
+                match infer n rec Kernel.eval repo env with
                   | << ex $_$ $a'$ $d2$ >> ->
                       equals repo [] a a' << tp >>;
                       << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
-                  | default -> f (Kernel.eval repo env default)
-                in f (infer n)
-            | default -> f (Kernel.eval repo env default)
-          in f (infer m)
+          end
       | << get $x$ (ex $_$ $a$ $h$) >> -> h
-      | default -> f (Kernel.eval repo env default)
-    in f m
+    in
+    Debug.log_open "infer" "=> %a" SLF.Printer.term m;
+    r
   $.
 
 >>

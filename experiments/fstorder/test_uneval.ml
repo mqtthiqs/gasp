@@ -7,20 +7,16 @@ let repo = Slicer.init <:sign<
   s : nat -> nat.
 
   pred : nat -> nat = $ fun x ->
-    let rec f = function
+    match x rec Kernel.eval repo env with
       | << o >> -> << o >>
       | << s $n$ >> -> n
-      | default -> f (Kernel.eval repo env default)
-    in f x
   $.
 
   f : nat -> nat = $ fun x ->
-    let rec f = function
+    match x rec Kernel.eval repo env with
       | << pred $n$ >> -> << o >>
       | << o >> -> << o >>
       | << s $n$ >> -> << s $n$ >>
-      | default -> f (Kernel.eval repo env default)
-    in f x
   $.
 
 >>
