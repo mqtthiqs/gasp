@@ -31,7 +31,7 @@ module rec Strat : sig
   val fam : Struct.sign -> binder list -> term -> LF.fam
   val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
-  val env : Struct.sign -> (binder * term) list -> env
+  val env : Struct.sign -> Struct.env -> (binder * term) list -> env
 end = struct
 
   open Util
@@ -98,10 +98,10 @@ end = struct
     | Non_sliceable -> Sign.Non_sliceable
     | Defined f -> Sign.Defined (fn f)
 
-  let rec env sign = function
-    | [] -> []
+  let rec env sign e0 = function
+    | [] -> e0
     | (x, t) :: e ->
-      let e = env sign e in
+      let e = env sign e0 e in
       (x, fam sign (Env.names_of e) t) :: e
 
 end

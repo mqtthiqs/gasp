@@ -48,7 +48,7 @@ module Strat : sig
   val fam : Struct.sign -> binder list -> term -> LF.fam
   val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
-  val env : Struct.sign -> (binder * term) list -> env
+  val env : Struct.sign -> Struct.env -> (binder * term) list -> env
 end
 
 module Unstrat : sig
@@ -57,4 +57,3 @@ module Unstrat : sig
   val kind : binder list -> LF.kind -> term
   val env : env -> (binder * term) list
 end
-
