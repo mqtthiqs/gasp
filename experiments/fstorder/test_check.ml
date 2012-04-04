@@ -7,11 +7,6 @@ let equals repo env m n a =
   let a = SLF.Strat.fam repo.Struct.Repo.sign [] a in
   Kernel.Conv.obj repo env (m, n, a)
 
-let reduce repo env m =
-  let env = SLF.Strat.env repo.Struct.Repo.sign env in
-  let repo = Slicer.commit repo env m in
-  Slicer.checkout repo
-
 let repo = Slicer.init
 <:sign<
 
@@ -34,20 +29,28 @@ let repo = Slicer.init
 
   get : {M : tm} inf M -> tm = $fun m _ -> m$.
 
-  infer : {M : tm} inf M = $ function
-    | << lam $a$ $m$ >> ->
-      begin match reduce repo <:env< x:tm; h:is x $a$ >> << infer ($m$ (get x (ex x $a$ h))) >> with
-        | << [$x$] [$h$] ex $_$ $b$ $d$ >> ->
-          << is_lam ([$x$] $m$) $a$ $b$ ([$x$] [$h$] $d$) >>
-      end
-    | << app $m$ $n$ >> ->
-      begin match reduce repo <:env< >> << infer $m$ >>, reduce repo <:env< >> << infer $n$ >> with
-        | << ex $_$ (arr $a$ $b$) $d1$ >>, << ex $_$ $a'$ $d2$ >> ->
-          equals repo [] a a' << tp >>;
-          << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
-      end
-    | << get $x$ (ex $_$ $a$ $h$) >> -> h
-    | m -> reduce repo <:env< >> m
+  infer : {M : tm} inf M = $ fun m ->
+    let rec f = function
+      | << lam $a$ $m$ >> ->
+          let rec f = function
+            | << [$x$] [$h$] ex $_$ $b$ $d$ >> ->
+                << is_lam ([$x$] $m$) $a$ $b$ ([$x$] [$h$] $d$) >>
+            | default -> f (Kernel.eval repo env default)
+          in f (infer << $m$ (get x (ex x $a$ h)) >>)
+      | << app $m$ $n$ >> ->
+          let rec f = function
+            | << ex $_$ (arr $a$ $b$) $d1$ >> ->
+                let rec f = function
+                  | << ex $_$ $a'$ $d2$ >> ->
+                      equals repo [] a a' << tp >>;
+                      << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
+                  | default -> f (Kernel.eval repo env default)
+                in f (infer n)
+            | default -> f (Kernel.eval repo env default)
+          in f (infer m)
+      | << get $x$ (ex $_$ $a$ $h$) >> -> h
+      | default -> f (Kernel.eval repo env default)
+    in f m
   $.
 
 >>
