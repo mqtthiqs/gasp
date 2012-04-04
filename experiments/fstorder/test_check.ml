@@ -35,21 +35,24 @@ let repo = Slicer.init
     Debug.log_open "infer" "%a" SLF.Printer.term m;
     let r = match m rec Kernel.eval repo env with
       | << lam $a$ $m$ >> ->
-          begin match infer << $m$ (get x (ex x $a$ h)) >> rec Kernel.eval repo env with
-            | << [$x$] [$h$] ex $_$ $b$ $d$ >> ->
-                << is_lam ([$x$] $m$) $a$ $b$ ([$x$] [$h$] $d$) >>
+          let env = SLF.Strat.env repo.Struct.Repo.sign env <:env< x:tm; h:is x $a$ >> in
+          begin match infer repo env << $m$ (get x (ex x $a$ h)) >> rec Kernel.eval repo env with
+            | << ex $_$ $b$ $d$ >> ->
+                << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam ([x] $m$) $a$ $b$ ([x] [h] $d$)) >>
           end
       | << app $m$ $n$ >> ->
-          begin match infer m rec Kernel.eval repo env with
-            | << ex $_$ (arr $a$ $b$) $d1$ >> ->
-                match infer n rec Kernel.eval repo env with
-                  | << ex $_$ $a'$ $d2$ >> ->
-                      equals repo [] a a' << tp >>;
-                      << is_app $m$ $n$ $a$ $b$ $d1$ $d2$ >>
+          begin match infer repo env m rec Kernel.eval repo env with
+            | << ex $_$ $c$ $d1$ >> ->
+                match c rec Kernel.eval repo env with
+                  | << arr $a$ $b$ >> ->
+                      match infer repo env n rec Kernel.eval repo env with
+                        | << ex $_$ $a'$ $d2$ >> ->
+                            equals repo [] a a' << tp >>;
+                            << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
           end
-      | << get $x$ (ex $_$ $a$ $h$) >> -> h
+      | << get $x$ $i$ >> -> i
     in
-    Debug.log_open "infer" "=> %a" SLF.Printer.term m;
+    Debug.log_close "infer" "=> %a" SLF.Printer.term r;
     r
   $.
 
