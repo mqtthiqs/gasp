@@ -1,3 +1,4 @@
+open Util
 
 module ExprParser = struct
 
@@ -60,7 +61,7 @@ module ExprParser = struct
 
   term2:
   [ "simple"
-      [ x = ident -> <:expr< SLF.Ident $str:x$ >>
+      [ x = ident -> <:expr< SLF.Ident (SLF.Id $str:x$) >>
       | "?"; x = ident -> <:expr< SLF.Meta ($str:x$, []) >>
       | "?"; x = ident; "["; s = subst; "]" -> <:expr< SLF.Meta ($str:x$, $s$) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
@@ -144,7 +145,7 @@ module PattParser = struct
 
   binder:
   [ [ x = ident -> <:patt< Some $x$ >>
-    | "_" -> <:patt< None >>
+    | "_" -> <:patt< _ >>
     | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s
     ]
   ];
@@ -171,7 +172,7 @@ module PattParser = struct
 
   term2:
   [ "simple"
-      [ x = ident -> <:patt< SLF.Ident $x$ >>
+      [ x = ident -> <:patt< SLF.Ident (SLF.Id $x$) >>
       | "?"; x = ident -> <:patt< SLF.Meta ($x$, _) >>
       | "?"; x = ident; "["; s = subst; "]" -> <:patt< SLF.Meta ($x$, $s$) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_patt _loc s

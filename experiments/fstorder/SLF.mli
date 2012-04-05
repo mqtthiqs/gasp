@@ -2,12 +2,17 @@ open Struct
 
 type binder = string option
 
+type ident =
+  | Id of string
+  | Unnamed of int
+  | Unbound of int
+
 type term =
   | Type
   | Prod of binder * term * term
   | Lam of binder * term
   | App of term * term
-  | Ident of string
+  | Ident of ident
   | Meta of string * term list
 
 type entry_type =

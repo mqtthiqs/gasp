@@ -4,12 +4,17 @@ open Struct
 
 type binder = string option
 
+type ident =
+  | Id of string
+  | Unnamed of int
+  | Unbound of int
+
 type term =
   | Type
   | Prod of binder * term * term
   | Lam of binder * term
   | App of term * term
-  | Ident of string
+  | Ident of ident
   | Meta of string * term list
 
 type entry_type =
@@ -56,7 +61,9 @@ end = struct
         with Not_found -> failwith ("strat: not found "^FConst.repr x)
 
   let rec app sign env l = function
-    | Ident x -> lookup sign env x l
+    | Ident (Id x) -> lookup sign env x l
+    | Ident (Unnamed n) -> failwith ("strat: unnamed variable "^(string_of_int n))
+    | Ident (Unbound n) -> failwith ("strat: unbound variable "^(string_of_int n))
     | App (t, u) -> app sign env (obj sign env u :: l) t
     | t -> Obj (LF.Subst.spine (obj sign env t) l)
 
@@ -72,7 +79,9 @@ end = struct
         | Obj _, _ -> failwith "strat: prod argument is an obj"
       end
     | App (t, u) -> app sign env [obj sign env u] t
-    | Ident x -> lookup sign env x []
+    | Ident (Id x) -> lookup sign env x []
+    | Ident (Unnamed n) -> failwith ("strat: unnamed variable "^(string_of_int n))
+    | Ident (Unbound n) -> failwith ("strat: unbound variable "^(string_of_int n))
     | Meta (x, s) ->
       let s = List.map (obj sign env) s in
       Obj (LF.mkMeta (Meta.make x, s))
@@ -118,12 +127,12 @@ end = struct
   open Util
 
   let head env = function
-    | LF.HConst c -> OConst.repr c
+    | LF.HConst c -> Id (OConst.repr c)
     | LF.HVar x ->
       try match List.nth env x with
-        | Some n -> n
-        | None -> "_UNNAMED_"^(string_of_int x)
-      with Failure "nth" -> "_UNBOUND_"^(string_of_int x)
+        | Some s -> Id s
+        | None -> Unnamed x
+      with Failure "nth" -> Unbound x
 
   let rec obj env = LF.prj @> function
     | LF.OLam (x, m) -> Lam (x, obj (x :: env) m)
@@ -135,7 +144,7 @@ end = struct
   let rec fam env = function
     | LF.FApp (f, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
-      ) (Ident (FConst.repr f)) l
+      ) (Ident (Id (FConst.repr f))) l
     | LF.FProd (x, a, b) -> Prod (x, fam env a, fam (x :: env) b)
 
   let rec kind env = function
@@ -177,10 +186,15 @@ module Printer = struct
     | App _ -> 10
     | Prod _ -> 30
 
+  let ident fmt = function
+    | Id s -> str fmt s
+    | Unnamed n -> fprintf fmt "_UNNAMED_%d" n
+    | Unbound n -> fprintf fmt "_UNBOUND_%d" n
+
   let term pp fmt = function
     | Meta (x, []) -> fprintf fmt "?%s" x
     | Meta (x, s) -> fprintf fmt "?%s[@[%a@]]" x (list_rev semi (pp (fun _ _ -> true))) s
-    | Ident x -> str fmt x
+    | Ident x -> ident fmt x
     | Prod (None, a, b) -> fprintf fmt "@[<hov 2>%a@ ->@ %a@]" (pp (<)) a (pp (<=)) b
     | Prod (Some x,a,b) -> fprintf fmt "@[<hov 2>@[<h>{%a@ :@ %a}@]@ %a@]"
 	str x (pp (<=)) a (pp (<=)) b
