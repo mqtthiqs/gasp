@@ -43,7 +43,7 @@ let repo = Slicer.init
     $.
 
   infer : {M : tm} inf M = $ fun m ->
-    Debug.log_open "infer" "%a" SLF.Printer.term m;
+    Debug.log_open "infer" "%a ⊢ %a" SLF.Printer.env env SLF.Printer.term m;
     let r = match m rec Kernel.eval repo env with
       | << lam $a$ $m$ >> ->
           let env = SLF.Strat.env repo.Struct.Repo.sign env <:env< x:tm; h:is x $a$ >> in
