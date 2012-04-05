@@ -60,7 +60,7 @@ let eval repo env h f l = f repo env l
 let eval repo env h f l =
   Debug.log_open "eval" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
   let m = eval repo env h f l in
-  Debug.log_close "eval" "%a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
+  Debug.log_close "eval" "=> %a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
   m
 
 module Conv = struct
@@ -366,6 +366,12 @@ let eval repo env = SLF.Strat.obj repo.sign (Env.names_of env) @> prj @> functio
         | _ -> raise (Not_evaluable (repo, env, mkApp(h, l)))
       end
   | m -> raise (Not_evaluable (repo, env, inj m))
+
+(* TODO: ugly hack! *)
+let eval repo env t =
+  let m = SLF.Strat.obj repo.sign (Env.names_of env) t in
+  let t' = SLF.Unstrat.obj (Env.names_of env) m in
+  if t<>t' then t' else eval repo env t
 
 let eval repo env t =
   Debug.log_open "eval" "%a" SLF.Printer.term t;
