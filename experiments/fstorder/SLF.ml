@@ -126,6 +126,19 @@ end = struct
 
   open Util
 
+  let bound_env (env:Struct.env) x =
+    List.memp (function _, (None, _) -> false | x, (Some y, _) -> x=y) x env
+
+  let bound_names (env:binder list) x =
+    List.memp (function _, None -> false | x, Some y -> x=y) x env
+
+  let rec fresh bound = function
+    | None -> None
+    | Some x ->
+        if bound x
+        then fresh bound (Some (x^"'"))
+        else Some x
+
   let head env = function
     | LF.HConst c -> Id (OConst.repr c)
     | LF.HVar x ->
@@ -135,7 +148,9 @@ end = struct
       with Failure "nth" -> Unbound x
 
   let rec obj env = LF.prj @> function
-    | LF.OLam (x, m) -> Lam (x, obj (x :: env) m)
+    | LF.OLam (x, m) ->
+        let x = fresh (bound_names env) x in
+        Lam (x, obj (x :: env) m)
     | LF.OApp (h, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
       ) (Ident (head env h)) l
@@ -145,11 +160,15 @@ end = struct
     | LF.FApp (f, l) -> List.fold_left
       (fun t m -> App (t, obj env m)
       ) (Ident (Id (FConst.repr f))) l
-    | LF.FProd (x, a, b) -> Prod (x, fam env a, fam (x :: env) b)
+    | LF.FProd (x, a, b) ->
+        let x = fresh (bound_names env) x in
+        Prod (x, fam env a, fam (x :: env) b)
 
   let rec kind env = function
     | LF.KType -> Type
-    | LF.KProd (x, a, b) -> Prod (x, fam env a, kind (x :: env) b)
+    | LF.KProd (x, a, b) ->
+        let x = fresh (bound_names env) x in
+        Prod (x, fam env a, kind (x :: env) b)
 
   let fn s (f : repo -> env -> LF.obj list -> LF.obj) repo env (l : term list) : term =
     let l = List.map (Strat.obj s (Env.names_of env)) l in
@@ -168,7 +187,9 @@ end = struct
 
   let env (e : env) : (binder * term) list =
     let rec aux = function
-      | (x, a) :: e -> (x, fam (List.map fst e) a) :: aux e
+      | (x, a) :: e ->
+        let x = fresh (bound_env e) x in
+        (x, fam (List.map fst e) a) :: aux e
       | [] -> []
     in aux e
 end
