@@ -72,6 +72,12 @@ let repo = Slicer.init
 
 Tests.commit repo
 <<
+  infer (lam base [z] z)
+>>
+;;
+
+Tests.commit repo
+<<
   infer (lam (arr base base) [x] lam base [y] app x y)
 >>
 ;;
@@ -79,9 +85,9 @@ Tests.commit repo
 (* This should be no work at all *)
 Tests.commit repo
 <<
-  infer (get (lam [x] x)
-           (ex (lam [x] x) (arr base base)
-              (is_lam ([x] x) base base ([_] [H] H))))
+  infer (get (lam base [z] z)
+           (ex (lam base [y] y) (arr base base)
+              (is_lam ([t] t) base base ([_] [H] H))))
 >>
 ;;
 
