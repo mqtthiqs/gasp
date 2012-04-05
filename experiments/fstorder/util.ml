@@ -76,7 +76,12 @@ module Debug = struct
     || List.mem "all" !tags
 
   let formatter = formatter_of_out_channel stdout
-  let _ = pp_open_vbox formatter 0
+
+  let flush = pp_print_newline formatter
+
+  let _ =
+    pp_open_vbox formatter 0;
+    at_exit flush
 
   let stack = ref []
 
@@ -111,8 +116,6 @@ module Debug = struct
       stack := pop tag !stack;
       pp_close_box formatter ()
 
-  let flush = pp_print_newline formatter
-
 end
 
 let (@@) a b = a b
@@ -124,13 +127,3 @@ let id x = x
 type ('a, 'b) union =
   | Inl of 'a
   | Inr of 'b
-
-
-
-
-
-
-
-
-
-
