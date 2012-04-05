@@ -60,7 +60,7 @@ let eval repo env h f l = f repo env l
 let eval repo env h f l =
   Debug.log_open "eval" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
   let m = eval repo env h f l in
-  Debug.log_close "eval" "=> %a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) SLF.Printer.obj m;
+  Debug.log_close "eval" "=> %a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) (SLF.Printer.eobj (Env.names_of env)) m;
   m
 
 module Conv = struct

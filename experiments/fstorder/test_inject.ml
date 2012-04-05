@@ -17,6 +17,8 @@ let repo = Slicer.init
       | << lam $m$ >> -> << $m$ $n$ >>
       $.
 
+  omega : tm -> tm = $ fun m -> omega repo env m $.
+
   eta_exp : tm -> tm = $ fun m -> << lam [x] app $m$ x >> $.
 
 >>
@@ -70,12 +72,12 @@ Tests.commit_eq repo
 >>
 ;;
 
+Tests.commit_eq repo
+<<
+  lam [f] (eta_exp (eta_exp f))
+>> <<
+  lam [f] (lam [x] app (lam [y] app f y) x)
+>>
+;;
+
 42
-
-
-
-
-
-
-
-
