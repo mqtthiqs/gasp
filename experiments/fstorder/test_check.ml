@@ -3,14 +3,11 @@
 
 open Util
 
-let equals repo env m n a =
-  let m = SLF.Strat.obj repo.Struct.Repo.sign [] m in
-  let n = SLF.Strat.obj repo.Struct.Repo.sign [] n in
-  let a = SLF.Strat.fam repo.Struct.Repo.sign [] a in
-  Kernel.Conv.obj repo env (m, n, a)
-
 let repo = Slicer.init
 <:sign<
+
+  unit : type.
+  one : unit.
 
   tp : type.
   #base : tp.
@@ -29,7 +26,21 @@ let repo = Slicer.init
   inf : tm -> type.
   ex : {M : tm} {A : tp} {H : is M A} inf M.
 
-  get : {M : tm} inf M -> tm = $fun m _ -> m$.
+  get : {M : tm} inf M -> tm = $ fun m _ -> m $.
+
+  equals : tp -> tp -> unit = $ fun a b ->
+    match a rec Kernel.eval repo env with
+      | << base >> ->
+          begin match b rec Kernel.eval repo env with
+            | << base >> -> << unit >>
+            | << arr $_$ $_$ >> -> failwith "types not equal"
+          end
+      | << arr $a1$ $a2$ >> ->
+          begin match b rec Kernel.eval repo env with
+            | << arr $b1$ $b2$ >> -> ignore (equals repo env a1 a2); equals repo env b1 b2
+            | << base >> -> failwith "types not equal"
+          end
+    $.
 
   infer : {M : tm} inf M = $ fun m ->
     Debug.log_open "infer" "%a" SLF.Printer.term m;
@@ -38,7 +49,7 @@ let repo = Slicer.init
           let env = SLF.Strat.env repo.Struct.Repo.sign env <:env< x:tm; h:is x $a$ >> in
           begin match infer repo env << $m$ (get x (ex x $a$ h)) >> rec Kernel.eval repo env with
             | << ex $_$ $b$ $d$ >> ->
-                << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam ([x] $m$) $a$ $b$ ([x] [h] $d$)) >>
+                << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
           end
       | << app $m$ $n$ >> ->
           begin match infer repo env m rec Kernel.eval repo env with
@@ -47,7 +58,7 @@ let repo = Slicer.init
                   | << arr $a$ $b$ >> ->
                       match infer repo env n rec Kernel.eval repo env with
                         | << ex $_$ $a'$ $d2$ >> ->
-                            equals repo [] a a' << tp >>;
+                            ignore (equals repo env a a');
                             << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
           end
       | << get $x$ $i$ >> -> i
