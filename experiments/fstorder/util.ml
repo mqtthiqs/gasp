@@ -8,6 +8,9 @@ module List = struct
       | x :: xs -> if p x then i else aux (i+1) xs
     in aux 0
 
+  let rec memp p x = function
+    | [] -> false
+    | a::l -> p (x, a) || memp p x l
 
   let fold_map f init xs =
   let acc, ys = List.fold_left
@@ -47,6 +50,36 @@ module List = struct
         xs, succ s
       | _ -> failwith "drop"
     in fst (aux 0 (xs, is))
+
+end
+
+module String = struct
+  include String
+
+  let subscript_of_char = function
+    | '0' -> "₀"
+    | '1' -> "₁"
+    | '2' -> "₂"
+    | '3' -> "₃"
+    | '4' -> "₄"
+    | '5' -> "₅"
+    | '6' -> "₆"
+    | '7' -> "₇"
+    | '8' -> "₈"
+    | '9' -> "₉"
+    | _ -> invalid_arg "subscript_of_char"
+
+  let subscript_of_int n =
+    let s = string_of_int n in
+    let rec loop i =
+      try
+        let x = subscript_of_char (String.get s i) in
+        x ^ loop (succ i)
+      with Invalid_argument _ -> ""
+    in loop 0
+  ;;
+
+  subscript_of_int 42;;
 
 end
 
