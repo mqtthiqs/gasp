@@ -109,6 +109,7 @@ module Debug = struct
     || List.mem "all" !tags
 
   let formatter = formatter_of_out_channel stdout
+  let formatter = std_formatter
 
   let flush = pp_print_newline formatter
 
