@@ -133,16 +133,16 @@ Tests.commit_eq repo
 << lam [x] x >>
 ;;
 
-Tests.commit_eq repo
-<< lam [a] vars (lam [b] app a b) >>
-<< lam [a] lam [b] app a b >>
-;;
-
 (* Fails here *)
 
 Tests.commit_eq repo
 << vars (lam [a] lam [b] a) >>
 << lam [a] lam [b] a >>
+;;
+
+Tests.commit_eq repo
+<< lam [a] vars (lam [b] app a b) >>
+<< lam [a] lam [b] app a b >>
 ;;
 
 Tests.commit_eq repo
@@ -154,7 +154,7 @@ Tests.commit_eq repo
 <<
   vars (lam [a] lam [b] app a b)
 >> <<
-  lam [f] lam [x] app (s f) (s x)
+  lam [f] lam [x] app f x
 >>
 ;;
 
