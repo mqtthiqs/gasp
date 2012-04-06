@@ -48,22 +48,24 @@ end = struct
     | Fam of LF.fam
     | Obj of LF.obj
 
-  let lookup sign names x l =
-    try let i = List.index ((=) (Some x)) names in
-        Obj (LF.mkApp (LF.HVar i, l))
-    with Not_found ->
-      try let x = OConst.make x in
-          ignore (Sign.ofind x sign);
-          Obj (LF.mkApp (LF.HConst x, l))
-      with Not_found ->
-        let x = FConst.make x in
-        try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
-        with Not_found -> failwith ("strat: not found "^FConst.repr x)
+  let lookup sign names l = function
+    | Id x ->
+        begin try let i = List.index ((=) (Some x)) names in
+                  Obj (LF.mkApp (LF.HVar i, l))
+          with Not_found ->
+            try let x = OConst.make x in
+                ignore (Sign.ofind x sign);
+                Obj (LF.mkApp (LF.HConst x, l))
+            with Not_found ->
+              let x = FConst.make x in
+              try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
+              with Not_found -> failwith ("strat: not found "^FConst.repr x)
+        end
+    | Unnamed n -> failwith ("strat: unnamed variable "^(string_of_int n))
+    | Unbound n -> failwith ("strat: unbound variable "^(string_of_int n))
 
   let rec app sign env l = function
-    | Ident (Id x) -> lookup sign env x l
-    | Ident (Unnamed n) -> failwith ("strat: unnamed variable "^(string_of_int n))
-    | Ident (Unbound n) -> failwith ("strat: unbound variable "^(string_of_int n))
+    | Ident x -> lookup sign env l x
     | App (t, u) -> app sign env (obj sign env u :: l) t
     | t -> Obj (LF.Subst.spine (obj sign env t) l)
 
@@ -79,9 +81,7 @@ end = struct
         | Obj _, _ -> failwith "strat: prod argument is an obj"
       end
     | App (t, u) -> app sign env [obj sign env u] t
-    | Ident (Id x) -> lookup sign env x []
-    | Ident (Unnamed n) -> failwith ("strat: unnamed variable "^(string_of_int n))
-    | Ident (Unbound n) -> failwith ("strat: unbound variable "^(string_of_int n))
+    | Ident x -> lookup sign env [] x
     | Meta (x, s) ->
       let s = List.map (obj sign env) s in
       Obj (LF.mkMeta (Meta.make x, s))
