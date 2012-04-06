@@ -47,12 +47,13 @@ let repo = Slicer.init
     let r = match m rec Kernel.eval repo env with
       | << lam $a$ $m$ >> ->
           let env = SLF.Strat.env repo.Struct.Repo.sign env <:env< x:tm; h:is x $a$ >> in
+          (* TODO essayer sans appel récursif *)
           begin match infer repo env << $m$ (get x (ex x $a$ h)) >> rec Kernel.eval repo env with
             | << ex $_$ $b$ $d$ >> ->
                 << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
           end
       | << app $m$ $n$ >> ->
-          begin match infer repo env m rec Kernel.eval repo env with
+          begin match << infer $m$ >> rec Kernel.eval repo env with
             | << ex $_$ $c$ $d1$ >> ->
                 match c rec Kernel.eval repo env with
                   | << arr $a$ $b$ >> ->

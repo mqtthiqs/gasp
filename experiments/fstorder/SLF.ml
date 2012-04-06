@@ -48,8 +48,8 @@ end = struct
     | Fam of LF.fam
     | Obj of LF.obj
 
-  let lookup sign env x l =
-    try let i = List.index ((=) (Some x)) env in
+  let lookup sign names x l =
+    try let i = List.index ((=) (Some x)) names in
         Obj (LF.mkApp (LF.HVar i, l))
     with Not_found ->
       try let x = OConst.make x in
@@ -139,36 +139,36 @@ end = struct
         then fresh bound (Some (x^"'"))
         else Some x
 
-  let head env = function
+  let head names = function
     | LF.HConst c -> Id (OConst.repr c)
     | LF.HVar x ->
-      try match List.nth env x with
+      try match List.nth names x with
         | Some s -> Id s
         | None -> Unnamed x
       with Failure "nth" -> Unbound x
 
-  let rec obj env = LF.prj @> function
+  let rec obj names = LF.prj @> function
     | LF.OLam (x, m) ->
-        let x = fresh (bound_names env) x in
-        Lam (x, obj (x :: env) m)
+        let x = fresh (bound_names names) x in
+        Lam (x, obj (x :: names) m)
     | LF.OApp (h, l) -> List.fold_left
-      (fun t m -> App (t, obj env m)
-      ) (Ident (head env h)) l
-    | LF.OMeta (x, s) -> Meta (Meta.repr x, List.map (obj env) s)
+      (fun t m -> App (t, obj names m)
+      ) (Ident (head names h)) l
+    | LF.OMeta (x, s) -> Meta (Meta.repr x, List.map (obj names) s)
 
-  let rec fam env = function
+  let rec fam names = function
     | LF.FApp (f, l) -> List.fold_left
-      (fun t m -> App (t, obj env m)
+      (fun t m -> App (t, obj names m)
       ) (Ident (Id (FConst.repr f))) l
     | LF.FProd (x, a, b) ->
-        let x = fresh (bound_names env) x in
-        Prod (x, fam env a, fam (x :: env) b)
+        let x = fresh (bound_names names) x in
+        Prod (x, fam names a, fam (x :: names) b)
 
-  let rec kind env = function
+  let rec kind names = function
     | LF.KType -> Type
     | LF.KProd (x, a, b) ->
-        let x = fresh (bound_names env) x in
-        Prod (x, fam env a, kind (x :: env) b)
+        let x = fresh (bound_names names) x in
+        Prod (x, fam names a, kind (x :: names) b)
 
   let fn s (f : repo -> env -> LF.obj list -> LF.obj) repo env (l : term list) : term =
     let l = List.map (Strat.obj s (Env.names_of env)) l in

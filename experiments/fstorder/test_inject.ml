@@ -23,7 +23,7 @@ let repo = Slicer.init
 
   vars : tm -> tm = $ fun m ->
     match m rec Kernel.eval repo env with
-      | << lam $m$ >> -> << lam [x] (vars ($m$ x)) >>
+      | << lam $m$ >> -> << lam [x] vars ($m$ x) >>
       | << app $m$ $n$ >> -> << app (vars $m$) (vars $n$) >>
       | << $id:x$ >> -> << $id:x$ >>
   $.
