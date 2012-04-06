@@ -160,3 +160,5 @@ let id x = x
 type ('a, 'b) union =
   | Inl of 'a
   | Inr of 'b
+
+exception Located of Camlp4.PreCast.Loc.t * exn
