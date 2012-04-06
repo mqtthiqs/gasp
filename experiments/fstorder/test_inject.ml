@@ -10,8 +10,6 @@ let repo = Slicer.init
   lam : (tm -> tm) -> tm.
   app : tm -> tm -> tm.
 
-  s : tm -> tm.
-
   subst : (tm -> tm) -> tm -> tm = $ fun m n -> << $m$ $n$ >> $.
 
   subst2 : tm -> tm -> tm = $ fun m n ->
@@ -25,9 +23,16 @@ let repo = Slicer.init
 
   vars : tm -> tm = $ fun m ->
     match m rec Kernel.eval repo env with
+      | << lam $m$ >> -> << lam [x] (vars ($m$ x)) >>
       | << app $m$ $n$ >> -> << app (vars $m$) (vars $n$) >>
-      | << lam $m$ >> -> << lam [x] (vars ($m$ (s x))) >>
-      | << s $id:x$ >> -> << s $id:x$ >>
+      | << $id:x$ >> -> << $id:x$ >>
+  $.
+
+  inst : tm -> tm = $ fun m ->
+    match m rec Kernel.eval repo env with
+      | << lam $m$ >> -> << inst ($m$ (lam [x] x)) >>
+      | << app $m$ $n$ >> -> << app $m$ $n$ >>
+      | << $id:x$ >> -> << $id:x$ >>
   $.
 
 >>
@@ -83,6 +88,14 @@ Tests.commit_eq repo
 
 Tests.commit_eq repo
 <<
+  lam [f] (eta_exp (app f f))
+>> <<
+  lam [f] (lam [x] app (app f f) x)
+>>
+;;
+
+Tests.commit_eq repo
+<<
   lam [f] (eta_exp (eta_exp f))
 >> <<
   lam [f] (lam [x] app (lam [y] app f y) x)
@@ -91,10 +104,60 @@ Tests.commit_eq repo
 
 Tests.commit_eq repo
 <<
-  vars (lam [f] lam [x] app f x)
+  lam [f] (eta_exp (eta_exp (app f f)))
+>> <<
+  lam [f] (lam [x] app (lam [y] app (app f f) y) x)
+>>
+;;
+
+Tests.commit_eq repo
+<<
+  vars (lam [a] a)
+>> <<
+  lam [a] a
+>>
+;;
+
+Tests.commit_eq repo
+<< vars (lam [a] app a a) >>
+<< lam [a] app a a >>
+;;
+
+Tests.commit_eq repo
+<< vars (lam [x] lam [x] app x x) >>
+<< lam [x] lam [x] app x x >>
+;;
+
+Tests.commit_eq repo
+<< lam [a] (vars a) >>
+<< lam [x] x >>
+;;
+
+Tests.commit_eq repo
+<< lam [a] vars (lam [b] app a b) >>
+<< lam [a] lam [b] app a b >>
+;;
+
+(* Fails here *)
+
+Tests.commit_eq repo
+<< vars (lam [a] lam [b] a) >>
+<< lam [a] lam [b] a >>
+;;
+
+Tests.commit_eq repo
+<< lam [x] vars (lam [b] app x b) >>
+<< lam [x] lam [b] app x b >>
+;;
+
+Tests.commit_eq repo
+<<
+  vars (lam [a] lam [b] app a b)
 >> <<
   lam [f] lam [x] app (s f) (s x)
 >>
 ;;
+
+(* TODO: tests inst *)
 
 42
