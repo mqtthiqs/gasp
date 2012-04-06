@@ -50,19 +50,24 @@ end = struct
 
   let lookup sign names l = function
     | Id x ->
-        begin try let i = List.index ((=) (Some x)) names in
-                  Obj (LF.mkApp (LF.HVar i, l))
+        begin
+          try
+            let i = List.index ((=) (Some x)) names in
+            Obj (LF.mkApp (LF.HVar i, l))
           with Not_found ->
-            try let x = OConst.make x in
-                ignore (Sign.ofind x sign);
-                Obj (LF.mkApp (LF.HConst x, l))
+            try
+              let x = OConst.make x in
+              ignore (Sign.ofind x sign);
+              Obj (LF.mkApp (LF.HConst x, l))
             with Not_found ->
               let x = FConst.make x in
               try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
               with Not_found -> failwith ("strat: not found "^FConst.repr x)
         end
-    | Unnamed n -> failwith ("strat: unnamed variable "^(string_of_int n))
-    | Unbound n -> failwith ("strat: unbound variable "^(string_of_int n))
+    | Unnamed i -> failwith ("strat: unnamed variable "^(string_of_int i))
+    | Unbound i ->
+        Debug.log "lookup" "%a ⊢ Unbound %d" (Print.list Print.semi (Print.opt_under Print.str)) names i;
+        Obj (LF.mkApp (LF.HVar (i + List.length names), l))
 
   let rec app sign env l = function
     | Ident x -> lookup sign env l x
@@ -99,14 +104,15 @@ end = struct
     | _ -> failwith "strat: not a kind"
 
   let fn (f : repo -> env -> term list -> term) repo env (l : LF.obj list) : LF.obj =
-    let l = List.map (Unstrat.obj (Env.names_of env)) l in
-    obj repo.Repo.sign (Env.names_of env) (f repo env l)
+    let l = List.map (Unstrat.obj []) l in
+    obj repo.Repo.sign [] (f repo env l)
 
   let entry_type = function
     | Sliceable -> Sign.Sliceable
     | Non_sliceable -> Sign.Non_sliceable
     | Defined f -> Sign.Defined (fn f)
 
+  (* TODO: le names_of? *)
   let rec env sign e0 = function
     | [] -> e0
     | (x, t) :: e ->
@@ -145,7 +151,7 @@ end = struct
       try match List.nth names x with
         | Some s -> Id s
         | None -> Unnamed x
-      with Failure "nth" -> Unbound x
+      with Failure "nth" -> Unbound (x - List.length names)
 
   let rec obj names = LF.prj @> function
     | LF.OLam (x, m) ->
@@ -171,7 +177,7 @@ end = struct
         Prod (x, fam names a, kind (x :: names) b)
 
   let fn s (f : repo -> env -> LF.obj list -> LF.obj) repo env (l : term list) : term =
-    let l = List.map (Strat.obj s (Env.names_of env)) l in
+    let l = List.map (Strat.obj s []) l in
     obj [] (f repo env l)
 
   let entry_type s = function

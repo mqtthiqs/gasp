@@ -349,28 +349,28 @@ let push repo env (h, l) =
 
 exception Not_evaluable of repo * env * obj
 
-let eval repo env = SLF.Strat.obj repo.sign (Env.names_of env) @> prj @> function
+let eval repo env = SLF.Strat.obj repo.sign [] @> prj @> function
   | OMeta (x, s) ->
       let e, m, _ =
         try Context.find x repo.ctx
         with Not_found -> raise (Unbound_meta (repo, x)) in
       assert (List.length e = List.length s);
-      SLF.Unstrat.obj (Env.names_of env) (Subst.obj s m)
+      SLF.Unstrat.obj [] (Subst.obj s m)
   | OApp (h, l) ->
       let _, e = Check.head repo env h in
       begin match e with
         | Sign.Defined f ->
             (* TODO do we have to check the l? *)
             let m = f repo env l in
-            SLF.Unstrat.obj (Env.names_of env) m
+            SLF.Unstrat.obj [] m
         | _ -> raise (Not_evaluable (repo, env, mkApp(h, l)))
       end
   | m -> raise (Not_evaluable (repo, env, inj m))
 
 (* TODO: ugly hack! *)
 let eval repo env t =
-  let m = SLF.Strat.obj repo.sign (Env.names_of env) t in
-  let t' = SLF.Unstrat.obj (Env.names_of env) m in
+  let m = SLF.Strat.obj repo.sign [] t in
+  let t' = SLF.Unstrat.obj [] m in
   if t<>t' then t' else eval repo env t
 
 let eval repo env t =
