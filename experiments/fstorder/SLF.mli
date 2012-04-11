@@ -15,6 +15,8 @@ type term =
   | Ident of ident
   | Meta of string * term list
 
+type lenv = (binder * term) list
+
 type entry_type =
   | Sliceable
   | Non_sliceable
@@ -35,7 +37,7 @@ module Printer : sig
   val env : formatter -> env -> unit
   val esubst : binder list -> formatter -> LF.subst -> unit
   val subst : formatter -> LF.subst -> unit
-  val senv : formatter -> (binder * term) list -> unit
+  val lenv : formatter -> lenv -> unit
   val context : formatter -> Context.t -> unit
   val repo : formatter -> repo -> unit
   val repo_light : formatter -> repo -> unit
@@ -53,12 +55,12 @@ module Strat : sig
   val fam : Struct.sign -> binder list -> term -> LF.fam
   val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
-  val env : Struct.sign -> Struct.env -> (binder * term) list -> env
+  val env : Struct.sign -> Struct.env -> lenv -> env
 end
 
 module Unstrat : sig
   val obj : binder list -> LF.obj -> term
   val fam : binder list -> LF.fam -> term
   val kind : binder list -> LF.kind -> term
-  val env : env -> (binder * term) list
+  val env : env -> lenv
 end

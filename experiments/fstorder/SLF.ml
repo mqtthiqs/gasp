@@ -17,6 +17,8 @@ type term =
   | Ident of ident
   | Meta of string * term list
 
+type lenv = (binder * term) list
+
 type entry_type =
   | Sliceable
   | Non_sliceable
@@ -66,7 +68,7 @@ end = struct
         end
     | Unnamed i -> failwith ("strat: unnamed variable "^(string_of_int i))
     | Unbound i ->
-        Debug.log "lookup" "%a ⊢ Unbound %d" (Print.list Print.semi (Print.opt_under Print.str)) names i;
+        Debug.log "lookup" "%a ⊢ Unbound %d => %d" (Print.list Print.semi (Print.opt_under Print.str)) names i (i + List.length names);
         Obj (LF.mkApp (LF.HVar (i + List.length names), l))
 
   let rec app sign env l = function
@@ -268,7 +270,7 @@ module Printer = struct
     | Some x -> fprintf fmt "%s" x
     | None -> fprintf fmt "_"
 
-  let senv fmt e =
+  let lenv fmt e =
     let rec aux fmt = function
       | [] -> ()
       | [x,a] -> fprintf fmt "@[%a@ :@ %a@]" binder x term a
@@ -276,7 +278,7 @@ module Printer = struct
     in
     Format.fprintf fmt "@[%a@]" aux e
 
-  let env fmt e = senv fmt (Unstrat.env e)
+  let env fmt e = lenv fmt (Unstrat.env e)
 
   let context fmt c =
     fprintf fmt "@[<v>";
