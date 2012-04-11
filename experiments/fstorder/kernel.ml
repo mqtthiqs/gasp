@@ -58,9 +58,9 @@ let push =
 let eval repo env h f l = f repo env l
 
 let eval repo env h f l =
-  Debug.log_open "eval" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
+  Debug.log_open "interp" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
   let m = eval repo env h f l in
-  Debug.log_close "eval" "=> %a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) (SLF.Printer.eobj (Env.names_of env)) m;
+  Debug.log_close "interp" "=> %a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) (SLF.Printer.eobj (Env.names_of env)) m;
   m
 
 module Conv = struct
@@ -349,32 +349,36 @@ let push repo env (h, l) =
 
 exception Not_evaluable of repo * env * obj
 
-let eval repo env = SLF.Strat.obj repo.sign [] @> prj @> function
+let eval repo env lenv =
+  let lnames = List.map fst lenv in
+  SLF.Strat.obj repo.sign lnames @> prj @> function
   | OMeta (x, s) ->
       let e, m, _ =
         try Context.find x repo.ctx
         with Not_found -> raise (Unbound_meta (repo, x)) in
       assert (List.length e = List.length s);
-      SLF.Unstrat.obj [] (Subst.obj s m)
+      SLF.Unstrat.obj lnames (Subst.obj s m)
   | OApp (h, l) ->
+      let env = SLF.Strat.env repo.sign env lenv in
       let _, e = Check.head repo env h in
       begin match e with
         | Sign.Defined f ->
             (* TODO do we have to check the l? *)
             let m = f repo env l in
-            SLF.Unstrat.obj [] m
+            SLF.Unstrat.obj lnames m
         | _ -> raise (Not_evaluable (repo, env, mkApp(h, l)))
       end
   | m -> raise (Not_evaluable (repo, env, inj m))
 
 (* TODO: ugly hack! *)
-let eval repo env t =
-  let m = SLF.Strat.obj repo.sign [] t in
-  let t' = SLF.Unstrat.obj [] m in
-  if t<>t' then t' else eval repo env t
+let eval repo env lenv t =
+  let lnames = List.map fst lenv in
+  let m = SLF.Strat.obj repo.sign lnames t in
+  let t' = SLF.Unstrat.obj lnames m in
+  if t<>t' then t' else eval repo env lenv t
 
-let eval repo env t =
-  Debug.log_open "eval" "%a" SLF.Printer.term t;
-  let t = eval repo env t in
+let eval repo env lenv t =
+  Debug.log_open "eval" "%a; %a ⊢ %a" SLF.Printer.env env SLF.Printer.lenv lenv SLF.Printer.term t;
+  let t = eval repo env lenv t in
   Debug.log_close "eval" "=> %a" SLF.Printer.term t;
   t

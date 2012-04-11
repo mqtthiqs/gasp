@@ -29,14 +29,14 @@ let repo = Slicer.init
   get : {M : tm} inf M -> tm = $ fun m _ -> m $.
 
   equals : tp -> tp -> unit = $ fun a b ->
-    match a rec Kernel.eval repo env with
+    match a rec Kernel.eval repo env [] with
       | << base >> ->
-          begin match b rec Kernel.eval repo env with
+          begin match b rec Kernel.eval repo env [] with
             | << base >> -> << unit >>
             | << arr $_$ $_$ >> -> failwith "types not equal"
           end
       | << arr $a1$ $a2$ >> ->
-          begin match b rec Kernel.eval repo env with
+          begin match b rec Kernel.eval repo env [] with
             | << arr $b1$ $b2$ >> -> ignore (equals repo env a1 a2); equals repo env b1 b2
             | << base >> -> failwith "types not equal"
           end
@@ -44,20 +44,19 @@ let repo = Slicer.init
 
   infer : {M : tm} inf M = $ fun m ->
     Debug.log_open "infer" "%a ⊢ %a" SLF.Printer.env env SLF.Printer.term m;
-    let r = match m rec Kernel.eval repo env with
+    let r = match m rec Kernel.eval repo env [] with
       | << lam $a$ $m$ >> ->
-          let env = SLF.Strat.env repo.Struct.Repo.sign env <:env< x:tm; h:is x $a$ >> in
-          (* TODO essayer sans appel récursif *)
-          begin match infer repo env << $m$ (get x (ex x $a$ h)) >> rec Kernel.eval repo env with
+          begin match << infer ($m$ (get x (ex x $a$ h))) >>
+          rec Kernel.eval repo env <:env< x:tm; h:is x $a$ >> with
             | << ex $_$ $b$ $d$ >> ->
                 << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
           end
       | << app $m$ $n$ >> ->
-          begin match << infer $m$ >> rec Kernel.eval repo env with
+          begin match << infer $m$ >> rec Kernel.eval repo env [] with
             | << ex $_$ $c$ $d1$ >> ->
-                match c rec Kernel.eval repo env with
+                match c rec Kernel.eval repo env [] with
                   | << arr $a$ $b$ >> ->
-                      match infer repo env n rec Kernel.eval repo env with
+                      match infer repo env n rec Kernel.eval repo env [] with
                         | << ex $_$ $a'$ $d2$ >> ->
                             ignore (equals repo env a a');
                             << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
