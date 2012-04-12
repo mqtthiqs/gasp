@@ -4,6 +4,8 @@ open LF
 open Struct
 open Struct.Repo
 
+module P = SLF.Printer
+
 exception Not_conv_obj of repo * env * obj * obj
 exception Not_conv_fam of repo * env * fam * fam
 exception Non_functional_fapp of repo * env * spine
@@ -35,9 +37,9 @@ let strengthen env (h, l) a =
 
 (* let strengthen env (h, l) a = *)
 (*   let e = Env.names_of env in *)
-(*   Debug.log_open "strengthen" "%a ⊢ %a : %a" SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h,l)) (SLF.Printer.efam e) a; *)
+(*   Debug.log_open "strengthen" "%a ⊢ %a : %a" P.env env (P.eobj e) (mkApp(h,l)) (P.efam e) a; *)
 (*   let env', (h, l), a, subst = strengthen env (h, l) a in *)
-(*   Debug.log_close "strengthen" "=> %a ⊢ %a : %a, σ = (%a ⊢ %a)" SLF.Printer.env env' (SLF.Printer.eobj (Env.names_of env')) (mkApp(h,l)) (SLF.Printer.efam (Env.names_of env')) a SLF.Printer.env env (SLF.Printer.esubst (Env.names_of env)) subst; *)
+(*   Debug.log_close "strengthen" "=> %a ⊢ %a : %a, σ = (%a ⊢ %a)" P.env env' (P.eobj (Env.names_of env')) (mkApp(h,l)) (P.efam (Env.names_of env')) a P.env env (P.esubst (Env.names_of env)) subst; *)
 (*   env', (h, l), a, subst *)
 
 (* —————————————————————————————————————— (X fresh)
@@ -58,9 +60,9 @@ let push =
 let interp repo env h f l = f repo env l
 
 let interp repo env h f l =
-  Debug.log_open "interp" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
+  Debug.log_open "interp" "%a ⊢ %a" P.env env (P.eobj (Env.names_of env)) (mkApp (h, l));
   let m = interp repo env h f l in
-  Debug.log_close "interp" "=> %a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) (SLF.Printer.eobj (Env.names_of env)) m;
+  Debug.log_close "interp" "=> %a ⊢ %a = %a" P.env env (P.eobj (Env.names_of env)) (mkApp (h, l)) (P.eobj (Env.names_of env)) m;
   m
 
 module Conv = struct
@@ -116,7 +118,7 @@ module Conv = struct
         try Context.find x repo.ctx
         with Not_found -> raise (Unbound_meta (repo, x)) in
         assert (List.length e = List.length s);
-        Debug.log "subst" "%a %a" SLF.Printer.obj m' SLF.Printer.subst s;
+        Debug.log "subst" "%a %a" P.obj m' P.subst s;
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
     | OApp (h1, l1), o2, a ->
@@ -140,7 +142,7 @@ module Conv = struct
 
   and obj repo env (m1, m2, a) =
     let e = Env.names_of env in
-    Debug.log_open "conv obj" "%a ⊢ %a ≡ %a : %a" SLF.Printer.env env (SLF.Printer.eobj e) m1 (SLF.Printer.eobj e) m2 (SLF.Printer.efam e) a;
+    Debug.log_open "conv obj" "%a ⊢ %a ≡ %a : %a" P.env env (P.eobj e) m1 (P.eobj e) m2 (P.efam e) a;
     let r = obj' repo env (m1, m2, a) in
     Debug.close "conv obj";
     r
@@ -155,7 +157,7 @@ module Conv = struct
 
   and fam repo env (a1, a2) =
     let e = Env.names_of env in
-    Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" SLF.Printer.env env (SLF.Printer.efam e) a1 (SLF.Printer.efam e) a2;
+    Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2;
     let r = fam' repo env (a1, a2) in
     Debug.close "conv fam";
     r
@@ -212,7 +214,7 @@ module Check = struct
 
   and obj repo env (m, a) =
     let e = Env.names_of env in
-    Debug.log_open "obj" "%a ⊢ %a : %a" SLF.Printer.env env (SLF.Printer.eobj e) m (SLF.Printer.efam e) a;
+    Debug.log_open "obj" "%a ⊢ %a : %a" P.env env (P.eobj e) m (P.efam e) a;
     let r = obj' repo env (m, a) in
     Debug.close "obj";
     r
@@ -342,9 +344,9 @@ let push repo env (h, l) =
 
 let push repo env (h, l) =
   let e = Env.names_of env in
-  Debug.log_open "push" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj e) (mkApp(h, l));
+  Debug.log_open "push" "%a ⊢ %a" P.env env (P.eobj e) (mkApp(h, l));
   let repo = push repo env (h, l) in
-  Debug.log_close "push" "%a = %a" (SLF.Printer.eobj e) (mkApp(h, l)) SLF.Printer.repo_light repo;
+  Debug.log_close "push" "%a = %a" (P.eobj e) (mkApp(h, l)) P.repo_light repo;
   repo
 
 exception Not_evaluable of repo * env * obj
@@ -364,7 +366,7 @@ let eval repo env lenv =
       begin match e with
         | Sign.Defined f ->
             (* TODO do we have to check the l? *)
-            let m = f repo env l in
+            let m = interp repo env h f l in
             SLF.Unstrat.obj lnames m
         | _ -> raise (Not_evaluable (repo, env, mkApp(h, l)))
       end
@@ -378,7 +380,7 @@ let eval repo env lenv t =
   if t<>t' then t' else eval repo env lenv t
 
 let eval repo env lenv t =
-  Debug.log_open "eval" "%a; %a ⊢ %a" SLF.Printer.env env SLF.Printer.lenv lenv SLF.Printer.term t;
+  Debug.log_open "eval" "%a; %a ⊢ %a" P.env env P.lenv lenv P.term t;
   let t = eval repo env lenv t in
-  Debug.log_close "eval" "=> %a" SLF.Printer.term t;
+  Debug.log_close "eval" "=> %a" P.term t;
   t
