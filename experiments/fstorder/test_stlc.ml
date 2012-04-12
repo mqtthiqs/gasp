@@ -2,7 +2,7 @@
 ;;
 
 (* HOAS STLC *)
-let repo = Slicer.init
+let repo = Version.init
 <:sign<
   tp : type.
   #base : tp.

@@ -2,7 +2,7 @@
 ;;
 
 (* First-order STLC *)
-let stlc = Slicer.init
+let stlc = Version.init
 <:sign<
   tp : type.
   base : tp.
@@ -31,7 +31,7 @@ let stlc = Slicer.init
 >>
 ;;
 
-let repo = Slicer.commit stlc []
+let repo = Version.commit stlc []
   <<
     lam (lam (app (s z) z))
   >>

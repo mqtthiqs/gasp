@@ -3,7 +3,7 @@
 
 open Util
 
-let repo = Slicer.init
+let repo = Version.init
 <:sign<
 
   unit : type.

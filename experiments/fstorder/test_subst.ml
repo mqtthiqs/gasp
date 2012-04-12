@@ -1,7 +1,7 @@
 #use "load.ml"
 ;;
 
-let repo = Slicer.init
+let repo = Version.init
 <:sign<
   A : type.
   B : type.
@@ -16,13 +16,13 @@ let repo = Slicer.init
 >>
 ;;
 
-let repo = Slicer.commit repo []
+let repo = Version.commit repo []
 <<
   p a b
 >>
 ;;
 
-let repo = Slicer.commit repo []
+let repo = Version.commit repo []
 <<
   h [x] g x
 >>

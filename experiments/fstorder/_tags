@@ -1,7 +1,7 @@
 <*.ml{,i}> : annot
 
 <pa_*.ml> : syntax(camlp4o), package(camlp4.extend, camlp4.quotations)
-<slicer.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF)
+<version.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF)
 
 <tests.ml> or <util.ml> : package(camlp4)
 <test_*.ml> : syntax(camlp4o), package(camlp4.quotations), dep(load.ml), dep(tests.ml), \

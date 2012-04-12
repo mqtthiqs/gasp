@@ -1,7 +1,7 @@
 #use "load.ml"
 ;;
 
-let repo = Slicer.init <:sign<
+let repo = Version.init <:sign<
   nat : type.
   #o : nat.
   s : nat -> nat.
