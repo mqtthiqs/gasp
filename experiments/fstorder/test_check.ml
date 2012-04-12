@@ -29,17 +29,17 @@ let repo = Slicer.init
   get : {M : tm} inf M -> tm = $ fun m _ -> m $.
 
   equals : tp -> tp -> unit = $ fun a b ->
-    match a rec Kernel.eval repo env [] with
+    match a rec eval <:env< >> with
       | << base >> ->
-          begin match b rec Kernel.eval repo env [] with
+          begin match b rec eval <:env< >> with
             | << base >> -> << one >>
             | << arr $_$ $_$ >> -> failwith "types not equal"
           end
       | << arr $a1$ $a2$ >> ->
-          begin match b rec Kernel.eval repo env [] with
+          begin match b rec eval <:env< >> with
             | << arr $b1$ $b2$ >> ->
-                begin match << equals $a1$ $a2$ >> rec Kernel.eval repo env [] with
-                  | << one >> -> match << equals $b1$ $b2$ >> rec Kernel.eval repo env [] with
+                begin match << equals $a1$ $a2$ >> rec eval <:env< >> with
+                  | << one >> -> match << equals $b1$ $b2$ >> rec eval <:env< >> with
                       | << one >> -> << one >>
                 end
             | << base >> -> failwith "types not equal"
@@ -47,22 +47,22 @@ let repo = Slicer.init
     $.
 
   infer : {M : tm} inf M = $ fun m ->
-    Debug.log_open "infer" "%a ⊢ %a" SLF.Printer.env env SLF.Printer.term m;
-    let r = match m rec Kernel.eval repo env [] with
+    Debug.log_open "infer" "%a" SLF.Printer.term m;
+    let r = match m rec eval <:env< >> with
       | << lam $a$ $m$ >> ->
           begin match << infer ($m$ (get x (ex x $a$ h))) >>
-          rec Kernel.eval repo env <:env< x:tm; h:is x $a$ >> with
+          rec eval <:env< x:tm; h:is x $a$ >> with
             | << ex $_$ $b$ $d$ >> ->
                 << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
           end
       | << app $m$ $n$ >> ->
-          begin match << infer $m$ >> rec Kernel.eval repo env [] with
+          begin match << infer $m$ >> rec eval <:env< >> with
             | << ex $_$ $c$ $d1$ >> ->
-                match c rec Kernel.eval repo env [] with
+                match c rec eval <:env< >> with
                   | << arr $a$ $b$ >> ->
-                      match << infer $n$ >> rec Kernel.eval repo env [] with
+                      match << infer $n$ >> rec eval <:env< >> with
                         | << ex $_$ $a'$ $d2$ >> ->
-                            match << equals $a$ $a'$ >> rec Kernel.eval repo env [] with
+                            match << equals $a$ $a'$ >> rec eval <:env< >> with
                               | << one >> ->
                                   << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
           end

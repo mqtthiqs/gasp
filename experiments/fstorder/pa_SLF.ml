@@ -106,7 +106,7 @@ module ExprParser = struct
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
      let names = fun_telescope 0 t in
      <:expr<
-       [($str:x$, $t$, SLF.Defined (fun (repo:Struct.repo) (env:Struct.env) -> fun
+       [($str:x$, $t$, SLF.Defined (fun (eval : SLF.lenv -> SLF.term -> SLF.term) -> fun
          [ $build_patt names$ -> $build_app e (List.rev names)$
          | _ -> assert False ]
        )) :: $s$]

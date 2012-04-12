@@ -22,7 +22,7 @@ type lenv = (binder * term) list
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of (repo -> env -> term list -> term)
+  | Defined of ((lenv -> term -> term) -> term list -> term)
 
 type sign = (string * term * entry_type) list
 
@@ -105,21 +105,26 @@ end = struct
     | Kind k -> k
     | _ -> failwith "strat: not a kind"
 
-  let fn (f : repo -> env -> term list -> term) repo env (l : LF.obj list) : LF.obj =
-    let l = List.map (Unstrat.obj []) l in
-    obj repo.Repo.sign [] (f repo env l)
-
-  let entry_type = function
-    | Sliceable -> Sign.Sliceable
-    | Non_sliceable -> Sign.Non_sliceable
-    | Defined f -> Sign.Defined (fn f)
-
   (* TODO: le names_of? *)
   let rec env sign e0 = function
     | [] -> e0
     | (x, t) :: e ->
       let e = env sign e0 e in
       (x, fam sign (Env.names_of e) t) :: e
+
+  let fn (f : (lenv -> term -> term) -> term list -> term)
+      repo (eval : LF.obj -> LF.obj) (l : LF.obj list) : LF.obj =
+    let l = List.map (Unstrat.obj []) l in
+    let eval (lenv:lenv) (t:term) =
+      let lnames = List.map fst lenv in
+      let m = Strat.obj repo.Repo.sign lnames t in
+      Unstrat.obj lnames (eval m) in
+    obj repo.Repo.sign [] (f eval l)
+
+  let entry_type = function
+    | Sliceable -> Sign.Sliceable
+    | Non_sliceable -> Sign.Non_sliceable
+    | Defined f -> Sign.Defined (fn f)
 
 end
 
@@ -178,14 +183,11 @@ end = struct
         let x = fresh (bound_names names) x in
         Prod (x, fam names a, kind (x :: names) b)
 
-  let fn s (f : repo -> env -> LF.obj list -> LF.obj) repo env (l : term list) : term =
-    let l = List.map (Strat.obj s []) l in
-    obj [] (f repo env l)
-
   let entry_type s = function
     | Sign.Sliceable -> Sliceable
     | Sign.Non_sliceable -> Non_sliceable
-    | Sign.Defined f -> Defined (fn s f)
+    | Sign.Defined f -> Defined (fun _ -> assert false) (* never evaluated since sign
+                                                           is only used for pretty printing *)
 
   let sign (s : Struct.sign) =
     Sign.fold
@@ -193,7 +195,7 @@ end = struct
       (fun x k l -> (FConst.repr x, kind [] k, Sliceable) :: l)
       s []
 
-  let env (e : env) : (binder * term) list =
+  let env (e : env) : lenv =
     let rec aux = function
       | (x, a) :: e ->
         let x = fresh (bound_env e) x in

@@ -57,12 +57,48 @@ let push =
       head = x, s } in
     repo
 
-let interp repo env h f l = f repo env l
+let head_type repo = function
+  | HVar x -> Sign.Non_sliceable
+  | HConst c -> snd (Sign.ofind c repo.sign)
 
-let interp repo env h f l =
-  Debug.log_open "interp" "%a ⊢ %a" P.env env (P.eobj (Env.names_of env)) (mkApp (h, l));
-  let m = interp repo env h f l in
-  Debug.log_close "interp" "=> %a ⊢ %a = %a" P.env env (P.eobj (Env.names_of env)) (mkApp (h, l)) (P.eobj (Env.names_of env)) m;
+exception Not_evaluable of repo * obj
+
+let rec eval repo = prj @> function
+  | OMeta (x, s) ->
+      let e, m, _ =
+        try Context.find x repo.ctx
+        with Not_found -> raise (Unbound_meta (repo, x)) in
+      assert (List.length e = List.length s);
+      Subst.obj s m
+  | OApp (h, l) ->
+      begin match head_type repo h with
+        | Sign.Defined f ->
+            (* TODO do we have to check the l? *)
+            let m = f repo (eval repo) l in
+            m
+        | _ -> raise (Not_evaluable (repo, mkApp(h, l)))
+      end
+  | m -> raise (Not_evaluable (repo, inj m))
+
+(* (\* TODO: ugly hack! *\) *)
+(* let eval repo env t = *)
+(*   let m = SLF.Strat.obj repo.sign [] t in *)
+(*   let t' = SLF.Unstrat.obj lnames m in *)
+(*   if t<>t' then t' else eval repo env t *)
+
+let eval repo m =
+  Debug.log_open "eval" "%a ⊢ %a" P.repo repo P.obj m;
+  let m = eval repo m in
+  Debug.log_close "eval" "=> %a" P.obj m;
+  m
+
+let interp repo h (f : repo -> (obj -> obj) -> spine -> obj) l =
+  f repo (eval repo) l
+
+let interp repo h f l =
+  Debug.log_open "interp" "%a" P.obj (mkApp (h, l));
+  let m = interp repo h f l in
+  Debug.log_close "interp" "=> %a = %a" P.obj (mkApp (h, l)) P.obj m;
   m
 
 module Conv = struct
@@ -122,17 +158,14 @@ module Conv = struct
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
     | OApp (h1, l1), o2, a ->
-        let head_type = function
-          | HVar x -> Sign.Non_sliceable
-          | HConst c -> snd (Sign.ofind c repo.sign) in
-        begin match head_type h1 with
-          | Sign.Defined f -> obj' repo env (interp repo env h1 f l1, m2, a)
+        begin match head_type repo h1 with
+          | Sign.Defined f -> obj' repo env (interp repo h1 f l1, m2, a)
           | Sign.Sliceable | Sign.Non_sliceable ->
               match o2 with
                 | OMeta _ | OLam _ -> raise (Not_conv_obj (repo, env, m1, m2))
                 | OApp (h2, l2) ->
-                    match head_type h2 with
-                      | Sign.Defined f -> obj' repo env (m1, interp repo env h2 f l2, a)
+                    match head_type repo h2 with
+                      | Sign.Defined f -> obj' repo env (m1, interp repo h2 f l2, a)
                       | Sign.Sliceable | Sign.Non_sliceable ->
                           let a' = head repo env (h1, h2) in
                           let a' = spine repo env (l1, l2, a') in
@@ -166,12 +199,11 @@ end
 
 module Check = struct
 
-
   let head repo env : head -> fam * Sign.entry_type = function
     | HVar x ->
-      let a = try Env.find x env with _ -> failwith(string_of_int x) in
-      let a = Lift.fam 0 (x+1) a in
-      a, Sign.Non_sliceable
+        let a = try Env.find x env with _ -> failwith(string_of_int x) in
+        let a = Lift.fam 0 (x+1) a in
+        a, Sign.Non_sliceable
     | HConst c -> Sign.ofind c repo.sign
 
   (* obj: check mode, returns the rewritten obj and the enlarged repo *)
@@ -268,7 +300,7 @@ module Check = struct
         (* check that arguments of this constants are well-typed *)
         let repo, l, a = spine repo env (l, a) in
         (* evaluate it with the unreduced arguments *)
-        let m = interp repo env h f l in
+        let m = interp repo h f l in
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
         repo, m, a
@@ -348,39 +380,3 @@ let push repo env (h, l) =
   let repo = push repo env (h, l) in
   Debug.log_close "push" "%a = %a" (P.eobj e) (mkApp(h, l)) P.repo_light repo;
   repo
-
-exception Not_evaluable of repo * env * obj
-
-let eval repo env lenv =
-  let lnames = List.map fst lenv in
-  SLF.Strat.obj repo.sign lnames @> prj @> function
-  | OMeta (x, s) ->
-      let e, m, _ =
-        try Context.find x repo.ctx
-        with Not_found -> raise (Unbound_meta (repo, x)) in
-      assert (List.length e = List.length s);
-      SLF.Unstrat.obj lnames (Subst.obj s m)
-  | OApp (h, l) ->
-      let env = SLF.Strat.env repo.sign env lenv in
-      let _, e = Check.head repo env h in
-      begin match e with
-        | Sign.Defined f ->
-            (* TODO do we have to check the l? *)
-            let m = interp repo env h f l in
-            SLF.Unstrat.obj lnames m
-        | _ -> raise (Not_evaluable (repo, env, mkApp(h, l)))
-      end
-  | m -> raise (Not_evaluable (repo, env, inj m))
-
-(* TODO: ugly hack! *)
-let eval repo env lenv t =
-  let lnames = List.map fst lenv in
-  let m = SLF.Strat.obj repo.sign lnames t in
-  let t' = SLF.Unstrat.obj lnames m in
-  if t<>t' then t' else eval repo env lenv t
-
-let eval repo env lenv t =
-  Debug.log_open "eval" "%a; %a ⊢ %a" P.env env P.lenv lenv P.term t;
-  let t = eval repo env lenv t in
-  Debug.log_close "eval" "=> %a" P.term t;
-  t
