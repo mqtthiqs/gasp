@@ -32,12 +32,16 @@ let repo = Slicer.init
     match a rec Kernel.eval repo env [] with
       | << base >> ->
           begin match b rec Kernel.eval repo env [] with
-            | << base >> -> << unit >>
+            | << base >> -> << one >>
             | << arr $_$ $_$ >> -> failwith "types not equal"
           end
       | << arr $a1$ $a2$ >> ->
           begin match b rec Kernel.eval repo env [] with
-            | << arr $b1$ $b2$ >> -> ignore (equals repo env a1 a2); equals repo env b1 b2
+            | << arr $b1$ $b2$ >> ->
+                begin match << equals $a1$ $a2$ >> rec Kernel.eval repo env [] with
+                  | << one >> -> match << equals $b1$ $b2$ >> rec Kernel.eval repo env [] with
+                      | << one >> -> << one >>
+                end
             | << base >> -> failwith "types not equal"
           end
     $.
@@ -56,10 +60,11 @@ let repo = Slicer.init
             | << ex $_$ $c$ $d1$ >> ->
                 match c rec Kernel.eval repo env [] with
                   | << arr $a$ $b$ >> ->
-                      match infer repo env n rec Kernel.eval repo env [] with
+                      match << infer $n$ >> rec Kernel.eval repo env [] with
                         | << ex $_$ $a'$ $d2$ >> ->
-                            ignore (equals repo env a a');
-                            << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
+                            match << equals $a$ $a'$ >> rec Kernel.eval repo env [] with
+                              | << one >> ->
+                                  << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
           end
       | << get $x$ $i$ >> -> i
     in

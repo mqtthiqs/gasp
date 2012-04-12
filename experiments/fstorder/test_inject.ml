@@ -17,7 +17,12 @@ let repo = Slicer.init
       | << lam $m$ >> -> << $m$ $n$ >>
   $.
 
-  omega : tm -> tm = $ fun m -> omega repo env m $.
+  omega : tm -> tm = $ fun m ->
+    match << omega m >> rec Kernel.eval repo env [] with
+      | << lam $m$ >> -> << lam $m$ >>
+      | << app $m$ $n$ >> -> << app $m$ $n$ >>
+      | << $id:x$ >> -> << $id:x$ >>
+  $.
 
   eta_exp : tm -> tm = $ fun m -> << lam [x] app $m$ x >> $.
 
