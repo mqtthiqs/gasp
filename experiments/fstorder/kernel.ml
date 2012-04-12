@@ -55,11 +55,11 @@ let push =
       head = x, s } in
     repo
 
-let eval repo env h f l = f repo env l
+let interp repo env h f l = f repo env l
 
-let eval repo env h f l =
+let interp repo env h f l =
   Debug.log_open "interp" "%a ⊢ %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l));
-  let m = eval repo env h f l in
+  let m = interp repo env h f l in
   Debug.log_close "interp" "=> %a ⊢ %a = %a" SLF.Printer.env env (SLF.Printer.eobj (Env.names_of env)) (mkApp (h, l)) (SLF.Printer.eobj (Env.names_of env)) m;
   m
 
@@ -124,13 +124,13 @@ module Conv = struct
           | HVar x -> Sign.Non_sliceable
           | HConst c -> snd (Sign.ofind c repo.sign) in
         begin match head_type h1 with
-          | Sign.Defined f -> obj' repo env (eval repo env h1 f l1, m2, a)
+          | Sign.Defined f -> obj' repo env (interp repo env h1 f l1, m2, a)
           | Sign.Sliceable | Sign.Non_sliceable ->
               match o2 with
                 | OMeta _ | OLam _ -> raise (Not_conv_obj (repo, env, m1, m2))
                 | OApp (h2, l2) ->
                     match head_type h2 with
-                      | Sign.Defined f -> obj' repo env (m1, eval repo env h2 f l2, a)
+                      | Sign.Defined f -> obj' repo env (m1, interp repo env h2 f l2, a)
                       | Sign.Sliceable | Sign.Non_sliceable ->
                           let a' = head repo env (h1, h2) in
                           let a' = spine repo env (l1, l2, a') in
@@ -266,7 +266,7 @@ module Check = struct
         (* check that arguments of this constants are well-typed *)
         let repo, l, a = spine repo env (l, a) in
         (* evaluate it with the unreduced arguments *)
-        let m = eval repo env h f l in
+        let m = interp repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
         repo, m, a
