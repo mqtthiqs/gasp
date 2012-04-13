@@ -5,4 +5,5 @@ test_subst.log
 test_defined.log
 test_inject.log
 test_check.log
+test_check2.log
 test_uneval.log
