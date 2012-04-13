@@ -1,8 +1,9 @@
 open Camlp4.PreCast
 open Camlp4.PreCast.Syntax
 
-EXTEND Gram expr: LEVEL "top"
-  [ [ "match"; e1 = expr; "rec"; e2 = expr; "with"; a = match_case ->
+EXTEND Gram
+expr: LEVEL "top" [
+  [ "match"; e1 = sequence; "rec"; e2 = expr; "with"; a = match_case ->
     <:expr<
       let c0 = $e2$ in
       let rec __f = fun
@@ -18,5 +19,6 @@ EXTEND Gram expr: LEVEL "top"
         ] in
       __f $e1$
     >>
-    ] ];
+  ]
+];
 END
