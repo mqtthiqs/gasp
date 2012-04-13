@@ -74,17 +74,10 @@ let rec eval repo = prj @> function
       begin match head_type repo h with
         | Sign.Defined f ->
             (* TODO do we have to check the l? *)
-            let m = f repo (eval repo) l in
-            m
+            f repo (eval repo) l
         | _ -> raise (Not_evaluable (repo, mkApp(h, l)))
       end
   | m -> raise (Not_evaluable (repo, inj m))
-
-(* (\* TODO: ugly hack! *\) *)
-(* let eval repo env t = *)
-(*   let m = SLF.Strat.obj repo.sign [] t in *)
-(*   let t' = SLF.Unstrat.obj lnames m in *)
-(*   if t<>t' then t' else eval repo env t *)
 
 let eval repo m =
   Debug.log_open "eval" "%a ⊢ %a" P.repo repo P.obj m;
