@@ -67,9 +67,7 @@ end = struct
               with Not_found -> failwith ("strat: not found "^FConst.repr x)
         end
     | Unnamed i -> failwith ("strat: unnamed variable "^(string_of_int i))
-    | Unbound i ->
-        Debug.log "lookup" "%a ⊢ Unbound %d => %d" (Print.list Print.semi (Print.opt_under Print.str)) names i (i + List.length names);
-        Obj (LF.mkApp (LF.HVar (i + List.length names), l))
+    | Unbound i -> Obj (LF.mkApp (LF.HVar (i + List.length names), l))
 
   let rec app sign env l = function
     | Ident x -> lookup sign env l x
