@@ -76,7 +76,7 @@ module Lift = struct
 
   let rec obj k n m =
     assert (k >= 0 && n >= 0);
-    let s = subs_liftn (pred k) (subs_shft (n, subs_id 0)) in
+    let s = subs_liftn k (subs_shft (n, subs_id 0)) in
     ESubst.clos (s, m)
 
   let rec fam k n = function
@@ -149,14 +149,13 @@ module Util = struct
       | OMeta (x, l) -> List.fold_left (fv k) s l in
     S.elements (fv 0 S.empty m)
 
-
   let eta_expand_var i a =
     let rec exp i l = function
       | FProd (x, a, b) ->
         let l = List.map (Lift.obj 0 1) l in
         let m = exp (succ i) (exp 0 [] a :: l) b in
         mkLam (x, m)
-      | FApp _ -> mkApp (HVar i, l)
+      | FApp _ -> mkApp (HVar i, (List.rev l))
     in exp i [] a
 
 end
