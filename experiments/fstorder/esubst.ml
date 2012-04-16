@@ -75,7 +75,7 @@ let subs_id i = ESID i
 
 let subs_cons(x,s) = if Array.length x = 0 then s else CONS(x,s)
 
-let subs_liftn n = function
+let subs_liftn n = assert (n>0); function
   | ESID p        -> ESID (p+n) (* bounded identity lifted extends by p *)
   | LIFT (p,lenv) -> LIFT (p+n, lenv)
   | lenv          -> LIFT (n,lenv)
