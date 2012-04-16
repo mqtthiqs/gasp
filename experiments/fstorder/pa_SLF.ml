@@ -37,43 +37,43 @@ module ExprParser = struct
   ];
 
   env_eoi:
-      [[ e = env; `EOI -> e ]];
+      [[ e = env; `EOI -> <:expr< SLF.($e$) >> ]];
 
   term:
   [ "prd" RIGHTA
-      [ "type" -> <:expr< SLF.Type >>
+      [ "type" -> <:expr< Type >>
       | "{"; id = binder; ":"; t = term; "}"; u = term ->
-      <:expr< SLF.Prod($id$, $t$, $u$) >> ]
+      <:expr< Prod($id$, $t$, $u$) >> ]
   | "arr" RIGHTA
-      [ t = term; "->"; u = term -> <:expr< SLF.Prod(None, $t$, $u$) >> ]
+      [ t = term; "->"; u = term -> <:expr< Prod(None, $t$, $u$) >> ]
   | "rarr" RIGHTA
-      [ t = term; "<-"; u = term -> <:expr< SLF.Prod(None, $u$, $t$) >> ]
+      [ t = term; "<-"; u = term -> <:expr< Prod(None, $u$, $t$) >> ]
   | "term1"
       [ t = term1 -> t ]
   ];
 
   term1:
   [ "app" LEFTA
-      [ t = term1; u = term2 -> <:expr<  SLF.App ($t$, $u$) >> ]
+      [ t = term1; u = term2 -> <:expr<  App ($t$, $u$) >> ]
   | "term2"
       [ t = term2 -> t ]
   ];
 
   term2:
   [ "simple"
-      [ x = ident -> <:expr< SLF.Ident (SLF.Id $str:x$) >>
-      | "?"; x = ident -> <:expr< SLF.Meta ($str:x$, []) >>
-      | "?"; x = ident; "["; s = subst; "]" -> <:expr< SLF.Meta ($str:x$, $s$) >>
+      [ x = ident -> <:expr< Ident (Id $str:x$) >>
+      | "?"; x = ident -> <:expr< Meta ($str:x$, []) >>
+      | "?"; x = ident; "["; s = subst; "]" -> <:expr< Meta ($str:x$, $s$) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
-      | `ANTIQUOT ("id", s) -> <:expr< SLF.Ident $Syntax.AntiquotSyntax.parse_expr _loc s$ >>
+      | `ANTIQUOT ("id", s) -> <:expr< Ident $Syntax.AntiquotSyntax.parse_expr _loc s$ >>
       | "("; t = term; ")" -> t ]
   | "lam"
       [ "["; id = binder; "]"; t = term1 ->
-      <:expr< SLF.Lam ($id$, $t$) >> ]
+      <:expr< Lam ($id$, $t$) >> ]
   ];
 
   term_eoi:
-      [[ t = term; `EOI -> t ]];
+      [[ t = term; `EOI -> <:expr< SLF.($t$) >> ]];
 
   subst:
   [ [ -> <:expr< [] >>
@@ -95,7 +95,7 @@ module ExprParser = struct
     | [] -> f
 
   let rec fun_telescope i = function
-    | <:expr@_loc< SLF.Prod ($_$, $_$, $xs$) >> ->
+    | <:expr@_loc< Prod ($_$, $_$, $xs$) >> ->
       ("__xxx"^string_of_int i) :: fun_telescope (succ i) xs
     | _ -> []
 
@@ -106,18 +106,20 @@ module ExprParser = struct
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
      let names = fun_telescope 0 t in
      <:expr<
-       [($str:x$, $t$, SLF.Defined (fun (eval : SLF.lenv -> SLF.term -> SLF.term) -> fun
+       [($str:x$, $t$, Defined (fun (eval : lenv -> term -> term) -> fun
          [ $build_patt names$ -> $build_app e (List.rev names)$
-         | _ -> assert False ]
+         | l -> failwith ($str:x$^" is applied to "^(string_of_int (List.length l))^" arguments") ]
        )) :: $s$]
      >>
    | x = ident; ":"; t = term; "."; s = sign ->
-     <:expr< [($str:x$, $t$, SLF.Sliceable) :: $s$] >>
+     <:expr< [($str:x$, $t$, Sliceable) :: $s$] >>
    | "#"; x = ident; ":"; t = term; "."; s = sign ->
-     <:expr< [($str:x$, $t$, SLF.Non_sliceable) :: $s$] >>
+     <:expr< [($str:x$, $t$, Non_sliceable) :: $s$] >>
    | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s
    ]];
-  sign_eoi: [[ s = sign; `EOI -> <:expr< ($s$ : SLF.sign) >>]];
+
+  sign_eoi: [[ s = sign; `EOI -> <:expr< SLF.($s$) >>]];
+
   END;;
 
 end
@@ -184,7 +186,7 @@ module PattParser = struct
   ];
 
   term_eoi:
-      [[ t = term; `EOI -> t ]];
+      [[ t = term; `EOI -> <:patt< $t$ >> ]];
 
   subst:
   [ [ -> <:patt< [] >>
