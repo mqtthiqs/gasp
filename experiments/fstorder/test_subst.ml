@@ -85,3 +85,12 @@ Tests.subst repo
 << A -> A >>
 with Tests.Failed (LF.Not_eta _) -> ()
 ;;
+
+Tests.subst_open
+(Version.init  <:sign< A : type. B : type. C : type. >>)
+<:env< g : A -> B -> C >>
+<< [a] [b] g a b >>
+<< [X] [x] [y] X x y >>
+<< [a] [b] g a b >>
+<< A -> B -> C >>
+;;
