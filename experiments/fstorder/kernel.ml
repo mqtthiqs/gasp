@@ -57,6 +57,13 @@ let push =
       head = x, s } in
     repo
 
+(* let push repo env (h, l) a = *)
+(*   let e = Env.names_of env in *)
+(*   Debug.log_open "push" "%a ⊢ %a : %a" P.env env (P.eobj e) (mkApp(h,l)) (P.efam e) a; *)
+(*   let r = push repo env (h, l) a in *)
+(*   Debug.log_close "push" "=> %a" P.repo r; *)
+(*   r *)
+
 let head_type repo = function
   | HVar x -> Sign.Non_sliceable
   | HConst c -> snd (Sign.ofind c repo.sign)
