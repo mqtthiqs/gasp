@@ -87,7 +87,7 @@ let rec eval repo = prj @> function
   | m -> raise (Not_evaluable (repo, inj m))
 
 let eval repo m =
-  Debug.log_open "eval" "%a ⊢ %a" P.repo repo P.obj m;
+  Debug.log_open "eval" "%a" P.obj m;
   let m = eval repo m in
   Debug.log_close "eval" "=> %a" P.obj m;
   m
