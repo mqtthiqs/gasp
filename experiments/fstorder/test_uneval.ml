@@ -7,13 +7,13 @@ let repo = Version.init <:sign<
   s : nat -> nat.
 
   pred : nat -> nat = $ fun x ->
-    match x rec eval <:env< >> with
+    match* x with
       | << o >> -> << o >>
       | << s $n$ >> -> n
   $.
 
   f : nat -> nat = $ fun x ->
-    match x rec eval <:env< >> with
+    match* x with
       | << pred $n$ >> -> << o >>
       | << o >> -> << o >>
       | << s $n$ >> -> << s $n$ >>

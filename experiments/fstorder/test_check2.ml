@@ -50,89 +50,65 @@ let repo = Version.init
 
   get : {M : tm} inf M -> tm = $ fun m _ -> m $.
 
+
   equals : tp -> tp -> unit = $ fun a b ->
-    match a rec eval <:env< >> with
+    match* a with
       | << $id:x$ >> ->
-          begin match b rec eval <:env< >> with
+          begin match* b with
             | << $id:y$ >> when x=y -> << one >>
             | << arr $_$ $_$ >> -> failwith "types not equal"
           end
       | << arr $a1$ $a2$ >> ->
-          begin match b rec eval <:env< >> with
+          begin match* b with
             | << arr $b1$ $b2$ >> ->
-                begin match << equals $a1$ $a2$ >> rec eval <:env< >> with
-                  | << one >> -> match << equals $b1$ $b2$ >> rec eval <:env< >> with
-                      | << one >> -> << one >>
-                end
+                let* << one >> = << equals $a1$ $a2$ >> in
+                << equals $b1$ $b2$ >>
             | << $id:x$ >> -> failwith "types not equal"
           end
-  $.
+    $.
 
   infer : {M : tm} inf M = $ fun m ->
     Debug.log_open "infer" "%a" SLF.Printer.term m;
-    let r = match m rec eval <:env< >> with
+    let r = match* m with
       | << lam $a$ $m$ >> ->
-          begin match << infer ($m$ (get x (ex x $a$ h))) >>
-          rec eval <:env< x:tm; h:is x $a$ >> with
-            | << ex $_$ $b$ $d$ >> ->
-                << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
-          end
+          let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:is x $a$ >> =
+            << infer ($m$ (get x (ex x $a$ h))) >> in
+          << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
       | << app $m$ $n$ >> ->
-          begin match << infer $m$ >> rec eval <:env< >> with
-            | << ex $_$ $c$ $d1$ >> ->
-                match c rec eval <:env< >> with
-                  | << arr $a$ $b$ >> ->
-                      match << infer $n$ >> rec eval <:env< >> with
-                        | << ex $_$ $a'$ $d2$ >> ->
-                            match << equals $a$ $a'$ >> rec eval <:env< >> with
-                              | << one >> ->
-                                  << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
+          let* << ex $_$ $c$ $d1$ >> = << infer $m$ >> in
+          let* << ex $_$ $a'$ $d2$ >> = << infer $n$ >> in
+          begin match* c in <:env< >> with
+            | << arr $a$ $b$ >> ->
+                let* << one >> = << equals $a$ $a'$ >> in
+                << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
+            | << $id:x$ >> -> failwith "non-functional application"
           end
+      | << get $x$ $i$ >> -> i
       | << o >> -> << ex o nat is_o >>
       | << s $m$ >> ->
-          begin match << infer $m$ >> rec eval <:env< >> with
-            | << ex $_$ nat $d$ >> -> << ex (s $m$) nat (is_s $m$ $d$) >>
-          end
+          let* << ex $_$ nat $d$ >> = << infer $m$ >> in
+          << ex (s $m$) nat (is_s $m$ $d$) >>
       | << tt >> -> << ex tt bool is_tt >>
       | << ff >> -> << ex ff bool is_ff >>
       | << ifb $m$ $n$ $p$ >> ->
-          begin match << infer $m$ >> rec eval <:env< >> with
-            | << ex $_$ bool $d$ >> ->
-                begin match << infer $n$ >> rec eval <:env< >> with
-                  | << ex $_$ $a$ $d1$ >> ->
-                      begin match << infer $p$ >> rec eval <:env< >> with
-                        | << ex $_$ $a'$ $d2$ >> ->
-                            begin match << equals $a$ $a'$ >> rec eval <:env< >> with
-                              | << one >> ->
-                                  << ex (ifb $m$ $n$ $p$) $a$ (is_if $m$ $n$ $p$ $a$ $d$ $d1$ $d2$) >>
-                            end
-                      end
-                end
-          end
+          let* << ex $_$ $b$ $d$ >> = << infer $m$ >> in
+          let* << ex $_$ $a$ $d1$ >> = << infer $n$ >> in
+          let* << ex $_$ $a'$ $d2$ >> = << infer $p$ >> in
+          let* << one >> = << equals $b$ bool >> in
+          let* << one >> = << equals $a$ $a'$ >> in
+          << ex (ifb $m$ $n$ $p$) $a$ (is_if $m$ $n$ $p$ $a$ $d$ $d1$ $d2$) >>
       | << letb $m$ $n$ >> ->
-          begin match << infer $m$ >> rec eval <:env< >> with
-            | << ex $_$ $a$ $d1$ >> ->
-                begin match << infer ($n$ (get x (ex x $a$ h))) >> rec eval <:env< x:tm; h:is x $a$ >> with
-                  | << ex $_$ $b$ $d2$ >> ->
-                      << ex (letb $m$ $n$) $b$ (is_let $m$ $n$ $a$ $b$ $d1$ ([x] [h] $d2$)) >>
-                end
-          end
+          let* << ex $_$ $a$ $d1$ >> = << infer $m$ >> in
+          let* << ex $_$ $b$ $d2$ >> in <:env< x:tm; h:is x $a$ >> =
+            << infer ($n$ (get x (ex x $a$ h))) >> in
+          << ex (letb $m$ $n$) $b$ (is_let $m$ $n$ $a$ $b$ $d1$ ([x] [h] $d2$)) >>
       | << recb $m$ $n$ $p$ >> ->
-          begin match << infer $m$ >> rec eval <:env< >> with
-            | << ex $_$ nat $dm$ >> ->
-                begin match << infer $n$ >> rec eval <:env< >> with
-                  | << ex $_$ $a$ $dn$ >> ->
-                      begin match << infer ($p$ (get x (ex x nat hx)) (get y (ex y $a$ hy))) >>
-                      rec eval <:env< x:tm; hx:is x $a$; y:tm; hy:tm >> with
-                        | << ex $_$ $a'$ $dp$ >> ->
-                            begin match << equals $a$ $a'$ >> rec eval <:env< >> with
-                              | << one >> -> << ex (recb $m$ $n$ $p$) $a$
-                                  (is_rec $m$ $n$ $p$ $a$ $dm$ $dn$ [x] [y] [hx] [hy] $dp$) >>
-                            end
-                      end
-                end
-          end
-      | << get $x$ $i$ >> -> i
+          let* << ex $_$ nat $dm$ >> = << infer $m$ >> in
+          let* << ex $_$ $a$ $dn$ >> = << infer $n$ >> in
+          let* << ex $_$ $a'$ $dp$ >> in <:env< x:tm; hx:is x $a$; y:tm; hy:tm >> =
+            << infer ($p$ (get x (ex x nat hx)) (get y (ex y $a$ hy))) >> in
+          let* << one >> = << equals $a$ $a'$ >> in
+          << ex (recb $m$ $n$ $p$) $a$ (is_rec $m$ $n$ $p$ $a$ $dm$ $dn$ [x] [y] [hx] [hy] $dp$) >>
     in
     Debug.log_close "infer" "=> %a" SLF.Printer.term r;
     r

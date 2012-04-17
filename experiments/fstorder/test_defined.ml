@@ -9,13 +9,13 @@ let repo = Version.init <:sign<
   two : nat = s (s o).
 
   plus : nat -> nat -> nat = $ fun m n ->
-    match m rec eval <:env< >> with
+    match* m with
       | << o >> -> n
       | << s $m$ >> -> << s (plus $m$ $n$) >> (* or << s (plus $m$ $n$) >> *)
   $.
 
   mult: nat -> nat -> nat = $ fun m n ->
-    match m rec eval <:env< >> with
+    match* m with
       | << o >> -> << o >>
       | << s $m$ >> -> << plus $n$ (mult $m$ $n$) >>
   $.
@@ -26,7 +26,7 @@ let repo = Version.init <:sign<
   emult : exp -> exp -> exp.
 
   eval : {e : exp} nat = $ fun e ->
-    match e rec eval <:env< >> with
+    match* e with
       | << enat $n$ >> -> n
       | << eplus $e1$ $e2$ >> -> << plus (eval $e1$) (eval $e2$) >>
       | << emult $e1$ $e2$ >> -> << mult (eval $e1$) (eval $e2$) >>

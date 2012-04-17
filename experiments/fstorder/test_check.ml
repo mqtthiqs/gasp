@@ -29,42 +29,36 @@ let repo = Version.init
   get : {M : tm} inf M -> tm = $ fun m _ -> m $.
 
   equals : tp -> tp -> unit = $ fun a b ->
-    match a rec eval <:env< >> with
+    match* a with
       | << base >> ->
-          begin match b rec eval <:env< >> with
+          begin match* b with
             | << base >> -> << one >>
             | << arr $_$ $_$ >> -> failwith "types not equal"
           end
       | << arr $a1$ $a2$ >> ->
-          begin match b rec eval <:env< >> with
+          begin match* b with
             | << arr $b1$ $b2$ >> ->
-                begin match << equals $a1$ $a2$ >> rec eval <:env< >> with
-                  | << one >> -> match << equals $b1$ $b2$ >> rec eval <:env< >> with
-                      | << one >> -> << one >>
-                end
+                let* << one >> = << equals $a1$ $a2$ >> in
+                << equals $b1$ $b2$ >>
             | << base >> -> failwith "types not equal"
           end
     $.
 
   infer : {M : tm} inf M = $ fun m ->
     Debug.log_open "infer" "%a" SLF.Printer.term m;
-    let r = match m rec eval <:env< >> with
+    let r = match* m with
       | << lam $a$ $m$ >> ->
-          begin match << infer ($m$ (get x (ex x $a$ h))) >>
-          rec eval <:env< x:tm; h:is x $a$ >> with
-            | << ex $_$ $b$ $d$ >> ->
-                << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
-          end
+          let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:is x $a$ >> =
+            << infer ($m$ (get x (ex x $a$ h))) >> in
+          << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
       | << app $m$ $n$ >> ->
-          begin match << infer $m$ >> rec eval <:env< >> with
-            | << ex $_$ $c$ $d1$ >> ->
-                match c rec eval <:env< >> with
-                  | << arr $a$ $b$ >> ->
-                      match << infer $n$ >> rec eval <:env< >> with
-                        | << ex $_$ $a'$ $d2$ >> ->
-                            match << equals $a$ $a'$ >> rec eval <:env< >> with
-                              | << one >> ->
-                                  << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
+          let* << ex $_$ $c$ $d1$ >> = << infer $m$ >> in
+          let* << ex $_$ $a'$ $d2$ >> = << infer $n$ >> in
+          begin match* c in <:env< >> with
+            | << arr $a$ $b$ >> ->
+                let* << one >> = << equals $a$ $a'$ >> in
+                << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
+            | << $id:x$ >> -> failwith "non-functional application"
           end
       | << get $x$ $i$ >> -> i
     in

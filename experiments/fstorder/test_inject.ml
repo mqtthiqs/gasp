@@ -13,12 +13,12 @@ let repo = Version.init
   subst : (tm -> tm) -> tm -> tm = $ fun m n -> << $m$ $n$ >> $.
 
   subst2 : tm -> tm -> tm = $ fun m n ->
-    match m rec eval <:env< >> with
+    match* m with
       | << lam $m$ >> -> << $m$ $n$ >>
   $.
 
   omega : tm -> tm = $ fun m ->
-    match << omega m >> rec eval <:env< >> with
+    match* << omega m >> with
       | << lam $m$ >> -> << lam $m$ >>
       | << app $m$ $n$ >> -> << app $m$ $n$ >>
       | << $id:x$ >> -> << $id:x$ >>
@@ -27,14 +27,14 @@ let repo = Version.init
   eta_exp : tm -> tm = $ fun m -> << lam [x] app $m$ x >> $.
 
   vars : tm -> tm = $ fun m ->
-    match m rec eval <:env< >> with
+    match* m with
       | << lam $m$ >> -> << lam [x] vars ($m$ x) >>
       | << app $m$ $n$ >> -> << app (vars $m$) (vars $n$) >>
       | << $id:x$ >> -> << $id:x$ >>
   $.
 
   inst : tm -> tm = $ fun m ->
-    match m rec eval <:env< >> with
+    match* m with
       | << lam $m$ >> -> << inst ($m$ (lam [x] x)) >>
       | << app $m$ $n$ >> -> << app $m$ $n$ >>
       | << $id:x$ >> -> << $id:x$ >>
