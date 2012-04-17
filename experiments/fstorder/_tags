@@ -1,4 +1,4 @@
-<*.ml{,i}> : annot
+<*.ml{,i}> : annot, debug
 
 <pa_*.ml> : syntax(camlp4o), package(camlp4.extend, camlp4.quotations)
 <version.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF)
@@ -7,4 +7,4 @@
 <test_*.ml> : syntax(camlp4o), package(camlp4.quotations), dep(load.ml), dep(tests.ml), \
               pa(SLF), pa(here), pa(recmatch)
 
-<*.{byte,native,top}> : package(camlp4.lib)
+<*.{byte,native,top}> : package(camlp4.lib), debug
