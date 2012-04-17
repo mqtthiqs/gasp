@@ -3,6 +3,7 @@ test_hol.log
 test_fo.log
 test_subst.log
 test_stren.log
+test_recmatch.log
 test_defined.log
 test_inject.log
 test_check.log
