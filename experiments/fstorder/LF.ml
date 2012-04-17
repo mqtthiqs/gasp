@@ -57,6 +57,8 @@ module ESubst = struct
 
   and spine = function
     | OLam (x, n), m :: l -> spine (obj (subs_cons ([|m|], subs_id 0)) n, l)
+    | OMeta (x, s), m :: l -> OMeta (x, List.map
+      (fun n -> inj (obj (subs_cons ([|m|], subs_id 0)) n)) s)
     | (OApp _ | OMeta _) as n, [] -> n
     | n, l -> raise (Not_eta (inj n, l))
 
