@@ -23,6 +23,7 @@ let repo = Version.init
   ff : tm.
   letb : tm -> (tm -> tm) -> tm.
   ifb : tm -> tm -> tm -> tm.
+  recb : tm -> tm -> (tm -> tm -> tm) -> tm.
 
   is : tm -> tp -> type.
   is_app : {M:tm} {N:tm} {A:tp} {B:tp}
@@ -37,6 +38,12 @@ let repo = Version.init
     is M bool -> is N1 A -> is N2 A -> is (ifb M N1 N2) A.
   is_let : {M : tm} {N : tm -> tm} {A : tp} {B : tp}
     is M A -> ({x : tm} is x A -> is (N x) B) -> is (letb M [x] N x) B.
+  is_rec : {M : tm} {N : tm} {P : tm -> tm -> tm} {A : tp}
+    is M nat ->
+    is N A ->
+    ({x:tm} {y:tm} is x nat -> is y A -> is (P x y) A) ->
+    is (recb M N [x] [y] P x y) A
+   .
 
   inf : tm -> type.
   ex : {M : tm} {A : tp} {H : is M A} inf M.
@@ -59,7 +66,7 @@ let repo = Version.init
                 end
             | << $id:x$ >> -> failwith "types not equal"
           end
-    $.
+  $.
 
   infer : {M : tm} inf M = $ fun m ->
     Debug.log_open "infer" "%a" SLF.Printer.term m;
@@ -110,6 +117,21 @@ let repo = Version.init
                       << ex (letb $m$ $n$) $b$ (is_let $m$ $n$ $a$ $b$ $d1$ ([x] [h] $d2$)) >>
                 end
           end
+      | << recb $m$ $n$ $p$ >> ->
+          begin match << infer $m$ >> rec eval <:env< >> with
+            | << ex $_$ nat $dm$ >> ->
+                begin match << infer $n$ >> rec eval <:env< >> with
+                  | << ex $_$ $a$ $dn$ >> ->
+                      begin match << infer ($p$ (get x (ex x nat hx)) (get y (ex y $a$ hy))) >>
+                      rec eval <:env< x:tm; hx:is x $a$; y:tm; hy:tm >> with
+                        | << ex $_$ $a'$ $dp$ >> ->
+                            begin match << equals $a$ $a'$ >> rec eval <:env< >> with
+                              | << one >> -> << ex (recb $m$ $n$ $p$) $a$
+                                  (is_rec $m$ $n$ $p$ $a$ $dm$ $dn$ [x] [y] [hx] [hy] $dp$) >>
+                            end
+                      end
+                end
+          end
       | << get $x$ $i$ >> -> i
     in
     Debug.log_close "infer" "=> %a" SLF.Printer.term r;
@@ -150,6 +172,30 @@ Tests.commit repo
     letb (app f tt) [x]
     letb (app f ff) [y]
     x
+  )
+>>
+;;
+
+Tests.commit repo
+<< infer (recb o o [x] [_] s x) >>
+;;
+
+Tests.commit repo
+<<
+  infer (
+    lam nat [x] lam nat [y] recb x y [z] [_] s z
+  )
+>>
+;;
+
+Tests.commit repo
+<<
+  infer (
+    letb (lam nat [x] lam nat [y] recb x y [z] [_] s z) [add]
+    letb (lam nat [x] lam nat [y] recb o y [z] [_] app (app add x) z) [mult]
+    letb (lam nat [x] lam nat [y] recb (s o) y [z] [_] app (app mult x) z) [exp]
+    letb (lam nat [x] recb o x [_] [w] w) [pred]
+    app (app exp (s o)) (s o)
   )
 >>
 ;;
