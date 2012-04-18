@@ -11,6 +11,7 @@ exception Not_conv_fam of repo * env * fam * fam
 exception Non_functional_fapp of repo * env * spine
 exception Non_functional_app of repo * env * spine * fam
 exception Unbound_meta of repo * Meta.t
+exception Not_evaluable of repo * obj
 
 let pull repo x =
   let rec aux ctx (x, s) =
@@ -68,7 +69,6 @@ let head_type repo = function
   | HVar x -> Sign.Non_sliceable
   | HConst c -> snd (Sign.ofind c repo.sign)
 
-exception Not_evaluable of repo * obj
 
 let rec eval repo = prj @> function
   | OMeta (x, s) ->

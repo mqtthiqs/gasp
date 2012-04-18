@@ -117,7 +117,7 @@ end = struct
       let lnames = List.map fst lenv in
       let m = Strat.obj repo.Repo.sign lnames t in
       Unstrat.obj lnames (eval m) in
-    obj repo.Repo.sign [] (f eval l)
+    Strat.obj repo.Repo.sign [] (f eval l)
 
   let entry_type = function
     | Sliceable -> Sign.Sliceable

@@ -50,12 +50,11 @@ let repo = Version.init
 
   get : {M : tm} inf M -> tm = $ fun m _ -> m $.
 
-
   equals : tp -> tp -> unit = $ fun a b ->
     match* a with
       | << $id:x$ >> ->
           begin match* b with
-            | << $id:y$ >> when x=y -> << one >>
+            | << $id:y$ >> when x=y -> << one >> (* TODO: equality *)
             | << arr $_$ $_$ >> -> failwith "types not equal"
           end
       | << arr $a1$ $a2$ >> ->
