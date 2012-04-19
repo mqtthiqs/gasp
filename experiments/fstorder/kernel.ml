@@ -44,7 +44,7 @@ let strengthen env (h, l) a =
 (*   env', (h, l), a, subst *)
 
 (* —————————————————————————————————————— (X fresh)
- * R, Γ ⊢ h l : A => R[Γ ⊢ ?X = h l : A], id(Γ)
+ * R, Γ ⊢ h l : A => R[?X = Γ ⊢ h l : A], id(Γ)
  *)
 let push =
   let gensym =
@@ -180,7 +180,7 @@ module Conv = struct
     Debug.close "conv obj";
     r
 
-  and fam' repo env = function
+  and fam repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
       fam repo env (a1, a2); fam repo (Env.add x a1 env) (b1, b2)
     | FApp (c1, l1), FApp (c2, l2) when FConst.compare c1 c2 = 0 ->
@@ -188,12 +188,12 @@ module Conv = struct
       fspine repo env (l1, l2, k)
     | a1, a2 -> raise (Not_conv_fam (repo, env, a1, a2))
 
-  and fam repo env (a1, a2) =
-    let e = Env.names_of env in
-    Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2;
-    let r = fam' repo env (a1, a2) in
-    Debug.close "conv fam";
-    r
+  (* and fam repo env (a1, a2) = *)
+  (*   let e = Env.names_of env in *)
+  (*   Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2; *)
+  (*   let r = fam' repo env (a1, a2) in *)
+  (*   Debug.close "conv fam"; *)
+  (*   r *)
 
 end
 
@@ -305,7 +305,7 @@ module Check = struct
         let repo, m = obj repo env (m, a) in
         repo, m, a
 
-  and spine repo env : spine * fam -> repo * spine * fam = function
+  and spine' repo env : spine * fam -> repo * spine * fam = function
 
     (* ———————————————————————
      * R, Γ, P ⊢ · => R, ·, P
@@ -324,6 +324,11 @@ module Check = struct
     | [], _ -> failwith "not eta-expanded"
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
+  and spine repo env (l, a) =
+    (* Debug.log_open "spine" "%a, %a ⊢ %a" P.env env P.fam a P.spine l; *)
+    let repo, l, a = spine' repo env (l, a) in
+    (* Debug.log_close "spine" "=> %a : %a" P.spine l P.fam a; *)
+    repo, l, a
   and fspine repo env : spine * kind -> repo * spine = function
     | [], KType -> repo, []
     | _ :: _ as l, KType -> raise (Non_functional_fapp (repo, env, l))
