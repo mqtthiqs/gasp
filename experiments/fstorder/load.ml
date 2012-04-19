@@ -17,4 +17,6 @@
 #install_printer SLF.Printer.repo
 
 #install_printer Names.Meta.print
+
+#install_printer Camlp4.PreCast.Loc.print
 ;;
