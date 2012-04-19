@@ -71,6 +71,12 @@ let repo = Version.init
 
 Tests.commit repo
 <<
+  is_lam ([t] t) base base ([x] [h] infer (get x (ex x base h)))
+>>
+;;
+
+Tests.commit repo
+<<
   infer (lam base [z] z)
 >>
 ;;
