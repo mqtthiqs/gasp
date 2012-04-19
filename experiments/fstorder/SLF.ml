@@ -249,12 +249,14 @@ module Printer = struct
   let eobj e fmt m = term fmt (Unstrat.obj e m)
   let efam e fmt a = term fmt (Unstrat.fam e a)
   let ekind e fmt k = term fmt (Unstrat.kind e k)
-
-  let obj fmt m = eobj [] fmt m
-  let fam fmt m = efam [] fmt m
-  let kind fmt m = ekind [] fmt m
-
+  let espine e = list semi (eobj e)
   let esubst e fmt s = fprintf fmt "@[[%a]@]" (list_rev semi (eobj e)) s
+
+  let obj = eobj []
+  let fam = efam []
+  let kind = ekind []
+  let spine = espine []
+
   let subst = esubst []
 
   let entity fmt = function

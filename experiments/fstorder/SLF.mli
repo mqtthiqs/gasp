@@ -30,9 +30,11 @@ module Printer : sig
   val eobj : binder list -> formatter -> LF.obj -> unit
   val efam : binder list -> formatter -> LF.fam -> unit
   val ekind : binder list -> formatter -> LF.kind -> unit
+  val espine : binder list -> formatter -> LF.spine -> unit
   val obj : formatter -> LF.obj -> unit
   val fam : formatter -> LF.fam -> unit
   val kind : formatter -> LF.kind -> unit
+  val spine : formatter -> LF.spine -> unit
   val sign : formatter -> Struct.sign -> unit
   val env : formatter -> env -> unit
   val esubst : binder list -> formatter -> LF.subst -> unit
