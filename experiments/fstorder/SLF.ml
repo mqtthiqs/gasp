@@ -111,12 +111,13 @@ end = struct
       (x, fam sign (Env.names_of e) t) :: e
 
   let fn (f : (lenv -> term -> term) -> term list -> term)
-      repo (eval : LF.obj -> LF.obj) (l : LF.obj list) : LF.obj =
+      repo env (eval : env -> LF.obj -> LF.obj) (l : LF.obj list) : LF.obj =
     let l = List.map (Unstrat.obj []) l in
     let eval (lenv:lenv) (t:term) =
       let lnames = List.map fst lenv in
       let m = Strat.obj repo.Repo.sign lnames t in
-      Unstrat.obj lnames (eval m) in
+      let env = Strat.env repo.Repo.sign env lenv in
+      Unstrat.obj lnames (eval env m) in
     Strat.obj repo.Repo.sign [] (f eval l)
 
   let entry_type = function
