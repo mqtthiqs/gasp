@@ -12,6 +12,8 @@ let commit repo m =
   Kernel.Conv.obj repo [] (m, n, a);
   repo
 
+let commit repo m = Topcatch.catch (commit repo) m
+
 let commit_eq repo m p =
   let repo = Version.commit repo [] m in
   let _, _, a = Context.find (fst repo.head) repo.ctx in
@@ -23,8 +25,10 @@ let commit_eq repo m p =
   Kernel.Conv.obj repo [] (m, p, a);
   repo
 
+let commit_eq repo m p = Topcatch.(catch (catch (commit_eq repo) m) p)
+
 (* ([x] n) [0 <- m] = p : a *)
-let subst repo m n p a =
+let subst' repo m n p a =
   let p = SLF.Strat.obj repo.sign [] p in
   let m = SLF.Strat.obj repo.sign [] m in
   let a = SLF.Strat.fam repo.sign [] a in
@@ -34,6 +38,10 @@ let subst repo m n p a =
   let q = LF.Subst.obj [m] n in
   Kernel.Conv.obj repo [] (p, q, a);
   p
+
+let subst repo m n p a =
+  Topcatch.(catch (catch (catch (catch (subst' repo) m) n) p) a)
+
 
 (* env |- ([x] n) [0 <- m] = p : a *)
 let subst_open repo env m n p a =
@@ -49,16 +57,17 @@ let subst_open repo env m n p a =
   Kernel.Conv.obj repo env (p, q, a);
   p
 
+let subst_open repo env m n p a =
+  Topcatch.(catch (catch (catch (catch (subst_open repo env) m) n) p) a)
+
 let conv repo m n a =
   let m = SLF.Strat.obj repo.sign [] m in
   let n = SLF.Strat.obj repo.sign [] n in
   let a = SLF.Strat.fam repo.sign [] a in
   Kernel.Conv.obj repo [] (m, n, a)
 
-let match_failure loc repo env m =
-  Debug.flush();
-  Format.eprintf "Match failure: %a ⊢ %a in %a@." SLF.Printer.env env (SLF.Printer.term) m SLF.Printer.repo_light repo;
-  raise (Match_failure(Camlp4.PreCast.Loc.(file_name loc, start_line loc, start_bol loc)))
+let conv repo env m n p a =
+  Topcatch.(catch (catch (catch (conv repo) m) n) a)
 
 exception Did_not_fail
 exception Failed of exn

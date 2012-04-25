@@ -78,7 +78,7 @@ Tests.subst repo
 ;;
 
 try Tests.fail5
-Tests.subst repo
+Tests.subst' repo
 << [x] x x >>
 << [y] y y >>
 << [x] x >>

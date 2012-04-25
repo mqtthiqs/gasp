@@ -13,6 +13,22 @@ exception Non_functional_app of repo * env * spine * fam
 exception Unbound_meta of repo * Meta.t
 exception Not_evaluable of repo * obj
 
+let _ =
+  Topcatch.register begin fun fmt -> function
+    | LF.Not_eta (m, s) -> Format.fprintf fmt "Not_eta(%a, [%a])" P.obj m P.spine s
+    | Not_conv_obj (repo, env, m1, m2) -> Format.fprintf fmt "Not convertible:@ @[%a ⊢ %a ≡ %a@])"
+      P.env env P.obj m1 P.obj m2
+    | Not_conv_fam (repo, env, m1, m2) -> Format.fprintf fmt "Not convertible:@ @[%a ⊢ %a ≡ %a@])"
+      P.env env P.fam m1 P.fam m2
+    | Non_functional_fapp (repo, env, l) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : *@])"
+      P.env env P.spine l
+    | Non_functional_app (repo, env, l, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@])"
+      P.env env P.spine l P.fam a
+    | Unbound_meta (repo, x) -> Format.fprintf fmt "Unbound meta:@ %a in %a" Meta.print x P.repo repo
+    | Not_evaluable (repo, m) -> Format.fprintf fmt "Not evaluable:@ %a in %a" P.obj m P.repo repo
+    | _ -> raise Topcatch.Unhandled
+  end
+
 let pull repo x =
   let rec aux ctx (x, s) =
     let e, m, a =

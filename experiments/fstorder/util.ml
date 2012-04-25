@@ -152,6 +152,37 @@ module Debug = struct
 
 end
 
+module Topcatch = struct
+
+  open Format
+
+  exception Unhandled
+
+  let stk = ref ([] : (formatter -> exn -> unit) list)
+
+  let register f = stk := f :: !stk
+
+  let print fmt e =
+    let rec aux = function
+      | [] -> Format.pp_print_newline fmt (); raise e
+      | f :: stk -> try f fmt e with Unhandled -> aux stk in
+    aux !stk
+
+  let catch fct arg =
+    try
+      fct arg
+    with x ->
+      flush stdout;
+      eprintf "@[Uncaught exception:@ @[%a@]@]@." print x;
+      exit 2
+
+  let _ =
+    register begin fun fmt -> function
+      | e  -> raise e
+    end
+
+end
+
 let (@@) a b = a b
 let (<@) f g x = f (g x)
 let (@>) f g x = g (f x)
@@ -163,3 +194,10 @@ type ('a, 'b) union =
   | Inr of 'b
 
 exception Located of Camlp4.PreCast.Loc.t * exn
+
+let _ =
+  Topcatch.register begin fun fmt -> function
+    | Invalid_argument s -> Format.fprintf fmt "Invalid argument:@ %s" s
+    | Located (l, e) -> Format.fprintf fmt "@[%a@]:@ %a" Camlp4.PreCast.Loc.print l Topcatch.print e
+    | _ -> raise Topcatch.Unhandled
+  end
