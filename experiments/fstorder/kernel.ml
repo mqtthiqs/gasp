@@ -24,8 +24,8 @@ let _ =
       P.env env P.spine l
     | Non_functional_app (repo, env, l, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@])"
       P.env env P.spine l P.fam a
-    | Unbound_meta (repo, x) -> Format.fprintf fmt "Unbound meta:@ %a in %a" Meta.print x P.repo repo
-    | Not_evaluable (repo, m) -> Format.fprintf fmt "Not evaluable:@ %a in %a" P.obj m P.repo repo
+    | Unbound_meta (repo, x) -> Format.fprintf fmt "Unbound meta:@ %a in %a" Meta.print x P.repo_light repo
+    | Not_evaluable (repo, m) -> Format.fprintf fmt "Not evaluable:@ %a in %a" P.obj m P.repo_light repo
     | _ -> raise Topcatch.Unhandled
   end
 
@@ -78,7 +78,7 @@ let push repo env (h, l) a =
   let e = Env.names_of env in
   Debug.log_open "push" "%a ⊢ %a : %a" P.env env (P.eobj e) (mkApp(h,l)) (P.efam e) a;
   let r = push repo env (h, l) a in
-  Debug.log_close "push" "=> %a" P.repo r;
+  Debug.log_close "push" "=> %a" P.repo_light r;
   r
 
 let head_type repo = function
