@@ -31,11 +31,13 @@ let repo = Version.init <:sign<
 
   tm : type.
   lam : (tm -> tm) -> tm.
+  app : tm -> tm -> tm.
 
   rename : tm -> tm = $ fun n ->
     Debug.log_open "rename" "%a" SLF.Printer.term n;
     let r = match* n with
       | << $id:x$ >> -> << $id:x$ >>
+      | << app $m$ $n$ >> -> << app (rename $m$) (rename $n$) >>
       | << lam $n$ >> -> << lam [x] rename ($n$ x) >>
     in
     Debug.log_close "rename" "=> %a" SLF.Printer.term r;

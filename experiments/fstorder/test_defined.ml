@@ -11,13 +11,21 @@ let repo = Version.init <:sign<
   plus : nat -> nat -> nat = $ fun m n ->
     match* m with
       | << o >> -> n
-      | << s $m$ >> -> << s (plus $m$ $n$) >> (* or << s (plus $m$ $n$) >> *)
+      | << s $m$ >> -> << s (plus $m$ $n$) >>
   $.
 
   mult: nat -> nat -> nat = $ fun m n ->
     match* m with
       | << o >> -> << o >>
       | << s $m$ >> -> << plus $n$ (mult $m$ $n$) >>
+  $.
+
+  div2 : nat -> nat = $ fun m ->
+    match* m with
+      | << o >> -> << o >>
+      | << s $m$ >> -> match* m with
+          | << o >> -> failwith "div2"
+          | << s $m$ >> -> << div2 $m$ >>
   $.
 
   exp : type.
@@ -64,7 +72,7 @@ Tests.conv repo <<
   plus two two
 >> <<
   s (s (s (s o)))
->>
+>> << nat >>
 ;;
 
 Tests.commit repo <<
@@ -76,6 +84,39 @@ Tests.commit_eq repo <<
   mult two two
 >> <<
   plus two two
+>>
+;;
+
+Tests.commit_eq repo <<
+  plus o (plus two two)
+>> <<
+  s (s (s (s o)))
+>>
+;;
+
+Tests.commit_eq repo <<
+  plus (plus (s o) o) o
+>> <<
+  s o
+>>
+;;
+
+Tests.commit_eq repo <<
+  div2 (s (s o))
+>> << o >>
+;;
+
+Tests.commit_eq repo <<
+  plus (plus o (s o)) o
+>> <<
+  s o
+>>
+;;
+
+Tests.commit_eq repo <<
+  plus (plus two two) o
+>> <<
+  s (s (s (s o)))
 >>
 ;;
 
