@@ -12,11 +12,15 @@ end
 module Context = struct
 
   module M = Map.Make(Meta)
-  type t = (Env.t * obj * fam) M.t
-  let empty = M.empty
-  let find = M.find
-  let add = M.add
-  let fold = M.fold
+  type t = (Env.t * obj * fam) M.t * int ref
+  let empty = M.empty, ref 0
+  let find x ((t, _) : t) = M.find x t
+  let add x v (t, n) =
+    if M.mem x t then failwith ("collision"^(Meta.repr x)) else M.add x v t, n
+  let fold f ((t, n):t) acc = M.fold f t acc
+  let fresh (_, n) () =
+    let x = Meta.make ("X"^string_of_int !n) in
+    n := succ !n; x
 
 end
 

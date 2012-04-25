@@ -71,9 +71,9 @@ Tests.subst repo
 ;;
 
 Tests.subst repo
-<< [a] ?X4[a] >>
+<< [a] ?X3[a] >>
 << [X] [x] X x >>
-<< [x] ?X4[x] >>
+<< [x] ?X3[x] >>
 << A -> A >>
 ;;
 

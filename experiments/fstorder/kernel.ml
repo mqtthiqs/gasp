@@ -62,12 +62,8 @@ let strengthen env (h, l) a =
 (* —————————————————————————————————————— (X fresh)
  * R, Γ ⊢ h l : A => R[?X = Γ ⊢ h l : A], id(Γ)
  *)
-let push =
-  let gensym =
-    let n = ref 0 in
-    fun () -> incr n; string_of_int !n in
-  fun repo env (h, l) a ->
-    let x = Meta.make ("X"^gensym()) in
+let push repo env (h, l) a =
+    let x = Context.fresh repo.ctx () in
     let env, (h, l), a, s = strengthen env (h, l) a in
     let repo = { repo with
       ctx = Context.add x (env, mkApp (h, l), a) repo.ctx;

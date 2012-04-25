@@ -14,6 +14,7 @@ module Context : sig
   val find : Meta.t -> t -> Env.t * obj * fam
   val add : Meta.t -> Env.t * obj * fam -> t -> t
   val fold : (Meta.t -> Env.t * obj * fam -> 'a -> 'a) -> t -> 'a -> 'a
+  val fresh : t -> unit -> Meta.t
 end
 
 module rec Repo : sig
