@@ -172,6 +172,7 @@ module Topcatch = struct
     try
       fct arg
     with x ->
+      pp_print_newline Debug.formatter ();
       flush stdout;
       eprintf "@[Uncaught exception:@ @[%a@]@]@." print x;
       exit 2

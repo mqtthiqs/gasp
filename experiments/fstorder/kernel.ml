@@ -141,15 +141,19 @@ end = struct
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
     | OApp (h1, l1), o2, a ->
-        begin match head_type repo h1 with
-          | Sign.Defined f -> obj' repo env (Eval.interp repo env h1 f l1, m2, a)
-          | Sign.Sliceable | Sign.Non_sliceable ->
+        begin match Check.head repo env h1 with
+          | ah, Sign.Defined f ->
+              let repo, l1, a' = Check.spine repo env (l1, ah) in
+              obj repo env (Eval.interp repo env h1 f l1, m2, a)
+          | ah, Sign.Sliceable | ah, Sign.Non_sliceable ->
               match o2 with
                 | OMeta _ | OLam _ -> raise (Not_conv_obj (repo, env, m1, m2))
                 | OApp (h2, l2) ->
-                    match head_type repo h2 with
-                      | Sign.Defined f -> obj' repo env (m1, Eval.interp repo env h2 f l2, a)
-                      | Sign.Sliceable | Sign.Non_sliceable ->
+                    match Check.head repo env h2 with
+                      | ah, Sign.Defined f ->
+                          let repo, l2, a' = Check.spine repo env (l2, ah) in
+                          obj repo env (m1, Eval.interp repo env h2 f l2, a)
+                      | ah, Sign.Sliceable | ah, Sign.Non_sliceable ->
                           let a' = head repo env (h1, h2) in
                           let a' = spine repo env (l1, l2, a') in
                           fam repo env (a, a')
