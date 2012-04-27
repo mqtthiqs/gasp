@@ -2,8 +2,12 @@
 %%% TeX-master: "paper"
 %%% End:
 
+% English
+\newcommand\eg{e.g.}
+\newcommand\ie{i.e.}
+
 % Grammars
-\newcommand\gor{\ |\ }
+\newcommand\gor{\ {\big|}\ }
 \newcommand\gequal{\ ::=\ }
 
 % Names
@@ -37,6 +41,10 @@
 \newcommand\spinenil{\gnil}
 \newcommand\spinecons[2]{{#1}\ {#2}}
 
+\newcommand\match[1]{\operatorname{case}\ {#1}\ \operatorname{of}\ }
+\newcommand\case[1]{|{#1}\to}
+\newcommand\casenobar[1]{{#1}\to}
+
 % Metavariable substitutions
 \newcommand\msubst[2]{{\var{#1}}/{#2}}
 \newcommand\msubstnil{\gnil}
@@ -52,3 +60,5 @@
 \newcommand\function[2]{\funname{#1}({#2})}
 
 \newcommand\FV[1]{\function{FV}{#1}}
+\newcommand\FMV[1]{\function{FMV}{#1}}
+\newcommand\dom[1]{\operatorname{dom}{(#1)}}

@@ -52,12 +52,24 @@ incrementality, type checking, logical framework, version control
 
 \subsection{Core calculus}
 
+The core calculus defines the \emph{values} we want to
+manipulate. These contain constants, and --- contrarily to \eg\ ML
+values --- binders and variables enabling $\lambda$-tree syntax (TODO
+cite). Thus, they embed a superficial notion of computation:
+hereditary substitution. This calculus is an extension of \emph{spine
+  canonical LF} (TODO cite) enriched with metavariables. We present
+its typing algorithm relatively to a signature. It features an
+explicit caching mechanism using metavariables.
+
 \paragraph{Syntax}
 
-We defined the syntax of canonical LF (TODO cite) enriched with
-metavariables and substitutions. Canonicity against $\beta$-reduction
-is enforced in the syntax, but we think of them also as $\eta$-long;
-it will be enforced by typing.
+In this variant, only $\eta$-long $\beta$-normal forms have an
+existence: canonicity for $\beta$-reduction is enforced in the syntax;
+canonicity for $\eta$-expansion will be enforced by typing. Also,
+application of a \emph{head} to a \emph{spine} (\ie\ a constant or
+variable) is $n$-ary as opposed to the more standard binary
+application: this eases reasoning about substitution and
+$\eta$-expansion (TODO cite).
 
 \begin{align*}
   K &\gequal
@@ -67,12 +79,14 @@ it will be enforced by typing.
   A &\gequal
   \prd x A A \gor
   \app {\cst a} S &
-  \text{Type family}\\
+  \text{Type family} \\
   M &\gequal
   \lam x M \gor
-  \app H S \gor
+  F \gor
   \smeta X \sigma &
-  \text{Object}\\
+  \text{Object} \\
+  F &\gequal \app H S &
+  \text{Application} \\
   H &\gequal
   \var x \gor
   \cst c &
@@ -88,41 +102,35 @@ it will be enforced by typing.
   \Gamma &\gequal
   \gnil \gor
   \gcons \Gamma {\tp {\var x} A} &
-  \text{Environment} \\
-  \Sigma &\gequal
-  \gnil \gor
-  \gcons \Sigma {\cst c : A} \gor
-  \gcons \Sigma {\cst a : K} &
-  \text{Signature}
+  \text{Environment}
 \end{align*}
 
 As usual, we write $\meta X$ for $\smeta X \msubstnil$, $A\to B$ for
 $\prd x A B$ when $x\notin \FV{B}$ and adopt list notations for $S,
 \sigma, \Gamma, \Sigma$ when convenient.
 
-A \emph{repository} is a finite map from metavariable to judgements of
-object well-typing, along with a distinguished metavariable, the
-\emph{head}:
-$$ \repo R\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X \sigma $$
+Metavariables $\smeta X \sigma$ stand for open objects with free
+variables in $\dom{\sigma}$; they are defined in a repository (see below). We
+write $\FMV{M}$ for the set of metavariables in $M$.
 
-\paragraph{Substitution} We overload \emph{substitution} as a partial
-operation on terms, given a parallel substitution $\sigma$. Since the
-syntax of object is not stable by substitution, it is defined
-\emph{hereditarily}: it is mutually recursive with a
-\emph{normalization} function $\gcut M S$ which can in turn trigger a
-chain of substitutions, leading to a canonical term, a stuck
-substitution or divergence. % TODO vraiment?
+\paragraph{Substitution}
 
+We overload \emph{substitution} as a partial operation on terms, given
+a parallel substitution $\sigma$. Since the syntax of object is not
+stable by substitution, it is defined \emph{hereditarily}: it is
+mutually recursive with a \emph{normalization} function $\gcut M S$
+which can in turn trigger a chain of substitutions, leading to a
+canonical term, a stuck substitution or divergence. % TODO vraiment?
 \begin{align*}
   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
-  \text{if $x\notin dom{(\sigma)}$}
+  \text{if $x\notin \dom{\sigma}$}
   \\
   \gsubst {(\app {\cst c} S)} \sigma &= \app {\cst c} {(\gsubst S
     \sigma)}
   \\
   \gsubst {(\app {\var x} S)} \sigma &=
   \app {\var x} {\gsubst S \sigma} &
-  \text{if $x\notin dom{(\sigma)}$}
+  \text{if $x\notin \dom{\sigma}$}
   \\
   \gsubst {(\app {\var x} S)} \sigma &=
   \gcut M {\gsubst S \sigma} &
@@ -162,7 +170,52 @@ Note that this notion of substitution presupposes $\eta$-long normal
 forms: a spine applied to another application $\gcut {\app H S} {S'}$
 blocks the substitution.
 
+We extend this operation trivially on families $\gsubst A \sigma$
+and kinds $\gsubst K \sigma$
+
 % TODO terminaison??
+% TODO stabilité de la eta
+
+\paragraph{Typing algorithm}
+
+A \emph{repository}
+is a finite map from metavariable to judgements of object well-typing,
+along with a distinguished metavariable, the \emph{head}:
+$$ \repo R\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X \sigma $$
+We maintain the invariant that a repository $\repo R$ is
+\emph{acyclic}, that is for all $\meta X$ in $\repo R$, the fixpoint
+of $\FMV{\meta X}$ does not contain $\meta X$.
+
+A \emph{signature} declares object and type constants to be used in
+objects:
+$$  \Sigma \gequal
+  \gnil \gor
+  \gcons \Sigma {\cst c : A} \gor
+  \gcons \Sigma {\cst a : K} \qquad
+  \text{Signature}
+$$
+
+\subsection{The computation calculus}
+
+We now turn to the definition of our computation calculus on LF
+objects. This language is untyped
+\begin{align*}
+  T &\gequal
+   M \gor
+  \match T \casenobar P T\ |\ \ldots\ \case P T \\
+  P &\gequal \app {\cst c} {\vec x}
+\end{align*}
+
+We extend our notion of signature to allow object constants to embed a
+computational behaviour.
+
+$$  \Sigma \gequal
+  \ldots \gor
+  \gcons \Sigma {\cst c : A = T}
+  \qquad
+  \text{Signature}
+$$
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
