@@ -1,0 +1,179 @@
+\documentclass[9pt]{sigplanconf}
+
+\usepackage{ntheorem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\usepackage{macros}
+
+\begin{document}
+
+\conferenceinfo{LFMTP '12}{September 9, 2012 -- Copenhagen, Denmark}
+\copyrightyear{2012}
+\copyrightdata{[to be supplied]}
+
+\titlebanner{banner above paper title}        % These are ignored unless
+\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Certified incremental program transformations}
+%\subtitle{Subtitle Text, if any}
+
+\authorinfo{Matthias Puech}
+           {Department of Comp. Sci., Univ. of Bologna,\\
+             PPS, Team $\pi r^2$ (Univ. Paris Diderot, CNRS, INRIA)}
+           {puech@cs.unibo.it}
+
+\authorinfo{Yann R\'egis-Gianas}
+           {PPS, Team $\pi r^2$ (Univ. Paris Diderot, CNRS, INRIA)}
+           {yrg@pps.jussieu.fr}
+
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+
+\category{D.3.3}{Language Constructs and Features}{Data types and
+  structures} \category{F.3.1}{Logics and Meanings of
+  Programs}{Specifying and Verifying and Reasoning about
+  Programs --- Logics of programs}
+
+\terms
+Theory, Languages
+
+\keywords
+incrementality, type checking, logical framework, version control
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+\section{The calculus}
+
+\subsection{Core calculus}
+
+\paragraph{Syntax}
+
+We defined the syntax of canonical LF (TODO cite) enriched with
+metavariables and substitutions. Canonicity against $\beta$-reduction
+is enforced in the syntax, but we think of them also as $\eta$-long;
+it will be enforced by typing.
+
+\begin{align*}
+  K &\gequal
+  \prd x A K \gor
+  \type &
+  \text{Kind}\\
+  A &\gequal
+  \prd x A A \gor
+  \app {\cst a} S &
+  \text{Type family}\\
+  M &\gequal
+  \lam x M \gor
+  \app H S \gor
+  \smeta X \sigma &
+  \text{Object}\\
+  H &\gequal
+  \var x \gor
+  \cst c &
+  \text{Head}\\
+  S &\gequal
+  \spinenil \gor
+  \spinecons S M &
+  \text{Spine}\\
+  \sigma &\gequal
+  \msubstnil \gor
+  \msubstcons \sigma x M &
+  \text{Substitution} \\
+  \Gamma &\gequal
+  \gnil \gor
+  \gcons \Gamma {\tp {\var x} A} &
+  \text{Environment} \\
+  \Sigma &\gequal
+  \gnil \gor
+  \gcons \Sigma {\cst c : A} \gor
+  \gcons \Sigma {\cst a : K} &
+  \text{Signature}
+\end{align*}
+
+As usual, we write $\meta X$ for $\smeta X \msubstnil$, $A\to B$ for
+$\prd x A B$ when $x\notin \FV{B}$ and adopt list notations for $S,
+\sigma, \Gamma, \Sigma$ when convenient.
+
+A \emph{repository} is a finite map from metavariable to judgements of
+object well-typing, along with a distinguished metavariable, the
+\emph{head}:
+$$ \repo R\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X \sigma $$
+
+\paragraph{Substitution} We overload \emph{substitution} as a partial
+operation on terms, given a parallel substitution $\sigma$. Since the
+syntax of object is not stable by substitution, it is defined
+\emph{hereditarily}: it is mutually recursive with a
+\emph{normalization} function $\gcut M S$ which can in turn trigger a
+chain of substitutions, leading to a canonical term, a stuck
+substitution or divergence. % TODO vraiment?
+
+\begin{align*}
+  \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
+  \text{if $x\notin dom{(\sigma)}$}
+  \\
+  \gsubst {(\app {\cst c} S)} \sigma &= \app {\cst c} {(\gsubst S
+    \sigma)}
+  \\
+  \gsubst {(\app {\var x} S)} \sigma &=
+  \app {\var x} {\gsubst S \sigma} &
+  \text{if $x\notin dom{(\sigma)}$}
+  \\
+  \gsubst {(\app {\var x} S)} \sigma &=
+  \gcut M {\gsubst S \sigma} &
+  \text{if $\sigma(x) = M$}
+  \\
+  \gsubst {\smeta X {\sigma}} {\sigma'} &=
+  \smeta X {\gcomp\sigma{\sigma'}}
+  \\
+  \gsubst\spinenil\sigma &=
+  \spinenil \\
+  \gsubst{\spinecons S M}\sigma &=
+  \spinecons{\gsubst S\sigma}{\gsubst M\sigma}
+  \\
+  \gcut {\lam x M} {\spinecons N S} &=
+  \gcut {\gsubst M N} S
+  \\
+  % TODO cas meta/S ????
+  % \gcut {\smeta X\sigma} S &=
+  % \smeta X{\gcomp\sigma\sigma'}
+  % \\
+  \gcut {\app H S} \spinenil &=
+  \app H S
+  \\
+  \gcomp \sigma \msubstnil &=
+  \sigma
+  \\
+  \gcomp \sigma {(\msubstcons{\sigma'} x M)} &=
+  \gcomp {\gsubst\sigma {\msubst x M}} \sigma'
+  \\
+  \gsubst {(\msubstcons{\sigma'} x M)} \sigma &=
+  \msubstcons{\gsubst{\sigma'}\sigma} x {\gsubst M \sigma}
+  \\
+  \gsubst {\msubstnil}{\sigma} &= \msubstnil
+\end{align*}
+
+Note that this notion of substitution presupposes $\eta$-long normal
+forms: a spine applied to another application $\gcut {\app H S} {S'}$
+blocks the substitution.
+
+% TODO terminaison??
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{abbrvnat}
+\bibliography{../../english.bib}
+
+
+% \begin{thebibliography}{}
+% \softraggedright
+% \bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
+% P. Q. Smith, and X. Y. Jones. ...reference text...
+% \end{thebibliography}
+
+\end{document}

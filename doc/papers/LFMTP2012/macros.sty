@@ -1,0 +1,54 @@
+%%% Local Variables:
+%%% TeX-master: "paper"
+%%% End:
+
+% Grammars
+\newcommand\gor{\ |\ }
+\newcommand\gequal{\ ::=\ }
+
+% Names
+\newcommand\name[1]{\ensuremath{\text{#1}}}
+\newcommand\var[1]{\name{\textit{#1}}}
+\newcommand\cst[1]{\name{\textsf{#1}}}
+\newcommand\meta[1]{\name{\textsl{#1}}}
+\newcommand\repo[1]{\mathcal{#1}}
+
+% General lists (cons and snoc)
+\newcommand\gnil{\cdot}
+\newcommand\gcons[2]{{#1},{#2}}
+\newcommand\gsnoc[2]{\gcons{#2}{#1}}
+
+% General operations and constructors
+\newcommand\gsubst[2]{{#1}[{#2}]}
+\newcommand\gcomp[2]{{#1}\circ{#2}}
+\newcommand\gcut[2]{{#1}\star{#2}}
+\newcommand\tp[2]{{#1}:{#2}}
+
+% Terms
+\newcommand\postbinder{.\ }
+\newcommand\prd[2]{\Pi\tp{\var{#1}}{#2}\postbinder}
+\newcommand\prdi[1]{\forall{#1}\postbinder}
+\newcommand\app[1]{{#1}\ }
+\newcommand\tlam[2]{\lambda\tp{\var{#1}}{#2}\postbinder}
+\newcommand\lam[1]{\lambda{\var {#1}}\postbinder}
+\newcommand\letb[2]{\mathsf{let}\ {\var{#1}}={#2}\ \mathsf{in}\ }
+\newcommand\smeta[2]{\gsubst{\meta{#1}}{#2}}
+
+\newcommand\spinenil{\gnil}
+\newcommand\spinecons[2]{{#1}\ {#2}}
+
+% Metavariable substitutions
+\newcommand\msubst[2]{{\var{#1}}/{#2}}
+\newcommand\msubstnil{\gnil}
+\newcommand\msubstcons[3]{\gcons{#1}{\msubst{#2}{#3}}}
+
+% Sorts
+\newcommand\srt[1]{\mathsf{#1}}
+\newcommand\type{\srt *}
+\newcommand\kind{\srt \Box}
+
+% Functions
+\newcommand\funname[1]{{\rm\mathsf{#1}}}
+\newcommand\function[2]{\funname{#1}({#2})}
+
+\newcommand\FV[1]{\function{FV}{#1}}

@@ -7,6 +7,7 @@ type binder = string option
 type head =
   | HVar of int
   | HConst of OConst.t
+  | HInv of OConst.t
 
 type obj =
   | XLam of binder * obj
@@ -48,12 +49,13 @@ module ESubst = struct
     | XClos (s', m) -> obj (comp clos s s') m
     | XMeta (x, l) -> OMeta (x, List.map (fun m -> clos (s, m)) l)
     | XLam (x, m) -> OLam (x, clos (subs_lift s, m))
-    | XApp (HConst c, l) -> OApp (HConst c, List.map (fun m -> clos (s, m)) l)
     | XApp (HVar n, l) ->
       let l = List.map (fun m -> clos (s, m)) l in
-      match expand_rel (n+1) s with
+      begin match expand_rel (n+1) s with
         | Inl (k, m) -> spine (obj (subs_shft (k, subs_id 0)) m, l)
         | Inr (k, _) -> OApp (HVar (k-1), l)
+      end
+    | XApp (h, l) -> OApp (h, List.map (fun m -> clos (s, m)) l)
 
   and spine = function
     | OLam (x, n), m :: l -> spine (obj (subs_cons ([|m|], subs_id 0)) n, l)

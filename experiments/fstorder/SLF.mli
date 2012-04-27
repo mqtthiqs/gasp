@@ -4,6 +4,7 @@ type binder = string option
 
 type ident =
   | Id of string
+  | Inv of string
   | Unnamed of int
   | Unbound of int
 

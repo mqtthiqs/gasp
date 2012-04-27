@@ -79,7 +79,7 @@ let push repo env (h, l) a =
 
 let head_type repo = function
   | HVar x -> Sign.Non_sliceable
-  | HConst c -> snd (Sign.ofind c repo.sign)
+  | HConst c | HInv c -> snd (Sign.ofind c repo.sign)
 
 module rec Conv : sig
   val obj : repo -> env -> obj * obj * fam -> unit

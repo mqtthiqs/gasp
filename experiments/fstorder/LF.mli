@@ -5,6 +5,7 @@ type binder = string option
 type head =
   | HVar of int
   | HConst of OConst.t
+  | HInv of OConst.t
 
 type obj
 and spine = obj list

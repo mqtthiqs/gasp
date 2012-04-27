@@ -26,8 +26,6 @@ let repo = Version.init
   inf : tm -> type.
   ex : {M : tm} {A : tp} {H : is M A} inf M.
 
-  get : {M : tm} inf M -> tm = $ fun m _ -> m $.
-
   equals : tp -> tp -> unit = $ fun a b ->
     match* a with
       | << base >> ->
@@ -49,7 +47,7 @@ let repo = Version.init
     let r = match* m with
       | << lam $a$ $m$ >> ->
           let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:is x $a$ >> =
-            << infer ($m$ (get x (ex x $a$ h))) >> in
+            << infer ($m$ (infer^ x (ex x $a$ h))) >> in
           << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
       | << app $m$ $n$ >> ->
           let* << ex $_$ $c$ $d1$ >> = << infer $m$ >> in
@@ -60,7 +58,6 @@ let repo = Version.init
                 << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
             | << $id:x$ >> -> failwith "non-functional application"
           end
-      | << get $x$ $i$ >> -> i
     in
     Debug.log_close "infer" "=> %a" SLF.Printer.term r;
     r
@@ -71,7 +68,7 @@ let repo = Version.init
 
 Tests.commit repo
 <<
-  is_lam ([t] t) base base ([x] [h] infer (get x (ex x base h)))
+  is_lam ([t] t) base base ([x] [h] infer (infer^ x (ex x base h)))
 >>
 ;;
 
@@ -90,7 +87,7 @@ Tests.commit repo
 (* This should be no work at all *)
 Tests.commit repo
 <<
-  infer (get (lam base [z] z)
+  infer (infer^ (lam base [z] z)
            (ex (lam base [y] y) (arr base base)
               (is_lam ([t] t) base base ([_] [H] H))))
 >>
