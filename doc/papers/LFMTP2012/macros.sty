@@ -6,6 +6,9 @@
 \newcommand\eg{e.g.}
 \newcommand\ie{i.e.}
 
+% Various
+\newcommand\To{\Rightarrow}
+
 % Grammars
 \newcommand\gor{\ {\big|}\ }
 \newcommand\gequal{\ ::=\ }
@@ -42,8 +45,12 @@
 \newcommand\spinecons[2]{{#1}\ {#2}}
 
 \newcommand\match[1]{\operatorname{case}\ {#1}\ \operatorname{of}\ }
-\newcommand\case[1]{|{#1}\to}
-\newcommand\casenobar[1]{{#1}\to}
+\newcommand\matchin[2]{\match{{#1}\ \operatorname{in}\ {#2}}}
+\newcommand\case[1]{|{#1}\to} \newcommand\casenobar[1]{{#1}\to}
+
+% Environment
+\newcommand\envnil{\gnil}
+\newcommand\envcons[3]{\gcons{#1}{\tp{\var {#2}}{#3}}}
 
 % Metavariable substitutions
 \newcommand\msubst[2]{{\var{#1}}/{#2}}
@@ -56,9 +63,29 @@
 \newcommand\kind{\srt \Box}
 
 % Functions
-\newcommand\funname[1]{{\rm\mathsf{#1}}}
+\newcommand\funname[1]{{\text{\textsf{#1}}}}
 \newcommand\function[2]{\funname{#1}({#2})}
 
 \newcommand\FV[1]{\function{FV}{#1}}
 \newcommand\FMV[1]{\function{FMV}{#1}}
 \newcommand\dom[1]{\operatorname{dom}{(#1)}}
+
+% Operations
+\newcommand\checkout[1]{\downarrow{#1}}
+\newcommand\checkoutr[1]{\downarrow_{\repo R}{#1}}
+
+% Judgements
+\newcommand\gj[2]{{#1}\vdash{#2}}
+\newcommand\gjo[3]{\gj{#1}{{#2}\To{#3}}}
+
+\newcommand\jm[6]{\gjo{{#1}; {#2}}{{#3}: {#4}}{{#5}; {#6}}}
+\newcommand\jf[6]{\gjo{{#1}; {#2}}{#3}{{#4};{#5};{#6}}}
+\newcommand\js\jm
+
+\newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}
+\newcommand\jea[4]{\gj{{#1}; {#2}}{{#3}={#4}}}
+
+% Metavariables
+\newcommand\mr{\repo R}
+\newcommand\mmr{\repo {R'}}
+\newcommand\mmmr{\repo {R''}}

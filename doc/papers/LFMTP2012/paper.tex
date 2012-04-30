@@ -6,6 +6,7 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 \usepackage{macros}
+\usepackage{mathpartir}
 
 \begin{document}
 
@@ -93,34 +94,36 @@ $\eta$-expansion (TODO cite).
   \text{Head}\\
   S &\gequal
   \spinenil \gor
-  \spinecons S M &
+  \spinecons M S &
   \text{Spine}\\
   \sigma &\gequal
   \msubstnil \gor
   \msubstcons \sigma x M &
-  \text{Substitution} \\
+  \text{Parallel substitution} \\
   \Gamma &\gequal
-  \gnil \gor
-  \gcons \Gamma {\tp {\var x} A} &
+  \envnil \gor
+  \envcons \Gamma x A &
   \text{Environment}
 \end{align*}
 
-As usual, we write $\meta X$ for $\smeta X \msubstnil$, $A\to B$ for
+As is customary, we adopt the Barendregt convention for naming bound
+variables, write $\meta X$ for $\smeta X \msubstnil$, $A\to B$ for
 $\prd x A B$ when $x\notin \FV{B}$ and adopt list notations for $S,
 \sigma, \Gamma, \Sigma$ when convenient.
 
 Metavariables $\smeta X \sigma$ stand for open objects with free
-variables in $\dom{\sigma}$; they are defined in a repository (see below). We
-write $\FMV{M}$ for the set of metavariables in $M$.
+variables in $\dom{\sigma}$; they are defined in a repository (see
+below). We write $\FMV{M}$ for the set of metavariables in $M$ and
+speak of a \emph{metaclosed} object $M$ if $\FMV{M} = \emptyset$.
 
 \paragraph{Substitution}
 
 We overload \emph{substitution} as a partial operation on terms, given
 a parallel substitution $\sigma$. Since the syntax of object is not
-stable by substitution, it is defined \emph{hereditarily}: it is
-mutually recursive with a \emph{normalization} function $\gcut M S$
-which can in turn trigger a chain of substitutions, leading to a
-canonical term, a stuck substitution or divergence. % TODO vraiment?
+stable by (textual) substitution, it is defined \emph{hereditarily}: it
+is mutually recursive with a \emph{cut} function $\gcut M S$ which can
+in turn trigger a chain of substitutions, leading to a canonical term,
+a stuck substitution or divergence. % TODO vraiment?
 \begin{align*}
   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
   \text{if $x\notin \dom{\sigma}$}
@@ -141,8 +144,8 @@ canonical term, a stuck substitution or divergence. % TODO vraiment?
   \\
   \gsubst\spinenil\sigma &=
   \spinenil \\
-  \gsubst{\spinecons S M}\sigma &=
-  \spinecons{\gsubst S\sigma}{\gsubst M\sigma}
+  \gsubst{\spinecons M S}\sigma &=
+  \spinecons{\gsubst M\sigma}{\gsubst S\sigma}
   \\
   \gcut {\lam x M} {\spinecons N S} &=
   \gcut {\gsubst M N} S
@@ -153,6 +156,8 @@ canonical term, a stuck substitution or divergence. % TODO vraiment?
   % \\
   \gcut {\app H S} \spinenil &=
   \app H S
+  \\
+  \gcut {\smeta X\sigma} \spinenil &= \smeta X\sigma
   \\
   \gcomp \sigma \msubstnil &=
   \sigma
@@ -166,43 +171,142 @@ canonical term, a stuck substitution or divergence. % TODO vraiment?
   \gsubst {\msubstnil}{\sigma} &= \msubstnil
 \end{align*}
 
+We extend this operation trivially on families $\gsubst A \sigma$ and
+kinds $\gsubst K \sigma$. We also allow to abusively write the
+non-canonical application $\app M S$ as a shorthand for $\gcut M S$ if
+it is defined.
+
 Note that this notion of substitution presupposes $\eta$-long normal
-forms: a spine applied to another application $\gcut {\app H S} {S'}$
-blocks the substitution.
+forms: a non-empty spine cut against to another non-empty spine $\gcut
+{\app H S} {S'}$ blocks the substitution.
 
-We extend this operation trivially on families $\gsubst A \sigma$
-and kinds $\gsubst K \sigma$
-
+% TODO pourquoi cette def?
 % TODO terminaison??
-% TODO stabilité de la eta
+% TODO stabilité de la eta?
 
 \paragraph{Typing algorithm}
 
-A \emph{repository}
-is a finite map from metavariable to judgements of object well-typing,
-along with a distinguished metavariable, the \emph{head}:
-$$ \repo R\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X \sigma $$
-We maintain the invariant that a repository $\repo R$ is
-\emph{acyclic}, that is for all $\meta X$ in $\repo R$, the fixpoint
-of $\FMV{\meta X}$ does not contain $\meta X$.
+Typing an object while storing intermediate derivations requires
+threading and maintaining a data structure of named partial
+derivations (a repository) throughout the typing process. We present a
+bidirectional typing algorithm updating an input repository.
+
+A \emph{repository} $\mr$ is a finite map from metavariable to
+judgements of object well-typing, along with a distinguished
+metavariable, the \emph{head}:
+$$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X \sigma $$
+We maintain the invariant that a repository $\mr$ is
+\emph{acyclic}, that is for all $\meta X$ in $\mr$, the fixpoint
+of $\FMV{\meta X}$ does not contain $\meta X$. With $\mr =
+(\Delta, X[\sigma])$, we write $\hat {\mr}$ for $X[\sigma]$,
+abusively $\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for
+$\gsubst M\sigma$ if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
 
 A \emph{signature} declares object and type constants to be used in
 objects:
-$$  \Sigma \gequal
-  \gnil \gor
-  \gcons \Sigma {\cst c : A} \gor
-  \gcons \Sigma {\cst a : K} \qquad
-  \text{Signature}
 $$
+\Sigma \gequal
+\gnil \gor
+\gcons \Sigma {\cst c : A} \gor
+\gcons \Sigma {\cst a : K} \qquad
+\text{Signature}
+$$
+
+The algorithm is presented in Fig. \ref{fig:typing-algo} as a
+syntax-directed inference system. All judgements are of the form $\gj
+U V W$ where $U$ and $V$ are inputs, $V$ is the induction hypothesis
+and $W$ the output. They are parameterized by a constant and implicit
+signature $\Sigma$.
+
+\begin{figure*}
+
+  \fbox{$\jm\mr\Gamma M A \mmr {M'}$}
+  \qquad
+  Object typing
+
+  \begin{mathpar}
+    % Lambda
+    \infer{
+      \jm\mr{\envcons\Gamma x A} M {A'} \mmr {M'}
+    }{
+      \jm\mr\Gamma {\lam x M} {\prd x A {A'}} \mmr {\lam x M'}
+    }
+
+    % App
+    \infer{
+      \jf\mr\Gamma F \mmr {M'} {A'}
+       \and
+      \jea\mmr\Gamma A {A'}
+    }{
+      \jm\mr\Gamma F A \mmr {M'}
+    }
+
+    % Meta
+    \infer{
+      \mr(\meta X) = (\Gamma'\vdash M:A')
+      \and
+      \js\mr\Gamma \sigma {\Gamma'} \mmr {\sigma'}
+      \and
+      \jea\mmr\Gamma A {\gsubst {A'} {\sigma'}}
+    }{
+      \jm\mr\Gamma {\smeta X \sigma} A \mmr {M'}
+    }
+  \end{mathpar}
+
+  \fbox{$\js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}$}
+  \qquad
+  {Substitution typing}
+
+  \begin{mathpar}
+
+    % Cons
+    \infer{
+      \js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}
+      \and
+      \jm\mmr\Gamma M {\gsubst A {\sigma'}} \mmmr {M'}
+    }{
+      \js\mr\Gamma{(\msubstcons \sigma x M)} {(\envcons {\Gamma'} x {A'})}
+      \mmmr {(\msubstcons {\sigma'} x {M'})}
+    }
+
+    % Nil
+    \infer{ }{
+      \js\mr\Gamma\msubstnil\envnil\mr\envnil
+    }
+
+  \end{mathpar}
+
+  \caption{Typing algorithm}
+  \label{fig:typing-algo}
+\end{figure*}
+
+
+\paragraph{Checkout}
+
+We define the partial \emph{checkout} operation $\checkout{\mr}$
+(resp. $\checkoutr{M}$, $\checkoutr{S}$) from a repository
+(resp. object, spine) to a metaclosed object as unfolding the
+definitions of all metavariables recursively:
+\begin{align*}
+  \checkout{\mr} &= \checkoutr{\hat{\mr}} \\
+  \checkoutr{\smeta X \sigma} &= \checkoutr{\mr(\smeta X\sigma)}\\
+  \checkoutr{\lam x M} &= \lam x \checkoutr{M} \\
+  \checkoutr{\app H S} &= \app H {(\checkoutr{S})} \\
+  \checkoutr{\spinecons M S} &= \spinecons {\checkoutr M} {\checkoutr S} \\
+  \checkoutr{\spinenil} &= \spinenil
+\end{align*}
+
+A repository is said to be \emph{well-formed} if $\checkout {\mr}$
+is defined.
 
 \subsection{The computation calculus}
 
 We now turn to the definition of our computation calculus on LF
-objects. This language is untyped
+objects. This language is untyped. % TODO??
 \begin{align*}
   T &\gequal
-   M \gor
-  \match T \casenobar P T\ |\ \ldots\ \case P T \\
+  F \gor
+  \matchin T \Gamma \casenobar P T\ |\ \ldots\ \case P T \\
   P &\gequal \app {\cst c} {\vec x}
 \end{align*}
 
@@ -215,6 +319,10 @@ $$  \Sigma \gequal
   \qquad
   \text{Signature}
 $$
+
+\section{Implementation}
+
+\section{Examples}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
