@@ -2,6 +2,10 @@
 %%% TeX-master: "paper"
 %%% End:
 
+%%%
+%%% Generic part
+%%%
+
 % English
 \newcommand\eg{e.g.}
 \newcommand\ie{i.e.}
@@ -70,22 +74,49 @@
 \newcommand\FMV[1]{\function{FMV}{#1}}
 \newcommand\dom[1]{\operatorname{dom}{(#1)}}
 
-% Operations
-\newcommand\checkout[1]{\downarrow{#1}}
-\newcommand\checkoutr[1]{\downarrow_{\repo R}{#1}}
+% Maps
+\newcommand\mapadd[3]{{#1}[{#2}\mapsto{#3}]}
 
-% Judgements
-\newcommand\gj[2]{{#1}\vdash{#2}}
-\newcommand\gjo[3]{\gj{#1}{{#2}\To{#3}}}
 
-\newcommand\jm[6]{\gjo{{#1}; {#2}}{{#3}: {#4}}{{#5}; {#6}}}
-\newcommand\jf[6]{\gjo{{#1}; {#2}}{#3}{{#4};{#5};{#6}}}
-\newcommand\js\jm
-
-\newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}
-\newcommand\jea[4]{\gj{{#1}; {#2}}{{#3}={#4}}}
+%%%
+%%% Specific part
+%%%
 
 % Metavariables
 \newcommand\mr{\repo R}
 \newcommand\mmr{\repo {R'}}
 \newcommand\mmmr{\repo {R''}}
+
+% Operations
+\newcommand\checkout[1]{\downarrow{#1}}
+\newcommand\checkoutr[1]{\downarrow_{\mr}{#1}}
+
+% Judgements
+\newcommand\gj[2]{{#1}\vdash{#2}}
+\newcommand\gjo[3]{\gj{#1}{{#2}\To{#3}}}
+\newcommand\gjor[4]{\gjo{{#1}; {#2}} {{#3}} {#4}}
+
+% objects
+\newcommand\jm[6]{\gjor{#1}{#2}{{#3}: {#4}}{{#5}; {#6}}}
+% app
+\newcommand\jf[6]{\gjor{#1}{#2}{#3}{{#4};{#5};{#6}}}
+% subst
+\newcommand\js\jm
+% head
+\newcommand\jh[5]{\gjor{#1}{#2}{#3}{{#4}; {#5}}}
+% spine
+\newcommand\jl[7]{\gjor{#1}{{#2}; {#3}}{#4}{{#5};{#6};{#7}}}
+% push
+\newcommand\jp[5]{\gjor{#1}{#2} {\tp{{#3}}{#4}} {#5}}
+% strenghten
+\newcommand\jstr[3]{({#1})\leadsto({#2})\To{#3}}
+
+% obj equality
+\newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}
+% fam equality
+\newcommand\jea[4]{\gj{{#1}; {#2}}{{#3}={#4}}}
+
+% constant annotations
+\newcommand\annsliceable{\mathsf{S}}
+\newcommand\annnonsliceable{\mathsf{NS}}
+\newcommand\anndefined[1]{\mathsf{D}({#1})}

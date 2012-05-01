@@ -49,6 +49,10 @@ incrementality, type checking, logical framework, version control
 
 \section{Introduction}
 
+\subsection{The LF representation language}
+\subsection{Storing computation results}
+\subsection{Naming intermediate results}
+
 \section{The calculus}
 
 \subsection{Core calculus}
@@ -107,9 +111,10 @@ $\eta$-expansion (TODO cite).
 \end{align*}
 
 As is customary, we adopt the Barendregt convention for naming bound
-variables, write $\meta X$ for $\smeta X \msubstnil$, $A\to B$ for
-$\prd x A B$ when $x\notin \FV{B}$ and adopt list notations for $S,
-\sigma, \Gamma, \Sigma$ when convenient.
+variables, write $A\to B$ for $\prd x A B$ when $x\notin \FV{B}$,
+$\meta X$ for $\smeta X \msubstnil$, and adopt indifferently list or
+map notations for $\sigma$ and $\Gamma$, \ie\ write $\sigma(x) = M$ or
+$\Gamma(x) = A$.
 
 Metavariables $\smeta X \sigma$ stand for open objects with free
 variables in $\dom{\sigma}$; they are defined in a repository (see
@@ -203,17 +208,29 @@ abusively $\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for
 $\gsubst M\sigma$ if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
 
 A \emph{signature} declares object and type constants to be used in
-objects:
-$$
-\Sigma \gequal
-\gnil \gor
-\gcons \Sigma {\cst c : A} \gor
-\gcons \Sigma {\cst a : K} \qquad
-\text{Signature}
-$$
+objects. To each object constant we assign an annotation $L$ setting
+the slicing behaviour of the constant during type-checking: either
+sliceable $\annsliceable$ (each application of this constant will have
+its own name in the repository), non-sliceable $\annnonsliceable$ (we
+don't create a name for applications of this constant), or defined
+$\anndefined{F}$ (see \ref{sec:computational-calculus}).
+\begin{align*}
+  L &\gequal
+  \annsliceable \gor
+  \annnonsliceable \gor
+  \anndefined{F}
+  \\
+  \Sigma &\gequal
+  \gnil \gor
+  \gcons \Sigma {\cst c :^L A} \gor
+  \gcons \Sigma {\cst a :^L K}
+  &\text{Signature}
+\end{align*}
+We write $\Sigma(\cst c) = A; L$ for $(\cst c :^L A) \in \Sigma$
+suggesting the implementation of signatures as maps.
 
 The algorithm is presented in Fig. \ref{fig:typing-algo} as a
-syntax-directed inference system. All judgements are of the form $\gj
+syntax-directed inference system. All judgements are of the form $\gjo
 U V W$ where $U$ and $V$ are inputs, $V$ is the induction hypothesis
 and $W$ the output. They are parameterized by a constant and implicit
 signature $\Sigma$.
@@ -276,6 +293,70 @@ signature $\Sigma$.
 
   \end{mathpar}
 
+
+  \fbox{$\jf\mr\Gamma F \mmr M A$}
+  \qquad
+  {Application typing}
+
+  \begin{mathpar}
+
+    % Non-sliceable
+    \infer{
+      \jh\mr\Gamma H A \annnonsliceable
+      \and
+      \jl\mr\Gamma A S \mmr {S'} {A'}
+    }{
+      \jf\mr\Gamma {\app H S} \mmr {\app H {S'}} {A'}
+    }
+
+    % Sliceable
+    \infer{
+      \jh\mr\Gamma H A \annsliceable
+      \and
+      \jl\mr\Gamma A S \mmr {S'} {A'}
+      \and
+      \jp\mmr\Gamma {\app H S} A \mmmr
+    }{
+      \jf\mr\Gamma {\app H S} \mmmr {\hat\mmmr} {A'}
+    }
+
+  \end{mathpar}
+
+  \fbox{$\jh\mr\Gamma H A L$}
+  \qquad
+  {Head typing}
+
+  \begin{mathpar}
+    % constant
+    \infer{
+      \Sigma(\cst c) = A; L
+    }{
+      \jh\mr\Gamma {\cst c} A L
+    }
+
+    % variable
+    \infer{
+      \Gamma(\var x) = A
+    }{
+      \jh\mr\Gamma {\var x} A \annnonsliceable
+    }
+  \end{mathpar}
+
+  \fbox{$\jp\mr\Gamma M A \mmr$}
+  \qquad
+  {Push}
+
+  \begin{mathpar}
+    \infer{
+      \jstr{\Gamma\vdash\tp M A}{\Gamma'\vdash\tp {M'} {A'}}\sigma
+      \and
+      \text{$\meta X$ fresh in $\Delta$}
+    }{
+      \jp{(\Delta; \smeta Z \sigma)}\Gamma M A {(\mapadd\Delta{\meta
+          X}{(\Gamma'\vdash M':A')}; \smeta X \sigma)}
+    }
+  \end{mathpar}
+
   \caption{Typing algorithm}
   \label{fig:typing-algo}
 \end{figure*}
@@ -300,25 +381,16 @@ A repository is said to be \emph{well-formed} if $\checkout {\mr}$
 is defined.
 
 \subsection{The computation calculus}
+\label{sec:computational-calculus}
 
 We now turn to the definition of our computation calculus on LF
 objects. This language is untyped. % TODO??
 \begin{align*}
   T &\gequal
   F \gor
-  \matchin T \Gamma \casenobar P T\ |\ \ldots\ \case P T \\
-  P &\gequal \app {\cst c} {\vec x}
+  \matchin T \Gamma \casenobar {\app {\cst c} {\vec x}} T\ |\ \ldots\
+  \case {\app {\cst c} {\vec x}} T
 \end{align*}
-
-We extend our notion of signature to allow object constants to embed a
-computational behaviour.
-
-$$  \Sigma \gequal
-  \ldots \gor
-  \gcons \Sigma {\cst c : A = T}
-  \qquad
-  \text{Signature}
-$$
 
 \section{Implementation}
 
