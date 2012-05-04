@@ -31,7 +31,13 @@
 
 \maketitle
 
+%% Here is a problem
 \begin{abstract}
+  %% 4 sentences:
+  %% State the problem
+  %% Say why it’s an interesting problem
+  %% Say what your solution achieves
+  %% Say what follows from your solution
 \end{abstract}
 
 \category{D.3.3}{Language Constructs and Features}{Data types and
@@ -47,34 +53,99 @@ incrementality, type checking, logical framework, version control
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Introduction}
+\section*{Introduction}
+%% It’s an interesting problem (1 page)
 
-\subsection{The LF representation language}
+As programming languages develop more static analysis like rich type
+systems, programs get safer as bugs are caught earlier.
+
+%% Describe the problem (Use an example)
+%% State your contributions (Bulleted list of contributions)
+
+\section{Background}
+%% It’s an unsolved problem (1 page)
+
+\section{Here is my idea}
+%% Here is my idea (2 pages)
+
+\subsection{The \LF\ representation language}
+
+The emission of certificates by untrusted applications first raises
+the question of the \emph{data structure} to use for these
+certificates. The requirements are:
+\begin{itemize}
+\item conciseness of the certificates, since they are usually stored
+  or transfered remotely; in particular,
+\item a well-understood, short and independent verification algorithm;
+  this is known as the \emph{de Bruijn principle}.
+\item universality with respect to the particular problem: having a
+  certificate language for each domain of application would just shift
+  the problem of trust; having one universally accepted certificate
+  language that can be tailored to many problems puts a much stronger
+  trust on the unique verifier.
+\end{itemize}
+
+The Edimburgh Logical Framework \cite{harper1993framework}, or \LF\
+for short, is a well-accepted solution to this question. It is a typed
+lambda-calculus and can be viewed as a language for
+\emph{representing} terms, derivations and statements of $\Pi_0^1$
+meta-theorems (but not their proofs) in a given inference system
+supporting hypothetical judgements \cite{pfenning2001logical}. For
+these, it provides built-in support for encoding languages with
+binders or hypothesis (a feature called $\lambda$-tree syntax or HOAS
+\cite{pfenning1988higher}). The user gives a \emph{signature} defining
+abstract syntax and inference rules of his \emph{object language}, and
+gets an algorithm to verify terms and derivations expressed in the
+\LF\ syntax.
+
+This framework has been used to issue certificates for a number of
+practical applications like proof-carrying code
+\cite{necula1997proof}, authentication framework \cite{appel1999proof}
+\ldots %TODO ATP
+
+In all these applications, the user feeds the generation program with
+a query (the program to compile to machine-code, the access query, the
+statement of a theorem \ldots) and gets in return a result (machine
+code, yes/no\ldots) together with a certificate that the result
+verifies the wanted property (semantics preservation, justification
+for granting access, proof of the theorem\ldots). A potential client
+can then verify independently that this result is adequate given the
+query: it suffices to batch-verify the certificate.
+
+\subsection{Proof-carrying static analysis}
+
 \subsection{Storing computation results}
 \subsection{Naming intermediate results}
 
+\section{Examples}
+
 \section{The calculus}
+%% My idea works (details, data) (5 pages)
 
 \subsection{Core calculus}
 
 The core calculus defines the \emph{values} we want to
-manipulate. These contain constants, and --- contrarily to \eg\ ML
-values --- binders and variables enabling $\lambda$-tree syntax (TODO
-cite). Thus, they embed a superficial notion of computation:
+manipulate. These contain constants, and --- contrarily to \eg\
+\sysname{ML} values --- binders and variables enabling $\lambda$-tree
+syntax. Thus, they embed a superficial notion of computation:
 hereditary substitution. This calculus is an extension of \emph{spine
-  canonical LF} (TODO cite) enriched with metavariables. We present
-its typing algorithm relatively to a signature. It features an
-explicit caching mechanism using metavariables.
+  canonical \LF} \cite{pfenning2007term} enriched with metavariables
+which are references to open terms as in
+\cite{nanevski2008contextual}. We present its typing algorithm
+relatively to a signature. It features an explicit caching mechanism
+using metavariables.
 
 \paragraph{Syntax}
 
 In this variant, only $\eta$-long $\beta$-normal forms have an
-existence: canonicity for $\beta$-reduction is enforced in the syntax;
-canonicity for $\eta$-expansion will be enforced by typing. Also,
-application of a \emph{head} to a \emph{spine} (\ie\ a constant or
-variable) is $n$-ary as opposed to the more standard binary
-application: this eases reasoning about substitution and
-$\eta$-expansion (TODO cite).
+existence: canonicity for $\beta$-reduction is enforced in the syntax
+and canonicity for $\eta$-expansion will be enforced by typing,
+following \cite{hl07mechanizing}. Besides, application of a
+\emph{head} (\ie\ a constant or variable) is $n$-ary (\ie\ to a
+\emph{spine} of objects) as opposed to the more standard binary
+application: this eases the definition substitution and
+$\eta$-expansion, and corresponds to a focused sequent calculus known
+as \sysname{LJT} \cite{herbelin1995λ}.
 
 \begin{align*}
   K &\gequal
@@ -111,10 +182,11 @@ $\eta$-expansion (TODO cite).
 \end{align*}
 
 As is customary, we adopt the Barendregt convention for naming bound
-variables, write $A\to B$ for $\prd x A B$ when $x\notin \FV{B}$,
-$\meta X$ for $\smeta X \msubstnil$, and adopt indifferently list or
-map notations for $\sigma$ and $\Gamma$, \ie\ write $\sigma(x) = M$ or
-$\Gamma(x) = A$.
+variables, write $A\to B$ for $\prd x A B$ when $\var x\notin \FV{B}$,
+$\meta X$ for $\smeta X \msubstnil$, and adopt indifferently list, map
+or set notations for $\sigma$ and $\Gamma$. The identity substitution
+$\msubstid{\Gamma}$ is a notation for $\{\msubst x {\var x}\ |\ \var x
+\in\dom\Gamma\}$.
 
 Metavariables $\smeta X \sigma$ stand for open objects with free
 variables in $\dom{\sigma}$; they are defined in a repository (see
@@ -123,26 +195,26 @@ speak of a \emph{metaclosed} object $M$ if $\FMV{M} = \emptyset$.
 
 \paragraph{Substitution}
 
-We overload \emph{substitution} as a partial operation on terms, given
+We overload \emph{substitution} as a partial operation on objects, given
 a parallel substitution $\sigma$. Since the syntax of object is not
 stable by (textual) substitution, it is defined \emph{hereditarily}: it
 is mutually recursive with a \emph{cut} function $\gcut M S$ which can
-in turn trigger a chain of substitutions, leading to a canonical term,
-a stuck substitution or divergence. % TODO vraiment?
+in turn trigger a chain of substitutions, leading to a canonical objects
+or an error.
 \begin{align*}
   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
-  \text{if $x\notin \dom{\sigma}$}
+  \text{if $\var x\notin \dom{\sigma}$}
   \\
   \gsubst {(\app {\cst c} S)} \sigma &= \app {\cst c} {(\gsubst S
     \sigma)}
   \\
   \gsubst {(\app {\var x} S)} \sigma &=
   \app {\var x} {\gsubst S \sigma} &
-  \text{if $x\notin \dom{\sigma}$}
+  \text{if $\var x\notin \dom{\sigma}$}
   \\
   \gsubst {(\app {\var x} S)} \sigma &=
   \gcut M {\gsubst S \sigma} &
-  \text{if $\sigma(x) = M$}
+  \text{if $\sigma(\var x) = M$}
   \\
   \gsubst {\smeta X {\sigma}} {\sigma'} &=
   \smeta X {\gcomp\sigma{\sigma'}}
@@ -153,7 +225,7 @@ a stuck substitution or divergence. % TODO vraiment?
   \spinecons{\gsubst M\sigma}{\gsubst S\sigma}
   \\
   \gcut {\lam x M} {\spinecons N S} &=
-  \gcut {\gsubst M N} S
+  \gcut {\gsubst M {\msubst x N}} S
   \\
   % TODO cas meta/S ????
   % \gcut {\smeta X\sigma} S &=
@@ -177,24 +249,60 @@ a stuck substitution or divergence. % TODO vraiment?
 \end{align*}
 
 We extend this operation trivially on families $\gsubst A \sigma$ and
-kinds $\gsubst K \sigma$. We also allow to abusively write the
-non-canonical application $\app M S$ as a shorthand for $\gcut M S$ if
-it is defined.
+kinds $\gsubst K \sigma$. We also allow to abusively write
+non-canonical applications $\app M S$ as a shorthand for $\gcut M S$
+if they are defined.
 
-Note that this notion of substitution presupposes $\eta$-long normal
-forms: a non-empty spine cut against to another non-empty spine $\gcut
-{\app H S} {S'}$ blocks the substitution.
+Note that this notion of substitution differs from hereditary
+substitution found in \eg\ \cite{hl07mechanizing} as it presupposes
+$\eta$-long normal forms: a non-empty spine cut against to another
+non-empty spine $\gcut {\app H S} {S'}$ blocks the substitution
+instead of reducing to $\app H {(\gconcat S S')}$ (an implicit
+$\eta$-expansion). For example, the reduction $\gcut {\lam x \app
+  {\var x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck because
+the second $\var x$ in the left part is substituted by a function yet
+is not itself a function.
 
 % TODO pourquoi cette def?
 % TODO terminaison??
 % TODO stabilité de la eta?
+% TODO comparer avec la def usuelle
 
 \paragraph{Typing algorithm}
 
 Typing an object while storing intermediate derivations requires
 threading and maintaining a data structure of named partial
-derivations (a repository) throughout the typing process. We present a
-bidirectional typing algorithm updating an input repository.
+derivations (\emph{slices}) throughout the typing process. We present
+a bidirectional typing algorithm updating an input repository.
+
+A \emph{signature} declares object and type constants to be used in
+objects. To each object constant we assign an annotation $L$ setting
+the slicing behaviour of the constant during type-checking: either
+sliceable $\annsliceable$ (each application of this constant will be
+cached and given a name), non-sliceable $\annnonsliceable$ (we don't
+create a name for applications of this constant), or defined
+$\anndefined{T}$ (see \ref{sec:computational-calculus}).
+\begin{align*}
+  L &\gequal
+  \annsliceable \gor
+  \annnonsliceable \gor
+  \anndefined{T}
+  \\
+  \Sigma &\gequal
+  \gnil \gor
+  \gcons \Sigma {\cst c :^L A} \gor
+  \gcons \Sigma {\cst a :^L K}
+  &\text{Signature}
+\end{align*}
+We write $\Sigma(\cst c) = A; L$ for $(\cst c :^L A) \in \Sigma$
+suggesting the implementation of signatures as maps.
+
+Our algorithm types exactly the well-typed objects of the usual
+\LF, except that we thread a repository $\mr$ and store in it
+all well-typed applicative subterms $F$ along with their classifier
+$A$ and the environment in which they are well-typed.
+
+% TODO parler de la redondance en LF normal
 
 A \emph{repository} $\mr$ is a finite map from metavariable to
 judgements of object well-typing, along with a distinguished
@@ -207,33 +315,29 @@ of $\FMV{\meta X}$ does not contain $\meta X$. With $\mr =
 abusively $\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for
 $\gsubst M\sigma$ if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
 
-A \emph{signature} declares object and type constants to be used in
-objects. To each object constant we assign an annotation $L$ setting
-the slicing behaviour of the constant during type-checking: either
-sliceable $\annsliceable$ (each application of this constant will have
-its own name in the repository), non-sliceable $\annnonsliceable$ (we
-don't create a name for applications of this constant), or defined
-$\anndefined{F}$ (see \ref{sec:computational-calculus}).
-\begin{align*}
-  L &\gequal
-  \annsliceable \gor
-  \annnonsliceable \gor
-  \anndefined{F}
-  \\
-  \Sigma &\gequal
-  \gnil \gor
-  \gcons \Sigma {\cst c :^L A} \gor
-  \gcons \Sigma {\cst a :^L K}
-  &\text{Signature}
-\end{align*}
-We write $\Sigma(\cst c) = A; L$ for $(\cst c :^L A) \in \Sigma$
-suggesting the implementation of signatures as maps.
+We refer to cached subterms by metavariables. We force instantiation
+of all variables in their environment by attaching a substitution to
+them ($\smeta X \sigma$).
+
+When checking large objects, the environment can grow fast. As an
+optimization to reduce the size of the stored environments and
+substitutions in slices $M$, we strengthen environments to their
+minimum size (the free variables of $M$): We define the operation of
+\emph{strengthening} from an environment $\Gamma$ and an object $M$
+well-typed in $\Gamma$ to the minimal environment in which $M$ can
+actually be typed, \ie\ containing only its free variables:
+$$
+\stren{\Gamma,M} = \{x : A\ |\ x\in \FV{M} \wedge \Gamma(x)=A\}
+$$
+% TODO lemme qui dit que c'est correct wrt variables libres des A et
+% du type
 
 The algorithm is presented in Fig. \ref{fig:typing-algo} as a
 syntax-directed inference system. All judgements are of the form $\gjo
 U V W$ where $U$ and $V$ are inputs, $V$ is the induction hypothesis
 and $W$ the output. They are parameterized by a constant and implicit
-signature $\Sigma$.
+signature $\Sigma$, and all premisses are ordered in the algorithmical
+order of computation.
 
 \begin{figure*}
 
@@ -348,12 +452,12 @@ signature $\Sigma$.
 
   \begin{mathpar}
     \infer{
-      \jstr{\Gamma\vdash\tp M A}{\Gamma'\vdash\tp {M'} {A'}}\sigma
+      \stren{\Gamma, M}=\Gamma'
       \and
       \text{$\meta X$ fresh in $\Delta$}
     }{
-      \jp{(\Delta; \smeta Z \sigma)}\Gamma M A {(\mapadd\Delta{\meta
-          X}{(\Gamma'\vdash M':A')}; \smeta X \sigma)}
+      \jp{(\Delta; \smeta Z {\sigma})}\Gamma M A {(\mapadd\Delta{\meta
+          X}{(\Gamma'\vdash M:A)}; \smeta X {\msubstid\Gamma})}
     }
   \end{mathpar}
 
@@ -361,6 +465,16 @@ signature $\Sigma$.
   \label{fig:typing-algo}
 \end{figure*}
 
+\begin{theorem}
+  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
+\end{theorem}
+
+\begin{theorem}
+  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutr
+    M)} (\checkoutr A)$
+\end{theorem}
+
+% TODO example
 
 \paragraph{Checkout}
 
@@ -383,19 +497,29 @@ is defined.
 \subsection{The computation calculus}
 \label{sec:computational-calculus}
 
-We now turn to the definition of our computation calculus on LF
-objects. This language is untyped, but can contain. % TODO??
+We now turn to the definition of our computation calculus. As we saw,
+it is attached to special, \emph{defined} constants in the signature
+and manipulates \LF\ objects. This language is un(i)typed, in that all
+\LF\ objects have the same implicit type $\cst{obj}$. We have the
+ability to construct objects out of other, and deconstruct them by
+case analysis.
 \begin{align*}
   T &\gequal
+  \lam x T \gor
+  U \\
+  U &\gequal
   F \gor
-  \matchin T \Gamma \casenobar {\app {\cst c} {\vec x}} T\ |\ \ldots\
-  \case {\app {\cst c} {\vec x}} T
+  \matchin U \Gamma \casenobar {\app {\cst c} {\vec x}} U\ |\ \ldots\
+  \case {\app {\cst c} {\vec x}} U
 \end{align*}
 
 \section{Implementation}
 
-\section{Examples}
+\section{Related work}
+% 1-2 pages
 
+\section*{Conclusion and future work}
+% 0.5 pages
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

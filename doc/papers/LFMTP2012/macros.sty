@@ -12,10 +12,19 @@
 
 % Various
 \newcommand\To{\Rightarrow}
+\newcommand\sysname[1]{\ensuremath{\text{\rm\sf{#1}}}}
 
 % Grammars
 \newcommand\gor{\ {\big|}\ }
 \newcommand\gequal{\ ::=\ }
+
+% Functions
+\newcommand\funname[1]{{\text{\textsf{#1}}}}
+\newcommand\function[2]{\funname{#1}({#2})}
+
+\newcommand\FV[1]{\function{FV}{#1}}
+\newcommand\FMV[1]{\function{FMV}{#1}}
+\newcommand\dom[1]{\operatorname{dom}{\!(#1)}}
 
 % Names
 \newcommand\name[1]{\ensuremath{\text{#1}}}
@@ -28,6 +37,7 @@
 \newcommand\gnil{\cdot}
 \newcommand\gcons[2]{{#1},{#2}}
 \newcommand\gsnoc[2]{\gcons{#2}{#1}}
+\newcommand\gconcat[2]{{#1}@{#2}}
 
 % General operations and constructors
 \newcommand\gsubst[2]{{#1}[{#2}]}
@@ -60,19 +70,12 @@
 \newcommand\msubst[2]{{\var{#1}}/{#2}}
 \newcommand\msubstnil{\gnil}
 \newcommand\msubstcons[3]{\gcons{#1}{\msubst{#2}{#3}}}
+\newcommand\msubstid[1]{\function{id}{#1}}
 
 % Sorts
 \newcommand\srt[1]{\mathsf{#1}}
 \newcommand\type{\srt *}
 \newcommand\kind{\srt \Box}
-
-% Functions
-\newcommand\funname[1]{{\text{\textsf{#1}}}}
-\newcommand\function[2]{\funname{#1}({#2})}
-
-\newcommand\FV[1]{\function{FV}{#1}}
-\newcommand\FMV[1]{\function{FMV}{#1}}
-\newcommand\dom[1]{\operatorname{dom}{(#1)}}
 
 % Maps
 \newcommand\mapadd[3]{{#1}[{#2}\mapsto{#3}]}
@@ -82,20 +85,30 @@
 %%% Specific part
 %%%
 
+% System names
+\newcommand\LF{\sysname{LF}}
+
 % Metavariables
 \newcommand\mr{\repo R}
 \newcommand\mmr{\repo {R'}}
 \newcommand\mmmr{\repo {R''}}
 
-% Operations
+% Functions & operations
 \newcommand\checkout[1]{\downarrow{#1}}
-\newcommand\checkoutr[1]{\downarrow_{\mr}{#1}}
+\newcommand\checkoutr[1]{\downarrow_{\mr}\!{#1}}
+\newcommand\stren[1]{\function{stren}{#1}}
 
 % Judgements
 \newcommand\gj[2]{{#1}\vdash{#2}}
+\newcommand\gja[3]{{#1}\vdash_{#2}{#3}}
+
 \newcommand\gjo[3]{\gj{#1}{{#2}\To{#3}}}
 \newcommand\gjor[4]{\gjo{{#1}; {#2}} {{#3}} {#4}}
 
+%%% Usual LF
+\newcommand\jlfm[3]{\gja{#1}{\LF}{\tp{#2}{#3}}}
+
+%%% My system
 % objects
 \newcommand\jm[6]{\gjor{#1}{#2}{{#3}: {#4}}{{#5}; {#6}}}
 % app
@@ -108,8 +121,6 @@
 \newcommand\jl[7]{\gjor{#1}{{#2}; {#3}}{#4}{{#5};{#6};{#7}}}
 % push
 \newcommand\jp[5]{\gjor{#1}{#2} {\tp{{#3}}{#4}} {#5}}
-% strenghten
-\newcommand\jstr[3]{({#1})\leadsto({#2})\To{#3}}
 
 % obj equality
 \newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}
