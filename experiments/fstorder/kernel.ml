@@ -323,6 +323,7 @@ end = struct
     let repo, l, a = spine' repo env (l, a) in
     (* Debug.log_close "spine" "=> %a : %a" P.spine l P.fam a; *)
     repo, l, a
+
   and fspine repo env : spine * kind -> repo * spine = function
     | [], KType -> repo, []
     | _ :: _ as l, KType -> raise (Non_functional_fapp (repo, env, l))

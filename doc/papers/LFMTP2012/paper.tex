@@ -360,10 +360,11 @@ order of computation.
     \infer{
       \jf\mr\Gamma F \mmr {M'} {A'}
        \and
-      \jea\mmr\Gamma A {A'}
+      \jea\mmr\Gamma {\app{\cst a} S} {A'}
     }{
-      \jm\mr\Gamma F A \mmr {M'}
+      \jm\mr\Gamma F {\app{\cst a} S} \mmr {M'}
     }
+    % TODO commenter type ground
 
     % Meta
     \infer{
@@ -452,6 +453,21 @@ order of computation.
   \fbox{$\jl\mr\Gamma A S \mmr{S'}{A'}$}
   \qquad
   {Spine typing}
+
+  \begin{mathpar}
+    \infer{ }{
+      \jl\mr\Gamma {\app{\cst a} S} \spinenil \mr \spinenil {{\app{\cst a} S}}
+    }
+
+    \infer{
+      \jm\mr\Gamma M A \mmr {M'}
+      \and
+      \jl\mmr\Gamma {\gsubst{A'}{M'}} S \mmmr {S'} {A''}
+    }{
+      \jl\mr\Gamma {\prd x {A} {A'}} {\spinecons M S} \mmmr {\spinecons
+      {M'}{S'}} {A''}
+    }
+  \end{mathpar}
 
   \fbox{$\jp\mr\Gamma M A \mmr$}
   \qquad
