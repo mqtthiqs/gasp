@@ -185,7 +185,7 @@ as \sysname{LJT} \cite{herbelin1995λ}.
 \end{align*}
 
 As is customary, we adopt the Barendregt convention for naming bound
-variables, write $A\to B$ for $\prd x A B$ when $\var x\notin \FV{B}$,
+variables, write $A\to A'$ for $\prd x A A'$ when $\var x\notin \FV{A'}$,
 $\meta X$ for $\smeta X \msubstnil$, and adopt indifferently list, map
 or set notations for $\sigma$ and $\Gamma$. The identity substitution
 $\msubstid{\Gamma}$ is a notation for $\{\msubst x {\var x}\ |\ \var x
@@ -294,7 +294,7 @@ $\anndefined{T}$ (see \ref{sec:computational-calculus}).
   \Sigma &\gequal
   \gnil \gor
   \gcons \Sigma {\cst c :^L A} \gor
-  \gcons \Sigma {\cst a :^L K}
+  \gcons \Sigma {\cst a : K}
   &\text{Signature}
 \end{align*}
 We write $\Sigma(\cst c) = A; L$ for $(\cst c :^L A) \in \Sigma$
@@ -335,7 +335,7 @@ $$
 % TODO lemme qui dit que c'est correct wrt variables libres des A et
 % du type
 
-The algorithm is presented in Fig. \ref{fig:typing-algo} as a
+The algorithm is presented in Fig. \ref{fig:obj-typing} as a
 syntax-directed inference system. All judgements are of the form $\gjo
 U V W$ where $U$ and $V$ are inputs, $V$ is the induction hypothesis
 and $W$ the output. They are parameterized by a constant and implicit
@@ -449,6 +449,10 @@ order of computation.
     }
   \end{mathpar}
 
+  \fbox{$\jl\mr\Gamma A S \mmr{S'}{A'}$}
+  \qquad
+  {Spine typing}
+
   \fbox{$\jp\mr\Gamma M A \mmr$}
   \qquad
   {Push}
@@ -464,8 +468,8 @@ order of computation.
     }
   \end{mathpar}
 
-  \caption{Typing algorithm for the core calculus}
-  \label{fig:typing-algo}
+  \caption{Typing algorithm for objects}
+  \label{fig:obj-typing}
 \end{figure*}
 
 The main judgement is application typing $\jf\mr\Gamma F \mmr M A$,
@@ -480,11 +484,77 @@ metavariable referring to it.
 
 Definitional equality judgement between two families $\jea\mr\Gamma A
 {A'}$ is used by these typing rules. This equivalence is usually
-defined to be just $\alpha$-equivalence since our objects are in
+defined to be just $\alpha$-equivalence since objects are in
 $\beta\eta$-canonical form. Here, objects can contain metavariables
-defined in $\mr$, so we shall thread it. Moreover, we will see in next
-section how defined constants compute and thus influence definitional
-equality. Definitional equality is defined later in
+defined in $\mr$, so we shall thread it. Moreover, we will see in the
+next section how defined constants compute and thus influence
+definitional equality. Definitional equality is defined later in
+\ref{fig:def-eq}.
+
+Signatures themselves need to be checked. We present the checking
+algorithm in Fig. \ref{fig:sign-typing}.
+
+\begin{figure*}
+  \fbox{$\jsig\mr\Sigma\mmr{\Sigma'}$}
+  \qquad
+  {Signature}
+
+  \begin{mathpar}
+    \infer{ }{
+      \jsig\mr\gnil\mr\gnil
+    }
+
+    \infer{
+      \jsig\mr\Sigma\mmr{\Sigma'}
+      \and
+      \jfam\mmr\gnil {\!_{\Sigma'} A}\mmmr {A'}
+    }{
+      \jsig\mr{\gcons\Sigma{{\cst c :^L A}}}\mmmr{\gcons{\Sigma'}{{\cst c :^L A'}}}
+    }
+
+    \infer{
+      \jsig\mmr\Sigma\mmmr{\Sigma'}
+      \and
+      \jkind\mr\gnil {\!_{\Sigma'} K}\mmr {K'}
+    }{
+      \jsig\mr{\gcons\Sigma{{\cst a : K}}}\mmmr{\gcons{\Sigma'}{{\cst a : K'}}}
+    }
+  \end{mathpar}
+
+  \fbox{$\jfam\mr\Gamma A \mmr {A'}$}
+  \qquad
+  {Family}
+
+  \begin{mathpar}
+
+    \infer{
+      \jfam\mr\Gamma {A_1} \mmr {A_1'}
+      \and
+      \jfam\mmr{\gcons\Gamma{\tp {\var x} {A_1'}}} {A_2} \mmmr {A_2'}
+    }{
+      \jfam\mr\Gamma {\prd x {A_1} {A_2}} \mmmr {\prd x {A_1'} {A_2'}}
+    }
+
+    \infer{
+      \Sigma(a) = K
+      % TODO
+    }{
+      \jfam\mr\Gamma {\app{\cst a} S} \mmr {\app{\cst a} {S'}}
+    }
+
+  \end{mathpar}
+
+  \fbox{$\jkind\mr\Gamma K \mmr {K'}$}
+  \qquad
+  {Kind}
+
+  \begin{mathpar}
+    
+  \end{mathpar}
+
+  \caption{Typing algorithm for signatures}
+  \label{fig:sign-typing}
+\end{figure*}
 
 \paragraph{Example}
 

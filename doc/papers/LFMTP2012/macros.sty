@@ -121,6 +121,13 @@
 \newcommand\jl[7]{\gjor{#1}{{#2}; {#3}}{#4}{{#5};{#6};{#7}}}
 % push
 \newcommand\jp[5]{\gjor{#1}{#2} {\tp{{#3}}{#4}} {#5}}
+% sign
+\newcommand\jsig[4]{\gjo{#1}{#2}{{#3};{#4}}}
+% fam
+\newcommand\jfam[5]{\gjor{#1}{#2}{#3}{{#4};{#5}}}
+% kind
+\newcommand\jkind\jfam
+
 
 % obj equality
 \newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}
