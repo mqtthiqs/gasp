@@ -7,6 +7,7 @@
 \newtheorem{definition}{Definition}
 \usepackage{macros}
 \usepackage{mathpartir}
+\usepackage{url}
 
 \begin{document}
 
@@ -17,7 +18,7 @@
 \titlebanner{banner above paper title}        % These are ignored unless
 \preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{Certified incremental program transformations}
+\title{Incremental tactics}
 %\subtitle{Subtitle Text, if any}
 
 \authorinfo{Matthias Puech}
@@ -118,6 +119,8 @@ query: it suffices to batch-verify the certificate.
 \subsection{Naming intermediate results}
 
 \section{Examples}
+
+
 
 \section{The calculus}
 %% My idea works (details, data) (5 pages)
@@ -461,19 +464,31 @@ order of computation.
     }
   \end{mathpar}
 
-  \caption{Typing algorithm}
+  \caption{Typing algorithm for the core calculus}
   \label{fig:typing-algo}
 \end{figure*}
 
-\begin{theorem}
-  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
-\end{theorem}
+The main judgement is application typing $\jf\mr\Gamma F \mmr M A$,
+which means that in repository $\mr$ and environment $\Gamma$, the
+applicative term $F$ is well-typed of type $A$, and the slicing of $F$
+produces a new repository $\mmr$. The object $M$ is the
+\emph{residual} of this operation: only certain kind of applications
+are sliced, and it is possible that the ``tip'' of application $F$ is
+not sliced (because it is declared as non-sliceable). In that case,
+$M$ is this tip; if $F$ is directly sliceable, then $M$ is the
+metavariable referring to it.
 
-\begin{theorem}
-  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutr
-    M)} (\checkoutr A)$
-\end{theorem}
+Definitional equality judgement between two families $\jea\mr\Gamma A
+{A'}$ is used by these typing rules. This equivalence is usually
+defined to be just $\alpha$-equivalence since our objects are in
+$\beta\eta$-canonical form. Here, objects can contain metavariables
+defined in $\mr$, so we shall thread it. Moreover, we will see in next
+section how defined constants compute and thus influence definitional
+equality. Definitional equality is defined later in
 
+\paragraph{Example}
+
+Let us work out an example.
 % TODO example
 
 \paragraph{Checkout}
@@ -494,6 +509,15 @@ definitions of all metavariables recursively:
 A repository is said to be \emph{well-formed} if $\checkout {\mr}$
 is defined.
 
+\begin{theorem}
+  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
+\end{theorem}
+
+\begin{theorem}
+  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutr
+    M)} (\checkoutr A)$
+\end{theorem}
+
 \subsection{The computation calculus}
 \label{sec:computational-calculus}
 
@@ -502,16 +526,30 @@ it is attached to special, \emph{defined} constants in the signature
 and manipulates \LF\ objects. This language is un(i)typed, in that all
 \LF\ objects have the same implicit type $\cst{obj}$. We have the
 ability to construct objects out of other, and deconstruct them by
-case analysis.
+case analysis:
 \begin{align*}
   T &\gequal
   \lam x T \gor
   U \\
   U &\gequal
   F \gor
-  \matchin U \Gamma \casenobar {\app {\cst c} {\vec x}} U\ |\ \ldots\
-  \case {\app {\cst c} {\vec x}} U
+  \matchin U \Gamma \casenobar {\app {H} {\vec x}} U\ |\ \ldots\
+  \case {\app {H} {\vec x}} U
 \end{align*}
+
+\begin{figure*}
+  \centering
+  TODO
+  \caption{Weak head-reduction}
+  \label{fig:whr}
+\end{figure*}
+
+\begin{figure*}
+  \centering
+  TODO
+  \caption{Definitional equality}
+  \label{fig:def-eq}
+\end{figure*}
 
 \section{Implementation}
 
