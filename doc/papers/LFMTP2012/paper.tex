@@ -230,7 +230,7 @@ or an error.
   \gcut {\lam x M} {\spinecons N S} &=
   \gcut {\gsubst M {\msubst x N}} S
   \\
-  % TODO cas meta/S ????
+  % TODO cas meta/S ? rem: on en a pas besoin ds le proto.
   % \gcut {\smeta X\sigma} S &=
   % \smeta X{\gcomp\sigma\sigma'}
   % \\
@@ -270,9 +270,8 @@ second $\var x$ in the left part is substituted by a function yet is
 not itself a function.
 
 % TODO pourquoi cette def?
-% TODO terminaison??
+% TODO terminaison?
 % TODO stabilité de la eta?
-% TODO comparer avec la def usuelle
 
 \paragraph{Typing algorithm}
 
@@ -519,9 +518,6 @@ algorithm in Fig. \ref{fig:sign-typing}.
   {Signature}
 
   \begin{mathpar}
-    \infer{ }{
-      \jsig\mr\gnil\mr\gnil
-    }
 
     \infer{
       \jsig\mr\Sigma\mmr{\Sigma'}
@@ -537,6 +533,10 @@ algorithm in Fig. \ref{fig:sign-typing}.
       \jkind\mr\gnil {\!_{\Sigma'} K}\mmr {K'}
     }{
       \jsig\mr{\gcons\Sigma{{\cst a : K}}}\mmmr{\gcons{\Sigma'}{{\cst a : K'}}}
+    }
+
+    \infer{ }{
+      \jsig\mr\gnil\mr\gnil
     }
   \end{mathpar}
 
@@ -603,6 +603,9 @@ algorithm in Fig. \ref{fig:sign-typing}.
   \label{fig:sign-typing}
 \end{figure*}
 
+\paragraph{Commit}
+% TODO commit
+
 \paragraph{Example}
 
 Let us work out an example.
@@ -631,28 +634,42 @@ is defined.
 \end{theorem}
 
 \begin{theorem}
-  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutr
-    M)} (\checkoutr A)$
+  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutrr
+    M)} (\checkoutrr A)$
 \end{theorem}
 
 \subsection{The computation calculus}
 \label{sec:computational-calculus}
 
 We now turn to the definition of our computation calculus. As we saw,
-it is attached to special, \emph{defined} constants in the signature
-and manipulates \LF\ objects. This language is un(i)typed, in that all
-\LF\ objects have the same implicit type $\cst{obj}$. We have the
-ability to construct objects out of other, and deconstruct them by
-case analysis:
+code is attached to special, \emph{defined} constants in the signature
+that manipulates \LF\ objects. We have the ability to construct
+objects out of other, and deconstruct them by case analysis:
 \begin{align*}
   T &\gequal
   \lam x T \gor
   U \\
   U &\gequal
   F \gor
-  \matchin U \Gamma \casenobar {\app {H} {\vec x}} U\ |\ \ldots\
-  \case {\app {H} {\vec x}} U
+  \matchin U \Gamma \casenobar {\app {H} {\vec {\var x}}} U\ |\ \ldots\
+  \case {\app {H} {\vec {\var x}}} U
 \end{align*}
+
+This language is un(i)typed, in that all \LF\ objects have the same
+implicit type $\cst{obj}$: there is no static guarantee that terms
+produced by a constant $\cst c : A_1\to A_2$ will have type $A_2$; it
+is also non-terminating: we could declare a constant $\cst c : \cst
+a\to \cst a = \lam x \app {\cst c} {\var x}$. We expose here only the
+minimal building blocks, but other features could be added at will to
+this language. You can think of defined constants as black boxes
+taking and producing terms, and being able to call other black
+boxes. We detail in section \ref{sec:implem} how to embed
+\sysname{OCaml} as computation calculus.
+
+Nevertheless, in order to maintain the well-typing of the generated
+term, we want to maintain the invariant that arguments fed to these
+defined constant as well as the computation result have the announced
+type. We thus maintain \emph{dynamic typing} of computations.
 
 \begin{figure*}
   \centering
@@ -669,7 +686,7 @@ case analysis:
 \end{figure*}
 
 \section{Implementation}
-
+\label{sec:implem}
 \section{Related work}
 % 1-2 pages
 
