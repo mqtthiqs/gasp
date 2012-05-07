@@ -253,8 +253,8 @@ or an error.
 
 We extend this operation trivially on families $\gsubst A \sigma$ and
 kinds $\gsubst K \sigma$. We also allow to abusively write
-non-canonical applications $\app M S$ as a shorthand for $\gcut M S$
-if they are defined.
+non-canonical application $\app M S$ as a shorthand for $\gcut M S$
+if it is defined.
 
 Note that this notion of substitution differs from hereditary
 substitution found in \eg\ \cite{hl07mechanizing} as it presupposes
@@ -558,7 +558,6 @@ algorithm in Fig. \ref{fig:sign-typing}.
       \Sigma(a) = K
       \and
       \jfl\mr\Gamma K S \mmr {S'}
-      % TODO
     }{
       \jfam\mr\Gamma {\app{\cst a} S} \mmr {\app{\cst a} {S'}}
     }
