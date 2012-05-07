@@ -258,13 +258,16 @@ if they are defined.
 
 Note that this notion of substitution differs from hereditary
 substitution found in \eg\ \cite{hl07mechanizing} as it presupposes
-$\eta$-long normal forms: a non-empty spine cut against to another
-non-empty spine $\gcut {\app H S} {S'}$ blocks the substitution
-instead of reducing to $\app H {(\gconcat S S')}$ (an implicit
-$\eta$-expansion). For example, the reduction $\gcut {\lam x \app
-  {\var x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck because
-the second $\var x$ in the left part is substituted by a function yet
-is not itself a function.
+$\eta$-long normal forms: once a cut starts, there must be exactly as
+many formal and actual arguments. A non-empty spine cut against
+another non-empty spine $\gcut {\app H S} {S'}$ blocks the
+substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
+implicit $\eta$-expansion); conversely, exhausting actual but not
+formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
+substitution too. For example, the reduction $\gcut {\lam x \app {\var
+    x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck because the
+second $\var x$ in the left part is substituted by a function yet is
+not itself a function.
 
 % TODO pourquoi cette def?
 % TODO terminaison??
@@ -346,7 +349,7 @@ order of computation.
 
   \fbox{$\jm\mr\Gamma M A \mmr {M'}$}
   \qquad
-  Object typing
+  Object
 
   \begin{mathpar}
     % Lambda
@@ -380,7 +383,7 @@ order of computation.
 
   \fbox{$\js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}$}
   \qquad
-  {Substitution typing}
+  {Substitution}
 
   \begin{mathpar}
 
@@ -404,7 +407,7 @@ order of computation.
 
   \fbox{$\jf\mr\Gamma F \mmr M A$}
   \qquad
-  {Application typing}
+  {Application}
 
   \begin{mathpar}
 
@@ -432,7 +435,7 @@ order of computation.
 
   \fbox{$\jh\mr\Gamma H A L$}
   \qquad
-  {Head typing}
+  {Head}
 
   \begin{mathpar}
     % constant
@@ -452,13 +455,9 @@ order of computation.
 
   \fbox{$\jl\mr\Gamma A S \mmr{S'}{A'}$}
   \qquad
-  {Spine typing}
+  {Spine}
 
   \begin{mathpar}
-    \infer{ }{
-      \jl\mr\Gamma {\app{\cst a} S} \spinenil \mr \spinenil {{\app{\cst a} S}}
-    }
-
     \infer{
       \jm\mr\Gamma M A \mmr {M'}
       \and
@@ -466,6 +465,10 @@ order of computation.
     }{
       \jl\mr\Gamma {\prd x {A} {A'}} {\spinecons M S} \mmmr {\spinecons
       {M'}{S'}} {A''}
+    }
+
+    \infer{ }{
+      \jl\mr\Gamma {\app{\cst a} S} \spinenil \mr \spinenil {{\app{\cst a} S}}
     }
   \end{mathpar}
 
@@ -504,7 +507,7 @@ defined to be just $\alpha$-equivalence since objects are in
 $\beta\eta$-canonical form. Here, objects can contain metavariables
 defined in $\mr$, so we shall thread it. Moreover, we will see in the
 next section how defined constants compute and thus influence
-definitional equality. Definitional equality is defined later in
+definitional equality. Definitional equality is defined later in Fig.
 \ref{fig:def-eq}.
 
 Signatures themselves need to be checked. We present the checking
@@ -553,11 +556,32 @@ algorithm in Fig. \ref{fig:sign-typing}.
 
     \infer{
       \Sigma(a) = K
+      \and
+      \jfl\mr\Gamma K S \mmr {S'}
       % TODO
     }{
       \jfam\mr\Gamma {\app{\cst a} S} \mmr {\app{\cst a} {S'}}
     }
+  \end{mathpar}
 
+
+  \fbox{$\jfl\mr\Gamma K S \mmr {S'}$}
+  \qquad
+  {Family spine}
+
+  \begin{mathpar}
+    \infer{
+      \jm\mr\Gamma M A \mmr {M'}
+      \and
+      \jfl\mmr\Gamma {\gsubst{K}{M'}} S \mmmr {S'}
+    }{
+      \jfl\mr\Gamma {\prd x {A} {K}} {\spinecons M S} \mmmr {\spinecons
+      {M'}{S'}}
+    }
+
+    \infer{ }{
+      \jfl\mr\Gamma\type\spinenil\mr\spinenil
+    }
   \end{mathpar}
 
   \fbox{$\jkind\mr\Gamma K \mmr {K'}$}
@@ -565,7 +589,15 @@ algorithm in Fig. \ref{fig:sign-typing}.
   {Kind}
 
   \begin{mathpar}
-    
+    \infer{
+      \jfam\mr\Gamma A\mmr{A'}
+      \and
+      \jkind\mmr{\envcons\Gamma x A} K \mmmr {K'}
+    }{
+      \jkind\mr\Gamma{\prd x A K}\mmmr{\prd x {A'}{K'}}
+    }
+
+    \infer{ }{\jkind\mr\Gamma\type\mr\type}
   \end{mathpar}
 
   \caption{Typing algorithm for signatures}
