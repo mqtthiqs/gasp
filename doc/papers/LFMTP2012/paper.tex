@@ -34,11 +34,11 @@
 
 %% Here is a problem
 \begin{abstract}
-  %% 4 sentences:
-  %% State the problem
-  %% Say why it’s an interesting problem
-  %% Say what your solution achieves
-  %% Say what follows from your solution
+ %% 4 sentences:
+ %% State the problem
+ %% Say why it’s an interesting problem
+ %% Say what your solution achieves
+ %% Say what follows from your solution
 \end{abstract}
 
 \category{D.3.3}{Language Constructs and Features}{Data types and
@@ -125,9 +125,9 @@ query: it suffices to batch-verify the certificate.
 \section{The calculus}
 %% My idea works (details, data) (5 pages)
 
-\subsection{Core calculus}
+\subsection{Value calculus}
 
-The core calculus defines the \emph{values} we want to
+The value calculus defines the \emph{values} we want to
 manipulate. These contain constants, and --- contrarily to \eg\
 \sysname{ML} values --- binders and variables enabling $\lambda$-tree
 syntax. Thus, they embed a superficial notion of computation:
@@ -161,10 +161,11 @@ as \sysname{LJT} \cite{herbelin1995λ}.
   \text{Type family} \\
   M &\gequal
   \lam x M \gor
-  F \gor
-  \smeta X \sigma &
+  F &
   \text{Object} \\
-  F &\gequal \app H S &
+  F &\gequal \app H S
+  \gor
+  \smeta X \sigma &
   \text{Application} \\
   H &\gequal
   \var x \gor
@@ -191,10 +192,14 @@ or set notations for $\sigma$ and $\Gamma$. The identity substitution
 $\msubstid{\Gamma}$ is a notation for $\{\msubst x {\var x}\ |\ \var x
 \in\dom\Gamma\}$.
 
+% TODO com M check/F infer
+
 Metavariables $\smeta X \sigma$ stand for open objects with free
-variables in $\dom{\sigma}$; they are defined in a repository (see
-below). We write $\FMV{M}$ for the set of metavariables in $M$ and
-speak of a \emph{metaclosed} object $M$ if $\FMV{M} = \emptyset$.
+variables in $\dom{\sigma}$; To each use of them is attached a
+substitution $\sigma$ defining these free variables. They are defined
+in a repository (see below). We write $\FMV{M}$ for the set of
+metavariables in $M$ and speak of a \emph{metaclosed} object $M$ if
+$\FMV{M} = \emptyset$.
 
 \paragraph{Substitution}
 
@@ -315,7 +320,7 @@ metavariable, the \emph{head}:
 $$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X \sigma $$
 We maintain the invariant that a repository $\mr$ is
 \emph{acyclic}, that is for all $\meta X$ in $\mr$, the fixpoint
-of $\FMV{\meta X}$ does not contain $\meta X$. With $\mr =
+of $\FMV{\meta X}$ does not contain $\meta X$. If $\mr =
 (\Delta, X[\sigma])$, we write $\hat {\mr}$ for $X[\sigma]$,
 abusively $\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for
 $\gsubst M\sigma$ if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
@@ -360,24 +365,13 @@ order of computation.
 
     % App
     \infer{
-      \jf\mr\Gamma F \mmr {M'} {A'}
+      \jf\mr\Gamma F \mmr {F'} {A'}
        \and
       \jea\mmr\Gamma {\app{\cst a} S} {A'}
     }{
-      \jm\mr\Gamma F {\app{\cst a} S} \mmr {M'}
+      \jm\mr\Gamma F {\app{\cst a} S} \mmr {F'}
     }
     % TODO commenter type ground
-
-    % Meta
-    \infer{
-      \mr(\meta X) = (\Gamma'\vdash M:A')
-      \and
-      \js\mr\Gamma \sigma {\Gamma'} \mmr {\sigma'}
-      \and
-      \jea\mmr\Gamma A {\gsubst {A'} {\sigma'}}
-    }{
-      \jm\mr\Gamma {\smeta X \sigma} A \mmr {M'}
-    }
   \end{mathpar}
 
   \fbox{$\js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}$}
@@ -403,8 +397,7 @@ order of computation.
 
   \end{mathpar}
 
-
-  \fbox{$\jf\mr\Gamma F \mmr M A$}
+  \fbox{$\jf\mr\Gamma F \mmr F A$}
   \qquad
   {Application}
 
@@ -419,15 +412,27 @@ order of computation.
       \jf\mr\Gamma {\app H S} \mmr {\app H {S'}} {A'}
     }
 
+    % Meta
+    \infer{
+      \mr(\meta X) = (\Gamma'\vdash M:A)
+      \and
+      \js\mr\Gamma \sigma {\Gamma'} \mmr {\sigma'}
+    }{
+      \jf\mr\Gamma {\smeta X \sigma} \mmr {\smeta X {\sigma'}} {\gsubst{A}\sigma'}
+    }
+
     % Sliceable
     \infer{
       \jh\mr\Gamma H A \annsliceable
       \and
       \jl\mr\Gamma A S \mmr {S'} {A'}
       \and
-      \jp\mmr\Gamma {\app H S} A \mmmr
+      \stren{\Gamma, \app H {S'}}=\Gamma'
+      \and
+      \text{$\meta X$ fresh in $\mr$}
     }{
-      \jf\mr\Gamma {\app H S} \mmmr {\hat\mmmr} {A'}
+      \jf\mr\Gamma {\app H S} {\mapadd\mmr{\meta X}{(\Gamma'\vdash
+          {\app H {S'}}:A)}} {\smeta X{\msubstid{\Gamma'}}} {A'}
     }
 
   \end{mathpar}
@@ -471,38 +476,23 @@ order of computation.
     }
   \end{mathpar}
 
-  \fbox{$\jp\mr\Gamma M A \mmr$}
-  \qquad
-  {Push}
-
-  \begin{mathpar}
-    \infer{
-      \stren{\Gamma, M}=\Gamma'
-      \and
-      \text{$\meta X$ fresh in $\Delta$}
-    }{
-      \jp{(\Delta; \smeta Z {\sigma})}\Gamma M A {(\mapadd\Delta{\meta
-          X}{(\Gamma'\vdash M:A)}; \smeta X {\msubstid\Gamma})}
-    }
-  \end{mathpar}
-
   \caption{Typing algorithm for objects}
   \label{fig:obj-typing}
 \end{figure*}
 
-The main judgement is application typing $\jf\mr\Gamma F \mmr M A$,
+The main judgement is application typing $\jf\mr\Gamma F \mmr {F'} A$,
 which means that in repository $\mr$ and environment $\Gamma$, the
 applicative term $F$ is well-typed of type $A$, and the slicing of $F$
-produces a new repository $\mmr$. The object $M$ is the
+produces a new repository $\mmr$. The object $F'$ is the
 \emph{residual} of this operation: only certain kind of applications
 are sliced, and it is possible that the ``tip'' of application $F$ is
 not sliced (because it is declared as non-sliceable). In that case,
 $M$ is this tip; if $F$ is directly sliceable, then $M$ is the
 metavariable referring to it.
 
-Definitional equality judgement between two families $\jea\mr\Gamma A
-{A'}$ is used by these typing rules. This equivalence is usually
-defined to be just $\alpha$-equivalence since objects are in
+These typing rules use definitional equality judgement between two
+families $\jea\mr\Gamma A {A'}$. This equivalence is usually defined
+to be just $\alpha$-equivalence since objects are in
 $\beta\eta$-canonical form. Here, objects can contain metavariables
 defined in $\mr$, so we shall thread it. Moreover, we will see in the
 next section how defined constants compute and thus influence
