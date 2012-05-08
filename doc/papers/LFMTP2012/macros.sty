@@ -60,7 +60,8 @@
 
 \newcommand\match[1]{\operatorname{case}\ {#1}\ \operatorname{of}\ }
 \newcommand\matchin[2]{\match{{#1}\ \operatorname{in}\ {#2}}}
-\newcommand\case[1]{|{#1}\to} \newcommand\casenobar[1]{{#1}\to}
+\newcommand\case[1]{|\ {#1}\to}
+\newcommand\casenobar[1]{{#1}\to}
 
 % Environment
 \newcommand\envnil{\gnil}
@@ -122,8 +123,6 @@
 \newcommand\jl[7]{\gjor{#1}{{#2}; {#3}}{#4}{{#5};{#6};{#7}}}
 % fspine
 \newcommand\jfl[6]{\gjor{#1}{{#2};{#3}}{#4}{{#5};{#6}}}
-% push
-\newcommand\jp[5]{\gjor{#1}{#2} {\tp{{#3}}{#4}} {#5}}
 % sign
 \newcommand\jsig[4]{\gjo{#1}{#2}{{#3};{#4}}}
 % fam
@@ -131,6 +130,9 @@
 % kind
 \newcommand\jkind\jfam
 
+% comp cut
+\newcommand\jcc[7]{\gjor{#1}{#2}{\tp{\gcut{#3}{#4}}{#5}}{{#6};{#7}}}
+\newcommand\jcr[5]{\gjor{#1}{#2}{#3}{{#4};{#5}}}
 
 % obj equality
 \newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}

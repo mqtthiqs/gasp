@@ -57,9 +57,6 @@ incrementality, type checking, logical framework, version control
 \section*{Introduction}
 %% It’s an interesting problem (1 page)
 
-As programming languages develop more static analysis like rich type
-systems, programs get safer as bugs are caught earlier.
-
 %% Describe the problem (Use an example)
 %% State your contributions (Bulleted list of contributions)
 
@@ -641,29 +638,110 @@ objects out of other, and deconstruct them by case analysis:
   U \\
   U &\gequal
   F \gor
-  \matchin U \Gamma \casenobar {\app {H} {\vec {\var x}}} U\ |\ \ldots\
-  \case {\app {H} {\vec {\var x}}} U
+  \matchin U \Gamma C \\
+  C &\gequal \casenobar P U \gor
+  C\ \case P U \\
+  P &\gequal
+  \app H {\var x} \ldots\ {\var x}
 \end{align*}
 
-This language is un(i)typed, in that all \LF\ objects have the same
-implicit type $\cst{obj}$: there is no static guarantee that terms
-produced by a constant $\cst c : A_1\to A_2$ will have type $A_2$; it
-is also non-terminating: we could declare a constant $\cst c : \cst
-a\to \cst a = \lam x \app {\cst c} {\var x}$. We expose here only the
-minimal building blocks, but other features could be added at will to
-this language. You can think of defined constants as black boxes
-taking and producing terms, and being able to call other black
-boxes. We detail in section \ref{sec:implem} how to embed
-\sysname{OCaml} as computation calculus.
+This language is un(i)typed, in that all \LF\ objects are viewed as
+having the same implicit type $\cst{obj}$: there is no static
+guarantee that terms produced by a constant $\cst c : A_1\to A_2$ will
+have type $A_2$. It is also non-terminating: we could declare a
+recursive constant $\cst c : \cst a\to \cst a = \lam x \app {\cst c}
+{\var x}$. We expose here only the minimal building blocks of this
+language, but really any language with algebraic datatypes would do
+since we will be manipulating directly the first-order representation
+of \LF\ objects. In fact, whatever the language is, you can think of
+defined constants as mere black boxes taking and producing terms, and
+being able to call other black boxes. We detail for example in section
+\ref{sec:implem} how to embed \sysname{OCaml} as computation calculus.
 
 Nevertheless, in order to maintain the well-typing of the generated
-term, we want to maintain the invariant that arguments fed to these
-defined constant as well as the computation result have the announced
-type. We thus maintain \emph{dynamic typing} of computations.
+term, we want to maintain the invariant that each time a piece of term
+goes in or out of a black box, it is checked against its specification
+(\ie\ its type). We thus maintain \emph{dynamic typing} of
+computations: arguments and results are type-checked at run-time.
+
+\paragraph{Substitution}
+
+\begin{align*}
+  \gsubst {(\lam x T)} \sigma &= \lam x {\gsubst T\sigma} \qquad
+  \text{if $\var x\notin\dom\sigma$}\\
+  \gsubst {(\matchin U \Gamma C)} \sigma &=
+  \matchin {\gsubst
+    U\sigma} {\gsubst\Gamma\sigma} {\gsubst C\sigma} \\
+  \gsubst {(\casenobar{\app H {\spinecons {\var x_1} {\spinecons \ldots {\var
+          x_n}}}} U)} \sigma &= {\casenobar{\app H {\spinecons {\var x_1} {\spinecons \ldots {\var
+          x_n}}}} \gsubst U \sigma} \quad \text{if $\var x_i\notin\dom\sigma$} \\
+\end{align*}
 
 \begin{figure*}
-  \centering
-  TODO
+  \fbox{$\jcc\mr\Gamma T S A \mmr F$}
+  \qquad
+  {Computational cut}
+
+  \begin{mathpar}
+    \infer{
+      \jm\mr\Gamma M A \mmr {M'}
+      \and
+      \jcc\mmr\Gamma{\gsubst T {\msubst x M}} S {A_2}\mmmr F
+    }{
+      \jcc\mr\Gamma{\lam x T}{\spinecons M S}{(\prd x {A_1} {A_2})}
+      \mmmr F
+    }
+
+    \infer{
+      \jcr\mr\Gamma U \mmr F
+      \and
+      \jm\mmr\Gamma F {\app {\cst a} S} \mmmr {F'}
+    }{
+      \jcc\mr\Gamma U \spinenil {\app {\cst a} S} \mmmr {F'}
+    }
+  \end{mathpar}
+
+  \fbox{$\jcr\mr\Gamma U \mmr F$}
+  \qquad
+  {Computational reduction}
+
+  \begin{mathpar}
+    \infer{ }{
+      \jcr\mr\Gamma{\app {\var x} S} \mr {\app {\var x} S}
+    }
+
+    \infer{
+      \Sigma(c) = A; (\annsliceable\text{ or }\annnonsliceable)
+    }{
+      \jcr\mr\Gamma{\app {\cst c} S} \mr {\app {\cst c} S}
+    }
+
+    \infer{
+      \Sigma(c) = A; \anndefined T
+      \and
+      \jcc\mr\Gamma T S A \mmr F
+    }{
+      \jcr\mr\Gamma{\app {\cst c} S} \mr {\app {\cst c} S}
+    }
+
+    \infer{
+      \jcr\mr{\gconcat\Gamma{\Gamma'}} U \mmr {\app {H_i} {\spinecons
+          {M_1}{\spinecons\ldots{M_{m_i}}}}}
+      \and
+      \jcr\mmr\Gamma {\gsubst{U_i}{\msubst {x$_1$} {M_1} \ldots\
+          \msubst {x$_{m_i}$} {M_{m_i}}}} \mmmr F a
+    }{
+      \jcr\mr\Gamma{\matchin{U}{\Gamma'}{
+          \casenobar{\app {H_1}{\spinecons {\var x_{11}} {\spinecons
+                \ldots\ {\var x_{1m_1}}}}}{U_1}
+          |\ \ldots\
+          \case{\app {H_n}{\spinecons {\var x_{n1}} {\spinecons
+              \ldots\ {\var x_{nm_n}}}}}{U_n}
+        }}\mmr F
+    }
+
+  \end{mathpar}
+
   \caption{Weak head-reduction}
   \label{fig:whr}
 \end{figure*}
