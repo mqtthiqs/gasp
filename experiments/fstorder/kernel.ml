@@ -65,21 +65,15 @@ let strengthen env (h, l) a =
 let push repo env (h, l) a =
     let x = Context.fresh repo.ctx () in
     let env, (h, l), a, s = strengthen env (h, l) a in
-    let repo = { repo with
-      ctx = Context.add x (env, mkApp (h, l), a) repo.ctx;
-      head = x, s } in
-    repo
+    let repo = { repo with ctx = Context.add x (env, mkApp (h, l), a) repo.ctx } in
+    repo, (x, s)
 
 let push repo env (h, l) a =
   let e = Env.names_of env in
   Debug.log_open "push" "%a ⊢ %a : %a" P.env env (P.eobj e) (mkApp(h,l)) (P.efam e) a;
-  let r = push repo env (h, l) a in
-  Debug.log_close "push" "=> %a" P.repo_light r;
-  r
-
-let head_type repo = function
-  | HVar x -> Sign.Non_sliceable
-  | HConst c | HInv c -> snd (Sign.ofind c repo.sign)
+  let r, (x, s) = push repo env (h, l) a in
+  Debug.log_close "push" "=> %a, %a[%a]" P.repo_light r Meta.print x P.subst s;
+  r, (x, s)
 
 module rec Conv : sig
   val obj : repo -> env -> obj * obj * fam -> unit
@@ -269,8 +263,8 @@ end = struct
          *)
       | Sign.Sliceable ->
         let repo, l, a = spine repo env (l, a) in
-        let repo = push repo env (h, l) a in
-        repo, mkMeta (repo.head), a
+        let repo, hd = push repo env (h, l) a in
+        repo, mkMeta hd, a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
        * ——————————————————————————————————————— (h non sliceable)
@@ -405,7 +399,9 @@ let rec init repo = function
 let push repo env (h, l) =
   let repo, m, a = Check.app repo env (h, l) in
   match prj m with
-    | OApp (h, l) -> push repo env (h, l) a
+    | OApp (h, l) ->
+      let repo, (x, s) = push repo env (h, l) a in
+      {repo with head = x, s }
     | OMeta (x, s) -> {repo with head = x, s}
     | OLam _ -> assert false
 
