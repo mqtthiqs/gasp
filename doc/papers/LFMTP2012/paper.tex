@@ -159,11 +159,11 @@ as \sysname{LJT} \cite{herbelin1995λ}.
   M &\gequal
   \lam x M \gor
   F &
-  \text{Object} \\
+  \text{Canonical object} \\
   F &\gequal \app H S
   \gor
   \smeta X \sigma &
-  \text{Application} \\
+  \text{Atomic object} \\
   H &\gequal
   \var x \gor
   \cst c &
@@ -189,14 +189,20 @@ or set notations for $\sigma$ and $\Gamma$. The identity substitution
 $\msubstid{\Gamma}$ is a notation for $\{\msubst x {\var x}\ |\ \var x
 \in\dom\Gamma\}$.
 
-% TODO com M check/F infer
-
 Metavariables $\smeta X \sigma$ stand for open objects with free
 variables in $\dom{\sigma}$; To each use of them is attached a
 substitution $\sigma$ defining these free variables. They are defined
 in a repository (see below). We write $\FMV{M}$ for the set of
 metavariables in $M$ and speak of a \emph{metaclosed} object $M$ if
 $\FMV{M} = \emptyset$.
+
+We distinguish syntactically between \emph{checkable} and
+\emph{inferrable} objects (resp. \emph{canonical} and \emph{atomic}),
+an idea dating back to \cite{pierce2000local}: canonical objects are
+checked against a given type, whereas we can synthesize the type of
+atomic objects; the coercion from the first to the second will be the
+place where to verify equality between the synthesized type and the
+given one.
 
 \paragraph{Substitution}
 
@@ -309,6 +315,8 @@ Our algorithm types exactly the well-typed objects of the usual
 all well-typed applicative subterms $F$ along with their classifier
 $A$ and the environment in which they are well-typed.
 
+% TODO parler d'effacer les R et retomber sur LF
+% TODO expl. c'est tout comme LF sauf qqes règles...
 % TODO parler de la redondance en LF normal
 
 A \emph{repository} $\mr$ is a finite map from metavariable to
@@ -350,7 +358,7 @@ order of computation.
 
   \fbox{$\jm\mr\Gamma M A \mmr {M'}$}
   \qquad
-  Object
+  Canonical object
 
   \begin{mathpar}
     % Lambda
@@ -371,32 +379,9 @@ order of computation.
     % TODO commenter type ground
   \end{mathpar}
 
-  \fbox{$\js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}$}
-  \qquad
-  {Substitution}
-
-  \begin{mathpar}
-
-    % Cons
-    \infer{
-      \js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}
-      \and
-      \jm\mmr\Gamma M {\gsubst A {\sigma'}} \mmmr {M'}
-    }{
-      \js\mr\Gamma{(\msubstcons \sigma x M)} {(\envcons {\Gamma'} x {A'})}
-      \mmmr {(\msubstcons {\sigma'} x {M'})}
-    }
-
-    % Nil
-    \infer{ }{
-      \js\mr\Gamma\msubstnil\envnil\mr\envnil
-    }
-
-  \end{mathpar}
-
   \fbox{$\jf\mr\Gamma F \mmr F A$}
   \qquad
-  {Application}
+  {Atomic object}
 
   \begin{mathpar}
 
@@ -425,12 +410,12 @@ order of computation.
       \jl\mr\Gamma A S \mmr {S'} {A'}
       \and
       \stren{\Gamma, \app H {S'}}=\Gamma'
-      \and
-      \text{$\meta X$ fresh in $\mr$}
     }{
       \jf\mr\Gamma {\app H S} {\mapadd\mmr{\meta X}{(\Gamma'\vdash
           {\app H {S'}}:A)}} {\smeta X{\msubstid{\Gamma'}}} {A'}
     }
+    \quad\text{($\meta X$ fresh in $\mr$)}
+
 
   \end{mathpar}
 
@@ -473,12 +458,35 @@ order of computation.
     }
   \end{mathpar}
 
+  \fbox{$\js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}$}
+  \qquad
+  {Substitution}
+
+  \begin{mathpar}
+
+    % Cons
+    \infer{
+      \js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}
+      \and
+      \jm\mmr\Gamma M {\gsubst A {\sigma'}} \mmmr {M'}
+    }{
+      \js\mr\Gamma{(\msubstcons \sigma x M)} {(\envcons {\Gamma'} x {A'})}
+      \mmmr {(\msubstcons {\sigma'} x {M'})}
+    }
+
+    % Nil
+    \infer{ }{
+      \js\mr\Gamma\msubstnil\envnil\mr\envnil
+    }
+
+  \end{mathpar}
+
   \caption{Typing algorithm for objects}
   \label{fig:obj-typing}
 \end{figure*}
 
-The main judgement is application typing $\jf\mr\Gamma F \mmr {F'} A$,
-which means that in repository $\mr$ and environment $\Gamma$, the
+The main judgement is atomic object typing $\jf\mr\Gamma F \mmr {F'}
+A$, which means that in repository $\mr$ and environment $\Gamma$, the
 applicative term $F$ is well-typed of type $A$, and the slicing of $F$
 produces a new repository $\mmr$. The object $F'$ is the
 \emph{residual} of this operation: only certain kind of applications
