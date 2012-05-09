@@ -75,15 +75,17 @@ Tests.conv repo <<
 >> << nat >>
 ;;
 
-Tests.commit repo <<
+Tests.commit_eq repo <<
   plus two two
+>> <<
+  s (s (s (s o)))
 >>
 ;;
 
 Tests.commit_eq repo <<
   mult two two
 >> <<
-  plus two two
+  s (s (s (s o)))
 >>
 ;;
 
@@ -138,7 +140,7 @@ Tests.commit_eq repo <<
   eval (eplus (enat (s o)) (emult (enat two) (enat (s two)))
 )
 >> <<
-  plus (s o) (mult two (s two))
+  s (s (s (s (s (s (s o))))))
 >>
 ;;
 

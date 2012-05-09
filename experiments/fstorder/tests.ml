@@ -5,11 +5,6 @@ open Struct.Repo
 
 let commit repo m =
   let repo = Version.commit repo [] m in
-  let _, _, a = Context.find (fst repo.head) repo.ctx in
-  let a = LF.Subst.fam (snd repo.head) a in
-  let m = Strat.obj repo.sign [] m in
-  let n = Strat.obj repo.sign [] (Version.checkout repo) in
-  Kernel.Conv.obj repo [] (m, n, a);
   repo
 
 let commit repo m = Topcatch.catch (commit repo) m
@@ -18,11 +13,9 @@ let commit_eq repo m p =
   let repo = Version.commit repo [] m in
   let _, _, a = Context.find (fst repo.head) repo.ctx in
   let a = LF.Subst.fam (snd repo.head) a in
-  let m = Strat.obj repo.sign [] m in
   let p = Strat.obj repo.sign [] p in
   let n = Strat.obj repo.sign [] (Version.checkout repo) in
-  Kernel.Conv.obj repo [] (m, n, a);
-  Kernel.Conv.obj repo [] (m, p, a);
+  Kernel.Conv.obj repo [] (n, p, a);
   repo
 
 let commit_eq repo m p = Topcatch.(catch (catch (commit_eq repo) m) p)
