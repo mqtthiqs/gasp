@@ -57,6 +57,18 @@ incrementality, type checking, logical framework, version control
 \section*{Introduction}
 %% It’s an interesting problem (1 page)
 
+When writing critical software, high assurance against bugs is an
+absolute necessity. To certify the absence of bugs in a large body of
+code given its specification, human reviewing is one option, but
+certainly a failible one. Formal, mathematical proof that our program
+respects a certain \emph{dependability claim} gives us the assurance
+that ``its trustworthyness [\ldots] would presumably last for eternity
+\cite{shao2010certified}''.
+
+Certifying
+
+\cite{miller2011proposal}
+
 %% Describe the problem (Use an example)
 %% State your contributions (Bulleted list of contributions)
 
@@ -416,6 +428,18 @@ order of computation.
     }
     \quad\text{($\meta X$ fresh in $\mr$)}
 
+    % Defined
+    \infer{
+      \jh\mr\Gamma H A {\anndefined T}
+      \and
+      \jl\mr\Gamma A S {\mmr} {S'} {A'}
+      \and
+      \jcc\mr\Gamma A T S \mmmr F
+      \and
+      \jm\mmmr\Gamma F {A'} {\repo {R'''} } {F'}
+    }{
+      \jf\mr\Gamma {\app H S} {\repo{R'''}} {F'} {A'}
+    }
 
   \end{mathpar}
 
@@ -692,11 +716,11 @@ computations: arguments and results are type-checked at run-time.
 
   \begin{mathpar}
     \infer{
-      \jm\mr\Gamma M A \mmr {M'}
+      \jm\mr\Gamma M {A_1} \mmr {M'}
       \and
-      \jcc\mmr\Gamma{\gsubst T {\msubst x M}} S {A_2}\mmmr F
+      \jcc\mmr\Gamma{\gsubst {A_2} {\msubst x {M'}}}{\gsubst T {\msubst x {M'}}} S \mmmr F
     }{
-      \jcc\mr\Gamma{\lam x T}{\spinecons M S}{(\prd x {A_1} {A_2})}
+      \jcc\mr\Gamma{\prd x {A_1} {A_2}}{\lam x T}{\spinecons M S}
       \mmmr F
     }
 
@@ -705,7 +729,7 @@ computations: arguments and results are type-checked at run-time.
       \and
       \jm\mmr\Gamma F {\app {\cst a} S} \mmmr {F'}
     }{
-      \jcc\mr\Gamma U \spinenil {\app {\cst a} S} \mmmr {F'}
+      \jcc\mr\Gamma {\app {\cst a} S} U \spinenil \mmmr {F'}
     }
   \end{mathpar}
 
