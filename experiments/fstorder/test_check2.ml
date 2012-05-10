@@ -111,6 +111,22 @@ let repo = Version.init
     repo, r
   $.
 
+
+  red_lam : {M : tm -> tm} {N : tm} {A : tp} {B : tp}
+             is (lam A [x] M x) (arr A B) -> is N A ->
+             is (M N) B = $ fun _ n _ _ hm hn ->
+    match* hm with
+      | << is_lam $m$ $a$ $b$ $h$ >> -> return << $h$ $n$ $hn$ >>
+  $.
+
+  red_let : {M : tm -> tm} {N : tm} {A : tp} {B : tp}
+             is (letb N [x] M x) A -> is (M N) A = $ fun m n a b hl ->
+    match* hl with
+      | << is_let $m$ $n$ $a$ $b$ $hm$ $h$ >> ->
+          return << $h$ $n$ $hm$ >>
+  $.
+
+(* TODO *)
 >>
 ;;
 
