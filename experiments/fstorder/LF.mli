@@ -54,6 +54,7 @@ module Util : sig
   val map_meta : (Meta.t * subst -> obj) -> obj -> obj
   val fv : obj -> int list
   val eta_expand_var : int -> fam -> obj
+  val inv_fam : (int * fam) -> fam
 end
 
 (* debug *)

@@ -162,4 +162,13 @@ module Util = struct
       | FApp _ -> mkApp (HVar i, (List.rev l))
     in exp i [] a
 
+  let rec push c = function
+    | FProd (x, a, b) -> FProd (x, a, push (Lift.fam 0 1 c) b)
+    | FApp _ as a -> FProd (None, a , Lift.fam 0 1 c)
+
+  let rec inv_fam = function
+    | 0, FProd (x, a, b) -> FProd (x, a, push (Lift.fam 0 1 a) b)
+    | n, FProd (x, a, b) -> FProd (x, a, inv_fam (pred n, b))
+    | _ -> invalid_arg "inv_fam"
+
 end
