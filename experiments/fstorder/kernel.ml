@@ -134,9 +134,15 @@ end = struct
         Debug.log "subst" "%a %a" P.obj m' P.subst s;
         let m' = Subst.obj s m' in
         obj repo env (inj m, m', a)
+    | OApp (HInv (c, n), l), _, a ->
+        obj repo env (List.nth l n, m2, a)
+    | _, OApp (HInv (c, n), l), a ->
+        obj repo env (m1, List.nth l n, a)
     | OApp (h1, l1), o2, a ->
         begin match Check.head repo env h1 with
-          | ah, Sign.Defined f -> assert false
+          | ah, Sign.Defined f ->
+              (* there should be no defined constants during conversion anymore *)
+              assert false
           | ah, Sign.Sliceable | ah, Sign.Non_sliceable ->
               match o2 with
                 | OMeta _ | OLam _ -> raise (Not_conv_obj (repo, env, m1, m2))
@@ -191,7 +197,7 @@ end = struct
     | HConst c -> Sign.ofind c repo.sign
     | HInv (c, n) ->
       match Sign.ofind c repo.sign with
-        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Sliceable
+        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Non_sliceable
         | _ -> failwith ("inverted a non-defined function")
 
   (* obj: check mode, returns the rewritten obj and the enlarged repo *)
@@ -285,9 +291,9 @@ end = struct
        * R, Γ ⊢ h l => R', m', C
        *)
       | Sign.Defined f ->
-        (* check that arguments of this constants are well-typed *)
+        (* check and reduce arguments of this constant *)
         let repo, l, a = spine repo env (l, a) in
-        (* evaluate it with the unreduced arguments *)
+        (* evaluate it with the reduced arguments *)
         let m = Eval.interp repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj repo env (m, a) in
