@@ -16,6 +16,7 @@ val init : repo -> SLF.sign -> repo
 (****** debugging only ******)
 module Conv : sig
   val obj : repo -> env -> obj * obj * fam -> unit
+  val fam : repo -> env -> fam * fam -> unit
 end
 module Check : sig
   val obj : repo -> env -> obj * fam -> repo * obj
