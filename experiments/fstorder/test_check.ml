@@ -47,7 +47,7 @@ let repo = Version.init
     let r = match* m with
       | << lam $a$ $m$ >> ->
           let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:is x $a$ >> =
-            << infer ($m$ (infer^ x (ex x $a$ h))) >> in
+            << infer ($m$ (infer^0 x (ex x $a$ h))) >> in
           << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
       | << app $m$ $n$ >> ->
           let* << ex $_$ $c$ $d1$ >> = << infer $m$ >> in
@@ -68,7 +68,7 @@ let repo = Version.init
 
 Tests.commit repo
 <<
-  is_lam ([t] t) base base ([x] [h] infer (infer^ x (ex x base h)))
+  is_lam ([t] t) base base ([x] [h] infer (infer^0 x (ex x base h)))
 >>
 ;;
 
@@ -87,7 +87,7 @@ Tests.commit repo
 (* This should be no work at all *)
 Tests.commit repo
 <<
-  infer (infer^ (lam base [z] z)
+  infer (infer^0 (lam base [z] z)
            (ex (lam base [y] y) (arr base base)
               (is_lam ([t] t) base base ([_] [H] H))))
 >>

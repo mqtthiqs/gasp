@@ -62,7 +62,7 @@ module ExprParser = struct
   term2:
   [ "simple"
       [ x = ident -> <:expr< Ident (Id $str:x$) >>
-      | x = ident; "^" -> <:expr< Ident (Inv $str:x$) >>
+      | x = ident; "^"; n=INT -> <:expr< Ident (Inv ($str:x$, $int:n$)) >>
       | "?"; x = ident -> <:expr< Meta ($str:x$, []) >>
       | "?"; x = ident; "["; s = subst; "]" -> <:expr< Meta ($str:x$, $s$) >>
       | `ANTIQUOT ("", s) -> Syntax.AntiquotSyntax.parse_expr _loc s

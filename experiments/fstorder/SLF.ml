@@ -6,7 +6,7 @@ type binder = string option
 
 type ident =
   | Id of string
-  | Inv of string
+  | Inv of string * int
   | Unnamed of int
   | Unbound of int
 
@@ -67,12 +67,12 @@ end = struct
               try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
               with Not_found -> failwith ("strat: not found "^FConst.repr x)
         end
-    | Inv x ->
+    | Inv (x, n) ->
         begin
           try
             let x = OConst.make x in
             ignore (Sign.ofind x sign);
-            Obj (LF.mkApp (LF.HInv x, l))
+            Obj (LF.mkApp (LF.HInv (x, n), l))
           with Not_found -> failwith ("strat: not found "^x^"^")
         end
     | Unnamed i -> failwith ("strat: unnamed variable "^(string_of_int i))
@@ -162,7 +162,7 @@ end = struct
 
   let head names = function
     | LF.HConst c -> Id (OConst.repr c)
-    | LF.HInv c -> Inv (OConst.repr c)
+    | LF.HInv (c, n) -> Inv (OConst.repr c, n)
     | LF.HVar x ->
       try match List.nth names x with
         | Some s -> Id s
@@ -228,7 +228,7 @@ module Printer = struct
 
   let ident fmt = function
     | Id s -> str fmt s
-    | Inv s -> fprintf fmt "%a^" str s
+    | Inv (s, n) -> fprintf fmt "%a^%d" str s n
     | Unnamed n -> fprintf fmt "_UNNAMED_%d" n
     | Unbound n -> fprintf fmt "_UNBOUND_%d" n
 
