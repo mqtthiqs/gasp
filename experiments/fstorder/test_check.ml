@@ -66,11 +66,11 @@ let repo = Version.init
 >>
 ;;
 
-Tests.commit repo
-<<
-  is_lam ([t] t) base base ([x] [h] infer (infer^0 x (ex x base h)))
->>
-;;
+(* Tests.commit repo *)
+(* << *)
+(*   is_lam ([t] t) base base ([x] [h] infer (infer^0 x (ex x base h))) *)
+(* >> *)
+(* ;; *)
 
 Tests.commit repo
 <<
