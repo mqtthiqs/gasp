@@ -368,7 +368,7 @@ end = struct
         begin match Check.head repo env h with
           | a, Sign.Defined f ->
               let repo, l, a = Check.spine repo env (l, a) in
-              f repo env (eval repo) l
+              interp repo env h f l
           | _ -> raise (Not_evaluable (repo, mkApp(h, l)))
         end
     | m -> raise (Not_evaluable (repo, inj m))
@@ -379,12 +379,17 @@ end = struct
     Debug.log_close "eval" "=> %a" P.obj m;
     m
 
-  let interp repo env h (f : repo -> env -> (env -> obj -> obj) -> spine -> obj) l =
-    f repo env (eval repo) l
+  and interp' repo env h (f : repo -> env -> (env -> obj -> obj) -> spine -> obj) l =
+    let c = match h with HConst c -> c | _ -> assert false in
+    match List.map prj l with
+      | [OApp (HInv (c', 0), [m1; m2])] when OConst.compare c c' = 0 ->
+            (* if the only argument is the inverse function c^0 *)
+          m2
+      | _ -> f repo env (eval repo) l
 
-  let interp repo env h f l =
+  and interp repo env h f l =
     Debug.log_open "interp" "%a" P.obj (mkApp (h, l));
-    let m = interp repo env h f l in
+    let m = interp' repo env h f l in
     Debug.log_close "interp" "=> %a = %a" P.obj (mkApp (h, l)) P.obj m;
     m
 
