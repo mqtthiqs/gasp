@@ -189,6 +189,10 @@ end = struct
         let a = Lift.fam 0 (x+1) a in
         a, Sign.Non_sliceable
     | HConst c -> Sign.ofind c repo.sign
+    | HInv (c, n) ->
+      match Sign.ofind c repo.sign with
+        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Sliceable
+        | _ -> failwith ("inverted a non-defined function")
 
   (* obj: check mode, returns the rewritten obj and the enlarged repo *)
   let rec obj' repo env : obj * fam -> repo * obj = Prod.map prj id @>
