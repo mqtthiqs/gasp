@@ -6,26 +6,26 @@ let repo = Version.init <:sign<
   #o : nat.
   s : nat -> nat.
 
-  two : nat = s (s o).
+  two : nat = $return << s (s o) >>$.
 
   plus : nat -> nat -> nat = $ fun m n ->
     match* m with
-      | << o >> -> n
-      | << s $m$ >> -> << s (plus $m$ $n$) >>
+      | << o >> -> return n
+      | << s $m$ >> -> return << s (plus $m$ $n$) >>
   $.
 
   mult: nat -> nat -> nat = $ fun m n ->
     match* m with
-      | << o >> -> << o >>
-      | << s $m$ >> -> << plus $n$ (mult $m$ $n$) >>
+      | << o >> -> return << o >>
+      | << s $m$ >> -> return << plus $n$ (mult $m$ $n$) >>
   $.
 
   div2 : nat -> nat = $ fun m ->
     match* m with
-      | << o >> -> << o >>
+      | << o >> -> return << o >>
       | << s $m$ >> -> match* m with
           | << o >> -> failwith "div2"
-          | << s $m$ >> -> << div2 $m$ >>
+          | << s $m$ >> -> return << div2 $m$ >>
   $.
 
   exp : type.
@@ -35,9 +35,9 @@ let repo = Version.init <:sign<
 
   eval : {e : exp} nat = $ fun e ->
     match* e with
-      | << enat $n$ >> -> n
-      | << eplus $e1$ $e2$ >> -> << plus (eval $e1$) (eval $e2$) >>
-      | << emult $e1$ $e2$ >> -> << mult (eval $e1$) (eval $e2$) >>
+      | << enat $n$ >> -> return n
+      | << eplus $e1$ $e2$ >> -> return << plus (eval $e1$) (eval $e2$) >>
+      | << emult $e1$ $e2$ >> -> return << mult (eval $e1$) (eval $e2$) >>
   $.
 >>
 ;;

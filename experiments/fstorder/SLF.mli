@@ -21,7 +21,7 @@ type lenv = (binder * term) list
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of ((lenv -> term -> term) -> term list -> term)
+  | Defined of (repo -> (repo -> lenv -> term -> repo * term) -> term list -> repo * term)
 
 type sign = (string * term * entry_type) list
 

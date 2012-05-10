@@ -11,11 +11,12 @@ let repo = Version.init <:sign<
 
   norm : nat -> nat = $ fun x ->
     match* x with
-      | << o >> -> << o >>
-      | << s $n$ >> -> << s (norm $n$) >>
-      | << p $n$ >> -> match* << norm $n$ >> with
-          | << o >> -> << o >>
-          | << s $n$ >> -> << $n$ >>
+      | << o >> -> return << o >>
+      | << s $n$ >> -> return << s (norm $n$) >>
+      | << p $n$ >> ->
+          match* << norm $n$ >> with
+          | << o >> -> return << o >>
+          | << s $n$ >> -> return << $n$ >>
   $.
 >>
 ;;
@@ -35,13 +36,13 @@ let repo = Version.init <:sign<
 
   rename : tm -> tm = $ fun n ->
     Debug.log_open "rename" "%a" SLF.Printer.term n;
-    let r = match* n with
-      | << $id:x$ >> -> << $id:x$ >>
-      | << app $m$ $n$ >> -> << app (rename $m$) (rename $n$) >>
-      | << lam $n$ >> -> << lam [x] rename ($n$ x) >>
+    let repo, r = match* n with
+      | << $id:x$ >> -> return << $id:x$ >>
+      | << app $m$ $n$ >> -> return << app (rename $m$) (rename $n$) >>
+      | << lam $n$ >> -> return << lam [x] rename ($n$ x) >>
     in
-    Debug.log_close "rename" "=> %a" SLF.Printer.term r;
-    r
+    Debug.log_close "rename" "=> %a in %a" SLF.Printer.term r SLF.Printer.repo_light repo;
+    repo, r
   $.
 
 >>

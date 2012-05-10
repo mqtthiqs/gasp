@@ -30,37 +30,37 @@ let repo = Version.init
     match* a with
       | << base >> ->
           begin match* b with
-            | << base >> -> << one >>
+            | << base >> -> return << one >>
             | << arr $_$ $_$ >> -> failwith "types not equal"
           end
       | << arr $a1$ $a2$ >> ->
           begin match* b with
             | << arr $b1$ $b2$ >> ->
                 let* << one >> = << equals $a1$ $a2$ >> in
-                << equals $b1$ $b2$ >>
+                return << equals $b1$ $b2$ >>
             | << base >> -> failwith "types not equal"
           end
     $.
 
   infer : {M : tm} inf M = $ fun m ->
     Debug.log_open "infer" "%a" SLF.Printer.term m;
-    let r = match* m with
+    let repo, r = match* m with
       | << lam $a$ $m$ >> ->
           let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:is x $a$ >> =
             << infer ($m$ (infer^0 x (ex x $a$ h))) >> in
-          << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
+          return << ex (lam $a$ $m$) (arr $a$ $b$) (is_lam $m$ $a$ $b$ ([x] [h] $d$)) >>
       | << app $m$ $n$ >> ->
           let* << ex $_$ $c$ $d1$ >> = << infer $m$ >> in
           let* << ex $_$ $a'$ $d2$ >> = << infer $n$ >> in
           begin match* c in <:env< >> with
             | << arr $a$ $b$ >> ->
                 let* << one >> = << equals $a$ $a'$ >> in
-                << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
+                return << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
             | << $id:x$ >> -> failwith "non-functional application"
           end
     in
-    Debug.log_close "infer" "=> %a" SLF.Printer.term r;
-    r
+    Debug.log_close "infer" "=> %a in %a" SLF.Printer.term r SLF.Printer.repo_light repo;
+    repo, r
   $.
 
 >>

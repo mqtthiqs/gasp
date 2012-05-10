@@ -3,11 +3,11 @@ open SLF
 open Struct
 open Struct.Repo
 
-let commit repo m =
+let commit' repo m =
   let repo = Version.commit repo [] m in
   repo
 
-let commit repo m = Topcatch.catch (commit repo) m
+let commit repo m = Topcatch.catch (Topcatch.catch commit' repo) m
 
 let commit_eq repo m p =
   let repo = Version.commit repo [] m in

@@ -6,26 +6,19 @@ let repo = Version.init <:sign<
   #o : nat.
   s : nat -> nat.
 
-  pred : nat -> nat = $ fun x ->
-    match* x with
-      | << o >> -> << o >>
-      | << s $n$ >> -> n
-  $.
-
   f : nat -> nat = $ fun x ->
     match* x with
-      | << pred $n$ >> -> << o >>
-      | << o >> -> << o >>
-      | << s $n$ >> -> << s $n$ >>
+      | << o >> -> return << o >>
+      | << s $n$ >> -> return << s $n$ >>
   $.
 
 >>
 ;;
 
 Tests.commit_eq repo <<
-  pred (s (s o))
+  f (s (s o))
 >> <<
-  s o
+  s (s o)
 >>
 ;;
 
@@ -37,9 +30,9 @@ Tests.commit_eq repo <<
 ;;
 
 Tests.commit_eq repo <<
-  f (pred (s (s o)))
+  f (s (s o))
 >> <<
-  o
+  s (s o)
 >>
 ;;
 

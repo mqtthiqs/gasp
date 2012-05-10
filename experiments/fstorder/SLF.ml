@@ -23,7 +23,7 @@ type lenv = (binder * term) list
 type entry_type =
   | Sliceable
   | Non_sliceable
-  | Defined of ((lenv -> term -> term) -> term list -> term)
+  | Defined of (repo -> (repo -> lenv -> term -> repo * term) -> term list -> repo * term)
 
 type sign = (string * term * entry_type) list
 
@@ -119,15 +119,17 @@ end = struct
       let e = env sign e0 e in
       (x, fam sign (Env.names_of e) t) :: e
 
-  let fn (f : (lenv -> term -> term) -> term list -> term)
-      repo env (eval : env -> LF.obj -> LF.obj) (l : LF.obj list) : LF.obj =
+  let fn (f : repo -> (repo -> lenv -> term -> repo * term) -> term list -> repo * term)
+      repo env (eval : repo -> env -> LF.obj -> repo * LF.obj) (l : LF.obj list) : repo * LF.obj =
     let l = List.map (Unstrat.obj []) l in
-    let eval (lenv:lenv) (t:term) =
+    let eval repo (lenv:lenv) (t:term) : repo * term =
       let lnames = List.map fst lenv in
       let m = Strat.obj repo.Repo.sign lnames t in
       let env = Strat.env repo.Repo.sign env lenv in
-      Unstrat.obj lnames (eval env m) in
-    Strat.obj repo.Repo.sign [] (f eval l)
+      let repo, m  = eval repo env m in
+      repo, Unstrat.obj lnames m in
+    let repo, t = f repo eval l in
+    repo, Strat.obj repo.Repo.sign [] t
 
   let entry_type = function
     | Sliceable -> Sign.Sliceable

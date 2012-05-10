@@ -10,34 +10,34 @@ let repo = Version.init
   lam : (tm -> tm) -> tm.
   app : tm -> tm -> tm.
 
-  subst : (tm -> tm) -> tm -> tm = $ fun m n -> << $m$ $n$ >> $.
+  subst : (tm -> tm) -> tm -> tm = $ fun m n -> return << $m$ $n$ >> $.
 
   subst2 : tm -> tm -> tm = $ fun m n ->
     match* m with
-      | << lam $m$ >> -> << $m$ $n$ >>
+      | << lam $m$ >> -> return << $m$ $n$ >>
   $.
 
   omega : tm -> tm = $ fun m ->
     match* << omega m >> with
-      | << lam $m$ >> -> << lam $m$ >>
-      | << app $m$ $n$ >> -> << app $m$ $n$ >>
-      | << $id:x$ >> -> << $id:x$ >>
+      | << lam $m$ >> -> return << lam $m$ >>
+      | << app $m$ $n$ >> -> return << app $m$ $n$ >>
+      | << $id:x$ >> -> return << $id:x$ >>
   $.
 
-  eta_exp : tm -> tm = $ fun m -> << lam [x] app $m$ x >> $.
+  eta_exp : tm -> tm = $ fun m -> return << lam [x] app $m$ x >> $.
 
   vars : tm -> tm = $ fun m ->
     match* m with
-      | << lam $m$ >> -> << lam [x] vars ($m$ x) >>
-      | << app $m$ $n$ >> -> << app (vars $m$) (vars $n$) >>
-      | << $id:x$ >> -> << $id:x$ >>
+      | << lam $m$ >> -> return << lam [x] vars ($m$ x) >>
+      | << app $m$ $n$ >> -> return << app (vars $m$) (vars $n$) >>
+      | << $id:x$ >> -> return << $id:x$ >>
   $.
 
   inst : tm -> tm = $ fun m ->
     match* m with
-      | << lam $m$ >> -> << inst ($m$ (lam [x] x)) >>
-      | << app $m$ $n$ >> -> << app $m$ $n$ >>
-      | << $id:x$ >> -> << $id:x$ >>
+      | << lam $m$ >> -> return << inst ($m$ (lam [x] x)) >>
+      | << app $m$ $n$ >> -> return << app $m$ $n$ >>
+      | << $id:x$ >> -> return << $id:x$ >>
   $.
 
 >>

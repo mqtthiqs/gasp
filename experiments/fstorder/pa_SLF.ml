@@ -107,10 +107,12 @@ module ExprParser = struct
    | x = ident; ":"; t = term; "="; e = term; "."; s = sign ->
      let names = fun_telescope 0 t in
      <:expr<
-       [($str:x$, $t$, Defined (fun (eval : lenv -> term -> term) -> fun
-         [ $build_patt names$ -> $build_app e (List.rev names)$
-         | l -> failwith ($str:x$^" is applied to "^(string_of_int (List.length l))^" arguments") ]
-       )) :: $s$]
+       [($str:x$, $t$, Defined
+         (fun __repo (__eval : Struct.Repo.t -> lenv -> term -> (Struct.Repo.t * term)) -> fun
+           [ $build_patt names$ -> $build_app e (List.rev names)$
+           | l -> failwith ($str:x$^" is applied to "^(string_of_int (List.length l))^" arguments") ]
+         )) :: $s$
+       ]
      >>
    | x = ident; ":"; t = term; "."; s = sign ->
      <:expr< [($str:x$, $t$, Sliceable) :: $s$] >>
