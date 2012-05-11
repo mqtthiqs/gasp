@@ -19,5 +19,5 @@ module Conv : sig
   val fam : repo -> env -> fam * fam -> unit
 end
 module Check : sig
-  val obj : repo -> env -> obj * fam -> repo * obj
+  val obj : red:bool -> repo -> env -> obj * fam -> repo * obj
 end

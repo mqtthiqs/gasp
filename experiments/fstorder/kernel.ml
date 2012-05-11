@@ -181,12 +181,12 @@ end = struct
 end
 
 and Check : sig
-  val fam : repo -> env -> fam -> repo * fam
+  val fam : red:bool -> repo -> env -> fam -> repo * fam
   val head : repo -> env -> head -> fam * Sign.entry_type
-  val kind : repo -> env -> kind -> repo * kind
-  val app : repo -> env -> head * spine -> repo * obj * fam
-  val spine : repo -> env -> spine * fam -> repo * spine * fam
-  val obj : repo -> env -> obj * fam -> repo * obj
+  val kind : red:bool -> repo -> env -> kind -> repo * kind
+  val app : red:bool -> repo -> env -> head * spine -> repo * obj * fam
+  val spine : red:bool -> repo -> env -> spine * fam -> repo * spine * fam
+  val obj : red:bool -> repo -> env -> obj * fam -> repo * obj
 end = struct
 
   let head repo env : head -> fam * Sign.entry_type = function
@@ -201,7 +201,7 @@ end = struct
         | _ -> failwith ("inverted a non-defined function")
 
   (* obj: check mode, returns the rewritten obj and the enlarged repo *)
-  let rec obj' repo env : obj * fam -> repo * obj = Prod.map prj id @>
+  let rec obj' ~red repo env : obj * fam -> repo * obj = Prod.map prj id @>
     function
 
     (* R, Γ; x:A ⊢ m : B => R', m'
@@ -212,7 +212,7 @@ end = struct
       let x = match x, y with
         | None, Some _ -> y
         | _ -> x in
-      let repo, m = obj repo (Env.add x a env) (m, b) in
+      let repo, m = obj ~red repo (Env.add x a env) (m, b) in
       repo, mkLam (x, m)
     | OLam _, FApp _ -> failwith "not eta"
 
@@ -221,7 +221,7 @@ end = struct
      * R, Γ ⊢ h l : A => R', m'
      *)
     | OApp (h, l), a ->
-      let repo, m, a' = app repo env (h, l) in
+      let repo, m, a' = app ~red repo env (h, l) in
       Conv.fam repo env (a, a');
       repo, m
 
@@ -233,27 +233,27 @@ end = struct
       let e, _, b =
         try Context.find x repo.ctx
         with Not_found -> raise (Unbound_meta (repo, x)) in
-      let repo, s = subst repo env (s, e) in
+      let repo, s = subst ~red repo env (s, e) in
       let b = Subst.fam s b in
       Conv.fam repo env (a, b);
       repo, mkMeta (x, s)
 
-  and obj repo env (m, a) =
+  and obj ~red repo env (m, a) =
     let e = Env.names_of env in
     Debug.log_open "obj" "%a ⊢ %a : %a" P.env env (P.eobj e) m (P.efam e) a;
-    let r = obj' repo env (m, a) in
+    let r = obj' ~red repo env (m, a) in
     Debug.close "obj";
     r
 
-  and subst repo env : subst * ('a * fam) list -> repo * subst = function
+  and subst ~red repo env : subst * ('a * fam) list -> repo * subst = function
 
   (* R, Γ ⊢ m : A[σ] => R', m'  R', Γ ⊢ σ : Δ => R'', σ'
    * —————————————————————————————————————————————————
    * R, Γ ⊢ σ; m : Δ; (x:A) => R'', σ'; m'
    *)
     | m :: s, (_, a) :: e ->
-      let repo, s = subst repo env (s, e) in
-      let repo, m = obj repo env (m, Subst.fam s a) in
+      let repo, s = subst ~red repo env (s, e) in
+      let repo, m = obj ~red repo env (m, Subst.fam s a) in
       repo, m :: s
 
   (* ————————————————————
@@ -262,7 +262,7 @@ end = struct
     | [], [] -> repo, []
     | _ -> failwith "subst"
 
-  and app repo env (h, l) : repo * obj * fam =
+  and app ~red repo env (h, l) : repo * obj * fam =
     let a, e = head repo env h in
     match e with
 
@@ -272,7 +272,7 @@ end = struct
          * R, Γ ⊢ h l => R'', ?X[s], C
          *)
       | Sign.Sliceable ->
-        let repo, l, a = spine repo env (l, a) in
+        let repo, l, a = spine ~red repo env (l, a) in
         let repo, hd = push repo env (h, l) a in
         repo, mkMeta hd, a
 
@@ -281,7 +281,7 @@ end = struct
        * R, Γ ⊢ h l => R', h l', C
        *)
       | Sign.Non_sliceable ->
-        let repo, l, a = spine repo env (l, a) in
+        let repo, l, a = spine ~red repo env (l, a) in
         repo, mkApp (h, l), a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => _, _, C
@@ -292,14 +292,14 @@ end = struct
        *)
       | Sign.Defined f ->
         (* check and reduce arguments of this constant *)
-        let repo, l, a = spine repo env (l, a) in
-        (* evaluate it with the reduced arguments *)
-        let repo, m = Eval.interp repo env h f l in
+        let repo, l, a = spine ~red repo env (l, a) in
+        (* if red, evaluate it with the reduced arguments *)
+        let repo, m = if red then Eval.interp repo env h f l else repo, mkApp(h, l) in
         (* check that the result is well-typed, and take the result into account *)
-        let repo, m = obj repo env (m, a) in
+        let repo, m = obj ~red repo env (m, a) in
         repo, m, a
 
-  and spine' repo env : spine * fam -> repo * spine * fam = function
+  and spine' ~red repo env : spine * fam -> repo * spine * fam = function
 
     (* ———————————————————————
      * R, Γ, P ⊢ · => R, ·, P
@@ -312,41 +312,41 @@ end = struct
      * R, Γ, Πx:A. B ⊢ m; l => R, m'; l', C
      *)
     | m :: l, FProd (_, a, b) ->
-      let repo, m = obj repo env (m, a) in
-      let repo, l, a = spine repo env (l, Subst.fam [m] b) in
+      let repo, m = obj ~red repo env (m, a) in
+      let repo, l, a = spine ~red repo env (l, Subst.fam [m] b) in
       repo, m :: l, a
     | [], _ -> failwith "not eta-expanded"
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
-  and spine repo env (l, a) =
+  and spine ~red repo env (l, a) =
     (* Debug.log_open "spine" "%a, %a ⊢ %a" P.env env P.fam a P.spine l; *)
-    let repo, l, a = spine' repo env (l, a) in
+    let repo, l, a = spine' ~red repo env (l, a) in
     (* Debug.log_close "spine" "=> %a : %a" P.spine l P.fam a; *)
     repo, l, a
 
-  and fspine repo env : spine * kind -> repo * spine = function
+  and fspine ~red repo env : spine * kind -> repo * spine = function
     | [], KType -> repo, []
     | _ :: _ as l, KType -> raise (Non_functional_fapp (repo, env, l))
     | [], _ -> failwith "not eta-expanded"
     | m :: l, KProd (_, a, k) ->
-      let repo, m = obj repo env (m, a) in
-      let repo, l = fspine repo env (l, Subst.kind [m] k) in
+      let repo, m = obj ~red repo env (m, a) in
+      let repo, l = fspine ~red repo env (l, Subst.kind [m] k) in
       repo, m :: l
 
-  let rec fam repo env : fam -> repo * fam = function
+  let rec fam ~red repo env : fam -> repo * fam = function
     | FApp (c, l) ->
-      let repo, l = fspine repo env (l, Sign.ffind c repo.sign) in
+      let repo, l = fspine ~red repo env (l, Sign.ffind c repo.sign) in
       repo, FApp (c, l)
     | FProd (x, a, b) ->
-      let repo, a = fam repo env a in
-      let repo, b = fam repo (Env.add x a env) b in
+      let repo, a = fam ~red repo env a in
+      let repo, b = fam ~red repo (Env.add x a env) b in
       repo, FProd (x, a, b)
 
-  let rec kind repo env : kind -> repo * kind = function
+  let rec kind ~red repo env : kind -> repo * kind = function
     | KType -> repo, KType
     | KProd (x, a, k) ->
-      let repo, a = fam repo env a in
-      let repo, k = kind repo (Env.add x a env) k in
+      let repo, a = fam ~red repo env a in
+      let repo, k = kind ~red repo (Env.add x a env) k in
       repo, KProd (x, a, k)
 
 end
@@ -367,7 +367,7 @@ end = struct
     | OApp (h, l) ->
         begin match Check.head repo env h with
           | a, Sign.Defined f ->
-              let repo, l, a = Check.spine repo env (l, a) in
+              let repo, l, a = Check.spine ~red:false repo env (l, a) in
               let repo, m = interp repo env h f l in
               eval repo env m
           | _ -> repo, mkApp(h, l)
@@ -401,19 +401,19 @@ let rec init repo = function
   | (c, t, e) :: s' ->
     match SLF.Strat.term repo.sign [] t, e with
       | SLF.Strat.Fam a, e ->
-        let repo, a = Check.fam repo [] a in
+        let repo, a = Check.fam false repo [] a in
         let e = SLF.Strat.entry_type e in
         let repo = {repo with sign = Sign.oadd (OConst.make c) (a, e) repo.sign} in
         init repo s'
       | SLF.Strat.Kind k, SLF.Sliceable ->
-        let repo, k = Check.kind repo [] k in
+        let repo, k = Check.kind false repo [] k in
         let repo = {repo with sign = Sign.fadd (FConst.make c) k repo.sign} in
         init repo s'
       | SLF.Strat.Obj _, _ -> failwith "object in sign"
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
 
 let push repo env (h, l) =
-  let repo, m, a = Check.app repo env (h, l) in
+  let repo, m, a = Check.app ~red:true repo env (h, l) in
   match prj m with
     | OApp (h, l) ->
       let repo, (x, s) = push repo env (h, l) a in
