@@ -52,7 +52,7 @@
 \newcommand\app[1]{{#1}\ }
 \newcommand\tlam[2]{\lambda\tp{\var{#1}}{#2}\postbinder}
 \newcommand\lam[1]{\lambda{\var {#1}}\postbinder}
-\newcommand\letb[2]{\mathsf{let}\ {\var{#1}}={#2}\ \mathsf{in}\ }
+\newcommand\letb[2]{\ensuremath\mathsf{let}\ {\var{#1}}={#2}\ \mathsf{in}\ }
 \newcommand\smeta[2]{\gsubst{\meta{#1}}{#2}}
 
 \newcommand\spinenil{\gnil}
@@ -93,6 +93,7 @@
 \newcommand\mr{\repo R}
 \newcommand\mmr{\repo {R'}}
 \newcommand\mmmr{\repo {R''}}
+\newcommand\md{\mathcal D}
 
 % Functions & operations
 \newcommand\checkout[1]{\downarrow{#1}}
@@ -143,3 +144,9 @@
 \newcommand\annsliceable{\mathsf{S}}
 \newcommand\annnonsliceable{\mathsf{NS}}
 \newcommand\anndefined[1]{\mathsf{D}({#1})}
+
+
+% System T
+\newcommand\recb[3]{\cst{rec}({#1},{#2},{#3})}
+\newcommand\s[1]{\cst s ({#1})}
+\newcommand\z{\cst o}

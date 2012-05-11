@@ -75,6 +75,62 @@ Certifying
 \section{Background}
 %% It’s an unsolved problem (1 page)
 
+A student is learning about System \sysname T, and wants to write a
+program to compute $4!$. He (or she) knows that System \sysname T is a
+typed language, and wants to take advantage of this to build his
+program incrementally using the teacher's provided incremental
+verifier. As a first attempt, he writes the following program $P_1$:
+$$
+\recb{\s\z}{\s\z}{\lam x\lam y \s {\var x}}
+$$
+The system type-checks it correctly by constructing a typing
+derivation $\md_1$ of \/ $\vdash P_1 : \cst{nat}$, valid in an
+empty context, and names all subderivations constructed for future
+reuse. The student then decides to factorize a definition for
+$\var{add}$ out of his code. He writes:
+\begin{align*}
+  &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
+    {\var y} {\lam x \lam y \s{\var x}}}
+  \\
+  &\quad\app{\var{add}}\app{(\s\z)}{(\s\z)} \ \text{.}
+\end{align*}
+But he (or his text editor) realizes that some parts of this program
+have not changed: both $\s\z$, and the function $\lam x\lam y\s{\var
+  x}$. The system must then have a name for the already-built
+associated derivations $\md_2$, $\md_3$ and $\md_4$. Provided there is
+an operator $|\md|$ from the derivation to the program it types, what
+is really to be checked is:
+\begin{align*}
+  &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
+    {\var y} {|\md_4|}}
+  \app{\var{add}}\app{|\md_2|}{|\md_2|} \ \text{,}
+\end{align*}
+that is, only the subterms of the program that changed. Derivations
+$\md_2$ and $\md_4$ used to live in the empty context, we are then
+free to use it in the new context where
+$\var{add}:\cst{nat}\to\cst{nat}$, because System \sysname T enjoys
+the \emph{weakening} property. So the system answers with a new
+derivation made out of pieces of the old one, without having to
+recheck the already built ones. It also gives the name $\md_5$ to the
+derivation for $\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
+{\var y} {|\md_4|}$, $\md_6$ to the arguments $\app{|\md_2|}{|\md_2|}$
+and $\md_7$ to the call $\app{\var{add}} {|\md_6|}$. Even if it
+occured in the scope of $\var{add}$, $\md_6$ doesn't depend on the
+fact that $\vdash \var{add}:\cst{nat}\to\cst{nat}$, but
+$\md_7$ does: %TODO
+. The
+student then types:
+\begin{align*}
+  &\letb{add}{ |\md_5| }
+  \\
+  &\letb{mul}{ \tlam x {\cst{nat}} \tlam y
+    {\cst{nat}} \recb \z {\var y} {\lam z \lam t
+      \app{\var{add}}\app{\var x} {\var z}} }
+  \\
+  &\app{\var{mul}}\app{|\md_2|}{|\md_2|}
+\end{align*}
+to see if his definition of multiplication is well-typed.
+
 \section{Here is my idea}
 %% Here is my idea (2 pages)
 

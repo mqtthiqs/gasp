@@ -111,7 +111,6 @@ let repo = Version.init
     repo, r
   $.
 
-
   red_lam : {M : tm -> tm} {N : tm} {A : tp} {B : tp}
              is (lam A [x] M x) (arr A B) -> is N A ->
              is (M N) B = $ fun _ n _ _ hm hn ->
@@ -129,49 +128,17 @@ let repo = Version.init
 >>
 ;;
 
-Tests.commit repo
+let repo = Tests.commit repo
 <<
-  infer (letb o [x] x)
+  infer (recb (s o) (s o) [x] [y] s x)
 >>
 ;;
 
-Tests.commit repo
-<<
-  infer (lam nat [z] z)
->>
-;;
-
-Tests.commit repo
-<<
-  infer (lam (arr nat nat) [x] lam nat [y] app x y)
->>
-;;
-
-Tests.commit repo
-<<
-  infer (lam bool [b] ifb b (s o) o)
->>
-;;
-
-Tests.commit repo
+let repo = Tests.commit repo
 <<
   infer (
-    letb (lam bool [b] ifb b (s o) o) [f]
-    letb (app f tt) [x]
-    letb (app f ff) [y]
-    x
-  )
->>
-;;
-
-Tests.commit repo
-<< infer (recb o o [x] [_] s x) >>
-;;
-
-Tests.commit repo
-<<
-  infer (
-    lam nat [x] lam nat [y] recb x y [z] [_] s z
+    letb (lam nat [x] lam nat [y] recb x y [z] [_] (infer^0 ?X26[z;infer z])) [add]
+    app (app add (infer^0 ?X23) (infer^0 ?X23))
   )
 >>
 ;;
