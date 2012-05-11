@@ -75,19 +75,25 @@ Certifying
 \section{Background}
 %% It’s an unsolved problem (1 page)
 
+\paragraph{Motivational example}
+
 A student is learning about System \sysname T, and wants to write a
-program to compute $4!$. He (or she) knows that System \sysname T is a
-typed language, and wants to take advantage of this to build his
-program incrementally using the teacher's provided incremental
-verifier. As a first attempt, he writes the following program $P_1$:
+program computing $(2+2)\times 3$. He (or she) knows that sometimes those
+$\cst{rec}$ arguments are quite hard to get correct, but System
+\sysname T is a typed language; he wants to take advantage of this to
+build his program incrementally using the teacher's provided
+incremental verifier. As a first attempt, he wants to verify $P_1$:
 $$
-\recb{\s\z}{\s\z}{\lam x\lam y \s {\var x}}
+\recb{\s\z}{\s\z}{\lam x\lam y \s {\var x}}\ \text{.}
 $$
-The system type-checks it correctly by constructing a typing
-derivation $\md_1$ of \/ $\vdash P_1 : \cst{nat}$, valid in an
-empty context, and names all subderivations constructed for future
-reuse. The student then decides to factorize a definition for
-$\var{add}$ out of his code. He writes:
+For this, he sends the command $\infer{P_1}$ to the system. The
+$\infer{}$ operator takes a well-formed program and tries to construct
+a valid typing derivation for its argument in the current, empty
+context. The system succeeds and returns a typing derivation $\md_1$
+of \/ $\vdash P_1 : \cst{nat}$, valid in an empty context.
+
+The student then decides to factorize a definition for $\var{add}$ out
+of his code:
 \begin{align*}
   &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
     {\var y} {\lam x \lam y \s{\var x}}}
@@ -96,40 +102,94 @@ $\var{add}$ out of his code. He writes:
 \end{align*}
 But he (or his text editor) realizes that some parts of this program
 have not changed: both $\s\z$, and the function $\lam x\lam y\s{\var
-  x}$. The system must then have a name for the already-built
-associated derivations $\md_2$, $\md_3$ and $\md_4$. Provided there is
-an operator $|\md|$ from the derivation to the program it types, what
-is really to be checked is:
+  x}$, and he could reuse the pieces of derivation just built. Let us
+call them $\md_2$, $\md_3$ and $\md_4$. Provided there is an operator
+$\get\md$ from the derivation to the program it types, what needs really
+to be sent to the system is:
 \begin{align*}
-  &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
-    {\var y} {|\md_4|}}
-  \app{\var{add}}\app{|\md_2|}{|\md_2|} \ \text{,}
+  &\infer{(
+    \letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
+      {\var y} {\get{\md_4}}}
+    \app{\var{add}}\app{\get{\md_2}}{\get{\md_2}}
+  )}
+\ \text{,}
 \end{align*}
 that is, only the subterms of the program that changed. Derivations
 $\md_2$ and $\md_4$ used to live in the empty context, we are then
 free to use it in the new context where
 $\var{add}:\cst{nat}\to\cst{nat}$, because System \sysname T enjoys
-the \emph{weakening} property. So the system answers with a new
-derivation made out of pieces of the old one, without having to
-recheck the already built ones. It also gives the name $\md_5$ to the
-derivation for $\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
-{\var y} {|\md_4|}$, $\md_6$ to the arguments $\app{|\md_2|}{|\md_2|}$
-and $\md_7$ to the call $\app{\var{add}} {|\md_6|}$. Even if it
-occured in the scope of $\var{add}$, $\md_6$ doesn't depend on the
-fact that $\vdash \var{add}:\cst{nat}\to\cst{nat}$, but
-$\md_7$ does: %TODO
-. The
-student then types:
+the \emph{weakening} property. Taking advantage of $\md_2$ and $\md_4$
+the system succeeds with a new derivation made out of these, without
+having to regenerate them because it knows that $\infer{\get\md} =
+\md$. Let us call $\md_5$ the subderivation generated for $\tlam x
+{\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y}
+{\get{\md_4}}$, $\md_6$ for the arguments
+$\app{\get{\md_2}}{\get{\md_2}}$ and $\md_7$ for the call
+$\app{\var{add}} {\get{\md_6}}$. Even if it occurs originally in the
+scope of $\var{add}$, $\md_6$ doesn't depend on the hypothesis $\var
+H$ that $\vdash \var{add}:\cst{nat}\to\cst{nat}$ because of the
+\emph{strengthening} property. Contrarily, $\md_7$ does: each time we
+want to reuse it, we will have to provide a proof of this fact.
+
+The student then provides a definition for multiplication, and writes
+the operation $(2 + 2)\times3$:
 \begin{align*}
-  &\letb{add}{ |\md_5| }
+  \infer{}(
+  &\letb{add}{\get{\md_5}}
   \\
-  &\letb{mul}{ \tlam x {\cst{nat}} \tlam y
+  &\quad\letb{mul} { \tlam x {\cst{nat}} \tlam y
     {\cst{nat}} \recb \z {\var y} {\lam z \lam t
       \app{\var{add}}\app{\var x} {\var z}} }
   \\
-  &\app{\var{mul}}\app{|\md_2|}{|\md_2|}
+  &\quad\quad\app{\var{mul}}\app
+  {(\get{\gsubst{\md_7}{\msubst H {\infer{\var{add}}}}})}
+  {(\s{\get{\md_2}})}
+  )
+  \ \text{.}
 \end{align*}
-to see if his definition of multiplication is well-typed.
+Here again, he took care of reusing all derivations for equal
+subterms. In particular, $\md_7$ expects a proof that the variable
+$\var{add}$ is of type $\cst{nat}\to\cst{nat}$; he provides
+$\infer{\var{add}}$ meaning: at this point we will have generated (or
+reused in this case) the derivation of $\var{add}$, so just use it.
+
+Finally, he decides (in an odd move) to inline the definition of
+$\var{mul}$ into its call site. Call $\md_8$ the derivation of the
+definition of $\var{mul}$ (it depends on an $\var H$ of
+$\vdash\var{add}:\cst{nat}\to\cst{nat}$) and $\md_9$ the derivation of
+$(2+2)\times 3$ depending on derivations $\var{H}$ and $\var{H'}$ for $+$ and
+$\times$. He orders:
+\begin{align*}
+\infer{}(
+\letb{add}{\get{\md_5}}
+\get{({\gsubst{\md_9} {\msubst {H} {(\get{\var{add}})}; \msubst {H'}
+      {\gsubst{\md_8}{\msubst H {(\get{\var{add}})}}}}})}
+)
+  \ \text{.}
+\end{align*}
+The definition for $\var{add}$ is unchanged, but the instantiation of
+open derivations enables to directly substitute one in the other and
+get the appropriate program: call $\md_{10}$ the whole derivation just
+returned, $\get{\md_{10}}$ returns:
+\begin{align*}
+  &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
+    {\var y} {\lam x \lam y \s{\var x}}}
+  \\&\quad
+  {\tlam x {\cst{nat}} \tlam y
+    {\cst{nat}} \recb \z {\var y} {\lam z \lam t
+      \app{\var{add}}\app{\var x} {\var z}}}
+  \\&\quad\quad
+  \app{(\app {\var{add}} \app {(\s{\s\z})}
+    {(\s{\s\z})})}{(\s{\s{\s\z}})}
+  \ \text{.}
+\end{align*}
+
+\paragraph{Discussion}
+
+% scale to big programs
+% memoization ds le cas HO
+%   nécessité de fcts inverses?
+% séparer generation des diffs et vérification
 
 \section{Here is my idea}
 %% Here is my idea (2 pages)
