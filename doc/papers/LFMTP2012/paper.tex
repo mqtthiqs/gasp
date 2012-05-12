@@ -57,18 +57,6 @@ incrementality, type checking, logical framework, version control
 \section*{Introduction}
 %% It’s an interesting problem (1 page)
 
-When writing critical software, high assurance against bugs is an
-absolute necessity. To certify the absence of bugs in a large body of
-code given its specification, human reviewing is one option, but
-certainly a failible one. Formal, mathematical proof that our program
-respects a certain \emph{dependability claim} gives us the assurance
-that ``its trustworthyness [\ldots] would presumably last for eternity
-\cite{shao2010certified}''.
-
-Certifying
-
-\cite{miller2011proposal}
-
 %% Describe the problem (Use an example)
 %% State your contributions (Bulleted list of contributions)
 
@@ -103,9 +91,9 @@ of his code:
 But he (or his text editor) realizes that some parts of this program
 have not changed: both $\s\z$, and the function $\lam x\lam y\s{\var
   x}$, and he could reuse the pieces of derivation just built. Let us
-call them $\md_2$, $\md_3$ and $\md_4$. Provided there is an operator
-$\get\md$ from the derivation to the program it types, what needs really
-to be sent to the system is:
+call these $\md_2$, $\md_3$ and $\md_4$. Provided there is an operator
+$\get\md$ from the derivation to the program it types, what needs
+really to be sent to the system is:
 \begin{align*}
   &\infer{(
     \letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
@@ -118,16 +106,16 @@ that is, only the subterms of the program that changed. Derivations
 $\md_2$ and $\md_4$ used to live in the empty context, we are then
 free to use it in the new context where
 $\var{add}:\cst{nat}\to\cst{nat}$, because System \sysname T enjoys
-the \emph{weakening} property. Taking advantage of $\md_2$ and $\md_4$
-the system succeeds with a new derivation made out of these, without
-having to regenerate them because it knows that $\infer{\get\md} =
-\md$. Let us call $\md_5$ the subderivation generated for $\tlam x
-{\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y}
-{\get{\md_4}}$, $\md_6$ for the arguments
-$\app{\get{\md_2}}{\get{\md_2}}$ and $\md_7$ for the call
-$\app{\var{add}} {\get{\md_6}}$. Even if it occurs originally in the
-scope of $\var{add}$, $\md_6$ doesn't depend on the hypothesis $\var
-H$ that $\vdash \var{add}:\cst{nat}\to\cst{nat}$ because of the
+the \emph{weakening} property. Taking advantage of the fact that the
+judgement $\md_2$ and $\md_4$ proves is statically known, the system
+succeeds with a new derivation made out of these, without having to
+regenerate them because it knows that $\infer{\get\md} = \md$. Let us
+call $\md_5$ the subderivation generated for $\tlam x {\cst{nat}}
+\tlam y {\cst{nat}} \recb {\var x} {\var y} {\get{\md_4}}$, $\md_6$
+for the arguments $\app{\get{\md_2}}{\get{\md_2}}$ and $\md_7$ for the
+call $\app{\var{add}} {\get{\md_6}}$. Even if it occurs originally in
+the scope of $\var{add}$, $\md_6$ doesn't depend on the hypothesis
+$\var H$ that $\vdash \var{add}:\cst{nat}\to\cst{nat}$ because of the
 \emph{strengthening} property. Contrarily, $\md_7$ does: each time we
 want to reuse it, we will have to provide a proof of this fact.
 
@@ -147,11 +135,11 @@ the operation $(2 + 2)\times3$:
   )
   \ \text{.}
 \end{align*}
-Here again, he took care of reusing all derivations for equal
-subterms. In particular, $\md_7$ expects a proof that the variable
-$\var{add}$ is of type $\cst{nat}\to\cst{nat}$; he provides
-$\infer{\var{add}}$ meaning: at this point we will have generated (or
-reused in this case) the derivation of $\var{add}$, so just use it.
+Here again, he took care of reusing all possible subderivations. In
+particular, $\md_7$ expects a proof that the variable $\var{add}$ is
+of type $\cst{nat}\to\cst{nat}$; he provides $\infer{\var{add}}$
+meaning: at this point we will have generated (or reused in this case)
+the derivation of $\var{add}$, so just use it.
 
 Finally, he decides (in an odd move) to inline the definition of
 $\var{mul}$ into its call site. Call $\md_8$ the derivation of the
@@ -186,13 +174,40 @@ returned, $\get{\md_{10}}$ returns:
 
 \paragraph{Discussion}
 
-% scale to big programs
-% memoization ds le cas HO
-%   nécessité de fcts inverses?
-% séparer generation des diffs et vérification
+Although this small example may seem anecdotal, the interest of a
+mechanism for reusing results of derivation generation becomes clear
+on very large programs: then the cost of rechecking well-typing of a
+small modification amounts to recheking the path in the term from the
+root to the changed part, and the changed part itself.
+
+A type-checker is usually viewed as an algorithm returning a binary
+answer (ok/error), specified by a set of inference rules. Seeing
+type-checking as issueing a completely explicit typing derivation
+enables to think of the relationship between the input and the
+output. Feeding part of the output $\md_i$ back to the input $P_i$ is
+a well-known technique for handling changes in the input: combined
+with a way to automatically recognize already-computed input, it is
+\emph{memoization}, a general-purpose technique for incremental
+computation that has been extensively studied and combined with other
+techniques \cite{pugh1989incremental, acar2003selective}. However, it
+is best understood in the case of purely first-order data, and to our
+best knowledge remains unexplored for higher-order structures
+containing binders, like programs and proofs. In this case,
+
+To simplify the problem,
+we separate the task in:
+\begin{itemize}
+\item from a modified program, generate the \emph{diff} against the
+  previous version, that is, observing and linking to unchanged
+  derivations.
+\item given a \emph{diff}, construct a new derivation and verify it.
+\end{itemize}
+The latter is the subject of this paper.
 
 \section{Here is my idea}
 %% Here is my idea (2 pages)
+
+% lambda-lifting
 
 \subsection{The \LF\ representation language}
 
