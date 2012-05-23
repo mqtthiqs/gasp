@@ -10,5 +10,6 @@ test_inject.log
 test_uneval.log
 test_inv.log
 test_check_stlc.log
+test_check_sub.log
 test_check_T.log
 test_check_intrinsic.log
