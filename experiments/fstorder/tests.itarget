@@ -7,8 +7,8 @@ test_stren.log
 test_recmatch.log
 test_defined.log
 test_inject.log
-test_inv.log
-test_check.log
-test_check2.log
 test_uneval.log
-test_check3.log
+test_inv.log
+test_check_stlc.log
+test_check_T.log
+test_check_intrinsic.log
