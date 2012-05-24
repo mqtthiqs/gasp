@@ -105,8 +105,8 @@ module Debug = struct
   let tags = ref ["all"]
 
   let active tag =
-    List.mem tag !tags
-    || List.mem "all" !tags
+    List.mem "all" !tags
+    || List.mem tag !tags
 
   let formatter = formatter_of_out_channel stdout
   let formatter = std_formatter

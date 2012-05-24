@@ -27,6 +27,13 @@ type entry_type =
 
 type sign = (string * term * entry_type) list
 
+exception Ident_not_found of ident
+exception Unnamed_variable of int
+exception Ill_formed_product of term
+exception Not_an_obj of term
+exception Not_a_fam of term
+exception Not_a_kind of term
+
 module rec Strat : sig
 
   type entity =
@@ -40,6 +47,7 @@ module rec Strat : sig
   val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
   val env : Struct.sign -> Struct.env -> (binder * term) list -> env
+
 end = struct
 
   open Util
@@ -63,9 +71,10 @@ end = struct
               ignore (Sign.ofind x sign);
               Obj (LF.mkApp (LF.HConst x, l))
             with Not_found ->
-              let x = FConst.make x in
-              try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
-              with Not_found -> failwith ("strat: not found "^FConst.repr x)
+              try
+                let x = FConst.make x in
+                ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
+              with Not_found -> raise (Ident_not_found (Id x))
         end
     | Inv (x, n) ->
         begin
@@ -73,9 +82,9 @@ end = struct
             let x = OConst.make x in
             ignore (Sign.ofind x sign);
             Obj (LF.mkApp (LF.HInv (x, n), l))
-          with Not_found -> failwith ("strat: not found "^x^"^")
+          with Not_found -> raise (Ident_not_found (Id x))
         end
-    | Unnamed i -> failwith ("strat: unnamed variable "^(string_of_int i))
+    | Unnamed i -> raise (Unnamed_variable i)
     | Unbound i -> Obj (LF.mkApp (LF.HVar (i + List.length names), l))
 
   let rec app sign env l = function
@@ -90,9 +99,7 @@ end = struct
       begin match term sign env a, term sign (x::env) b with
         | Fam a, Kind k -> Kind (LF.KProd (x, a, k))
         | Fam a, Fam b -> Fam (LF.FProd (x, a, b))
-        | Kind _, _ -> failwith "strat: prod argument is a kind"
-        | Fam _, Obj _ -> failwith "strat: prod body is an obj"
-        | Obj _, _ -> failwith "strat: prod argument is an obj"
+        | _ -> raise (Ill_formed_product (Prod(x, a, b)))
       end
     | App (t, u) -> app sign env [obj sign env u] t
     | Ident x -> lookup sign env [] x
@@ -102,15 +109,15 @@ end = struct
 
   and obj sign env t = match term sign env t with
     | Obj m -> m
-    | _ -> failwith "strat: not an obj"
+    | _ -> raise (Not_an_obj t)
 
   let fam sign env t = match term sign env t with
     | Fam a -> a
-    | _ -> failwith "strat: not a fam"
+    | _ -> raise (Not_a_fam t)
 
   let kind sign env t = match term sign env t with
     | Kind k -> k
-    | _ -> failwith "strat: not a kind"
+    | _ -> raise (Not_a_kind t)
 
   (* TODO: le names_of? *)
   let rec env sign e0 = function

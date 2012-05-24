@@ -25,6 +25,13 @@ type entry_type =
 
 type sign = (string * term * entry_type) list
 
+exception Ident_not_found of ident
+exception Unnamed_variable of int
+exception Ill_formed_product of term
+exception Not_an_obj of term
+exception Not_a_fam of term
+exception Not_a_kind of term
+
 module Printer : sig
   open Format
   val term : formatter -> term -> unit
@@ -59,6 +66,7 @@ module Strat : sig
   val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
   val env : Struct.sign -> Struct.env -> lenv -> env
+
 end
 
 module Unstrat : sig
