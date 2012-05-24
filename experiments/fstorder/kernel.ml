@@ -72,7 +72,7 @@ let push repo env (h, l) a =
   let e = Env.names_of env in
   Debug.log_open "push" "%a ⊢ %a : %a" P.env env (P.eobj e) (mkApp(h,l)) (P.efam e) a;
   let r, (x, s) = push repo env (h, l) a in
-  Debug.log_close "push" "=> %a, %a[%a]" P.repo_light r Meta.print x P.subst s;
+  Debug.log_close "push" "=> %a, %a%a" P.repo_light r Meta.print x P.subst s;
   r, (x, s)
 
 module rec Conv : sig
@@ -163,7 +163,7 @@ end = struct
     Debug.close "conv obj";
     r
 
-  and fam repo env = function
+  and fam' repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
       fam repo env (a1, a2); fam repo (Env.add x a1 env) (b1, b2)
     | FApp (c1, l1), FApp (c2, l2) when FConst.compare c1 c2 = 0 ->
@@ -171,12 +171,12 @@ end = struct
       fspine repo env (l1, l2, k)
     | a1, a2 -> raise (Not_conv_fam (repo, env, a1, a2))
 
-  (* and fam repo env (a1, a2) = *)
-  (*   let e = Env.names_of env in *)
-  (*   Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2; *)
-  (*   let r = fam' repo env (a1, a2) in *)
-  (*   Debug.close "conv fam"; *)
-  (*   r *)
+  and fam repo env (a1, a2) =
+    let e = Env.names_of env in
+    Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2;
+    let r = fam' repo env (a1, a2) in
+    Debug.close "conv fam";
+    r
 
 end
 
@@ -377,7 +377,7 @@ end = struct
   and eval repo env m =
     Debug.log_open "eval" "%a" P.obj m;
     let repo, m = eval' repo env m in
-    Debug.log_close "eval" "=> %a in %a" P.obj m P.repo_light repo;
+    Debug.log_close "eval" "=> %a" P.obj m;
     repo, m
 
   and interp' repo env h (f : repo -> env -> (repo -> env -> obj -> repo * obj) -> spine -> repo * obj) l =
@@ -391,7 +391,7 @@ end = struct
   and interp repo env h f l =
     Debug.log_open "interp" "%a" P.obj (mkApp (h, l));
     let repo, m = interp' repo env h f l in
-    Debug.log_close "interp" "=> %a = %a in %a" P.obj (mkApp (h, l)) P.obj m P.repo_light repo;
+    Debug.log_close "interp" "=> %a = %a" P.obj (mkApp (h, l)) P.obj m;
     repo, m
 
 end
@@ -411,6 +411,12 @@ let rec init repo = function
         init repo s'
       | SLF.Strat.Obj _, _ -> failwith "object in sign"
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
+
+let init repo s =
+  Debug.log_open "sign" "";
+  let r = init repo s in
+  Debug.log_close "sign" "";
+  r
 
 let push repo env (h, l) =
   let repo, m, a = Check.app ~red:true repo env (h, l) in
