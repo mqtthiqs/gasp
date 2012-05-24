@@ -39,7 +39,7 @@ let repo = Version.init
     is M B.
 
   inf : tm -> type.
-  ex : {M : tm} {A : tp} {H : {B : tp} sub A B -> is M B} inf M.
+  ex : {M : tm} {A : tp} is M A -> inf M.
 
   equals : tp -> tp -> unit = $ fun a b ->
     match* a with
@@ -93,24 +93,21 @@ let repo = Version.init
 
     let repo, r = match* m with
       | << lam $a$ $m$ >> ->
-          let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:{B: tp} sub $a$ B -> is x B >> =
-            << infer ($m$ (infer^0 x (ex x $a$ ([c] [s] h c s)))) >> in
-           return << ex (lam $a$ $m$) (arr $a$ $b$)
-             ([c] [s] is_sub (lam $a$ [x] $m$ x) (arr $a$ $b$) c s
-                 (is_lam $m$ $a$ $b$ ([x] [h] $d$ $b$ (sub_refl $b$))))
-           >>
+          let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:is x $a$ >> =
+            << infer ($m$ (infer^0 x (ex x $a$ h))) >> in
+          return << ex (lam $a$ $m$) (arr $a$ $b$)
+            (is_lam $m$ $a$ $b$ ([x] [h] $d$))
+          >>
       | << app $m$ $n$ >> ->
           let* << ex $_$ $c$ $d1$ >> = << infer $m$ >> in
           let* << ex $_$ $a'$ $d2$ >> = << infer $n$ >> in
           begin match* c in <:env< >> with
             | << arr $a$ $b$ >> ->
-	      (* begin try *)
-              (*   let* << one >> = << equals $a$ $a'$ >> in *)
-              (*   return << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >> *)
-	      (* with Failure "types not equal" -> *)
                 return <<
-                  ex (app $m$ $n$) $b$ [c] [s]
-                    is_sub c s (is_app $m$ $n$ $a$ $b$ ($d1$ $c$ (sub_refl $c$)) ($d2$ $a$ (subtype $a$ $a'$)))
+                  ex (app $m$ $n$) $b$
+                    (is_app $m$ $n$ $a$ $b$ $d1$
+                       (is_sub $n$ $a'$ $a$ (subtype $a'$ $a$) $d2$)
+                    )
                 >>
             | << $id:x$ >> -> failwith "non-functional application"
           end
@@ -135,13 +132,4 @@ Tests.commit repo
 	     app f z)
 >>
 ;;
-
-(* try Tests.fail2 Tests.commit' repo *)
-(* << *)
-(*   infer (lam nat [z]  *)
-(* 	   lam (arr odd nat) [f] *)
-(* 	     app f z) *)
-(* >> *)
-(* with Failure "TODO" -> () *)
-(* ;; *)
 
