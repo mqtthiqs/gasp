@@ -23,12 +23,18 @@ let _ =
       P.env env P.obj m1 P.obj m2 (Print.opt_under P.fam) a P.repo_light repo
     | Not_conv_fam (repo, env, m1, m2) -> Format.fprintf fmt "Not convertible:@ @[%a ⊢ %a ≡ %a@] in %a"
       P.env env P.fam m1 P.fam m2 P.repo_light repo
-    | Non_functional_fapp (repo, env, l) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : *@]"
-      P.env env P.spine l
-    | Non_functional_app (repo, env, l, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@]"
-      P.env env P.spine l P.fam a
-    | Non_functional_obj (repo, env, m, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@] in %a"
-      P.env env P.obj m P.fam a P.repo_light repo
+    | Non_functional_fapp (repo, env, l) ->
+        let e = Env.names_of env in
+        Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : *@]"
+      P.env env (P.espine e) l
+    | Non_functional_app (repo, env, l, a) ->
+        let e = Env.names_of env in
+        Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@]"
+          P.env env (P.espine e) l P.fam a
+    | Non_functional_obj (repo, env, m, a) ->
+        let e = Env.names_of env in
+        Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@] in %a"
+          P.env env (P.eobj e) m (P.efam e) a P.repo_light repo
     | Unbound_meta (repo, x) -> Format.fprintf fmt "Unbound meta:@ %a in %a" Meta.print x P.repo_light repo
     | Not_evaluable (repo, t) -> Format.fprintf fmt "Not evaluable:@ %a in %a" P.term t P.repo_light repo
     | Not_eta_expanded (repo, env, s, a) -> Format.fprintf fmt "Not eta-expanded:@ %a, %a ⊢ %a" P.env env (Print.union P.fam P.kind) a P.subst s
@@ -96,20 +102,20 @@ end = struct
       fst (Sign.ofind c1 repo.sign)
     | h1, h2 -> raise (Not_conv_obj (repo, env, mkApp (h1, []), mkApp (h2, []), None))
 
-  let rec spine repo env = function
+  let rec spine repo env h = function
     | [], [], (FApp _ as a) -> a
     | m1 :: l1, m2 :: l2, FProd (x, a, b) ->
-      obj repo env (m1, m2, a);
-      spine repo env (l1, l2, Subst.fam [m1] b)
-    | l1, l2, a ->
-      let h = HConst (OConst.make "@") in
-      raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2), Some a))
+        let s = spine repo env h (l1, l2, Subst.fam [m1] b) in
+        obj repo env (m1, m2, a);
+        s
+    | l1, l2, a -> raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2), Some a))
 
   and fspine repo env = function
     | [], [], KType -> ()
     | m1 :: l1, m2 :: l2, KProd (x, a, b) ->
-      obj repo env (m1, m2, a);
-      fspine repo env (l1, l2, Subst.kind [m1] b)
+        let s = fspine repo env (l1, l2, Subst.kind [m1] b) in
+        obj repo env (m1, m2, a);
+        s
     | l1, l2, a ->
       let h = HConst (OConst.make "@") in
       raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2), None))
@@ -160,7 +166,7 @@ end = struct
                       | ah, Sign.Defined f -> assert false
                       | ah, Sign.Sliceable | ah, Sign.Non_sliceable ->
                           let a' = head repo env (h1, h2) in
-                          let a' = spine repo env (l1, l2, a') in
+                          let a' = spine repo env h1 (l1, l2, a') in
                           fam repo env (a, a')
         end
     | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2, Some a))
@@ -325,9 +331,9 @@ end = struct
      * R, Γ, Πx:A. B ⊢ m; l => R, m'; l', C
      *)
     | m :: l, FProd (_, a, b) ->
+      let repo, l, a' = spine ~red repo env (l, Subst.fam [m] b) in
       let repo, m = obj ~red repo env (m, a) in
-      let repo, l, a = spine ~red repo env (l, Subst.fam [m] b) in
-      repo, m :: l, a
+      repo, m :: l, a'
     | [], a -> raise (Not_eta_expanded (repo, env, [], Inl a))
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
