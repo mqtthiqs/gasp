@@ -10,6 +10,7 @@ exception Not_conv_obj of repo * env * obj * obj
 exception Not_conv_fam of repo * env * fam * fam
 exception Non_functional_fapp of repo * env * spine
 exception Non_functional_app of repo * env * spine * fam
+exception Non_functional_obj of repo * env * obj * fam
 exception Unbound_meta of repo * Meta.t
 exception Not_evaluable of repo * SLF.term
 
@@ -24,6 +25,8 @@ let _ =
       P.env env P.spine l
     | Non_functional_app (repo, env, l, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@]"
       P.env env P.spine l P.fam a
+    | Non_functional_obj (repo, env, m, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@]"
+      P.env env P.obj m P.fam a
     | Unbound_meta (repo, x) -> Format.fprintf fmt "Unbound meta:@ %a in %a" Meta.print x P.repo_light repo
     | Not_evaluable (repo, t) -> Format.fprintf fmt "Not evaluable:@ %a in %a" P.term t P.repo_light repo
     | _ -> raise Topcatch.Unhandled
@@ -163,7 +166,7 @@ end = struct
     Debug.close "conv obj";
     r
 
-  and fam' repo env = function
+  and fam repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
       fam repo env (a1, a2); fam repo (Env.add x a1 env) (b1, b2)
     | FApp (c1, l1), FApp (c2, l2) when FConst.compare c1 c2 = 0 ->
@@ -171,12 +174,12 @@ end = struct
       fspine repo env (l1, l2, k)
     | a1, a2 -> raise (Not_conv_fam (repo, env, a1, a2))
 
-  and fam repo env (a1, a2) =
-    let e = Env.names_of env in
-    Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2;
-    let r = fam' repo env (a1, a2) in
-    Debug.close "conv fam";
-    r
+  (* and fam repo env (a1, a2) = *)
+  (*   let e = Env.names_of env in *)
+  (*   Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2; *)
+  (*   let r = fam' repo env (a1, a2) in *)
+  (*   Debug.close "conv fam"; *)
+  (*   r *)
 
 end
 
@@ -214,7 +217,7 @@ end = struct
         | _ -> x in
       let repo, m = obj ~red repo (Env.add x a env) (m, b) in
       repo, mkLam (x, m)
-    | OLam _, FApp _ -> failwith "not eta"
+    | (OLam _ as m), (FApp _ as a) -> raise (Non_functional_obj (repo, env, inj m, a))
 
     (* R, Γ ⊢ h l => R', M', A'  R' ⊢ A ≡ A'
      * ————————————————————————————————————
@@ -413,9 +416,9 @@ let rec init repo = function
       | SLF.Strat.Kind _, _ -> failwith "kind cannot be non-sliceable or defined"
 
 let init repo s =
-  Debug.log_open "sign" "";
+  Debug.log_open "sign" "begin";
   let r = init repo s in
-  Debug.log_close "sign" "";
+  Debug.log_close "sign" "end";
   r
 
 let push repo env (h, l) =

@@ -6,6 +6,7 @@ exception Not_conv_obj of repo * env * obj * obj
 exception Not_conv_fam of repo * env * fam * fam
 exception Non_functional_fapp of repo * env * spine
 exception Non_functional_app of repo * env * spine * fam
+exception Non_functional_obj of repo * env * obj * fam
 exception Unbound_meta of repo * Meta.t
 exception Not_evaluable of repo * SLF.term
 
