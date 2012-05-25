@@ -290,18 +290,10 @@ end = struct
          * ——————————————————————————————————————— (h sliceable)
          * R, Γ ⊢ h l => R'', ?X[s], C
          *)
-      | Sign.Sliceable ->
+      | Sign.Sliceable when red ->
         let repo, l, a = spine ~red repo env (l, a) in
         let repo, hd = push repo env (h, l) a in
         repo, mkMeta hd, a
-
-      (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
-       * ——————————————————————————————————————— (h non sliceable)
-       * R, Γ ⊢ h l => R', h l', C
-       *)
-      | Sign.Non_sliceable ->
-        let repo, l, a = spine ~red repo env (l, a) in
-        repo, mkApp (h, l), a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => _, _, C
        * R ⊢ f l ~~> m
@@ -309,14 +301,22 @@ end = struct
        * ——————————————————————————————————————— (h defined = f)
        * R, Γ ⊢ h l => R', m', C
        *)
-      | Sign.Defined f ->
+      | Sign.Defined f when red ->
         (* check and reduce arguments of this constant *)
-        let repo, l, a = spine ~red repo env (l, a) in
-        (* if red, evaluate it with the reduced arguments *)
-        let repo, m = if red then Eval.interp repo env h f l else repo, mkApp(h, l) in
+        let repo, l, a = spine ~red:false repo env (l, a) in
+        (* evaluate it with the reduced arguments *)
+        let repo, m = Eval.interp repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
         let repo, m = obj ~red repo env (m, a) in
         repo, m, a
+
+      (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
+       * ——————————————————————————————————————— (h non sliceable)
+       * R, Γ ⊢ h l => R', h l', C
+       *)
+      | _ ->
+        let repo, l, a = spine ~red repo env (l, a) in
+        repo, mkApp (h, l), a
 
   and spine' ~red repo env : spine * fam -> repo * spine * fam = function
 
