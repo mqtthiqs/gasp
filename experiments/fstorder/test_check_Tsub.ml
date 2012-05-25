@@ -6,8 +6,8 @@
 open Util
 ;;
 
-Debug.tags := []
-;;
+(* Debug.tags := [] *)
+(* ;; *)
 
 let repo = Version.init
 <:sign<
@@ -178,7 +178,7 @@ let repo = Version.init
           end
       | << o >> -> return << ex o even is_o >>
       | << s $m$ >> ->
-          let* << ex $m$ $a$ $d$ >> = << infer $m$ >> in
+          let* << ex $_$ $a$ $d$ >> = << infer $m$ >> in
           begin match* a with
             | << nat >> -> return << ex (s $m$) nat (is_sn $m$ $d$) >>
             | << even >> -> return << ex (s $m$) odd (is_so $m$ $d$) >>
@@ -187,9 +187,9 @@ let repo = Version.init
       | << tt >> -> return << ex tt bool is_tt >>
       | << ff >> -> return << ex ff bool is_ff >>
       | << ifb $m$ $n$ $p$ >> ->
-          let* << ex $m$ $tm$ $dm$ >> = << infer $m$ >> in
-          let* << ex $n$ $tn$ $dn$ >> = << infer $n$ >> in
-          let* << ex $p$ $tp$ $dp$ >> = << infer $p$ >> in
+          let* << ex $_$ $tm$ $dm$ >> = << infer $m$ >> in
+          let* << ex $_$ $tn$ $dn$ >> = << infer $n$ >> in
+          let* << ex $_$ $tp$ $dp$ >> = << infer $p$ >> in
           let* << $a$ >> = << sup $tn$ $tp$ >> in
           return << ex (ifb $m$ $n$ $p$) $a$
             (is_if $m$ $n$ $p$ $a$
@@ -204,15 +204,18 @@ let repo = Version.init
             << infer ($n$ (infer^0 x (ex x $a$ h))) >> in
           return << ex (letb $m$ $n$) $b$ (is_let $m$ $n$ $a$ $b$ $d1$ ([x] [h] $d2$)) >>
       | << recb $m$ $n$ $p$ >> ->
-          let* << ex $m$ $tm$ $dm$ >> = << infer $m$ >> in
-          let* << ex $n$ $tn$ $dn$ >> = << infer $n$ >> in
-          let* << ex $p$ $tp$ $dp$ >> in <:env< x:tm; hx:is x nat; y:tm; hy:is y $tn$ >> =
+          let* << ex $_$ $tm$ $dm$ >> = << infer $m$ >> in
+          let* << ex $_$ $tn$ $dn$ >> = << infer $n$ >> in
+          let* << ex $_$ $tp$ $_$ >> in <:env< x:tm; hx:is x nat; y:tm; hy:is y $tn$ >> =
             << infer ($p$ (infer^0 x (ex x nat hx)) (infer^0 y (ex y $tn$ hy))) >> in
-          return << ex (recb $m$ $n$ [x] [y] $p$) (sup $tn$ $tp$)
-            (is_rec $m$ $n$ ([x] [y] $p$) (sup $tn$ $tp$)
+          let* << $a$ >> = << sup $tn$ $tp$ >> in
+          let* << ex $_$ $tp$ $dp$ >> in <:env< x:tm; hx:is x nat; y:tm; hy:is y $a$ >> =
+            << infer ($p$ (infer^0 x (ex x nat hx)) (infer^0 y (ex y $a$ hy))) >> in
+          return << ex (recb $m$ $n$ $p$) $a$
+            (is_rec $m$ $n$ $p$ $a$
                (maybe_is_sub $m$ $tm$ nat $dm$)
-               (maybe_is_sub $n$ $tn$ $tp$ $dn$) (* TODO *)
-               [x] [y] [hx] [hy] $dp$) >>
+               (maybe_is_sub $n$ $tn$ $a$ $dn$)
+               [x] [y] [hx] [hy] (maybe_is_sub ($p$ x y) $tp$ $a$ $dp$)) >>
     in
     Debug.log_close "infer" "=> %a in %a" SLF.Printer.term r SLF.Printer.repo_light repo;
     repo, r
@@ -268,31 +271,52 @@ Tests.commit repo
 >>
 ;;
 
-(* Tests.commit repo *)
-(* << *)
-(*   infer ( *)
-(*     letb (lam nat [x] lam nat [y] recb x y [z] [_] s z) [add] *)
-(*     letb (lam nat [x] lam nat [y] recb o y [z] [_] app (app add x) z) [mult] *)
-(*     letb (lam nat [x] lam nat [y] recb (s o) y [z] [_] app (app mult x) z) [exp] *)
-(*     letb (lam nat [x] recb o x [_] [w] w) [pred] *)
-(*     app (app exp (s o)) (s o) *)
-(*   ) *)
-(* >> *)
-(* ;; *)
+Tests.commit repo
+<<
+  infer (
+    lam (arr nat nat) [div2]
+      recb o (s o) [_] [y] app div2 y
+  )
+>>
+;;
 
-(* (\* Incremental tests *\) *)
+(* Contrex de Pierre B. *)
+try Tests.fail2
+  Tests.commit repo
+<<
+  infer (
+    lam (arr even nat) [div2]
+      recb (s (s o)) (s (s o)) [_] [y] app div2 y
+  )
+>>
+with Tests.Failed (Failure "subtype error") -> ()
+;;
+
+Tests.commit repo
+<<
+  infer (
+    letb (lam nat [x] lam nat [y] recb x y [z] [_] s z) [add]
+    letb (lam nat [x] lam nat [y] recb o y [z] [_] app (app add x) z) [mult]
+    letb (lam nat [x] lam nat [y] recb (s o) y [z] [_] app (app mult x) z) [exp]
+    letb (lam nat [x] recb o x [_] [w] w) [pred]
+    app (app exp (s o)) (s o)
+  )
+>>
+;;
+
+(* Incremental tests *)
+
+let repo = Tests.commit repo
+<<
+  infer (recb (s o) (s o) [x] [y] s x)
+>>
+;;
 
 (* let repo = Tests.commit repo *)
 (* << *)
-(*   infer (recb (s o) (s o) [x] [y] s x) *)
-(* >> *)
-(* ;; *)
-
-(* let repo = Tests.commit repo *)
-(* << *)
 (*   infer ( *)
-(*     letb (lam nat [x] lam nat [y] recb x y [z] [_] (infer^0 z ?X26[z;infer z])) [add] *)
-(*     app (app add (infer^0 ?X23) (infer^0 ?X23)) *)
+(*     letb (lam nat [x] lam nat [y] recb x y [z] [_] (infer^0 z ?X25[z;infer z])) [add] *)
+(*     app (app add (infer^0 ?X21) (infer^0 ?X21)) *)
 (*   ) *)
 (* >> *)
 (* ;; *)
@@ -318,4 +342,4 @@ Tests.commit repo
 (* >> *)
 (* ;; *)
 
-(* 42 *)
+42
