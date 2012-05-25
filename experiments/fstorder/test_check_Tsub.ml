@@ -69,6 +69,11 @@ let repo = Version.init
   inf : tm -> type.
   ex : {M : tm} {A : tp} {H : is M A} inf M.
 
+  prj : {M : tm} {A : tp} inf M -> is M A = $ fun _ _ i ->
+    match* i with
+      | << ex $_$ $_$ $h$ >> -> return h
+  $.
+
   equals : tp -> tp -> Bool = $ fun a b ->
     match* a with
       | << $id:x$ >> ->
@@ -304,6 +309,12 @@ Tests.commit repo
 >>
 ;;
 
+Tests.commit repo
+<<
+  infer (lam nat [x] infer^0 x (infer x))
+>>
+;;
+
 (* Incremental tests *)
 
 let repo = Tests.commit repo
@@ -312,19 +323,25 @@ let repo = Tests.commit repo
 >>
 ;;
 
-(* let repo = Tests.commit repo *)
-(* << *)
-(*   infer ( *)
-(*     letb (lam nat [x] lam nat [y] recb x y [z] [_] (infer^0 z ?X25[z;infer z])) [add] *)
-(*     app (app add (infer^0 ?X21) (infer^0 ?X21)) *)
-(*   ) *)
-(* >> *)
-(* ;; *)
+Tests.commit repo
+<<
+  infer (recb (infer^0 ?X0 (ex ?X0 odd ?X9)) (infer^0 ?X0 (ex ?X0 odd ?X9)) [x] [y] s x)
+>>
+;;
+
+let repo = Tests.commit repo
+<<
+  infer (
+    letb (lam nat [x] lam nat [y] recb x y [z] [_] (infer^0 (s z) (ex (s z) nat ?X15[z; prj z nat (infer z)]))) [add]
+    app (app add (infer^0 ?X0 (ex ?X0 odd ?X9))) (infer^0 ?X0 (ex ?X0 odd ?X9))
+  )
+>>
+;;
 
 (* let repo = Tests.commit repo *)
 (* << *)
 (*   infer ( *)
-(*     letb ?X42 [add] *)
+(*     letb ?X42[] [add] *)
 (*     letb (lam nat [x] lam nat [y] recb o y [z][_] add x z) [mul] *)
 (*     app (app mul ?X43[add; infer add]) (s (infer^0 ?X23)) *)
 (*   ) *)
