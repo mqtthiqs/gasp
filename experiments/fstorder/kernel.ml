@@ -6,29 +6,32 @@ open Struct.Repo
 
 module P = SLF.Printer
 
-exception Not_conv_obj of repo * env * obj * obj
+exception Not_conv_obj of repo * env * obj * obj * fam option
 exception Not_conv_fam of repo * env * fam * fam
 exception Non_functional_fapp of repo * env * spine
 exception Non_functional_app of repo * env * spine * fam
 exception Non_functional_obj of repo * env * obj * fam
 exception Unbound_meta of repo * Meta.t
+exception Unbound_variable of repo * env * int
 exception Not_evaluable of repo * SLF.term
+exception Not_eta_expanded of repo * env * spine * (fam, kind) union
 
 let _ =
   Topcatch.register begin fun fmt -> function
-    | LF.Not_eta (m, s) -> Format.fprintf fmt "Not_eta(%a, [%a])" P.obj m P.spine s
-    | Not_conv_obj (repo, env, m1, m2) -> Format.fprintf fmt "Not convertible:@ @[%a ⊢ %a ≡ %a@] in %a"
-      P.env env P.obj m1 P.obj m2 P.repo_light repo
+    | LF.Not_eta (m, s) -> Format.fprintf fmt "Not eta-expanded:@ %a@ [%a]" P.obj m P.spine s
+    | Not_conv_obj (repo, env, m1, m2, a) -> Format.fprintf fmt "Not convertible:@ @[%a ⊢ %a ≡ %a : %a@] in %a"
+      P.env env P.obj m1 P.obj m2 (Print.opt_under P.fam) a P.repo_light repo
     | Not_conv_fam (repo, env, m1, m2) -> Format.fprintf fmt "Not convertible:@ @[%a ⊢ %a ≡ %a@] in %a"
       P.env env P.fam m1 P.fam m2 P.repo_light repo
     | Non_functional_fapp (repo, env, l) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : *@]"
       P.env env P.spine l
     | Non_functional_app (repo, env, l, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@]"
       P.env env P.spine l P.fam a
-    | Non_functional_obj (repo, env, m, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@]"
-      P.env env P.obj m P.fam a
+    | Non_functional_obj (repo, env, m, a) -> Format.fprintf fmt "Non functional:@ @[%a ⊢ %a : %a@] in %a"
+      P.env env P.obj m P.fam a P.repo_light repo
     | Unbound_meta (repo, x) -> Format.fprintf fmt "Unbound meta:@ %a in %a" Meta.print x P.repo_light repo
     | Not_evaluable (repo, t) -> Format.fprintf fmt "Not evaluable:@ %a in %a" P.term t P.repo_light repo
+    | Not_eta_expanded (repo, env, s, a) -> Format.fprintf fmt "Not eta-expanded:@ %a, %a ⊢ %a" P.env env (Print.union P.fam P.kind) a P.subst s
     | _ -> raise Topcatch.Unhandled
   end
 
@@ -83,13 +86,15 @@ module rec Conv : sig
   val fam : repo -> env -> (fam * fam) -> unit
 end = struct
 
+  exception Subst_not_conv
+
   let head repo env = function
     | HVar x, HVar y when x = y ->
-      let a = try Env.find x env with _ -> failwith(string_of_int x) in
+      let a = try Env.find x env with _ -> raise (Unbound_variable (repo, env, x)) in
       Lift.fam 0 (x+1) a
     | HConst c1, HConst c2 when OConst.compare c1 c2 = 0 ->
       fst (Sign.ofind c1 repo.sign)
-    | h1, h2 -> raise (Not_conv_obj (repo, env, mkApp (h1, []), mkApp (h2, [])))
+    | h1, h2 -> raise (Not_conv_obj (repo, env, mkApp (h1, []), mkApp (h2, []), None))
 
   let rec spine repo env = function
     | [], [], (FApp _ as a) -> a
@@ -98,7 +103,7 @@ end = struct
       spine repo env (l1, l2, Subst.fam [m1] b)
     | l1, l2, a ->
       let h = HConst (OConst.make "@") in
-      raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2)))
+      raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2), Some a))
 
   and fspine repo env = function
     | [], [], KType -> ()
@@ -107,14 +112,14 @@ end = struct
       fspine repo env (l1, l2, Subst.kind [m1] b)
     | l1, l2, a ->
       let h = HConst (OConst.make "@") in
-      raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2)))
+      raise (Not_conv_obj (repo, env, mkApp (h, l1), mkApp (h, l2), None))
 
   and subst repo env = function
     | [], [], [] -> ()
     | m1 :: s1, m2 :: s2, (_, a) :: e ->
       subst repo env (s1, s2, e);
       obj repo env (m1, m2, Subst.fam s1 a)
-    | _ -> failwith "subst"
+    | _ -> raise Subst_not_conv
 
   and obj' repo env (m1, m2, a) = match prj m1, prj m2, a with
     | OLam (x, m1), OLam (y,m2), FProd (z, a, b) ->
@@ -124,11 +129,12 @@ end = struct
           | _ -> x in
         obj repo (Env.add x a env) (m1, m2, b)
     | OMeta (x1, s1), OMeta (x2, s2), a when Meta.compare x1 x2 = 0 ->
-      let e, _, a' =
-        try Context.find x1 repo.ctx
-        with Not_found -> raise (Unbound_meta (repo, x1)) in
-      subst repo env (s1, s2, e);
-      fam repo env (a, Subst.fam s1 a')
+        let e, _, a' =
+          try Context.find x1 repo.ctx
+          with Not_found -> raise (Unbound_meta (repo, x1)) in
+        begin try subst repo env (s1, s2, e)
+        with Subst_not_conv -> raise (Not_conv_obj (repo, env, m1, m2, Some a)) end;
+        fam repo env (a, Subst.fam s1 a')
     | OMeta (x, s), m, a | m, OMeta (x, s), a ->
         let e, m', _ =
         try Context.find x repo.ctx
@@ -148,7 +154,7 @@ end = struct
               assert false
           | ah, Sign.Sliceable | ah, Sign.Non_sliceable ->
               match o2 with
-                | OMeta _ | OLam _ -> raise (Not_conv_obj (repo, env, m1, m2))
+                | OMeta _ | OLam _ -> raise (Not_conv_obj (repo, env, m1, m2, Some a))
                 | OApp (h2, l2) ->
                     match Check.head repo env h2 with
                       | ah, Sign.Defined f -> assert false
@@ -157,7 +163,7 @@ end = struct
                           let a' = spine repo env (l1, l2, a') in
                           fam repo env (a, a')
         end
-    | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2))
+    | m1, m2, a -> raise (Not_conv_obj (repo, env, inj m1, inj m2, Some a))
 
   and obj repo env (m1, m2, a) =
     let e = Env.names_of env in
@@ -192,9 +198,11 @@ and Check : sig
   val obj : red:bool -> repo -> env -> obj * fam -> repo * obj
 end = struct
 
+  exception Subst_mismatch
+
   let head repo env : head -> fam * Sign.entry_type = function
     | HVar x ->
-        let a = try Env.find x env with _ -> failwith(string_of_int x) in
+        let a = try Env.find x env with _ -> raise (Unbound_variable (repo, env, x)) in
         let a = Lift.fam 0 (x+1) a in
         a, Sign.Non_sliceable
     | HConst c -> Sign.ofind c repo.sign
@@ -236,7 +244,9 @@ end = struct
       let e, _, b =
         try Context.find x repo.ctx
         with Not_found -> raise (Unbound_meta (repo, x)) in
-      let repo, s = subst ~red repo env (s, e) in
+      let repo, s =
+        try subst ~red repo env (s, e)
+        with Subst_mismatch -> raise (Non_functional_obj (repo, env, mkMeta(x, s), a)) in
       let b = Subst.fam s b in
       Conv.fam repo env (a, b);
       repo, mkMeta (x, s)
@@ -263,7 +273,7 @@ end = struct
    * R, Γ ⊢ · : · => R, ·
    *)
     | [], [] -> repo, []
-    | _ -> failwith "subst"
+    | _ -> raise Subst_mismatch
 
   and app ~red repo env (h, l) : repo * obj * fam =
     let a, e = head repo env h in
@@ -318,7 +328,7 @@ end = struct
       let repo, m = obj ~red repo env (m, a) in
       let repo, l, a = spine ~red repo env (l, Subst.fam [m] b) in
       repo, m :: l, a
-    | [], _ -> failwith "not eta-expanded"
+    | [], a -> raise (Not_eta_expanded (repo, env, [], Inl a))
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
   and spine ~red repo env (l, a) =
@@ -330,7 +340,7 @@ end = struct
   and fspine ~red repo env : spine * kind -> repo * spine = function
     | [], KType -> repo, []
     | _ :: _ as l, KType -> raise (Non_functional_fapp (repo, env, l))
-    | [], _ -> failwith "not eta-expanded"
+    | [], k -> raise (Not_eta_expanded (repo, env, [], Inr k))
     | m :: l, KProd (_, a, k) ->
       let repo, m = obj ~red repo env (m, a) in
       let repo, l = fspine ~red repo env (l, Subst.kind [m] k) in
