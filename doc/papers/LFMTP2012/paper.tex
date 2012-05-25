@@ -57,19 +57,80 @@ incrementality, type checking, logical framework, version control
 \section*{Introduction}
 %% It’s an interesting problem (1 page)
 
-When writing critical software, high assurance against bugs is an
-absolute necessity. To certify the absence of bugs in a large body of
-code given its specification, human reviewing is one option, but
-certainly a failible one. Formal, mathematical proof that our program
-respects a certain \emph{dependability claim} gives us the assurance
-that ``its trustworthyness [\ldots] would presumably last for eternity
-\cite{shao2010certified}''.
-
-Certifying
-
-\cite{miller2011proposal}
-
 %% Describe the problem (Use an example)
+
+The positive impact of rich type systems on programming language
+design is not to be demonstrated anymore, both in terms of the safety
+of programs --- they ``do not go wrong'', and programming practices
+\eg\ modularity, early bug catching. Verifying well-typing of
+real-world programs is thus a critical matter, but it is a complex
+operation, for the compiler designer and for the human operator.
+
+\paragraph{For the compiler designer}
+
+Type systems are usually presented in a declarative manner as a set of
+inference rules, together with proofs that all programs accepting a
+derivation in this system respect a certain dependability claim, the
+famous ``progress and preservation'' pair. Yet, actual algorithms of
+verification often differ very much from their declarative
+description. This is of course true when programs are provided with
+little type annotations (type inference), but is also true in many
+cases for what is usually called ``type checking'', or
+``church-style'' calculi. Take for example dependent type systems,
+relying on a certain notion of definitional equality on types, or type
+systems with subtype polymorphism: both rely on a rule of the form
+$$
+\infer{\Gamma\vdash M : A \\ A\leq B}{\Gamma\vdash M : B}\ \text{,}
+$$
+for a given notion of $\leq$, which is not syntax-directed. The
+implementer then has to convert the declarative system to an
+algorithm, and convince himself that both are equivalent. This task,
+often neglected, is nonetheless highly non-trivial and non-modular.
+
+The most common option is to formally prove the equivalence, \ie\ that
+the (typing) relation is actually a function. It is of course the most
+satisfactory because it allows to ``forget'' about the declarative
+system and take only the result of the algorithm into consideration,
+although these proofs can be difficult to obtain. But for the sake of
+the discussion, let us choose another path: derivations in the
+declarative systems, if they cannot always be algorithmically
+inferred, can be \emph{verified} if provided by an oracle. This way,
+even if the oracle is wrong, we have a way to decide it. Let us then
+imagine a type-checker to be the pair of 1/ an untrusted procedure
+$\finfer M$ for inferring a typing derivations out of programs $M$; it
+doesn't have to be complete, or even sound, and 2/ a trusted kernel
+$\fcheck{\md}$ for verifying these derivations in a given set of
+inference rules $\Sigma$. This scheme has the following advantages
+over the first approach:
+\begin{itemize}
+\item it is lightweight: the untrusted algorithm is usually shorter
+  than the corresponding equivalence proof
+\item it is certifying: if $\fcheck{\finfer M} = \cst{true}$ then
+  there really \emph{is} a derivation $\md$ for $M$. Of course the
+  converse is not necessarily true: function $\finfer{}\!\!$ could
+  fail, or have bugs (return an incorrect derivation).
+\item it inherits benefits from certifying approaches like
+  proof-carrying code \cite{necula1997proof}: %TODO third-party
+                                              %verification
+\item for optimization purpose, compilers often need to propagate type
+  information in the chain of transformation; the typing derivation
+  produced by $\finfer{}$ being explicit, it could constitute the data
+  structure being exploited.
+\item \ldots\ but there is more:
+\end{itemize}
+
+\paragraph{For the programmer}
+
+Compilers are generally monolithic programs, taking source code and
+producing machine code in a series of transformations, one of the
+first being type checking. But as type systems become richer, it
+becomes increasingly difficult for the programmer to write a correct
+program in one try, compile it and run it: writing a program longer
+than a few dozen of lines becomes a tight and non-linear interaction
+between the human and the type-checker involving constant experiments,
+fixes, etc. If this interaction is possible for short programs and
+fast checkers, it becomes increasingly difficult %TODO
+
 %% State your contributions (Bulleted list of contributions)
 
 \section{Background}
@@ -77,17 +138,18 @@ Certifying
 
 \paragraph{Motivational example}
 
-A student is learning about System \sysname T, and wants to write a
-program computing $(2+2)\times 3$. He (or she) knows that sometimes those
-$\cst{rec}$ arguments are quite hard to get correct, but System
-\sysname T is a typed language; he wants to take advantage of this to
-build his program incrementally using the teacher's provided
-incremental verifier. As a first attempt, he wants to verify $P_1$:
+A student (the first author) is learning about System \sysname T, and
+wants to write a program computing $(2+2)\times 3$. He knows that
+sometimes those $\cst{rec}$ arguments are quite hard to get correct,
+but System \sysname T is a typed language; he wants to take advantage
+of this to build his program incrementally using the teacher's (the
+first author too) provided incremental verifier. As a first attempt,
+he wants to verify $P_1$:
 $$
 \recb{\s\z}{\s\z}{\lam x\lam y \s {\var x}}\ \text{.}
 $$
-For this, he sends the command $\infer{P_1}$ to the system. The
-$\infer{}$ operator takes a well-formed program and tries to construct
+For this, he sends the command $\finfer{P_1}$ to the system. The
+$\finfer{}$ operator takes a well-formed program and tries to construct
 a valid typing derivation for its argument in the current, empty
 context. The system succeeds and returns a typing derivation $\md_1$
 of \/ $\vdash P_1 : \cst{nat}$, valid in an empty context.
@@ -107,7 +169,7 @@ call them $\md_2$, $\md_3$ and $\md_4$. Provided there is an operator
 $\get\md$ from the derivation to the program it types, what needs really
 to be sent to the system is:
 \begin{align*}
-  &\infer{(
+  &\finfer{(
     \letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
       {\var y} {\get{\md_4}}}
     \app{\var{add}}\app{\get{\md_2}}{\get{\md_2}}
@@ -120,7 +182,7 @@ free to use it in the new context where
 $\var{add}:\cst{nat}\to\cst{nat}$, because System \sysname T enjoys
 the \emph{weakening} property. Taking advantage of $\md_2$ and $\md_4$
 the system succeeds with a new derivation made out of these, without
-having to regenerate them because it knows that $\infer{\get\md} =
+having to regenerate them because it knows that $\finfer{\get\md} =
 \md$. Let us call $\md_5$ the subderivation generated for $\tlam x
 {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y}
 {\get{\md_4}}$, $\md_6$ for the arguments
@@ -134,7 +196,7 @@ want to reuse it, we will have to provide a proof of this fact.
 The student then provides a definition for multiplication, and writes
 the operation $(2 + 2)\times3$:
 \begin{align*}
-  \infer{}(
+  \finfer{}(
   &\letb{add}{\get{\md_5}}
   \\
   &\quad\letb{mul} { \tlam x {\cst{nat}} \tlam y
@@ -142,7 +204,7 @@ the operation $(2 + 2)\times3$:
       \app{\var{add}}\app{\var x} {\var z}} }
   \\
   &\quad\quad\app{\var{mul}}\app
-  {(\get{\gsubst{\md_7}{\msubst H {\infer{\var{add}}}}})}
+  {(\get{\gsubst{\md_7}{\msubst H {\finfer{\var{add}}}}})}
   {(\s{\get{\md_2}})}
   )
   \ \text{.}
@@ -150,7 +212,7 @@ the operation $(2 + 2)\times3$:
 Here again, he took care of reusing all derivations for equal
 subterms. In particular, $\md_7$ expects a proof that the variable
 $\var{add}$ is of type $\cst{nat}\to\cst{nat}$; he provides
-$\infer{\var{add}}$ meaning: at this point we will have generated (or
+$\finfer{\var{add}}$ meaning: at this point we will have generated (or
 reused in this case) the derivation of $\var{add}$, so just use it.
 
 Finally, he decides (in an odd move) to inline the definition of
@@ -160,7 +222,7 @@ $\vdash\var{add}:\cst{nat}\to\cst{nat}$) and $\md_9$ the derivation of
 $(2+2)\times 3$ depending on derivations $\var{H}$ and $\var{H'}$ for $+$ and
 $\times$. He orders:
 \begin{align*}
-\infer{}(
+\finfer{}(
 \letb{add}{\get{\md_5}}
 \get{({\gsubst{\md_9} {\msubst {H} {(\get{\var{add}})}; \msubst {H'}
       {\gsubst{\md_8}{\msubst H {(\get{\var{add}})}}}}})}
@@ -418,7 +480,7 @@ a bidirectional typing algorithm updating an input repository.
 
 A \emph{signature} declares object and type constants to be used in
 objects. To each object constant we assign an annotation $L$ setting
-the slicing behaviour of the constant during type-checking: either
+the slicing behaviour of the constant during type checking: either
 sliceable $\annsliceable$ (each application of this constant will be
 cached and given a name), non-sliceable $\annnonsliceable$ (we don't
 create a name for applications of this constant), or defined
@@ -922,3 +984,5 @@ computations: arguments and results are type-checked at run-time.
 % \end{thebibliography}
 
 \end{document}
+
+%  LocalWords:  subtype
