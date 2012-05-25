@@ -331,9 +331,9 @@ end = struct
      * R, Γ, Πx:A. B ⊢ m; l => R, m'; l', C
      *)
     | m :: l, FProd (_, a, b) ->
-      let repo, l, a' = spine ~red repo env (l, Subst.fam [m] b) in
       let repo, m = obj ~red repo env (m, a) in
-      repo, m :: l, a'
+      let repo, l, a = spine ~red repo env (l, Subst.fam [m] b) in
+      repo, m :: l, a
     | [], a -> raise (Not_eta_expanded (repo, env, [], Inl a))
     | _ :: _ as l, (FApp _ as a) -> raise (Non_functional_app (repo, env, l, a))
 
