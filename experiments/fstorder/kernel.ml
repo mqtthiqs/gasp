@@ -214,7 +214,7 @@ end = struct
     | HConst c -> Sign.ofind c repo.sign
     | HInv (c, n) ->
       match Sign.ofind c repo.sign with
-        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Non_sliceable
+        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Defined (fun repo _ _ s -> repo, List.nth s n)
         | _ -> failwith ("inverted a non-defined function")
 
   (* obj: check mode, returns the rewritten obj and the enlarged repo *)
@@ -400,12 +400,17 @@ end = struct
     repo, m
 
   and interp' repo env h (f : repo -> env -> (repo -> env -> obj -> repo * obj) -> spine -> repo * obj) l =
-    let c = match h with HConst c -> c | _ -> assert false in
-    match List.map prj l with
-      | [OApp (HInv (c', 0), [m1; m2])] when OConst.compare c c' = 0 ->
-            (* if the only argument is the inverse function c^0 *)
-          repo, m2
-      | _ -> f repo env eval l
+    match h with
+      |  HConst c ->
+          begin match List.map prj l with
+            | [OApp (HInv (c', 0), [m1; m2])] when OConst.compare c c' = 0 ->
+                (* if the only argument is the inverse function c^0 *)
+                repo, m2
+            | _ -> f repo env eval l
+          end
+      | HInv (c, _) -> f repo env eval l
+      | HVar _ -> assert false
+
 
   and interp repo env h f l =
     Debug.log_open "interp" "%a" P.obj (mkApp (h, l));
