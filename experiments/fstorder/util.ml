@@ -175,7 +175,7 @@ module Topcatch = struct
       pp_print_newline Debug.formatter ();
       flush stdout;
       eprintf "@[Uncaught exception:@ @[%a@]@]@." print x;
-      exit 2
+      raise Unhandled
 
   let _ =
     register begin fun fmt -> function
