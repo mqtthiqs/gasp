@@ -109,7 +109,7 @@ let repo = Version.init
                        (is_sub $n$ $a'$ $a$ (subtype $a'$ $a$) $d2$)
                     )
                 >>
-            | << $id:x$ >> -> failwith "non-functional application"
+            | << $id:_$ >> -> failwith "non-functional application"
           end
     in
     Debug.log_close "infer" "=> %a in %a" SLF.Printer.term r SLF.Printer.repo_light repo;

@@ -60,7 +60,7 @@ let repo = Version.init
             | << arr $b1$ $b2$ >> ->
                 let* << one >> = << equals $a1$ $a2$ >> in
                 return << equals $b1$ $b2$ >>
-            | << $id:x$ >> -> failwith "types not equal"
+            | << $id:_$ >> -> failwith "types not equal"
           end
     $.
 
@@ -78,7 +78,7 @@ let repo = Version.init
             | << arr $a$ $b$ >> ->
                 let* << one >> = << equals $a$ $a'$ >> in
                 return << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
-            | << $id:x$ >> -> failwith "non-functional application"
+            | << $id:_$ >> -> failwith "non-functional application"
           end
       | << o >> -> return << ex o nat is_o >>
       | << s $m$ >> ->
@@ -115,13 +115,13 @@ let repo = Version.init
              is (lam A [x] M x) (arr A B) -> is N A ->
              is (M N) B = $ fun _ n _ _ hm hn ->
     match* hm with
-      | << is_lam $m$ $a$ $b$ $h$ >> -> return << $h$ $n$ $hn$ >>
+      | << is_lam $_$ $_$ $_$ $h$ >> -> return << $h$ $n$ $hn$ >>
   $.
 
   inline : {M : tm -> tm} {N : tm} {A : tp}
              is (letb N [x] M x) A -> is (M N) A = $ fun _ _ _ hl ->
     match* hl with
-      | << is_let $m$ $n$ $a$ $b$ $hm$ $h$ >> ->
+      | << is_let $_$ $n$ $_$ $_$ $hm$ $h$ >> ->
           return << $h$ $n$ $hm$ >>
   $.
 

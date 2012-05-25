@@ -56,7 +56,7 @@ let repo = Version.init
             | << arr $a$ $b$ >> ->
                 let* << one >> = << equals $a$ $a'$ >> in
                 return << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
-            | << $id:x$ >> -> failwith "non-functional application"
+            | << $id:_$ >> -> failwith "non-functional application"
           end
     in
     Debug.log_close "infer" "=> %a in %a" SLF.Printer.term r SLF.Printer.repo_light repo;

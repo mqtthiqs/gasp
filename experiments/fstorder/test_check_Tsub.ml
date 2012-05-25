@@ -83,7 +83,7 @@ let repo = Version.init
                   | << True >> -> return << equals $b1$ $b2$ >>
                   | << False >> -> return << False >>
                 end
-            | << $id:x$ >> ->  return << False >>
+            | << $id:_$ >> ->  return << False >>
           end
     $.
 
@@ -126,7 +126,7 @@ let repo = Version.init
 
   maybe_is_sub : {M : tm} {A : tp} {B : tp} is M A -> is M B = $ fun m a b d ->
     match* << subtype $a$ $b$ >> with
-      | << sub_refl $a$ >> -> return d
+      | << sub_refl $_$ >> -> return d
       | (<< sub_arr $_$ $_$ $_$ $_$ $_$ $_$ >> | << sub_odd_nat >> | << sub_even_nat >>) as s ->
           return << is_sub $m$ $a$ $b$ $s$ $d$ >>
   $.
@@ -174,7 +174,7 @@ let repo = Version.init
                      (maybe_is_sub $n$ $a'$ $a$ $d2$)
                   )
                 >>
-            | << $id:x$ >> -> failwith "non-functional application"
+            | << $id:_$ >> -> failwith "non-functional application"
           end
       | << o >> -> return << ex o even is_o >>
       | << s $m$ >> ->

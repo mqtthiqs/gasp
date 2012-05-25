@@ -39,15 +39,15 @@ let repo = Version.init
             | << arr $b1$ $b2$ >> ->
                 let* << one >> = << equals $a1$ $a2$ >> in
                 return << equals $b1$ $b2$ >>
-            | << $id:x$ >> -> failwith "types not equal"
+            | << $id:_$ >> -> failwith "types not equal"
           end
     $.
 
-  get : {A : tp} is A -> tm = $ fun a p ->
+  get : {A : tp} is A -> tm = $ fun _ p ->
     match* p with
       | << is_app $a$ $b$ $p$ $q$ >> ->
           return << app (get (arr $a$ $b$) $p$) (get $a$ $q$) >>
-      | << is_lam $a$ $b$ $p$ >> ->
+      | << is_lam $a$ $_$ $p$ >> ->
           return << lam $a$ (get $p$) >>
       | << $id:x$ >> ->
           return << $id:x$ >>
@@ -67,7 +67,7 @@ let repo = Version.init
             | << arr $a$ $b$ >> ->
                 let* << one >> = << equals $a$ $a'$ >> in
                 return << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
-            | << $id:x$ >> -> failwith "non-functional application"
+            | << $id:_$ >> -> failwith "non-functional application"
           end
       | << o >> -> return << ex o nat is_o >>
       | << s $m$ >> ->
