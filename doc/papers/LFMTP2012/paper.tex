@@ -76,7 +76,7 @@ verification often differ very much from their declarative
 description. This is of course true when programs are provided with
 little type annotations (``type inference''), in which case the
 missing information has to be algorithmically synthesized, but is also
-true in many cases for what is commonly refered as ``type checking'',
+true in many cases for what is commonly referred as ``type checking'',
 or explicit ``church-style'' calculi. Take for example dependent type
 systems, relying on a certain notion of definitional equality on
 types, or type systems with subtype polymorphism: both rely on a rule
@@ -99,16 +99,16 @@ systems, if they cannot always be easily inferred, can be
 \emph{verified} if provided by an oracle. Even if the oracle is wrong,
 we can tell cheaply by verifying the witness typing derivation it
 provides. Let us then imagine a type-checker to be the pair of 1/ an
-untrusted procedure $\finfer M$ for inferring a typing derivations out
-of programs $M$; it doesn't have to be complete, or even sound, and 2/
-a trusted and fast kernel $\fcheck{\md}$ for verifying these
-derivations in a given set of inference rules $\Sigma$. This is a
-certifying scheme: if $\fcheck{\finfer M} = \cst{true}$ then there
-really \emph{is} a derivation $\md$ for $M$. Of course the converse is
-not necessarily true: function $\finfer{}\!\!$ could fail, or have
-bugs (return an incorrect derivation). Explicitly generating the
-derivation in the declarative system has the following advantages over
-the first approach:
+untrusted procedure $\finfer M$ to infer a typing derivations out of
+programs $M$; it doesn't have to be complete, or even sound, and 2/ a
+trusted and fast kernel $\fcheck{\md}$ to verify these derivations in
+a given set of inference rules $\Sigma$. This is a \emph{certifying}
+scheme: if $\fcheck{\finfer M} = \cst{true}$ then there really
+\emph{is} a derivation $\md$ for $M$. Of course the converse is not
+necessarily true: function $\finfer{}\!\!$ could fail, or have bugs
+(return an incorrect derivation). Explicitly generating the derivation
+in the declarative system has the following advantages over the first
+approach:
 \begin{itemize}
 \item it is lightweight: the untrusted algorithm is usually shorter
   than the corresponding equivalence proof
@@ -125,41 +125,85 @@ the first approach:
 
 \paragraph{For the programmer}
 
-Compilers are generally monolithic programs, taking source code and
-producing machine code in a series of transformations, one of the
-first being type checking. But as type systems become richer, it
-becomes increasingly difficult for the programmer to write a correct
-program in one try, compile it and run it: writing a program longer
-than a few dozen of lines becomes a tight and non-linear interaction
-between the human and the type-checker involving constant experiments,
-fixes, etc. If this interaction is possible for short programs and
-fast checkers, it becomes increasingly hindered by the latency of
-complete rechecks: even if the modifications made to the program
-between two interactions are small, the whole program will be
-rechecked. This is especially true for languages embedding formal
-verification aspects, like proof assistants: there, tight interaction
-with a type or proof checker is unavoidable due to the difficulty of
-writing correct proofs without guidance from the system, and the time
-taken by the tool to infer trivial parts of the proofs (proof
-search). The constant modification of the source makes it necessary to
-observe \emph{incrementally} the effect of a small change on the whole
-edifice: we need to take advantage of the results of previous checks
-in order to build the result for a modified version of the program.
+As type systems become richer, it becomes increasingly difficult for
+the programmer to write a correct program in one try, compile it and
+run it: writing a program longer than a few dozen of lines becomes a
+tight and non-linear interaction between the human and the
+type-checker involving constant experiments, fixes, etc. If this
+interaction is possible for short programs and fast checkers, it
+becomes increasingly hindered by the latency of complete rechecks:
+even if the modifications made to the program between two interactions
+are small, the whole program is usually rechecked. This is especially
+true for languages embedding formal verification aspects, like proof
+assistants: there, tight interaction with a type or proof checker is
+unavoidable due to the difficulty of writing correct proofs without
+guidance from the system, and the time taken by many tools to infer
+easy parts of the proofs (proof search). The constant modification of
+the source makes it necessary to observe \emph{incrementally} the
+effect of a small change on the whole edifice: we need to take
+advantage of the results of previous checks in order to build the
+result for a modified version of the program.
 
-%% State your contributions (Bulleted list of contributions)
+Several methods have been devised for turning a batch procedure into
+an incremental one \cite{pugh1989incremental,
+  acar2003selective}. Unfortunately, they all suffer from their
+genericity on the particular problem of type checking:
+\begin{itemize}
+\item first, they ignore the higher-order nature of program syntax,
+  and the kind of structural quotients we make on syntax trees with
+  binders and environments ($\alpha$-equivalence, weakening\ldots): a
+  ground derivation of $\vdash 2+2 : \cst{nat}$ is still valid when
+  put under a binder $\vdash\lam x 2 + 2 - x:\cst{nat}\to\cst{nat}$
+  and should not be regenerated;
+\item for very large programs, we might want to feed the type checker
+  only with a small \emph{delta} on the previous version and not the
+  whole program, thus saving the time to recognize already checked
+  parts;
+\item finally, there is no way to \emph{a posteriori} validate the
+  result of the incremental process: the user has to trust not only
+  the type-checking algorithm but also its transformation into an
+  incremental one.
+\end{itemize}
+It just so happens that, if we consider as above a type-checker as a
+derivation-generating procedure, and storing these derivations between
+calls to the procedure, we could recognize already-built
+subderivations for subterms common to a checked and a new version to
+check of the program, and graft these pieces of derivation to form a
+new, large one for the whole modified program, saving the regeneration
+of all equal subterms' derivations in compatible contexts. This way we
+maintain the verifiable witness of well-typing for the program, and
+take advantage of the quotients made on higher-order syntax.
+
+We can thus add to the previous list that explicitly generating typing
+derivations makes possible a form of safe incrementality by sharing
+common subderivations.
+
+In this paper, we present a framework to incrementally generate typing
+certificates represented in the \LF\ logical framework, and implemented
+as an \sysname{ML} library. We specifically propose:
+\begin{itemize}
+\item a simple language for representing programs and proof
+  deltas, derived from contextual \LF\ \cite{nanevski2008contextual};
+\item an untyped, unsafe calculus to write derivation-generating type
+  checkers, based on a notion of function inverse %TODO le nom?
+  to refer an already-computed value;
+\item a generic algorithm to evaluate these type-checkers on program
+  deltas and verify on-the-fly the generated certificates
+  incrementally against a \emph{repository} of already constructed and
+  checked derivations.
+\end{itemize}
 
 \section{Background}
 %% It’s an unsolved problem (1 page)
 
 \paragraph{Motivational example}
 
-A student (the first author) is learning about System \sysname T, and
-wants to write a program computing $(2+2)\times 3$. He knows that
-sometimes those $\cst{rec}$ arguments are quite hard to get correct,
-but System \sysname T is a typed language; he wants to take advantage
-of this to build his program incrementally using the teacher's (the
-first author too) provided incremental verifier. As a first attempt,
-he wants to verify $P_1$:
+A student is learning about System \sysname T, and wants to write a
+program computing $(2+2)\times 3$. He knows that sometimes those
+$\cst{rec}$ arguments are quite hard to get correct, but System
+\sysname T is a typed language; he wants to take advantage of this to
+build his program incrementally using the teacher's provided
+incremental verifier. As a first attempt, he wants to verify $P_1$:
 $$
 \recb{\s\z}{\s\z}{\lam x\lam y \s {\var x}}\ \text{.}
 $$
@@ -181,13 +225,13 @@ But he (or his text editor) realizes that some parts of this program
 have not changed: both $\s\z$, and the function $\lam x\lam y\s{\var
   x}$, and he could reuse the pieces of derivation just built. Let us
 call these $\md_2$, $\md_3$ and $\md_4$. Provided there is an operator
-$\get\md$ from the derivation to the program it types, what needs
+$\fget\md$ from the derivation to the program it types, what needs
 really to be sent to the system is:
 \begin{align*}
   &\finfer{(
     \letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
-      {\var y} {\get{\md_4}}}
-    \app{\var{add}}\app{\get{\md_2}}{\get{\md_2}}
+      {\var y} {\fget{\md_4}}}
+    \app{\var{add}}\app{\fget{\md_2}}{\fget{\md_2}}
   )}
 \ \text{,}
 \end{align*}
@@ -197,12 +241,12 @@ free to use it in the new context where
 $\var{add}:\cst{nat}\to\cst{nat}$, because System \sysname T enjoys
 the \emph{weakening} property. Taking advantage of $\md_2$ and $\md_4$
 the system succeeds with a new derivation made out of these, without
-having to regenerate them because it knows that $\finfer{\get\md} =
+having to regenerate them because it knows that $\finfer{\fget\md} =
 \md$. Let us call $\md_5$ the subderivation generated for $\tlam x
 {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y}
-{\get{\md_4}}$, $\md_6$ for the arguments
-$\app{\get{\md_2}}{\get{\md_2}}$ and $\md_7$ for the call
-$\app{\var{add}} {\get{\md_6}}$. Even if it occurs originally in the
+{\fget{\md_4}}$, $\md_6$ for the arguments
+$\app{\fget{\md_2}}{\fget{\md_2}}$ and $\md_7$ for the call
+$\app{\var{add}} {\fget{\md_6}}$. Even if it occurs originally in the
 scope of $\var{add}$, $\md_6$ doesn't depend on the hypothesis $\var
 H$ that $\vdash \var{add}:\cst{nat}\to\cst{nat}$ because of the
 \emph{strengthening} property. Contrarily, $\md_7$ does: each time we
@@ -212,15 +256,15 @@ The student then provides a definition for multiplication, and writes
 the operation $(2 + 2)\times3$:
 \begin{align*}
   \finfer{}(
-  &\letb{add}{\get{\md_5}}
+  &\letb{add}{\fget{\md_5}}
   \\
   &\quad\letb{mul} { \tlam x {\cst{nat}} \tlam y
     {\cst{nat}} \recb \z {\var y} {\lam z \lam t
       \app{\var{add}}\app{\var x} {\var z}} }
   \\
   &\quad\quad\app{\var{mul}}\app
-  {(\get{\gsubst{\md_7}{\msubst H {\finfer{\var{add}}}}})}
-  {(\s{\get{\md_2}})}
+  {(\fget{\gsubst{\md_7}{\msubst H {\finfer{\var{add}}}}})}
+  {(\s{\fget{\md_2}})}
   )
   \ \text{.}
 \end{align*}
@@ -238,16 +282,16 @@ $(2+2)\times 3$ depending on derivations $\var{H}$ and $\var{H'}$ for $+$ and
 $\times$. He orders:
 \begin{align*}
 \finfer{}(
-\letb{add}{\get{\md_5}}
-\get{({\gsubst{\md_9} {\msubst {H} {(\get{\var{add}})}; \msubst {H'}
-      {\gsubst{\md_8}{\msubst H {(\get{\var{add}})}}}}})}
+\letb{add}{\fget{\md_5}}
+\fget{({\gsubst{\md_9} {\msubst {H} {(\fget{\var{add}})}; \msubst {H'}
+      {\gsubst{\md_8}{\msubst H {(\fget{\var{add}})}}}}})}
 )
   \ \text{.}
 \end{align*}
 The definition for $\var{add}$ is unchanged, but the instantiation of
 open derivations enables to directly substitute one in the other and
 get the appropriate program: call $\md_{10}$ the whole derivation just
-returned, $\get{\md_{10}}$ returns:
+returned, $\fget{\md_{10}}$ returns:
 \begin{align*}
   &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
     {\var y} {\lam x \lam y \s{\var x}}}
@@ -263,33 +307,55 @@ returned, $\get{\md_{10}}$ returns:
 
 \paragraph{Discussion}
 
-Although this small example may seem anecdotal, the interest of a
-mechanism for reusing results of derivation generation becomes clear
-on very large programs: then the cost of rechecking well-typing of a
-small modification amounts to recheking the path in the term from the
-root to the changed part, and the changed part itself.
+We choose here to represent deltas as usual terms with variables $\var
+x, \var y$ and special, \emph{meta}-variables referring to
+already-computed results $\md_i$. Commands sent to the system consists
+of terms, possibly containing special typed operators having a
+computational content: $\finfer{\cdot}$ takes a term $M$ and produces
+the (dependent) pair of a type $A$ and a derivation of the judgment
+$\vdash M:A$ in the current context; $\fget{\cdot}$ does the exact
+converse: it takes a derivation $\vdash M:A$ and projects it back as
+the term $M$. The successful result of a command execution is a
+derivation where each subderivation has been given a unique
+metavariable name for later reuse (a \emph{repository}). As
+subderivations can have free variables, we close them by a local
+environment that must be instantiated by a \emph{substitution}.
 
-A type-checker is usually viewed as an algorithm returning a binary
-answer (ok/error), specified by a set of inference rules. Seeing
-type-checking as issueing a completely explicit typing derivation
-enables to think of the relationship between the input and the
-output. Feeding part of the output $\md_i$ back to the input $P_i$ is
-a well-known technique for handling changes in the input: combined
-with a way to automatically recognize already-computed input, it is
-\emph{memoization}, a general-purpose technique for incremental
-computation that has been extensively studied and combined with other
-techniques \cite{pugh1989incremental, acar2003selective}. However, it
-is best understood in the case of purely first-order data, and to our
-best knowledge remains unexplored for higher-order structures
-containing binders, like programs and proofs. In this case,
+Although this small example may seem anecdotal, the interest of such a
+mechanism becomes clear on very large programs: then the cost of
+rechecking well-typing of a small modification amounts to rechecking
+the path in the term from the root to the changed part, and the
+changed part itself.
+
+%TODO figure?
+
+Seeing type-checking as issuing a completely explicit typing
+derivation enables thus to think of the relationship between the input
+and the output. Feeding subterms of the output $\md_i$ back into
+subterms of the input $P_i$ is a well-known technique for handling
+changes in the input: combined with a way to automatically recognize
+already-computed input, it is \emph{memoization}, a general-purpose
+technique for incremental computation that has been extensively
+studied and combined with other techniques \cite{pugh1989incremental,
+  acar2003selective}. However, it is best understood in the case of
+purely first-order data, and to our best knowledge remains unexplored
+for higher-order structures containing binders, like programs and
+proofs.
+
+A memoized type-checker stores in a table bindings from its input (the
+program) to its output (the derivation), and returns automatically the
+stored output if the current input matches a binding in the table. It
+thus performs two operations at once: output reuse and recognition of
+already-seen input. Since       %TODO
+
 
 To simplify the problem,
 we separate the task in:
 \begin{itemize}
-\item from a modified program, generate the \emph{diff} against the
+\item from a modified program, generate the \emph{delta} against the
   previous version, that is, observing and linking to unchanged
   derivations.
-\item given a \emph{diff}, construct a new derivation and verify it.
+\item given a \emph{delta}, construct a new derivation and verify it.
 \end{itemize}
 The latter is the subject of this paper.
 
@@ -305,7 +371,7 @@ the question of the \emph{data structure} to use for these
 certificates. The requirements are:
 \begin{itemize}
 \item conciseness of the certificates, since they are usually stored
-  or transfered remotely; in particular,
+  or transferred remotely; in particular,
 \item a well-understood, short and independent verification algorithm;
   this is known as the \emph{de Bruijn principle}.
 \item universality with respect to the particular problem: having a
@@ -315,12 +381,12 @@ certificates. The requirements are:
   trust on the unique verifier.
 \end{itemize}
 
-The Edimburgh Logical Framework \cite{harper1993framework}, or \LF\
+The Edinburgh Logical Framework \cite{harper1993framework}, or \LF\
 for short, is a well-accepted solution to this question. It is a typed
 lambda-calculus and can be viewed as a language for
 \emph{representing} terms, derivations and statements of $\Pi_0^1$
 meta-theorems (but not their proofs) in a given inference system
-supporting hypothetical judgements \cite{pfenning2001logical}. For
+supporting hypothetical judgments \cite{pfenning2001logical}. For
 these, it provides built-in support for encoding languages with
 binders or hypothesis (a feature called $\lambda$-tree syntax or HOAS
 \cite{pfenning1988higher}). The user gives a \emph{signature} defining
@@ -438,12 +504,12 @@ given one.
 
 \paragraph{Substitution}
 
-We overload \emph{substitution} as a partial operation on objects, given
-a parallel substitution $\sigma$. Since the syntax of object is not
-stable by (textual) substitution, it is defined \emph{hereditarily}: it
-is mutually recursive with a \emph{cut} function $\gcut M S$ which can
-in turn trigger a chain of substitutions, leading to a canonical objects
-or an error.
+We overload \emph{substitution} as a partial operation on objects,
+given a parallel substitution $\sigma$. Since the syntax of object is
+not stable by (textual) substitution, it is defined as
+\emph{hereditary}: it is mutually recursive with a \emph{cut} function
+$\gcut M S$ which can in turn trigger a chain of substitutions,
+leading to a canonical objects or an error.
 \begin{align*}
   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
   \text{if $\var x\notin \dom{\sigma}$}
@@ -498,9 +564,9 @@ if it is defined.
 
 Note that this notion of substitution differs from hereditary
 substitution found in \eg\ \cite{hl07mechanizing} as it presupposes
-$\eta$-long normal forms: once a cut starts, there must be exactly as
-many formal and actual arguments. A non-empty spine cut against
-another non-empty spine $\gcut {\app H S} {S'}$ blocks the
+$\eta$-long normal forms: once a \emph{cut} starts, there must be
+exactly as many formal and actual arguments. A non-empty spine cut
+against another non-empty spine $\gcut {\app H S} {S'}$ blocks the
 substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
 implicit $\eta$-expansion); conversely, exhausting actual but not
 formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
@@ -580,10 +646,10 @@ $$
 % du type
 
 The algorithm is presented in Fig. \ref{fig:obj-typing} as a
-syntax-directed inference system. All judgements are of the form $\gjo
+syntax-directed inference system. All judgments are of the form $\gjo
 U V W$ where $U$ and $V$ are inputs, $V$ is the induction hypothesis
 and $W$ the output. They are parameterized by a constant and implicit
-signature $\Sigma$, and all premisses are ordered in the algorithmical
+signature $\Sigma$, and all premises are ordered in the algorithmic
 order of computation.
 
 \begin{figure*}
