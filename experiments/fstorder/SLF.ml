@@ -27,6 +27,62 @@ type entry_type =
 
 type sign = (string * term * entry_type) list
 
+exception Ident_not_found of ident
+exception Unnamed_variable of int
+exception Ill_formed_product of term
+exception Not_an_obj of term
+exception Not_a_fam of term
+exception Not_a_kind of term
+
+module SLFPrinter = struct
+
+  open Format
+  open Print
+
+  let str fmt s = fprintf fmt "%s" s
+
+  let term_prec = function
+    | Type | Ident _ | Meta _ -> 0
+    | Lam _ -> 20
+    | App _ -> 10
+    | Prod _ -> 30
+
+  let ident fmt = function
+    | Id s -> str fmt s
+    | Inv (s, n) -> fprintf fmt "%a^%d" str s n
+    | Unnamed n -> fprintf fmt "_UNNAMED_%d" n
+    | Unbound n -> fprintf fmt "_UNBOUND_%d" n
+
+  let term pp fmt = function
+    | Meta (x, []) -> fprintf fmt "?%s" x
+    | Meta (x, s) -> fprintf fmt "?%s[@[%a@]]" x (list_rev semi (pp (fun _ _ -> true))) s
+    | Ident x -> ident fmt x
+    | Prod (None, a, b) -> fprintf fmt "@[<hov 2>%a@ ->@ %a@]" (pp (<)) a (pp (<=)) b
+    | Prod (Some x,a,b) -> fprintf fmt "@[<hov 2>@[<h>{%a@ :@ %a}@]@ %a@]"
+	str x (pp (<=)) a (pp (<=)) b
+    | Lam (Some x, t) -> fprintf fmt "@[<hov 2>[%s]@ %a@]" x (pp (<=)) t
+    | Lam (None, t) -> fprintf fmt "@[<hov 2>[_]@ %a@]" (pp (<=)) t
+    | App (t,u) -> fprintf fmt "@[<hov 2>%a@ %a@]" (pp (<=)) t (pp (<)) u
+    | Type -> fprintf fmt "@[type@]"
+      
+  let term fmt t = paren term term_prec 100 (<=) fmt t
+
+  let sharp b fmt x = if b then fprintf fmt "@[#%a@]" str x else fprintf fmt "@[%a@]" str x
+  let code fmt f = fprintf fmt "<fun>"
+
+  let binders : binder list printing_fun  = list semi (opt_under str)
+
+  let rec sign fmt = function
+    | [] -> ()
+    | [x, t, Sliceable] -> fprintf fmt "@[%a : %a.@]" str x term t
+    | [x, t, Non_sliceable] -> fprintf fmt "@[#%a : %a.@]" str x term t
+    | [x, t, Defined _] -> fprintf fmt "@[%a@ :@ %a@ =@ <fun>.@]" str x term t
+    | a :: s -> fprintf fmt "%a@,%a" sign [a] sign s
+
+  let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
+
+end
+
 module rec Strat : sig
 
   type entity =
@@ -40,6 +96,7 @@ module rec Strat : sig
   val kind : Struct.sign -> binder list -> term -> LF.kind
   val entry_type : entry_type -> Sign.entry_type
   val env : Struct.sign -> Struct.env -> (binder * term) list -> env
+
 end = struct
 
   open Util
@@ -63,9 +120,10 @@ end = struct
               ignore (Sign.ofind x sign);
               Obj (LF.mkApp (LF.HConst x, l))
             with Not_found ->
-              let x = FConst.make x in
-              try ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
-              with Not_found -> failwith ("strat: not found "^FConst.repr x)
+              try
+                let x = FConst.make x in
+                ignore(Sign.ffind x sign); Fam (LF.FApp (x, l))
+              with Not_found -> raise (Ident_not_found (Id x))
         end
     | Inv (x, n) ->
         begin
@@ -73,9 +131,9 @@ end = struct
             let x = OConst.make x in
             ignore (Sign.ofind x sign);
             Obj (LF.mkApp (LF.HInv (x, n), l))
-          with Not_found -> failwith ("strat: not found "^x^"^")
+          with Not_found -> raise (Ident_not_found (Id x))
         end
-    | Unnamed i -> failwith ("strat: unnamed variable "^(string_of_int i))
+    | Unnamed i -> raise (Unnamed_variable i)
     | Unbound i -> Obj (LF.mkApp (LF.HVar (i + List.length names), l))
 
   let rec app sign env l = function
@@ -90,9 +148,7 @@ end = struct
       begin match term sign env a, term sign (x::env) b with
         | Fam a, Kind k -> Kind (LF.KProd (x, a, k))
         | Fam a, Fam b -> Fam (LF.FProd (x, a, b))
-        | Kind _, _ -> failwith "strat: prod argument is a kind"
-        | Fam _, Obj _ -> failwith "strat: prod body is an obj"
-        | Obj _, _ -> failwith "strat: prod argument is an obj"
+        | _ -> raise (Ill_formed_product (Prod(x, a, b)))
       end
     | App (t, u) -> app sign env [obj sign env u] t
     | Ident x -> lookup sign env [] x
@@ -102,15 +158,20 @@ end = struct
 
   and obj sign env t = match term sign env t with
     | Obj m -> m
-    | _ -> failwith "strat: not an obj"
+    | _ -> raise (Not_an_obj t)
 
   let fam sign env t = match term sign env t with
     | Fam a -> a
-    | _ -> failwith "strat: not a fam"
+    | _ -> raise (Not_a_fam t)
 
   let kind sign env t = match term sign env t with
     | Kind k -> k
-    | _ -> failwith "strat: not a kind"
+    | _ -> raise (Not_a_kind t)
+
+  (* let obj sign env t = *)
+  (*   Debug.log "Strat.obj" "%a ⊢ %a" SLFPrinter.binders env SLFPrinter.term t; *)
+  (*   let r = obj sign env t in *)
+  (*   r *)
 
   (* TODO: le names_of? *)
   let rec env sign e0 = function
@@ -220,45 +281,7 @@ module Printer = struct
   open Format
   open Print
 
-  let str fmt s = fprintf fmt "%s" s
-
-  let term_prec = function
-    | Type | Ident _ | Meta _ -> 0
-    | Lam _ -> 20
-    | App _ -> 10
-    | Prod _ -> 30
-
-  let ident fmt = function
-    | Id s -> str fmt s
-    | Inv (s, n) -> fprintf fmt "%a^%d" str s n
-    | Unnamed n -> fprintf fmt "_UNNAMED_%d" n
-    | Unbound n -> fprintf fmt "_UNBOUND_%d" n
-
-  let term pp fmt = function
-    | Meta (x, []) -> fprintf fmt "?%s" x
-    | Meta (x, s) -> fprintf fmt "?%s[@[%a@]]" x (list_rev semi (pp (fun _ _ -> true))) s
-    | Ident x -> ident fmt x
-    | Prod (None, a, b) -> fprintf fmt "@[<hov 2>%a@ ->@ %a@]" (pp (<)) a (pp (<=)) b
-    | Prod (Some x,a,b) -> fprintf fmt "@[<hov 2>@[<h>{%a@ :@ %a}@]@ %a@]"
-	str x (pp (<=)) a (pp (<=)) b
-    | Lam (Some x, t) -> fprintf fmt "@[<hov 2>[%s]@ %a@]" x (pp (<=)) t
-    | Lam (None, t) -> fprintf fmt "@[<hov 2>[_]@ %a@]" (pp (<=)) t
-    | App (t,u) -> fprintf fmt "@[<hov 2>%a@ %a@]" (pp (<=)) t (pp (<)) u
-    | Type -> fprintf fmt "@[type@]"
-      
-  let term fmt t = paren term term_prec 100 (<=) fmt t
-
-  let sharp b fmt x = if b then fprintf fmt "@[#%a@]" str x else fprintf fmt "@[%a@]" str x
-  let code fmt f = fprintf fmt "<fun>"
-
-  let rec sign fmt = function
-    | [] -> ()
-    | [x, t, Sliceable] -> fprintf fmt "@[%a : %a.@]" str x term t
-    | [x, t, Non_sliceable] -> fprintf fmt "@[#%a : %a.@]" str x term t
-    | [x, t, Defined _] -> fprintf fmt "@[%a@ :@ %a@ =@ <fun>.@]" str x term t
-    | a :: s -> fprintf fmt "%a@,%a" sign [a] sign s
-
-  let sign fmt s = fprintf fmt "@,@[<v>%a@]" sign s
+  include SLFPrinter
 
   let eobj e fmt m = term fmt (Unstrat.obj e m)
   let efam e fmt a = term fmt (Unstrat.fam e a)

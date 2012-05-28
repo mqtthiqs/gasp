@@ -39,3 +39,9 @@ let opt f fmt = function
 let opt_under f fmt = function
   | None -> fprintf fmt "_"
   | Some x -> fprintf fmt "%a" f x
+
+open Util
+
+let union f g fmt = function
+  | Inl x -> f fmt x
+  | Inr y -> g fmt y

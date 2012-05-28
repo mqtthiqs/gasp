@@ -18,7 +18,7 @@ let repo = Version.init
   $.
 
   omega : tm -> tm = $ fun m ->
-    match* << omega m >> with
+    match* << omega $m$ >> with
       | << lam $m$ >> -> return << lam $m$ >>
       | << app $m$ $n$ >> -> return << app $m$ $n$ >>
       | << $id:x$ >> -> return << $id:x$ >>

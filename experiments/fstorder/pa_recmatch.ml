@@ -8,8 +8,7 @@ expr: LEVEL "top" [
   <:expr<
     let (__repo, __v) = __eval __repo $e2$ $e1$ in
     match __v with
-      [$a$
-      | default -> failwith "match failure"]
+      [$a$]
   >>
 
   | "let"; "*"; p = patt; o = OPT ["in"; e2 = expr LEVEL "apply" -> e2]; "=";
@@ -18,8 +17,7 @@ expr: LEVEL "top" [
     <:expr<
       let (__repo, __v) = __eval __repo $e2$ $e1$ in
       match __v with
-          [ $p$ -> $e3$
-          | t -> raise (Kernel.Not_evaluable (__repo, t)) ]
+          [ $p$ -> $e3$]
   >>
 
   | "return"; e=expr -> <:expr< (__repo, $e$) >>

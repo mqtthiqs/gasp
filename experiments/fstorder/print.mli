@@ -1,4 +1,5 @@
 open Format
+open Util
 
 type level = int
 
@@ -24,3 +25,4 @@ val str : string printing_fun
 val int : int printing_fun
 val opt : 'a printing_fun -> 'a option printing_fun
 val opt_under : 'a printing_fun -> 'a option printing_fun
+val union : 'a printing_fun -> 'b printing_fun -> ('a, 'b) union printing_fun

@@ -60,7 +60,7 @@ let repo = Version.init
             | << arr $b1$ $b2$ >> ->
                 let* << one >> = << equals $a1$ $a2$ >> in
                 return << equals $b1$ $b2$ >>
-            | << $id:x$ >> -> failwith "types not equal"
+            | << $id:_$ >> -> failwith "types not equal"
           end
     $.
 
@@ -78,7 +78,7 @@ let repo = Version.init
             | << arr $a$ $b$ >> ->
                 let* << one >> = << equals $a$ $a'$ >> in
                 return << ex (app $m$ $n$) $b$ (is_app $m$ $n$ $a$ $b$ $d1$ $d2$) >>
-            | << $id:x$ >> -> failwith "non-functional application"
+            | << $id:_$ >> -> failwith "non-functional application"
           end
       | << o >> -> return << ex o nat is_o >>
       | << s $m$ >> ->
@@ -111,18 +111,17 @@ let repo = Version.init
     repo, r
   $.
 
-
   red_lam : {M : tm -> tm} {N : tm} {A : tp} {B : tp}
              is (lam A [x] M x) (arr A B) -> is N A ->
              is (M N) B = $ fun _ n _ _ hm hn ->
     match* hm with
-      | << is_lam $m$ $a$ $b$ $h$ >> -> return << $h$ $n$ $hn$ >>
+      | << is_lam $_$ $_$ $_$ $h$ >> -> return << $h$ $n$ $hn$ >>
   $.
 
-  red_let : {M : tm -> tm} {N : tm} {A : tp} {B : tp}
-             is (letb N [x] M x) A -> is (M N) A = $ fun m n a b hl ->
+  inline : {M : tm -> tm} {N : tm} {A : tp}
+             is (letb N [x] M x) A -> is (M N) A = $ fun _ _ _ hl ->
     match* hl with
-      | << is_let $m$ $n$ $a$ $b$ $hm$ $h$ >> ->
+      | << is_let $_$ $n$ $_$ $_$ $hm$ $h$ >> ->
           return << $h$ $n$ $hm$ >>
   $.
 
@@ -184,6 +183,44 @@ Tests.commit repo
     letb (lam nat [x] lam nat [y] recb (s o) y [z] [_] app (app mult x) z) [exp]
     letb (lam nat [x] recb o x [_] [w] w) [pred]
     app (app exp (s o)) (s o)
+  )
+>>
+;;
+
+(* Incremental tests *)
+
+let repo = Tests.commit repo
+<<
+  infer (recb (s o) (s o) [x] [y] s x)
+>>
+;;
+
+let repo = Tests.commit repo
+<<
+  infer (
+    letb (lam nat [x] lam nat [y] recb x y [z] [_] (infer^0 z ?X26[z;infer z])) [add]
+    app (app add (infer^0 ?X23) (infer^0 ?X23))
+  )
+>>
+;;
+
+let repo = Tests.commit repo
+<<
+  infer (
+    letb ?X42 [add]
+    letb (lam nat [x] lam nat [y] recb o y [z][_] add x z) [mul]
+    app (app mul ?X43[add; infer add]) (s (infer^0 ?X23))
+  )
+>>
+;;
+
+let repo = Tests.commit repo
+<<
+  infer (
+    letb ?X42 [add]
+    infer^0 (
+      inline ([x] ?X90[x]) ?X91 nat ?X92[add; infer add]
+    )
   )
 >>
 ;;

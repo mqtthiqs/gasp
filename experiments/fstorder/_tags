@@ -5,6 +5,6 @@
 
 <tests.ml> or <util.ml> : package(camlp4)
 <test_*.ml> : syntax(camlp4o), package(camlp4.quotations), dep(load.ml), dep(tests.ml), \
-              pa(SLF), pa(here), pa(recmatch)
+              pa(SLF), pa(here), pa(recmatch), warn(+a-p-u)
 
 <*.{byte,native,top}> : package(camlp4.lib), debug
