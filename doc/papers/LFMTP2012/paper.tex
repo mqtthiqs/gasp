@@ -62,7 +62,7 @@ incrementality, type checking, logical framework, version control
 The positive impact of rich type systems on programming language
 design is not to be demonstrated anymore, both in terms of the safety
 of programs --- they ``do not go wrong'', and programming practices
-\eg\ modularity, early bug catching. Verifying well-typing of
+--- modularity, early bug catching. Verifying well-typing of
 real-world programs is thus a critical matter, but it is a complex
 operation, for the compiler designer and for the human operator.
 
@@ -74,11 +74,13 @@ derivation in this system respect a certain dependability claim, the
 famous ``progress and preservation'' pair. Yet, actual algorithms of
 verification often differ very much from their declarative
 description. This is of course true when programs are provided with
-little type annotations (type inference), but is also true in many
-cases for what is usually called ``type checking'', or
-``church-style'' calculi. Take for example dependent type systems,
-relying on a certain notion of definitional equality on types, or type
-systems with subtype polymorphism: both rely on a rule of the form
+little type annotations (``type inference''), in which case the
+missing information has to be algorithmically synthesized, but is also
+true in many cases for what is commonly refered as ``type checking'',
+or explicit ``church-style'' calculi. Take for example dependent type
+systems, relying on a certain notion of definitional equality on
+types, or type systems with subtype polymorphism: both rely on a rule
+of the form
 $$
 \infer{\Gamma\vdash M : A \\ A\leq B}{\Gamma\vdash M : B}\ \text{,}
 $$
@@ -88,36 +90,38 @@ algorithm, and convince himself that both are equivalent. This task,
 often neglected, is nonetheless highly non-trivial and non-modular.
 
 The most common option is to formally prove the equivalence, \ie\ that
-the (typing) relation is actually a function. It is of course the most
-satisfactory because it allows to ``forget'' about the declarative
-system and take only the result of the algorithm into consideration,
-although these proofs can be difficult to obtain. But for the sake of
-the discussion, let us choose another path: derivations in the
-declarative systems, if they cannot always be algorithmically
-inferred, can be \emph{verified} if provided by an oracle. This way,
-even if the oracle is wrong, we have a way to decide it. Let us then
-imagine a type-checker to be the pair of 1/ an untrusted procedure
-$\finfer M$ for inferring a typing derivations out of programs $M$; it
-doesn't have to be complete, or even sound, and 2/ a trusted kernel
-$\fcheck{\md}$ for verifying these derivations in a given set of
-inference rules $\Sigma$. This scheme has the following advantages
-over the first approach:
+the (typing) relation is actually a function. Although these proofs
+can be difficult to obtain, it is the most satisfactory because it
+allows to ``forget'' about the declarative system and take only the
+result of the algorithm into consideration. But for the sake of the
+discussion, let us choose another path: derivations in the declarative
+systems, if they cannot always be easily inferred, can be
+\emph{verified} if provided by an oracle. Even if the oracle is wrong,
+we can tell cheaply by verifying the witness typing derivation it
+provides. Let us then imagine a type-checker to be the pair of 1/ an
+untrusted procedure $\finfer M$ for inferring a typing derivations out
+of programs $M$; it doesn't have to be complete, or even sound, and 2/
+a trusted and fast kernel $\fcheck{\md}$ for verifying these
+derivations in a given set of inference rules $\Sigma$. This is a
+certifying scheme: if $\fcheck{\finfer M} = \cst{true}$ then there
+really \emph{is} a derivation $\md$ for $M$. Of course the converse is
+not necessarily true: function $\finfer{}\!\!$ could fail, or have
+bugs (return an incorrect derivation). Explicitly generating the
+derivation in the declarative system has the following advantages over
+the first approach:
 \begin{itemize}
 \item it is lightweight: the untrusted algorithm is usually shorter
   than the corresponding equivalence proof
-\item it is certifying: if $\fcheck{\finfer M} = \cst{true}$ then
-  there really \emph{is} a derivation $\md$ for $M$. Of course the
-  converse is not necessarily true: function $\finfer{}\!\!$ could
-  fail, or have bugs (return an incorrect derivation).
 \item it inherits benefits from certifying approaches like
-  proof-carrying code \cite{necula1997proof}: %TODO third-party
-                                              %verification
+  proof-carrying code \cite{necula1997proof}: certificates can be
+  transmitted with the program, saving regeneration time and avoiding
+  to disclose the generation program.
 \item for optimization purpose, compilers often need to propagate type
   information in the chain of transformation; the typing derivation
   produced by $\finfer{}$ being explicit, it could constitute the data
   structure being exploited.
-\item \ldots\ but there is more:
 \end{itemize}
+\ldots\ but there is more:
 
 \paragraph{For the programmer}
 
@@ -129,7 +133,18 @@ program in one try, compile it and run it: writing a program longer
 than a few dozen of lines becomes a tight and non-linear interaction
 between the human and the type-checker involving constant experiments,
 fixes, etc. If this interaction is possible for short programs and
-fast checkers, it becomes increasingly difficult %TODO
+fast checkers, it becomes increasingly hindered by the latency of
+complete rechecks: even if the modifications made to the program
+between two interactions are small, the whole program will be
+rechecked. This is especially true for languages embedding formal
+verification aspects, like proof assistants: there, tight interaction
+with a type or proof checker is unavoidable due to the difficulty of
+writing correct proofs without guidance from the system, and the time
+taken by the tool to infer trivial parts of the proofs (proof
+search). The constant modification of the source makes it necessary to
+observe \emph{incrementally} the effect of a small change on the whole
+edifice: we need to take advantage of the results of previous checks
+in order to build the result for a modified version of the program.
 
 %% State your contributions (Bulleted list of contributions)
 
