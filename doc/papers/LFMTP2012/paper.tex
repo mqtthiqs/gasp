@@ -212,10 +212,10 @@ as an \sysname{ML} library. We specifically propose:
   checked derivations.
 \end{itemize}
 
-\section{Background}
+\section{Use case}
 %% It’s an unsolved problem (1 page)
 
-\paragraph{Motivational example}
+\paragraph{A backend for incremental type checking}
 
 A student is learning about System \sysname T --- a simply typed
 $\lambda$-calculus with natural numbers introduction $\z$ and $\s{M}$,
@@ -380,6 +380,19 @@ case a complex task that we hope to address in the future; we tackle
 here the verification of output reuse: given a delta, construct a new
 derivation and verify it.
 
+\paragraph{A language to write incremental type-checkers}
+
+A few days earlier, the teacher is preparing the tool for the students
+to train composing System \sysname{T} programs. He (or she) provides
+the abstract syntax, the typing rules and the typing algorithm in
+order to build the incremental type checker. How should he write the
+algorithm? Usually, it takes a program and an environment and returns
+nothing but we know that we want to return a derivation, and take
+advantage of a higher-order representation of the syntax, so it
+shouldn't be necessary to thread any explicit environment. %TODO
+$$
+
+$$
 \section{Here is my idea}
 %% Here is my idea (2 pages)
 
