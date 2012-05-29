@@ -64,7 +64,7 @@ design is not to be demonstrated anymore, both in terms of the safety
 of programs --- they ``do not go wrong'', and programming practices
 --- modularity, early bug catching. Verifying well-typing of
 real-world programs is thus a critical matter, but it is a complex
-operation, for the compiler designer and for the human operator.
+operation, for the compiler designer and for the human operator:
 
 \paragraph{For the compiler designer}
 
@@ -82,44 +82,61 @@ systems, relying on a certain notion of definitional equality on
 types, or type systems with subtype polymorphism: both rely on a rule
 of the form
 $$
-\infer{\Gamma\vdash M : A \\ A\leq B}{\Gamma\vdash M : B}\ \text{,}
+\infer{\Gamma\vdash M : A \\ A\leq B}{\Gamma\vdash M : B}
 $$
-for a given notion of $\leq$, which is not syntax-directed. The
+(for a given notion of $\leq$) which is not syntax-directed. The
 implementer then has to convert the declarative system to an
-algorithm, and convince himself that both are equivalent. This task,
-often neglected, is nonetheless highly non-trivial and non-modular.
+algorithm, and convince himself that both are equivalent. This task is
+highly non-trivial and non-modular: for instance, how to infer the
+type of a System \sysname{T} recursor
+$$
+\infer{
+  \Gamma\vdash M : \cst{nat}
+  \and
+  \Gamma\vdash N : A
+  \and
+  \Gamma, \var x:\cst{nat}, \var y:A\vdash P : A
+}{
+  \Gamma\vdash \recb M N x y P
+}
+$$
+in presence of subtyping? The problem is that we have to guess a type
+$A$ more general than that of $N$ and $P$, while giving that type to
+variable $\var y$. A well-known algorithm if the subtyping relation
+forms a complete lattice is to iterate the typing of $P$ with the join
+of the previously computed and the new type until a fixpoint is
+reached.
 
 The most common option is to formally prove the equivalence, \ie\ that
 the (typing) relation is actually a function. Although these proofs
 can be difficult to obtain, it is the most satisfactory because it
-allows to ``forget'' about the declarative system and take only the
-result of the algorithm into consideration. But for the sake of the
-discussion, let us choose another path: derivations in the declarative
-systems, if they cannot always be easily inferred, can be
-\emph{verified} if provided by an oracle. Even if the oracle is wrong,
-we can tell cheaply by verifying the witness typing derivation it
-provides. Let us then imagine a type-checker to be the pair of 1/ an
-untrusted procedure $\finfer M$ to infer a typing derivations out of
-programs $M$; it doesn't have to be complete, or even sound, and 2/ a
-trusted and fast kernel $\fcheck{\md}$ to verify these derivations in
-a given set of inference rules $\Sigma$. This is a \emph{certifying}
-scheme: if $\fcheck{\finfer M} = \cst{true}$ then there really
-\emph{is} a derivation $\md$ for $M$. Of course the converse is not
-necessarily true: function $\finfer{}\!\!$ could fail, or have bugs
-(return an incorrect derivation). Explicitly generating the derivation
-in the declarative system has the following advantages over the first
-approach:
+allows to take only the result of the algorithm into
+consideration. But let us choose another path for a minute:
+derivations in the declarative systems, if they cannot always be
+easily inferred, can be \emph{verified} if provided by an oracle. If
+the oracle is wrong, we can tell cheaply by verifying the witness
+typing derivation it provides. Let us then imagine a type-checker to
+be the pair of 1/ an untrusted procedure $\finfer M$ to infer a typing
+derivation out of program $M$; it doesn't have to be complete, or even
+sound, and 2/ a trusted and fast kernel $\fcheck{\md}$ to verify these
+derivations in a given set of inference rules $\Sigma$. This is a
+\emph{certifying} scheme: %TODO cite Leroy
+if $\fcheck{\finfer M} = \cst{true}$ then there really \emph{is} a
+derivation $\md$ for $M$, but the converse is not necessarily true:
+function $\finfer{}\!\!$ could fail, or have bugs (return an incorrect
+derivation). Explicitly generating the derivation in the declarative
+system has the following advantages over the first approach:
 \begin{itemize}
 \item it is lightweight: the untrusted algorithm is usually shorter
   than the corresponding equivalence proof
+\item compilers often need to propagate type information further in
+  the chain of transformation; the typing derivation produced by
+  $\finfer{}$ being explicit, it could constitute the data structure
+  being exploited.
 \item it inherits benefits from certifying approaches like
   proof-carrying code \cite{necula1997proof}: certificates can be
   transmitted with the program, saving regeneration time and avoiding
   to disclose the generation program.
-\item for optimization purpose, compilers often need to propagate type
-  information in the chain of transformation; the typing derivation
-  produced by $\finfer{}$ being explicit, it could constitute the data
-  structure being exploited.
 \end{itemize}
 \ldots\ but there is more:
 
@@ -127,7 +144,7 @@ approach:
 
 As type systems become richer, it becomes increasingly difficult for
 the programmer to write a correct program in one try, compile it and
-run it: writing a program longer than a few dozen of lines becomes a
+run it: writing a program longer than a few dozens of lines becomes a
 tight and non-linear interaction between the human and the
 type-checker involving constant experiments, fixes, etc. If this
 interaction is possible for short programs and fast checkers, it
@@ -152,9 +169,9 @@ genericity on the particular problem of type checking:
 \item first, they ignore the higher-order nature of program syntax,
   and the kind of structural quotients we make on syntax trees with
   binders and environments ($\alpha$-equivalence, weakening\ldots): a
-  ground derivation of $\vdash 2+2 : \cst{nat}$ is still valid when
-  put under a binder $\vdash\lam x 2 + 2 - x:\cst{nat}\to\cst{nat}$
-  and should not be regenerated;
+  hypothetical derivation of\ \ $\vdash x+2 : \cst{nat}$ is still valid
+  when put under a binder\ \ $\vdash\lam y (x + 2) -
+  y:\cst{nat}\to\cst{nat}$ and should not be regenerated;
 \item for very large programs, we might want to feed the type checker
   only with a small \emph{delta} on the previous version and not the
   whole program, thus saving the time to recognize already checked
@@ -162,17 +179,18 @@ genericity on the particular problem of type checking:
 \item finally, there is no way to \emph{a posteriori} validate the
   result of the incremental process: the user has to trust not only
   the type-checking algorithm but also its transformation into an
-  incremental one.
+  incremental one, which increases the size of the trusted base.
 \end{itemize}
-It just so happens that, if we consider as above a type-checker as a
-derivation-generating procedure, and storing these derivations between
-calls to the procedure, we could recognize already-built
-subderivations for subterms common to a checked and a new version to
-check of the program, and graft these pieces of derivation to form a
-new, large one for the whole modified program, saving the regeneration
-of all equal subterms' derivations in compatible contexts. This way we
-maintain the verifiable witness of well-typing for the program, and
-take advantage of the quotients made on higher-order syntax.
+
+Now, if we consider as above a type-checker as a derivation-generating
+procedure, and storing these derivations between calls to the
+procedure, we could recognize already-built subderivations for
+subterms common to a checked and a new version of the program, and
+graft these pieces of derivation to form a new, large one for the
+whole modified program, saving the regeneration of all equal subterms'
+derivations in compatible contexts. This way we constantly maintain
+the verifiable witness of well-typing for the program, and take
+advantage of the quotients made on higher-order syntax.
 
 We can thus add to the previous list that explicitly generating typing
 derivations makes possible a form of safe incrementality by sharing
@@ -184,9 +202,10 @@ as an \sysname{ML} library. We specifically propose:
 \begin{itemize}
 \item a simple language for representing programs and proof
   deltas, derived from contextual \LF\ \cite{nanevski2008contextual};
-\item an untyped, unsafe calculus to write derivation-generating type
-  checkers, based on a notion of function inverse %TODO le nom?
-  to refer an already-computed value;
+\item a computational language to write untrusted
+  derivation-generating type checkers, based on a notion of function
+  inverse %TODO le nom?
+  to refer to an already-computed value;
 \item a generic algorithm to evaluate these type-checkers on program
   deltas and verify on-the-fly the generated certificates
   incrementally against a \emph{repository} of already constructed and
@@ -198,14 +217,16 @@ as an \sysname{ML} library. We specifically propose:
 
 \paragraph{Motivational example}
 
-A student is learning about System \sysname T, and wants to write a
+A student is learning about System \sysname T --- a simply typed
+$\lambda$-calculus with natural numbers introduction $\z$ and $\s{M}$,
+and elimination ($\recb M N x y P$).  He (or she) wants to write a
 program computing $(2+2)\times 3$. He knows that sometimes those
 $\cst{rec}$ arguments are quite hard to get correct, but System
 \sysname T is a typed language; he wants to take advantage of this to
 build his program incrementally using the teacher's provided
 incremental verifier. As a first attempt, he wants to verify $P_1$:
 $$
-\recb{\s\z}{\s\z}{\lam x\lam y \s {\var x}}\ \text{.}
+\recb{\s\z}{\s\z} x y {\s {\var x}}\ \text{.}
 $$
 For this, he sends the command $\finfer{P_1}$ to the system. The
 $\finfer{}$ operator takes a well-formed program and tries to construct
@@ -217,35 +238,41 @@ The student then decides to factorize a definition for $\var{add}$ out
 of his code:
 \begin{align*}
   &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
-    {\var y} {\lam x \lam y \s{\var x}}}
+    {\var y} u v {\s{\var u}}}
   \\
   &\quad\app{\var{add}}\app{(\s\z)}{(\s\z)} \ \text{.}
 \end{align*}
 But he (or his text editor) realizes that some parts of this program
-have not changed: both $\s\z$, and the function $\lam x\lam y\s{\var
-  x}$, and he could reuse the pieces of derivation just built. Let us
-call these $\md_2$, $\md_3$ and $\md_4$. Provided there is an operator
-$\fget\md$ from the derivation to the program it types, what needs
-really to be sent to the system is:
+have not changed: both $\s\z$, and the function body $\s{\var x}$, and
+he could reuse the pieces of derivation just built. Let us call these
+respectively $\md_2$, $\md_3$ and $\md_4$. $\md_4$ is hypothetical: it
+depends on the hypothesis $H$ that\ \ $\vdash \var x:\cst{nat}$ .
+Provided there is an operator $\fget\md$ from the derivation to the
+program it types, what needs really to be sent to the system is:
 \begin{align*}
-  &\finfer{(
+  &\finfer{}(
     \letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
-      {\var y} {\fget{\md_4}}}
+      {\var y} u v {\fget{\gsubst{\md_4}{\msubst{H}{\finfer{\var u}}}}}}
+    \\&\qquad
     \app{\var{add}}\app{\fget{\md_2}}{\fget{\md_2}}
-  )}
+  )
 \ \text{,}
 \end{align*}
-that is, only the subterms of the program that changed. Derivations
-$\md_2$ and $\md_4$ used to live in the empty context, we are then
-free to use it in the new context where
-$\var{add}:\cst{nat}\to\cst{nat}$, because System \sysname T enjoys
-the \emph{weakening} property. Taking advantage of $\md_2$ and $\md_4$
-the system succeeds with a new derivation made out of these, without
-having to regenerate them because it knows that $\finfer{\fget\md} =
-\md$. Let us call $\md_5$ the subderivation generated for $\tlam x
-{\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y}
-{\fget{\md_4}}$, $\md_6$ for the arguments
-$\app{\fget{\md_2}}{\fget{\md_2}}$ and $\md_7$ for the call
+that is, only the changed subterms of the program. Derivations $\md_2$
+used to live in the empty context, we are then free to use it in the
+new context where $\var{add}:\cst{nat}\to\cst{nat}$, because System
+\sysname T enjoys the \emph{weakening} property; $\md_4$ depending on
+a derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole
+with the derivation $\finfer{\var u}$ inferred recursively for then
+new recursive argument $\var u$. Taking advantage of $\md_2$ and
+$\md_4$ the system succeeds with a new derivation made out of these,
+without having to regenerate them because it knows that
+$\finfer{\fget\md} = \md$.
+
+Let us call $\md_5$ the subderivation generated for $\tlam x
+{\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y} u v
+{\fget{\gsubst{\md_4}{\msubst H {\finfer{\var u}}}}}$, $\md_6$ for the
+arguments $\app{\fget{\md_2}}{\fget{\md_2}}$ and $\md_7$ for the call
 $\app{\var{add}} {\fget{\md_6}}$. Even if it occurs originally in the
 scope of $\var{add}$, $\md_6$ doesn't depend on the hypothesis $\var
 H$ that $\vdash \var{add}:\cst{nat}\to\cst{nat}$ because of the
@@ -259,7 +286,7 @@ the operation $(2 + 2)\times3$:
   &\letb{add}{\fget{\md_5}}
   \\
   &\quad\letb{mul} { \tlam x {\cst{nat}} \tlam y
-    {\cst{nat}} \recb \z {\var y} {\lam z \lam t
+    {\cst{nat}} \recb \z {\var y} z t {
       \app{\var{add}}\app{\var x} {\var z}} }
   \\
   &\quad\quad\app{\var{mul}}\app
@@ -272,7 +299,8 @@ Here again, he took care of reusing all derivations for equal
 subterms. In particular, $\md_7$ expects a proof that the variable
 $\var{add}$ is of type $\cst{nat}\to\cst{nat}$; he provides
 $\finfer{\var{add}}$ meaning: at this point we will have generated (or
-reused in this case) the derivation of $\var{add}$, so just use it.
+reused in this case) the derivation of $\var{add}$, so we just have to
+use it here.
 
 Finally, he decides (in an odd move) to inline the definition of
 $\var{mul}$ into its call site. Call $\md_8$ the derivation of the
@@ -294,10 +322,10 @@ get the appropriate program: call $\md_{10}$ the whole derivation just
 returned, $\fget{\md_{10}}$ returns:
 \begin{align*}
   &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
-    {\var y} {\lam x \lam y \s{\var x}}}
+    {\var y} x y {\s{\var x}}}
   \\&\quad
   {\tlam x {\cst{nat}} \tlam y
-    {\cst{nat}} \recb \z {\var y} {\lam z \lam t
+    {\cst{nat}} \recb \z {\var y} z t {
       \app{\var{add}}\app{\var x} {\var z}}}
   \\&\quad\quad
   \app{(\app {\var{add}} \app {(\s{\s\z})}
@@ -346,34 +374,27 @@ A memoized type-checker stores in a table bindings from its input (the
 program) to its output (the derivation), and returns automatically the
 stored output if the current input matches a binding in the table. It
 thus performs two operations at once: output reuse and recognition of
-already-seen input. Since       %TODO
-
-
-To simplify the problem,
-we separate the task in:
-\begin{itemize}
-\item from a modified program, generate the \emph{delta} against the
-  previous version, that is, observing and linking to unchanged
-  derivations.
-\item given a \emph{delta}, construct a new derivation and verify it.
-\end{itemize}
-The latter is the subject of this paper.
+already-seen input. Recognition --- that is from a modified program,
+generate a delta from previous versions --- is in the higher-order
+case a complex task that we hope to address in the future; we tackle
+here the verification of output reuse: given a delta, construct a new
+derivation and verify it.
 
 \section{Here is my idea}
 %% Here is my idea (2 pages)
 
 % lambda-lifting
 
-\subsection{The \LF\ representation language}
+\subsection{The representation language}
 
 The emission of certificates by untrusted applications first raises
 the question of the \emph{data structure} to use for these
 certificates. The requirements are:
 \begin{itemize}
-\item conciseness of the certificates, since they are usually stored
-  or transferred remotely; in particular,
-\item a well-understood, short and independent verification algorithm;
-  this is known as the \emph{de Bruijn principle}.
+\item conciseness of the certificates, since they are stored or even
+  transferred remotely;
+\item a well-understood, short and independent verification algorithm.
+  This is known as the \emph{de Bruijn principle};
 \item universality with respect to the particular problem: having a
   certificate language for each domain of application would just shift
   the problem of trust; having one universally accepted certificate
@@ -388,34 +409,63 @@ lambda-calculus and can be viewed as a language for
 meta-theorems (but not their proofs) in a given inference system
 supporting hypothetical judgments \cite{pfenning2001logical}. For
 these, it provides built-in support for encoding languages with
-binders or hypothesis (a feature called $\lambda$-tree syntax or HOAS
+binders and hypothesis (a feature called $\lambda$-tree syntax or HOAS
 \cite{pfenning1988higher}). The user gives a \emph{signature} defining
 abstract syntax and inference rules of his \emph{object language}, and
 gets an algorithm to verify terms and derivations expressed in the
-\LF\ syntax.
-
-This framework has been used to issue certificates for a number of
-practical applications like proof-carrying code
+\LF\ syntax. This framework has been used to issue certificates for a
+number of practical applications like proof-carrying code
 \cite{necula1997proof}, authentication framework \cite{appel1999proof}
 \ldots %TODO ATP
 
-In all these applications, the user feeds the generation program with
-a query (the program to compile to machine-code, the access query, the
-statement of a theorem \ldots) and gets in return a result (machine
-code, yes/no\ldots) together with a certificate that the result
-verifies the wanted property (semantics preservation, justification
-for granting access, proof of the theorem\ldots). A potential client
-can then verify independently that this result is adequate given the
-query: it suffices to batch-verify the certificate.
+To write deltas by sharing subterms, we need to be able to address any
+subterm and instantiate its free variables. For this, we define the
+the \emph{slicing} of a well-typed \LF\ term: we extend \LF\ with
+metavariables $\meta X$, $\meta Y$\ldots\ as in
+\cite{nanevski2008contextual}. Metavariables stand for well-typed
+terms defined in a repository, and are instantiated wrt. their free
+variables. A repository also contains a distinguished metavariable
+corresponding to the head of the term stored in it. For instance, the
+repository
+$$
+\left(\begin{array}{llll}
+    \meta X &\mapsto
+    \envnil&\vdash
+    \app{\cst{lam}} \lam x \smeta Y {\msubst u {\smeta T {\msubst w x}}} &:
+    \cst{tm}
+    \\
+    \meta Y &\mapsto
+    \env u {\cst{tm}} &\vdash
+    \app{\cst{lam}} \lam y \smeta Z {\msubstcons {\msubst u
+      {\var u}} v {\var y} } &:
+    \cst{tm}
+    \\
+    \meta Z &\mapsto
+    \envcons {\env u {\cst{tm}}} v {\cst{tm}} &\vdash
+    \app{\app{\cst{app}}{\var v}}{\var u} &:
+    \cst{tm}
+    \\
+    \meta T &\mapsto
+    \env x {\cst{tm}} &\vdash
+    \app{\cst{app}}\app{\var x}{\cst{0}} &:
+    \cst{tm}
 
-\subsection{Proof-carrying static analysis}
+\end{array}\right), \smeta X {}
+$$
+is one of the possible way of slicing of the term
+$$
+\fbox{$\app {\cst{lam}} \lam x
+\fbox{$\app {\cst{lam}} \lam y
+\fbox{\app {\cst{app}} \app {\var y}
+}$}
+{(\fbox{\app
+  {\cst{app}}\app{\var x}{\cst 0}})
+}
+$}$$
+where all boxed subterms are referable slices.
 
-\subsection{Storing computation results}
-\subsection{Naming intermediate results}
-
-\section{Examples}
-
-
+\subsection{Computational calculus}
+\subsection{Slicing results of computation}
 
 \section{The calculus}
 %% My idea works (details, data) (5 pages)
@@ -435,7 +485,7 @@ using metavariables.
 
 \paragraph{Syntax}
 
-In this variant, only $\eta$-long $\beta$-normal forms have an
+In this variant, only $\eta$-long and $\beta$-normal values have an
 existence: canonicity for $\beta$-reduction is enforced in the syntax
 and canonicity for $\eta$-expansion will be enforced by typing,
 following \cite{hl07mechanizing}. Besides, application of a

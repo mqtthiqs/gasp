@@ -64,6 +64,7 @@
 \newcommand\casenobar[1]{{#1}\to}
 
 % Environment
+\newcommand\env[2]{\tp{\var{#1}}{#2}}
 \newcommand\envnil{\gnil}
 \newcommand\envcons[3]{\gcons{#1}{\tp{\var {#2}}{#3}}}
 
@@ -148,7 +149,7 @@
 
 
 % System T
-\newcommand\recb[3]{\cst{rec}({#1},{#2},{#3})}
+\newcommand\recb[5]{\cst{rec}({#1},{#2},{\var{#3}}\,{\var{#4}}\postbinder{#5})}
 \newcommand\s[1]{\cst s ({#1})}
 \newcommand\z{\cst o}
 
