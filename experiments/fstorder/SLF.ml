@@ -168,10 +168,10 @@ end = struct
     | Kind k -> k
     | _ -> raise (Not_a_kind t)
 
-  let obj sign env t =
-    Debug.log "Strat.obj" "%a ⊢ %a" SLFPrinter.binders env SLFPrinter.term t;
-    let r = obj sign env t in
-    r
+  (* let obj sign env t = *)
+  (*   Debug.log "Strat.obj" "%a ⊢ %a" SLFPrinter.binders env SLFPrinter.term t; *)
+  (*   let r = obj sign env t in *)
+  (*   r *)
 
   (* TODO: le names_of? *)
   let rec env sign e0 = function
