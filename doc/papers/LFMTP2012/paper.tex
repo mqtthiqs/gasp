@@ -560,14 +560,17 @@ $$
   \vdash \{\var x : A\} : A
 }
 $$
-replace the usual ones.
+replace the usual ones. The difficulty with this technique,
+particularly in a dependent setting, is to ensure that term $\{\var
+x:A\}$ reduces to $\var x$ so that they are considered equal, \ie\ we
+can strip off the annotations, while not forgetting them too soon:
+otherwise we would arrive to the unhandled case $\finfer{\var
+  x}$. This requires evaluating the type-checker with a carefully
+designed strategy.
 
-The difficulty with this technique, particularly in a dependent
-setting, is to ensure that term $\{\var x:A\}$ reduces to $\var x$ so
-that they are considered equal, \ie\ we can strip off the annotations,
-while not forgetting them too soon: otherwise we would arrive to the
-unhandled case $\finfer{\var x}$. This requires evaluating the
-type-checker with a carefully designed strategy.
+For the sake of conciseness, we took a simple, syntax-directed system
+as example; this scales nonetheless to declaratively presented
+features like subtyping or conversion.
 
 \section{Here is my idea}
 %% Here is my idea (2 pages)
