@@ -13,6 +13,7 @@
 % Various
 \newcommand\To{\Rightarrow}
 \newcommand\sysname[1]{\ensuremath{\text{\rm\sf{#1}}}}
+\newcommand\rulename[1]{\ensuremath{\textsc{#1}}}
 
 % Grammars
 \newcommand\gor{\ {\big|}\ }
@@ -32,6 +33,7 @@
 \newcommand\cst[1]{\name{\textsf{#1}}}
 \newcommand\meta[1]{\name{\textsl{#1}}}
 \newcommand\repo[1]{\mathcal{#1}}
+\newcommand\syntax[1]{\operatorname{#1}}
 
 % General lists (cons and snoc)
 \newcommand\gnil{\cdot}
@@ -48,18 +50,23 @@
 % Terms
 \newcommand\postbinder{.\ }
 \newcommand\prd[2]{\Pi\tp{\var{#1}}{#2}\postbinder}
+\newcommand\sig[2]{\Sigma\tp{\var{#1}}{#2}\postbinder}
 \newcommand\prdi[1]{\forall{#1}\postbinder}
 \newcommand\app[1]{{#1}\ }
+\newcommand\pair[2]{\langle{#1}, {#2}\rangle}
 \newcommand\tlam[2]{\lambda\tp{\var{#1}}{#2}\postbinder}
 \newcommand\lam[1]{\lambda{\var {#1}}\postbinder}
-\newcommand\letb[2]{\ensuremath\mathsf{let}\ {\var{#1}}={#2}\ \mathsf{in}\ }
+\newcommand\lamd[1]{\lambda{#1}\postbinder}
+\newcommand\letd[2]{\ensuremath\syntax{let}{{#1}}={#2}\ \syntax{in}\ }
+\newcommand\letb[2]{\letd{\var{#1}}{#2}}
+\newcommand\letdin[3]{\letd{{#1}\syntax{in}{#2}}{#3}}
 \newcommand\smeta[2]{\gsubst{\meta{#1}}{#2}}
 
 \newcommand\spinenil{\gnil}
 \newcommand\spinecons[2]{{#1}\ {#2}}
 
-\newcommand\match[1]{\operatorname{case}\ {#1}\ \operatorname{of}\ }
-\newcommand\matchin[2]{\match{{#1}\ \operatorname{in}\ {#2}}}
+\newcommand\match[1]{\syntax{case}\ {#1}\ \syntax{of}\ }
+\newcommand\matchin[2]{\match{{#1}\ \syntax{in}\ {#2}}}
 \newcommand\case[1]{|\ {#1}\to}
 \newcommand\casenobar[1]{{#1}\to}
 
@@ -94,7 +101,7 @@
 \newcommand\mr{\repo R}
 \newcommand\mmr{\repo {R'}}
 \newcommand\mmmr{\repo {R''}}
-\newcommand\md{\mathcal D}
+\newcommand\md{\ensuremath{\mathcal D}}
 
 % Functions & operations
 \newcommand\checkout[1]{\downarrow{#1}}
@@ -156,3 +163,6 @@
 % fct/fct inverse
 \newcommand\finfer[1]{\uparrow\!{#1}}
 \newcommand\fget[1]{\downarrow\!{#1}}
+\newcommand\feq[2]{{#1}\equiv{#2}}
+
+\newenvironment{mathleft}{\medskip$\begin{array}{l}}{\end{array}$\medskip}

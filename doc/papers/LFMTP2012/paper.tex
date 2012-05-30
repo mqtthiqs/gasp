@@ -205,7 +205,7 @@ as an \sysname{ML} library. We specifically propose:
 \item a computational language to write untrusted
   derivation-generating type checkers, based on a notion of function
   inverse %TODO le nom?
-  to refer to an already-computed value;
+  to refer to already-computed values;
 \item a generic algorithm to evaluate these type-checkers on program
   deltas and verify on-the-fly the generated certificates
   incrementally against a \emph{repository} of already constructed and
@@ -215,7 +215,8 @@ as an \sysname{ML} library. We specifically propose:
 \section{Use case}
 %% It’s an unsolved problem (1 page)
 
-\paragraph{A backend for incremental type checking}
+\subsection{A backend for incremental type checking}
+\label{sec:use-incremental}
 
 A student is learning about System \sysname T --- a simply typed
 $\lambda$-calculus with natural numbers introduction $\z$ and $\s{M}$,
@@ -380,25 +381,201 @@ case a complex task that we hope to address in the future; we tackle
 here the verification of output reuse: given a delta, construct a new
 derivation and verify it.
 
-\paragraph{A language to write incremental type-checkers}
+\subsection{A language to write incremental type-checkers}
 
 A few days earlier, the teacher is preparing the tool for the students
 to train composing System \sysname{T} programs. He (or she) provides
-the abstract syntax, the typing rules and the typing algorithm in
-order to build the incremental type checker. How should he write the
-algorithm? Usually, it takes a program and an environment and returns
-nothing but we know that we want to return a derivation, and take
-advantage of a higher-order representation of the syntax, so it
-shouldn't be necessary to thread any explicit environment. %TODO
-$$
+the abstract syntax, the typing rules and the typing untrusted
+algorithm in order to build the incremental type checker. How should
+he write the algorithm? We know that we want to return a derivation,
+and take advantage of a higher-order representation of the syntax, so
+it shouldn't be necessary to thread any explicit environment. The
+definition should then start with:
 
+\begin{mathleft}
+  \finfer{}\ :\ \prd M {\cst{tm}} \sig A {\cst{tp}} (\vdash M : A) =
+\end{mathleft}
+
+\noindent
+It takes a term $M$ and producing the pair of a type $A$ and a
+derivation that $M$ has type $A$. Its code will be untyped, but
+the teacher provides this type so that the checker can verify that
+each call is fed and returns values of the right type: it is its
+\emph{contract} so to say. He first decomposes term $M$ and treats
+the easy cases of $\cst{o}$, $\cst{s}$ and $\cst{app}$:
+
+\begin{mathleft}
+  \lamd M \match{M} \\
+  \quad\case{\z} \pair {\cst{nat}}{\infer{ }{\vdash \cst o : \cst{nat}}} \\
+  \quad\case{\s M}
+  \letd {\pair {\cst{nat}} \md} {\finfer{M}}
+  \pair {\cst{nat}}{\infer\md{\vdash\app{\cst{s}} M : \cst{nat}}} \\
+  \quad\case{\app{M}N}
+  \letd {\pair {A_1\to B} {\md_1}} {\finfer{M}} \\
+  \quad\quad\letd {\pair {A_2} {\md_2}} {\finfer{N}} \\
+  \quad\quad\letd {\cst{true}} {\feq {A_1} {A_2}}
+  \pair {B} {\infer{\md_1 \and \md_2}{\vdash \app M N : B}}
+\end{mathleft}
+
+\noindent
+We write $\pair{\cdot}{\cdot}$ the constructor of $\Sigma$-types; the
+$\syntax{let}$ construct is just syntactic sugar for a one-branch
+$\syntax{case}$; patterns don't have to be exhaustive since we are in
+an untrusted setting; for conciseness, we use case failure for
+signaling typing error; we use an auxiliary function $\!\!\feq{}{}\!\!
+: \cst{tp}\to\cst{tp}\to\cst{bool}$ for syntactic comparison of types,
+defined the same way.
+
+Then comes the abstraction case $\tlam x A M$. The difficulty is that
+the recursive call $\finfer{M}$ must be done in an enlarged
+environment where $\vdash x : A$, otherwise the check that the
+returned open derivation $\md$ is correct would fail ($x$ is
+unknown). We thus introduce a new construct $\matchin M \Gamma \ldots$
+and its $\syntax{let}$ counterpart ($\match M \ldots$ being syntactic
+sugar for $\matchin M \envnil \ldots$). Even then, in the recursive
+call, arriving to variable $\var x$ would fail since we would have no
+way of telling its type anymore. Thus we substitute all occurrences of
+$\var x$ with the \emph{output} of function $\finfer{}$ on it (since
+it is known at this point), \ie\ a pair of $A$ and $\md_1$. For this
+substitution to be well-typed, we now need to coerce this output to a
+valid input (a term). We introduce an operator which is in some way
+the \emph{inverse} of $\finfer{}$: operator $\fget{}$ maps a pair of a
+type and a derivation to the term it types.
+
+\begin{mathleft}
+  \quad\case{\tlam x A M} \\
+  \quad\quad
+  \letdin{\pair B \md}{\env {$\md_{\var x}$} {(\vdash {\var x} : A)}}
+  {\finfer {\gsubst M {\msubst x {\fget{\pair A {\md_{\var x}}}}}}}
+\end{mathleft}
+
+At this point, we get back $B$ and $\md$ from the recursive call. We
+know that $B$ can't depend on $\md_x$ (because a type is always
+closed), but $\md$ can: it is not \emph{per se} a hypothetical
+derivation but an \emph{open} derivation where a special judgement
+named $\md_x$ can occur. To return the complete derivation of
+$\vdash\tlam A x M : A \to B$, we must then close, or ``hypothesize''
+$\md$ by $\md_x$, and then apply rule \rulename{Lam}:
+
+\begin{mathleft}
+  \quad\quad
+  \pair {A\to B}
+  {\infer{
+\mbox{$      \begin{array}{c}
+        {[\md_{\var x}]} \\
+        {\md}
+      \end{array}
+    $}    }{
+    \vdash\lam x M : A\to B
+  }}
+\end{mathleft}
+
+The case of $\cst{rec}$ is similar: we first compute recursively the
+derivations $\md_M$ and $\md_N$ which should be well-typed in the
+current environment, and then $\md_P$ in the enlarged environment,
+with variables $\var x$ and $\var y$ in $P$ substituted with the
+(future) result of $\finfer{}$.
+
+\begin{mathleft}
+  \quad\case{\recb M N x y P} \\
+  \quad\quad
+  \letd {\pair {\cst{nat}} {\md_M}} {\finfer{M}} \\
+  \quad\quad
+  \letd {\pair {A_1} {\md_N}} {\finfer{N}} \\
+  \quad\quad
+  \syntax{let} {\pair {A_2} {\md_P}} \syntax{in}
+  {(\envcons {\env {$\md_x$} {(\vdash
+        \var x : \cst{nat})}} {$\md_y$} {(\vdash\var y : A_1)})} = \\
+  \quad\quad\quad
+  {\finfer{\gsubst P {\msubstcons {\msubst x
+          {\fget{\pair{\cst{nat}}{\md_x}}}} y
+        {\fget{\pair{A_1}{\md_y}}}}}} \\
+  \quad\quad\letd {\cst{true}} {\feq {A_1} {A_2}} \\
+  \quad\quad
+  \pair {A} {
+    \infer{
+      \md_M \and
+      \md_N \and
+      \mbox{$
+        \begin{array}{c}
+          [\md_x] [\md_y] \\
+          \md_P
+      \end{array}
+        $}
+    }{
+      \vdash \recb M N x y P
+    }
+  }
+\end{mathleft}
+
+The type-checker is now done. There is no case for variables, as we
+won't ever meet this case: we already substituted all variables with
+their result derivation. We only need to make sure that in this case,
+the derivation will be returned:
 $$
+\finfer{\fget{\pair A \md}} = \md
+$$
+Now $\fget{}$ can be derived automatically from the type of
+$\finfer{}$: it is its inverse. It has definition:
+
+\begin{mathleft}
+  \fget{}\ :\ \prd{\{M\}}{\cst{tm}} \prd {A}{\cst{tp}} \prd{\md}{(\vdash
+    M:A)} \cst{tm} =
+  \\\quad \lamd M \lamd A \lamd \md M
+\end{mathleft}
+
+\noindent
+where argument $M$ is implicit.
+
+\paragraph{Discussion}
+
+We exploit here an idea similar to run-time
+\emph{contracts}: %TODO cite
+there is no static guarantee that computations won't return ill-typed
+values, but arguments and results are checked at run-time at the
+boundaries of defined functions. This allows to omit formal
+justifications, like the fact that $B$ can't depend on $\md_x$ in the
+$\lambda$ case, but of course incurs on the performance. This is
+compensated by the slicing mechanism described below in
+\ref{sec:repr}.
+
+Introducing the ``inverse'' of the derivation inference function has
+two purpose: as we saw in \ref{sec:use-incremental}, it allows to
+refer to already-constructed derivations when writing deltas. It also
+permits to abstract from the concrete environment when writing the
+type-checker itself, that one must thread throughout the process in a
+traditional, first-order type-checker. It is a generalization of the
+so-called \emph{context-free} typing presented in
+\cite[chap. 4]{boespflug2011conception} where a special variable
+construct $\{x:A\}$ denoting free variables is added to the syntax of
+terms, and the rules
+$$
+\infer{
+  \vdash \gsubst M {\msubst x {\{\var x:A\}}} : B
+}{
+  \vdash \tlam x A M : A\to B
+}
+\qquad\text{and}\qquad
+\infer{ }{
+  \vdash \{\var x : A\} : A
+}
+$$
+replace the usual ones.
+
+The difficulty with this technique, particularly in a dependent
+setting, is to ensure that term $\{\var x:A\}$ reduces to $\var x$ so
+that they are considered equal, \ie\ we can strip off the annotations,
+while not forgetting them too soon: otherwise we would arrive to the
+unhandled case $\finfer{\var x}$. This requires evaluating the
+type-checker with a carefully designed strategy.
+
 \section{Here is my idea}
 %% Here is my idea (2 pages)
 
 % lambda-lifting
 
 \subsection{The representation language}
+\label{sec:repr}
 
 The emission of certificates by untrusted applications first raises
 the question of the \emph{data structure} to use for these
@@ -426,7 +603,27 @@ binders and hypothesis (a feature called $\lambda$-tree syntax or HOAS
 \cite{pfenning1988higher}). The user gives a \emph{signature} defining
 abstract syntax and inference rules of his \emph{object language}, and
 gets an algorithm to verify terms and derivations expressed in the
-\LF\ syntax. This framework has been used to issue certificates for a
+\LF\ syntax.
+
+For instance, the rule for System \sysname{T}'s recursor can be
+encoded by the following constant:
+
+\begin{mathleft}
+  \cst{is\_rec}\ :\
+  \prd{M}{\cst{tm}}\prd{N}{\cst{tm}}\prd{P}{\cst{tm}\to\cst{tm}\to\cst{tm}}
+  \\\quad
+  \prd A {\cst{tp}}
+  \app {\cst{is}}\app M {\cst{nat}} \to \app{\cst{is}}\app N A \to \\\quad
+  \left(
+  \prd x {\cst{tm}} \prd y {\cst{tm}}
+  \app{\cst{is}}\app x \cst{nat} \to \app{\cst{is}}\app y A \to
+  \app{\cst{is}}\app {(\app P \app x y)} A
+  \right)\to\\\quad
+  \app{\cst{is}}\app{(\app{\cst{rec}}\app M \app N (\lam x\lam y \app
+    P\app x y))} A
+\end{mathleft}
+
+This framework has been used to issue certificates for a
 number of practical applications like proof-carrying code
 \cite{necula1997proof}, authentication framework \cite{appel1999proof}
 \ldots %TODO ATP
@@ -460,7 +657,7 @@ $$
     \\
     \meta T &\mapsto
     \env x {\cst{tm}} &\vdash
-    \app{\cst{app}}\app{\var x}{\cst{0}} &:
+    \app{\cst{app}}\app{\var x}{\cst{o}} &:
     \cst{tm}
 
 \end{array}\right), \smeta X {}
@@ -472,13 +669,12 @@ $$
 \fbox{\app {\cst{app}} \app {\var y}
 }$}
 {(\fbox{\app
-  {\cst{app}}\app{\var x}{\cst 0}})
+  {\cst{app}}\app{\var x}{\cst o}})
 }
 $}$$
 where all boxed subterms are referable slices.
 
-\subsection{Computational calculus}
-\subsection{Slicing results of computation}
+\subsection{The computational calculus}
 
 \section{The calculus}
 %% My idea works (details, data) (5 pages)
