@@ -120,7 +120,8 @@ be the pair of 1/ an untrusted procedure $\finfer M$ to infer a typing
 derivation out of program $M$; it doesn't have to be complete, or even
 sound, and 2/ a trusted and fast kernel $\fcheck{\md}$ to verify these
 derivations in a given set of inference rules $\Sigma$. This is a
-\emph{certifying} scheme: %TODO cite Leroy
+\emph{certifying} scheme (see \cite{leroy2006compcert} for a
+discussion on approaches to reliable compilers):
 if $\fcheck{\finfer M} = \cst{true}$ then there really \emph{is} a
 derivation $\md$ for $M$, but the converse is not necessarily true:
 function $\finfer{}\!\!$ could fail, or have bugs (return an incorrect
@@ -221,7 +222,7 @@ as an \sysname{ML} library. We specifically propose:
 A student is learning about System \sysname {T_{<:}} --- a simply
 typed $\lambda$-calculus with natural numbers $\cst{nat}$ coming in
 two sets $\cst{even}$ and $\cst{odd}$, introduction $\z$ and $\s{M}$,
-elimination ($\recb M N x y P$), and subtyping those types. He (or
+elimination ($\recb M N x y P$), and subtyping on those types. He (or
 she) wants to write a program computing $(2+2)\times 3$. He knows that
 sometimes those $\cst{rec}$ arguments are quite hard to get correct,
 but \sysname{T_{<:}} is a typed language; he wants to take advantage
@@ -268,13 +269,12 @@ new context where $\var{add}:\cst{nat}\to\cst{nat}$, because System
 a derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole
 with the derivation $\finfer{\var u}$ inferred recursively for then
 new recursive argument $\var u$. $\md_2$ derives $\vdash \s\z :
-\cst{even}$, but $\var{add}$ awaits $\cst{nat}$ arguments. When the
-system will generate this derivation, it will insert a coercion at
-these two points.
-% TODO j'en ss la ds la relecture F<
-Taking advantage of $\md_2$ and $\md_4$ the system
-succeeds with a new derivation made out of these, without having to
-regenerate them because it knows that $\finfer{\fget\md} = \md$.
+\cst{odd}$, but $\var{add}$ awaits $\cst{nat}$ arguments. When the
+system will generate this derivation, it will insert a coercion
+$\cst{odd} \leq \cst{nat}$ at these two points. Taking advantage of
+$\md_2$ and $\md_4$ the system succeeds with a new derivation made out
+of these, without having to regenerate them because it knows that
+$\finfer{\fget\md} = \md$.
 
 Let us call $\md_5$ the subderivation generated for $\tlam x
 {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y} u v
@@ -307,7 +307,9 @@ subterms. In particular, $\md_7$ expects a proof that the variable
 $\var{add}$ is of type $\cst{nat}\to\cst{nat}$; he provides
 $\finfer{\var{add}}$ meaning: at this point we will have generated (or
 reused in this case) the derivation of $\var{add}$, so we just have to
-use it here.
+use it here. $\md_2$ was deriving $\vdash\s\z:\cst{nat}$ (with a
+coercion since it was used as an argument to $\var{add}$); the system
+thus infer the more general type $\cst{nat}$ for $\s{\fget{\md_2}}$.
 
 Finally, he decides (in an odd move) to inline the definition of
 $\var{mul}$ into its call site. Call $\md_8$ the derivation of the
@@ -324,7 +326,7 @@ $\times$. He orders:
   \ \text{.}
 \end{align*}
 The definition for $\var{add}$ is unchanged, but the instantiation of
-open derivations enables to directly substitute one in the other and
+open derivations enables to directly substitute one into the other and
 get the appropriate program: call $\md_{10}$ the whole derivation just
 returned, $\fget{\md_{10}}$ returns:
 \begin{align*}
@@ -390,47 +392,71 @@ derivation and verify it.
 \subsection{A language to write incremental type-checkers}
 
 A few days earlier, the teacher is preparing the tool for the students
-to train composing System \sysname{T} programs. He (or she) provides
-the abstract syntax, the typing rules and the typing untrusted
-algorithm in order to build the incremental type checker. How should
-he write the algorithm? We know that we want to return a derivation,
-and take advantage of a higher-order representation of the syntax, so
-it shouldn't be necessary to thread any explicit environment. The
-definition should then start with:
+to train composing System \sysname{T_{<:}} programs. He (or she)
+provides the abstract syntax, the typing rules and the untrusted
+typing algorithm in order to build the incremental type checker. How
+should he write the algorithm? We know that we want to return a
+derivation, and take advantage of a higher-order representation of the
+syntax, so it shouldn't be necessary to thread any explicit
+environment. The definition should then start with:
 
 \begin{mathleft}
   \finfer{}\ :\ \prd M {\cst{tm}} \sig A {\cst{tp}} (\vdash M : A) =
 \end{mathleft}
 
 \noindent
-It takes a term $M$ and producing the pair of a type $A$ and a
-derivation that $M$ has type $A$. Its code will be untyped, but
-the teacher provides this type so that the checker can verify that
-each call is fed and returns values of the right type: it is its
-\emph{contract} so to say. He first decomposes term $M$ and treats
-the easy cases of $\cst{o}$, $\cst{s}$ and $\cst{app}$:
+Function $\finfer{}$ takes a term $M$ and produces the pair of an
+inferred type $A$ and a derivation that $M$ has type $A$. Its code
+will be untyped, but the teacher provides this type so that the
+checker can verify that each call is fed and returns values of the
+right type: it is its \emph{contract} so to say. He first decomposes
+term $M$ and treats the easy cases of $\cst{o}$ and $\cst{s}$:
 
 \begin{mathleft}
   \lamd M \match{M} \\
-  \quad\case{\z} \pair {\cst{nat}}{\infer{ }{\vdash \cst o : \cst{nat}}} \\
+  \quad\case{\z} \pair {\cst{even}}{\infer{ }{\vdash \cst o : \cst{even}}} \\
   \quad\case{\s M}
-  \letd {\pair {\cst{nat}} \md} {\finfer{M}}
+  \match{\finfer M} \\
+  \quad\quad\case{\pair{\cst{even}}\md}
+  \pair {\cst{odd}}{\infer\md{\vdash\app{\cst{s}} M : \cst{odd}}} \\
+  \quad\quad\case{\pair{\cst{odd}}\md}
+  \pair {\cst{even}}{\infer\md{\vdash\app{\cst{s}} M : \cst{even}}} \\
+  \quad\quad\case{\pair{\cst{nat}}\md}
   \pair {\cst{nat}}{\infer\md{\vdash\app{\cst{s}} M : \cst{nat}}} \\
-  \quad\case{\app{M}N}
-  \letd {\pair {A_1\to B} {\md_1}} {\finfer{M}} \\
-  \quad\quad\letd {\pair {A_2} {\md_2}} {\finfer{N}} \\
-  \quad\quad\letd {\cst{true}} {\feq {A_1} {A_2}}
-  \pair {B} {\infer{\md_1 \and \md_2}{\vdash \app M N : B}}
 \end{mathleft}
 
 \noindent
-We write $\pair{\cdot}{\cdot}$ the constructor of $\Sigma$-types; the
-$\syntax{let}$ construct is just syntactic sugar for a one-branch
-$\syntax{case}$; patterns don't have to be exhaustive since we are in
-an untrusted setting; for conciseness, we use case failure for
-signaling typing error; we use an auxiliary function $\!\!\feq{}{}\!\!
-: \cst{tp}\to\cst{tp}\to\cst{bool}$ for syntactic comparison of types,
-defined the same way.
+We write $\pair{\cdot}{\cdot}$ the constructor of $\Sigma$-types;
+patterns don't have to be exhaustive since we are in an untrusted
+setting; for conciseness, we use case failure for signaling typing
+error. There are three cases for $\s{M}$ in the system, corresponding
+to the three rules in the declarative system. For the application
+case, we rely on the well-known property that we may need to insert a
+coercion from the actual type of the argument to its expected type:
+
+\begin{mathleft}
+  \quad\case{\app{M}N} \\
+  \quad\quad\letd {\pair {A_1\to B} {\md_1}} {\finfer{M}} \\
+  \quad\quad\letd {\pair {A_2} {\md_2}} {\finfer{N}} \\
+  \quad\quad\letd {\md_{\leq}} {\fleq {A_1} {A_2}} \\
+  \quad\quad
+  \match{\md_{\leq}} \\
+  \quad\quad\quad\case{\infer{ }{A\leq A}}
+  \pair {B} {\infer{\md_1 \and \md_2}{\vdash \app M N : B}} \\
+  \quad\quad\quad\case{\_}
+  \pair {B} {\infer{\md_1 \and \infer*{\md_2 \and \md_{\leq}}{\vdash N
+      : A_1}}{\vdash \app M N : B}}
+\end{mathleft}
+
+\noindent
+The $\syntax{let}$ construct is just syntactic sugar for a one-branch
+$\syntax{case}$; we use an auxiliary function $$\fleq{}{}\ :\
+\prd A {\cst{tp}} \prd B {\cst{tp}} \vdash A\leq B = \ldots$$ trying to
+construct a subtyping derivation for its argument, or failing with an
+error (definition not included here). Notice the slight optimization
+to the size of the derivation: if the types $A_1$ and $A_2$ are the
+same syntactically, we don't generate a subtyping rule. This is done by
+matching on the returned derivation $\md_\leq$.
 
 Then comes the abstraction case $\tlam x A M$. The difficulty is that
 the recursive call $\finfer{M}$ must be done in an enlarged
@@ -476,43 +502,68 @@ $\md$ by $\md_x$, and then apply rule \rulename{Lam}:
   }}
 \end{mathleft}
 
-The case of $\cst{rec}$ is similar: we first compute recursively the
-derivations $\md_M$ and $\md_N$ which should be well-typed in the
-current environment, and then $\md_P$ in the enlarged environment,
-with variables $\var x$ and $\var y$ in $P$ substituted with the
-(future) result of $\finfer{}$.
+For what concerns the treatment of environments, the case of $\recb M
+N x y P$ is similar: we first compute recursively the derivations
+$\md_M$ and $\md_N$ which should be well-typed in the current
+environment, and then $\md_P$ in the enlarged environment, with
+variables $\var x$ and $\var y$ in $P$ substituted with the (future)
+result of $\finfer{}$. The problem is with subtyping: terms $N : A_N$
+and $P : A_P$ should be coercible to the same type $A$, but $P$ should
+be typed under $\vdash y:A$, which is not known before typing $P$. The
+trick to break the loop is to iterate the typing of $P$ with more and
+more general types, until we reach a fixpoint (this is finite if there
+is a unique more general type); in our case, that means iterating
+twice: we will then attain \cst{nat}.
 
 \begin{mathleft}
   \quad\case{\recb M N x y P} \\
   \quad\quad
-  \letd {\pair {\cst{nat}} {\md_M}} {\finfer{M}} \\
+  \letd {\pair {A_M} {\md_M}} {\finfer{M}} \\
+  \quad\quad\letd {\md_{A_M}} {{A_M} \leq \cst{nat}} \\
   \quad\quad
-  \letd {\pair {A_1} {\md_N}} {\finfer{N}} \\
+  \letd {\pair {A_N} {\md_N}} {\finfer{N}} \\
   \quad\quad
-  \syntax{let} {\pair {A_2} {\md_P}} \syntax{in}
+  \syntax{let} {\pair {A_P} {\md_P}} \syntax{in}
   {(\envcons {\env {$\md_x$} {(\vdash
-        \var x : \cst{nat})}} {$\md_y$} {(\vdash\var y : A_1)})} = \\
+        \var x : \cst{nat})}} {$\md_y$} {(\vdash\var y : A_N)})} = \\
   \quad\quad\quad
   {\finfer{\gsubst P {\msubstcons {\msubst x
           {\fget{\pair{\cst{nat}}{\md_x}}}} y
-        {\fget{\pair{A_1}{\md_y}}}}}} \\
-  \quad\quad\letd {\cst{true}} {\feq {A_1} {A_2}} \\
+        {\fget{\pair{A_N}{\md_y}}}}}} \syntax{in}\\
+  \quad\quad\letd {\pair A {\pair{\md_{A_N}}{\md_{A_P}}}} {{A_N} \sqcap {A_P}} \\
   \quad\quad
-  \pair {A} {
+  \syntax{let} {\pair {\_} {\md_P}} \syntax{in}
+  {(\envcons {\env {$\md_x$} {(\vdash
+        \var x : \cst{nat})}} {$\md_y$} {(\vdash\var y : A)})} = \\
+  \quad\quad\quad
+  {\finfer{\gsubst P {\msubstcons {\msubst x
+          {\fget{\pair{\cst{nat}}{\md_x}}}} y
+        {\fget{\pair{A}{\md_y}}}}}} \syntax{in}\\
+  \hspace{-2em}\pair {A} {
     \infer{
-      \md_M \and
-      \md_N \and
-      \mbox{$
+      \infer*{\md_M \and \md_{A_M}}
+      {\vdash M : A} \and
+      \infer*{\md_N \and \md_{A_N}}
+      {\vdash N : A}\and
+      \infer*{\infer*{}{\mbox{$
         \begin{array}{c}
           [\md_x] [\md_y] \\
           \md_P
       \end{array}
-        $}
+        $}} \and \md_{A_P}}{\vdash P : A}
     }{
-      \vdash \recb M N x y P
+      \vdash \recb M N x y P : A
     }
   }
 \end{mathleft}
+
+\noindent
+Again, we use a new auxiliary function
+$$\sqcap\ :\ \prd{A}{\cst{tp}} \prd{B}{\cst{tp}} \sig C {\cst{tp}}
+(\vdash A\leq C )\times(\vdash B\leq C) = \ldots$$ computing the sup
+of two types $A$ and $B$, and returning proofs of of subtyping. Note
+that we didn't perform here the optimization seen in the application
+case.
 
 The type-checker is now done. There is no case for variables, as we
 won't ever meet this case: we already substituted all variables with
@@ -540,10 +591,25 @@ We exploit here an idea similar to run-time
 there is no static guarantee that computations won't return ill-typed
 values, but arguments and results are checked at run-time at the
 boundaries of defined functions. This allows to omit formal
-justifications, like the fact that $B$ can't depend on $\md_x$ in the
-$\lambda$ case, but of course incurs on the performance. This is
-compensated by the slicing mechanism described below in
+justifications, like the fact that we need to iterate twice the typing
+of $P$ in $\recb M N x y P$, or that $B$ can't depend on $\md_x$ in
+the $\lambda$ case. Of course this incurs on the performance; we will
+see a compensation for it by the slicing mechanism described below in
 \ref{sec:repr}.
+
+A similar idea is very wide-spread in \sysname{LCF}-style proof
+assistants: during manual proof search, the interaction is driven by
+\emph{tactics}: %TODO cite
+they are untrusted programs generating pieces of proofs, assembled by
+other, higher-order tactics; verification of the generated proofs is
+done when the evaluation of all tactics is complete. The differences
+with our mechanism are two-fold: first, tactics usually take one (or
+several) \emph{goal}(s) as input, \ie\ holes in a proof, whereas our
+functions can take any term; secondly, proof-check is usually done at
+the end of the evaluation, which can lead to less tractable bugs; by
+making evaluation and checking mutually recursive, we choose to detect
+errors earlier in these witnesses: exactly at the point where they are
+generated.
 
 Introducing the ``inverse'' of the derivation inference function has
 two purpose: as we saw in \ref{sec:use-incremental}, it allows to
@@ -572,11 +638,9 @@ x:A\}$ reduces to $\var x$ so that they are considered equal, \ie\ we
 can strip off the annotations, while not forgetting them too soon:
 otherwise we would arrive to the unhandled case $\finfer{\var
   x}$. This requires evaluating the type-checker with a carefully
-designed strategy.
+designed strategy (see \ref{sec:comput}).
 
-For the sake of conciseness, we took a simple, syntax-directed system
-as example; this scales nonetheless to declaratively presented
-features like subtyping or conversion.
+% TODO cite lee2007mechanizing
 
 \section{Here is my idea}
 %% Here is my idea (2 pages)
@@ -684,6 +748,7 @@ $}$$
 where all boxed subterms are referable slices.
 
 \subsection{The computational calculus}
+\label{sec:comput}
 
 % inverse
 
