@@ -218,14 +218,16 @@ as an \sysname{ML} library. We specifically propose:
 \subsection{A backend for incremental type checking}
 \label{sec:use-incremental}
 
-A student is learning about System \sysname T --- a simply typed
-$\lambda$-calculus with natural numbers introduction $\z$ and $\s{M}$,
-and elimination ($\recb M N x y P$).  He (or she) wants to write a
-program computing $(2+2)\times 3$. He knows that sometimes those
-$\cst{rec}$ arguments are quite hard to get correct, but System
-\sysname T is a typed language; he wants to take advantage of this to
-build his program incrementally using the teacher's provided
-incremental verifier. As a first attempt, he wants to verify $P_1$:
+A student is learning about System \sysname {T_{<:}} --- a simply
+typed $\lambda$-calculus with natural numbers $\cst{nat}$ coming in
+two sets $\cst{even}$ and $\cst{odd}$, introduction $\z$ and $\s{M}$,
+elimination ($\recb M N x y P$), and subtyping those types. He (or
+she) wants to write a program computing $(2+2)\times 3$. He knows that
+sometimes those $\cst{rec}$ arguments are quite hard to get correct,
+but \sysname{T_{<:}} is a typed language; he wants to take advantage
+of this to build his program incrementally using the teacher's
+provided incremental verifier. As a first attempt, he wants to verify
+$P_1$:
 $$
 \recb{\s\z}{\s\z} x y {\s {\var x}}\ \text{.}
 $$
@@ -244,12 +246,12 @@ of his code:
   &\quad\app{\var{add}}\app{(\s\z)}{(\s\z)} \ \text{.}
 \end{align*}
 But he (or his text editor) realizes that some parts of this program
-have not changed: both $\s\z$, and the function body $\s{\var x}$, and
+have not changed: both $\s\z$, and the function body $\s{\var u}$, and
 he could reuse the pieces of derivation just built. Let us call these
 respectively $\md_2$, $\md_3$ and $\md_4$. $\md_4$ is hypothetical: it
-depends on the hypothesis $H$ that\ \ $\vdash \var x:\cst{nat}$ .
+depends on the hypothesis $H$ that\ \ $\vdash \var u:\cst{nat}$ .
 Provided there is an operator $\fget\md$ from the derivation to the
-program it types, what needs really to be sent to the system is:
+program it types, what really needs to be sent to the system is:
 \begin{align*}
   &\finfer{}(
     \letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
@@ -259,16 +261,20 @@ program it types, what needs really to be sent to the system is:
   )
 \ \text{,}
 \end{align*}
-that is, only the changed subterms of the program. Derivations $\md_2$
+that is, only the changed subterms of the program. Derivation $\md_2$
 used to live in the empty context, we are then free to use it in the
 new context where $\var{add}:\cst{nat}\to\cst{nat}$, because System
 \sysname T enjoys the \emph{weakening} property; $\md_4$ depending on
 a derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole
 with the derivation $\finfer{\var u}$ inferred recursively for then
-new recursive argument $\var u$. Taking advantage of $\md_2$ and
-$\md_4$ the system succeeds with a new derivation made out of these,
-without having to regenerate them because it knows that
-$\finfer{\fget\md} = \md$.
+new recursive argument $\var u$. $\md_2$ derives $\vdash \s\z :
+\cst{even}$, but $\var{add}$ awaits $\cst{nat}$ arguments. When the
+system will generate this derivation, it will insert a coercion at
+these two points.
+% TODO j'en ss la ds la relecture F<
+Taking advantage of $\md_2$ and $\md_4$ the system
+succeeds with a new derivation made out of these, without having to
+regenerate them because it knows that $\finfer{\fget\md} = \md$.
 
 Let us call $\md_5$ the subderivation generated for $\tlam x
 {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x} {\var y} u v
