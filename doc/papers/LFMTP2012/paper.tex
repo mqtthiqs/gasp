@@ -61,8 +61,8 @@ incrementality, type checking, logical framework, version control
 
 The positive impact of rich type systems on programming language
 design is not to be demonstrated anymore, both in terms of the safety
-of programs --- they ``do not go wrong'', and programming practices
---- modularity, early bug catching. Verifying well-typing of
+of program execution --- they ``do not go wrong'', and programming
+practices --- modularity, early bug catching. Verifying well-typing of
 real-world programs is thus a critical matter, but it is a complex
 operation, for the compiler designer and for the human operator:
 
@@ -88,24 +88,12 @@ $$
 implementer then has to convert the declarative system to an
 algorithm, and convince himself that both are equivalent. This task is
 highly non-trivial and non-modular: for instance, how to infer the
-type of a System \sysname{T} recursor
-$$
-\infer{
-  \Gamma\vdash M : \cst{nat}
-  \and
-  \Gamma\vdash N : A
-  \and
-  \Gamma, \var x:\cst{nat}, \var y:A\vdash P : A
-}{
-  \Gamma\vdash \recb M N x y P
-}
-$$
-in presence of subtyping? The problem is that we have to guess a type
-$A$ more general than that of $N$ and $P$, while giving that type to
-variable $\var y$. A well-known algorithm if the subtyping relation
-forms a complete lattice is to iterate the typing of $P$ with the join
-of the previously computed and the new type until a fixpoint is
-reached.
+type of a System \sysname{T} recursor $\recb M N x y P$, in presence
+of subtyping? The problem is that we have to guess a type $A$ more
+general than that of $N$ and $P$, while giving that type to variable
+$\var y$. A well-known algorithm if the subtyping relation forms a
+complete lattice is to iterate the typing of $P$ with the join of the
+previously computed and the new type until a fixpoint is reached.
 
 The most common option is to formally prove the equivalence, \ie\ that
 the (typing) relation is actually a function. Although these proofs
@@ -116,17 +104,18 @@ derivations in the declarative systems, if they cannot always be
 easily inferred, can be \emph{verified} if provided by an oracle. If
 the oracle is wrong, we can tell cheaply by verifying the witness
 typing derivation it provides. Let us then imagine a type-checker to
-be the pair of 1/ an untrusted procedure $\finfer M$ to infer a typing
-derivation out of program $M$; it doesn't have to be complete, or even
-sound, and 2/ a trusted and fast kernel $\fcheck{\md}$ to verify these
-derivations in a given set of inference rules $\Sigma$. This is a
-\emph{certifying} scheme (see \cite{leroy2006compcert} for a
-discussion on approaches to reliable compilers):
-if $\fcheck{\finfer M} = \cst{true}$ then there really \emph{is} a
-derivation $\md$ for $M$, but the converse is not necessarily true:
-function $\finfer{}\!\!$ could fail, or have bugs (return an incorrect
-derivation). Explicitly generating the derivation in the declarative
-system has the following advantages over the first approach:
+be the pair of \emph{(i)} an untrusted procedure $\finfer M$ to infer
+a typing derivation out of program $M$; it doesn't have to be
+complete, or even sound, and \emph{(ii)} a trusted and fast kernel
+$\fcheck{\md}$ to verify these derivations \wrt\ a given set of inference
+rules $\Sigma$. This is a \emph{certifying} scheme (see
+\cite{leroy2006compcert} for a discussion on approaches to reliable
+compilers): if $\fcheck{\finfer M} = \cst{true}$ then there really
+\emph{is} a derivation $\md$ for $M$, but the converse is not
+necessarily true: function $\finfer{}\!\!$ could fail, or have bugs
+(return an incorrect derivation). Explicitly generating the derivation
+in the declarative system has the following advantages over the first
+approach:
 \begin{itemize}
 \item it is lightweight: the untrusted algorithm is usually shorter
   than the corresponding equivalence proof
@@ -144,9 +133,9 @@ system has the following advantages over the first approach:
 \paragraph{For the programmer}
 
 As type systems become richer, it becomes increasingly difficult for
-the programmer to write a correct program in one try, compile it and
-run it: writing a program longer than a few dozens of lines becomes a
-tight and non-linear interaction between the human and the
+the programmer to write a well-typed program in one try, compile it
+and run it: writing a program longer than a few dozens of lines
+becomes a tight and non-linear interaction between the human and the
 type-checker involving constant experiments, fixes, etc. If this
 interaction is possible for short programs and fast checkers, it
 becomes increasingly hindered by the latency of complete rechecks:
@@ -186,16 +175,17 @@ genericity on the particular problem of type checking:
 Now, if we consider as above a type-checker as a derivation-generating
 procedure, and storing these derivations between calls to the
 procedure, we could recognize already-built subderivations for
-subterms common to a checked and a new version of the program, and
-graft these pieces of derivation to form a new, large one for the
-whole modified program, saving the regeneration of all equal subterms'
-derivations in compatible contexts. This way we constantly maintain
-the verifiable witness of well-typing for the program, and take
-advantage of the quotients made on higher-order syntax.
+subterms common to an old, checked version and a new, to-be-checked
+version, and graft together these pieces of derivation to form a new,
+large one for the new version of the program, saving the regeneration
+of all equal subterms' derivations in compatible contexts. This way we
+constantly maintain the verifiable witness of well-typing for the
+program, and take advantage of the quotients made on higher-order
+syntax.
 
-We can thus add to the previous list that explicitly generating typing
-derivations makes possible a form of safe incrementality by sharing
-common subderivations.
+We can thus add to the list of advantages begun earlier that
+explicitly generating typing derivations makes possible a form of safe
+incrementality by sharing common subderivations.
 
 In this paper, we present a framework to incrementally generate typing
 certificates represented in the \LF\ logical framework, and implemented
@@ -219,16 +209,66 @@ as an \sysname{ML} library. We specifically propose:
 \subsection{A backend for incremental type checking}
 \label{sec:use-incremental}
 
+\begin{figure}
+  \centering
+%  \small
+  \begin{mathpar}
+    \infer{ }{\jts{\cst o} {\even}}
+
+    \infer{\jts M \odd} {\jts {\s M} \even}
+
+    \infer{\jts M \even} {\jts {\s M} \odd}
+
+    \infer{\jts M \nat} {\jts {\s M} \nat}
+
+    \infer{\jts M {A\to B} \and \jts N A} {\jts {\app M N} B}
+
+    \infer{\infer*{}{\mbox{$
+          \begin{array}{c}
+            [\jts {\var x} A] \\[-0.3em]
+            \vdots\\
+            \jts M B
+          \end{array}$
+        }}} {\jts {\lam x M} {A\to B}}
+
+    \infer{\jts M A \and \jsub A B}{\jts M B}
+
+    \infer{\jts M \nat
+      \and
+      \jts N A
+      \and
+      \infer*{}{\mbox{$
+        \begin{array}{c}
+          [\jts {\var x} \nat] \quad
+          [\jts {\var y} A] \\[-0.3em]
+          \vdots \\
+          \jts P A
+        \end{array}
+        $}}
+    }{\jts {\recb M N x y P} A}
+
+    \infer{ }{\jsub A A}
+
+    \infer{ }{\jsub \even\nat}
+
+    \infer{ }{\jsub \odd\nat}
+
+    \infer{\jsub {A'} A \and \jsub B {B'} }{\jsub {A\to B}{A'\to B'}}
+  \end{mathpar}
+  \caption{System \sysname{T_{<:}}, declaratively}
+  \label{fig:tsub}
+\end{figure}
+
 A student is learning about System \sysname {T_{<:}} --- a simply
 typed $\lambda$-calculus with natural numbers $\cst{nat}$ coming in
 two sets $\cst{even}$ and $\cst{odd}$, introduction $\z$ and $\s{M}$,
-elimination ($\recb M N x y P$), and subtyping on those types. He (or
-she) wants to write a program computing $(2+2)\times 3$. He knows that
-sometimes those $\cst{rec}$ arguments are quite hard to get correct,
-but \sysname{T_{<:}} is a typed language; he wants to take advantage
-of this to build his program incrementally using the teacher's
-provided incremental verifier. As a first attempt, he wants to verify
-$P_1$:
+elimination ($\recb M N x y P$), and subtyping on those types; see
+Fig. \ref{fig:tsub}. He (or she) wants to write a program computing
+$(2+2)\times 3$. He knows that sometimes those $\cst{rec}$ arguments
+are quite hard to get correct, but \sysname{T_{<:}} is a typed
+language; he wants to take advantage of this to build his program
+incrementally using the teacher's provided incremental verifier. As a
+first attempt, he wants to verify $P_1$:
 $$
 \recb{\s\z}{\s\z} x y {\s {\var x}}\ \text{.}
 $$
@@ -267,8 +307,8 @@ used to live in the empty context, we are then free to use it in the
 new context where $\var{add}:\cst{nat}\to\cst{nat}$, because System
 \sysname T enjoys the \emph{weakening} property; $\md_4$ depending on
 a derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole
-with the derivation $\finfer{\var u}$ inferred recursively for then
-new recursive argument $\var u$. $\md_2$ derives $\vdash \s\z :
+with the derivation $\finfer{\var u}$ inferred recursively for the new
+recursive argument $\var u$. $\md_2$ derives $\vdash \s\z :
 \cst{odd}$, but $\var{add}$ awaits $\cst{nat}$ arguments. When the
 system will generate this derivation, it will insert a coercion
 $\cst{odd} \leq \cst{nat}$ at these two points. Taking advantage of
@@ -441,7 +481,7 @@ coercion from the actual type of the argument to its expected type:
   \quad\quad\letd {\md_{\leq}} {\fleq {A_1} {A_2}} \\
   \quad\quad
   \match{\md_{\leq}} \\
-  \quad\quad\quad\case{\infer{ }{A\leq A}}
+  \quad\quad\quad\case{\infer{ }{\vdash A\leq A}}
   \pair {B} {\infer{\md_1 \and \md_2}{\vdash \app M N : B}} \\
   \quad\quad\quad\case{\_}
   \pair {B} {\infer{\md_1 \and \infer*{\md_2 \and \md_{\leq}}{\vdash N
@@ -450,13 +490,13 @@ coercion from the actual type of the argument to its expected type:
 
 \noindent
 The $\syntax{let}$ construct is just syntactic sugar for a one-branch
-$\syntax{case}$; we use an auxiliary function $$\fleq{}{}\ :\
-\prd A {\cst{tp}} \prd B {\cst{tp}} \vdash A\leq B = \ldots$$ trying to
+$\syntax{case}$; we use an auxiliary function $$\fleq{}{}\ :\ \prd A
+{\cst{tp}} \prd B {\cst{tp}} \vdash A\leq B = \ldots$$ trying to
 construct a subtyping derivation for its argument, or failing with an
-error (definition not included here). Notice the slight optimization
-to the size of the derivation: if the types $A_1$ and $A_2$ are the
-same syntactically, we don't generate a subtyping rule. This is done by
-matching on the returned derivation $\md_\leq$.
+error. Notice the slight optimization to the size of the derivation:
+if the types $A_1$ and $A_2$ are the same syntactically, we don't
+generate a subtyping rule. This is done by matching on the returned
+derivation $\md_\leq$.
 
 Then comes the abstraction case $\tlam x A M$. The difficulty is that
 the recursive call $\finfer{M}$ must be done in an enlarged
@@ -465,12 +505,12 @@ returned open derivation $\md$ is correct would fail ($x$ is
 unknown). We thus introduce a new construct $\matchin M \Gamma \ldots$
 and its $\syntax{let}$ counterpart ($\match M \ldots$ being syntactic
 sugar for $\matchin M \envnil \ldots$). Even then, in the recursive
-call, arriving to variable $\var x$ would fail since we would have no
-way of telling its type anymore. Thus we substitute all occurrences of
+call, the variable case $\var x$ would fail since we would have no way
+of telling its type anymore. Thus we substitute all occurrences of
 $\var x$ with the \emph{output} of function $\finfer{}$ on it (since
 it is known at this point), \ie\ a pair of $A$ and $\md_1$. For this
 substitution to be well-typed, we now need to coerce this output to a
-valid input (a term). We introduce an operator which is in some way
+valid input (a term). We introduce an operator which is in some sense
 the \emph{inverse} of $\finfer{}$: operator $\fget{}$ maps a pair of a
 type and a derivation to the term it types.
 
@@ -482,12 +522,13 @@ type and a derivation to the term it types.
 \end{mathleft}
 
 At this point, we get back $B$ and $\md$ from the recursive call. We
-know that $B$ can't depend on $\md_x$ (because a type is always
-closed), but $\md$ can: it is not \emph{per se} a hypothetical
-derivation but an \emph{open} derivation where a special judgement
-named $\md_x$ can occur. To return the complete derivation of
-$\vdash\tlam A x M : A \to B$, we must then close, or ``hypothesize''
-$\md$ by $\md_x$, and then apply rule \rulename{Lam}:
+know that $B$ can't depend on $\md_x$ (because a System
+\sysname{T_{<:}} type is always closed), but $\md$ can: it is not
+\emph{per se} a hypothetical derivation but an \emph{open} derivation
+where a special judgement named $\md_x$ can occur. To return the
+complete derivation of $\vdash\tlam A x M : A \to B$, we must then
+close, or ``hypothesize'' $\md$ by $\md_x$, and then apply rule
+\rulename{Lam}:
 
 \begin{mathleft}
   \quad\quad
@@ -502,18 +543,20 @@ $\md$ by $\md_x$, and then apply rule \rulename{Lam}:
   }}
 \end{mathleft}
 
-For what concerns the treatment of environments, the case of $\recb M
-N x y P$ is similar: we first compute recursively the derivations
-$\md_M$ and $\md_N$ which should be well-typed in the current
-environment, and then $\md_P$ in the enlarged environment, with
-variables $\var x$ and $\var y$ in $P$ substituted with the (future)
-result of $\finfer{}$. The problem is with subtyping: terms $N : A_N$
-and $P : A_P$ should be coercible to the same type $A$, but $P$ should
-be typed under $\vdash y:A$, which is not known before typing $P$. The
-trick to break the loop is to iterate the typing of $P$ with more and
-more general types, until we reach a fixpoint (this is finite if there
-is a unique more general type); in our case, that means iterating
-twice: we will then attain \cst{nat}.
+Concerning the treatment of environments, the case of $\recb M N x y
+P$ is similar: we first compute recursively the derivations $\md_M$
+and $\md_N$ which should be well-typed in the current environment, and
+then $\md_P$ in the enlarged environment, with variables $\var x$ and
+$\var y$ in $P$ substituted with the (future) result of $\finfer{}$.
+
+Remains one problem with subtyping: terms $N : A_N$ and $P : A_P$
+should be coercible to the same type $A$, but $P$ should be typed
+under $\vdash y:A$, which is not known before typing $P$. A trick to
+break the loop is to iterate the typing of $P$ with more and more
+general types, until we reach a fixpoint (we reach a fixpoint if there
+is a unique more general type); in our particular case of subtyping
+relation, this means iterating only twice: we will then attain
+\cst{nat}.
 
 \begin{mathleft}
   \quad\case{\recb M N x y P} \\
@@ -567,18 +610,20 @@ case.
 
 The type-checker is now done. There is no case for variables, as we
 won't ever meet this case: we already substituted all variables with
-their result derivation. We only need to make sure that in this case,
-the derivation will be returned:
+their result derivation. Evaluation only need to make sure that in
+this case, the derivation will be returned, \ie\ that it reduces the
+following way:
 $$
-\finfer{\fget{\pair A \md}} = \md
+\finfer{\fget{\pair A \md}} = \pair A \md
 $$
 Now $\fget{}$ can be derived automatically from the type of
 $\finfer{}$: it is its inverse. It has definition:
 
+% TODO confirmer qu'on met bien la def. des f^0
 \begin{mathleft}
   \fget{}\ :\ \prd{\{M\}}{\cst{tm}} \prd {A}{\cst{tp}} \prd{\md}{(\vdash
     M:A)} \cst{tm} =
-  \\\quad \lamd M \lamd A \lamd \md M
+  \\\qquad\quad \lamd M \lamd A \lamd \md M
 \end{mathleft}
 
 \noindent
@@ -597,7 +642,8 @@ the $\lambda$ case. Of course this incurs on the performance; we will
 see a compensation for it by the slicing mechanism described below in
 \ref{sec:repr}.
 
-A similar idea is very wide-spread in \sysname{LCF}-style proof
+The idea of untrustedly generating certificates verified \emph{a
+  posteriori} is very wide-spread in \sysname{LCF}-style proof
 assistants: during manual proof search, the interaction is driven by
 \emph{tactics}: %TODO cite
 they are untrusted programs generating pieces of proofs, assembled by
@@ -612,7 +658,7 @@ errors earlier in these witnesses: exactly at the point where they are
 generated.
 
 Introducing the ``inverse'' of the derivation inference function has
-two purpose: as we saw in \ref{sec:use-incremental}, it allows to
+two purposes: as we saw in \ref{sec:use-incremental}, it allows to
 refer to already-constructed derivations when writing deltas. It also
 permits to abstract from the concrete environment when writing the
 type-checker itself, that one must thread throughout the process in a
@@ -632,6 +678,7 @@ $$
   \vdash \{\var x : A\} : A
 }
 $$
+% TODO: vérif ce paragraphe après avoir parlé de fcts inv
 replace the usual ones. The difficulty with this technique,
 particularly in a dependent setting, is to ensure that term $\{\var
 x:A\}$ reduces to $\var x$ so that they are considered equal, \ie\ we
@@ -703,8 +750,8 @@ number of practical applications like proof-carrying code
 
 To write deltas by sharing subterms, we need to be able to address any
 subterm and instantiate its free variables. For this, we define the
-the \emph{slicing} of a well-typed \LF\ term: we extend \LF\ with
-metavariables $\meta X$, $\meta Y$\ldots\ as in
+\emph{slicing} of a well-typed \LF\ term: we extend \LF\ with
+contextual metavariables $\meta X$, $\meta Y$\ldots\ as in
 \cite{nanevski2008contextual}. Metavariables stand for well-typed
 terms defined in a repository, and are instantiated wrt. their free
 variables. A repository also contains a distinguished metavariable
@@ -737,14 +784,19 @@ $$
 $$
 is one of the possible way of slicing of the term
 $$
-\fbox{$\app {\cst{lam}} \lam x
-\fbox{$\app {\cst{lam}} \lam y
-\fbox{\app {\cst{app}} \app {\var y}
-}$}
-{(\fbox{\app
-  {\cst{app}}\app{\var x}{\cst o}})
-}
-$}$$
+\fbox{$
+  \app {\cst{lam}} \lam x
+  \fbox{$
+    \app {\cst{lam}} \lam y
+    \fbox{$
+      \app {\cst{app}} \app {\var y}
+      (\fbox{$
+        \app{\cst{app}}\app{\var x}{\cst o}
+      $})
+    $}
+  $}
+$}
+$$
 where all boxed subterms are referable slices.
 
 \subsection{The computational calculus}
@@ -829,22 +881,34 @@ in a repository (see below). We write $\FMV{M}$ for the set of
 metavariables in $M$ and speak of a \emph{metaclosed} object $M$ if
 $\FMV{M} = \emptyset$.
 
-We distinguish syntactically between \emph{checkable} and
-\emph{inferrable} objects (resp. \emph{canonical} and \emph{atomic}),
-an idea dating back to \cite{pierce2000local}: canonical objects are
-checked against a given type, whereas we can synthesize the type of
-atomic objects; the coercion from the first to the second will be the
-place where to verify equality between the synthesized type and the
-given one.
+We distinguish syntactically between \emph{checkable} $M$ and
+\emph{inferrable} $F$ objects (resp. \emph{canonical} and
+\emph{atomic}), an idea dating back to \cite{pierce2000local}:
+canonical objects are checked against a given type, whereas we can
+synthesize the type of atomic objects; the coercion from the first
+grammatical category to the second is where we verify equality between
+the synthesized and the checked types.
 
 \paragraph{Substitution}
 
 We overload \emph{substitution} as a partial operation on objects,
 given a parallel substitution $\sigma$. Since the syntax of object is
 not stable by (textual) substitution, it is defined as
-\emph{hereditary}: it is mutually recursive with a \emph{cut} function
-$\gcut M S$ which can in turn trigger a chain of substitutions,
-leading to a canonical objects or an error.
+\emph{hereditary}\footnote{ Note that this notion of substitution,
+  present in \cite{pfenning2007term} differs from
+  \cite{hl07mechanizing} as it presupposes $\eta$-long normal forms:
+  once a \emph{cut} starts, there must be exactly as many formal and
+  actual arguments. A non-empty spine cut against another non-empty
+  spine $\gcut {\app H S} {S'}$ blocks the substitution instead of
+  reducing to $\app H {(\gconcat S S')}$ (an implicit
+  $\eta$-expansion); conversely, exhausting actual but not formal
+  arguments as in $\gcut{\lam x M}{\gnil}$ blocks the substitution
+  too. For example, the reduction $\gcut {\lam x \app {\var x}{\var
+      x}} {\lam x \app {\var x}{\var x}}$ gets stuck because the
+  second $\var x$ in the left part is substituted by a function yet is
+  not itself a function. }: it is mutually recursive with a \emph{cut}
+function $\gcut M S$ which can in turn trigger a chain of
+substitutions, leading to a canonical objects or an error.
 \begin{align*}
   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
   \text{if $\var x\notin \dom{\sigma}$}
@@ -897,19 +961,6 @@ kinds $\gsubst K \sigma$. We also allow to abusively write
 non-canonical application $\app M S$ as a shorthand for $\gcut M S$
 if it is defined.
 
-Note that this notion of substitution differs from hereditary
-substitution found in \eg\ \cite{hl07mechanizing} as it presupposes
-$\eta$-long normal forms: once a \emph{cut} starts, there must be
-exactly as many formal and actual arguments. A non-empty spine cut
-against another non-empty spine $\gcut {\app H S} {S'}$ blocks the
-substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
-implicit $\eta$-expansion); conversely, exhausting actual but not
-formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
-substitution too. For example, the reduction $\gcut {\lam x \app {\var
-    x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck because the
-second $\var x$ in the left part is substituted by a function yet is
-not itself a function.
-
 % TODO pourquoi cette def?
 % TODO terminaison?
 % TODO stabilité de la eta?
@@ -943,10 +994,10 @@ $\anndefined{T}$ (see \ref{sec:computational-calculus}).
 We write $\Sigma(\cst c) = A; L$ for $(\cst c :^L A) \in \Sigma$
 suggesting the implementation of signatures as maps.
 
-Our algorithm types exactly the well-typed objects of the usual
-\LF, except that we thread a repository $\mr$ and store in it
-all well-typed applicative subterms $F$ along with their classifier
-$A$ and the environment in which they are well-typed.
+Our algorithm accepts exactly the well-typed objects of the usual \LF,
+except that we thread a repository $\mr$ and store in it all
+well-typed applicative subterms $F$ along with their classifier $A$
+and the environment in which they are well-typed.
 
 % TODO parler d'effacer les R et retomber sur LF
 % TODO expl. c'est tout comme LF sauf qqes règles...
@@ -954,14 +1005,16 @@ $A$ and the environment in which they are well-typed.
 
 A \emph{repository} $\mr$ is a finite map from metavariable to
 judgements of object well-typing, along with a distinguished
-metavariable, the \emph{head}:
-$$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X \sigma $$
-We maintain the invariant that a repository $\mr$ is
-\emph{acyclic}, that is for all $\meta X$ in $\mr$, the fixpoint
-of $\FMV{\meta X}$ does not contain $\meta X$. If $\mr =
-(\Delta, X[\sigma])$, we write $\hat {\mr}$ for $X[\sigma]$,
-abusively $\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for
-$\gsubst M\sigma$ if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
+metavariable, corresponding to the \emph{tip} of the term contained in
+it:
+$$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X
+\sigma $$
+The algorithm will maintain the invariant that a repository
+$\mr$ is \emph{acyclic}, that is for all $\meta X$ in $\mr$, the
+fixpoint of $\FMV{\meta X}$ does not contain $\meta X$. If $\mr =
+(\Delta, X[\sigma])$, we write $\hat {\mr}$ for $X[\sigma]$, abusively
+$\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for $\gsubst M\sigma$
+if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
 
 We refer to cached subterms by metavariables. We force instantiation
 of all variables in their environment by attaching a substitution to
@@ -1269,14 +1322,14 @@ definitions of all metavariables recursively:
 A repository is said to be \emph{well-formed} if $\checkout {\mr}$
 is defined.
 
-\begin{theorem}
-  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
-\end{theorem}
+% \begin{theorem}
+%   If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
+% \end{theorem}
 
-\begin{theorem}
-  If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutrr
-    M)} (\checkoutrr A)$
-\end{theorem}
+% \begin{theorem}
+%   If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutrr
+%     M)} (\checkoutrr A)$
+% \end{theorem}
 
 \subsection{The computation calculus}
 \label{sec:computational-calculus}
@@ -1308,8 +1361,7 @@ language, but really any language with algebraic datatypes would do
 since we will be manipulating directly the first-order representation
 of \LF\ objects. In fact, whatever the language is, you can think of
 defined constants as mere black boxes taking and producing terms, and
-being able to call other black boxes. We detail for example in section
-\ref{sec:implem} how to embed \sysname{OCaml} as computation calculus.
+being able to call other black boxes.
 
 Nevertheless, in order to maintain the well-typing of the generated
 term, we want to maintain the invariant that each time a piece of term
@@ -1406,8 +1458,6 @@ computations: arguments and results are type-checked at run-time.
   \label{fig:def-eq}
 \end{figure*}
 
-\section{Implementation}
-\label{sec:implem}
 \section{Related work}
 % 1-2 pages
 

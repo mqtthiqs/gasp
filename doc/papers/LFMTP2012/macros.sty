@@ -9,6 +9,7 @@
 % English
 \newcommand\eg{e.g.}
 \newcommand\ie{i.e.}
+\newcommand\wrt{w.r.t.}
 
 % Various
 \newcommand\To{\Rightarrow}
@@ -112,10 +113,15 @@
 
 % Judgements
 \newcommand\gj[2]{{#1}\vdash{#2}}
+\newcommand\gjt[3]{\gj{#1}{{#2}:{#3}}}
 \newcommand\gja[3]{{#1}\vdash_{#2}{#3}}
 
 \newcommand\gjo[3]{\gj{#1}{{#2}\To{#3}}}
 \newcommand\gjor[4]{\gjo{{#1}; {#2}} {{#3}} {#4}}
+
+%%% System Tsub
+\newcommand\jts[2]{\gjt{}{#1}{#2}}
+\newcommand\jsub[2]{\gj{}{{#1}\leq{#2}}}
 
 %%% Usual LF
 \newcommand\jlfm[3]{\gja{#1}{\LF}{\tp{#2}{#3}}}
@@ -159,6 +165,9 @@
 \newcommand\recb[5]{\cst{rec}({#1},{#2},{\var{#3}}\,{\var{#4}}\postbinder{#5})}
 \newcommand\s[1]{\cst s ({#1})}
 \newcommand\z{\cst o}
+\newcommand\nat{\cst{nat}}
+\newcommand\odd{\cst{odd}}
+\newcommand\even{\cst{even}}
 
 % fct/fct inverse
 \newcommand\finfer[1]{\uparrow\!{#1}}
