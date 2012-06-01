@@ -214,7 +214,7 @@ end = struct
     | HConst c -> Sign.ofind c repo.sign
     | HInv (c, n) ->
       match Sign.ofind c repo.sign with
-        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Sliceable
+        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Defined (fun repo _ _ s -> repo, List.nth s n)
         | _ -> failwith ("inverted a non-defined function")
 
   (* obj: check mode, returns the rewritten obj and the enlarged repo *)
