@@ -17,15 +17,33 @@ let repo = Tests.commit repo
 
 let repo = Tests.commit repo
 <<
-  infer (lam nat [x] infer^0 x ?X4[x; prj x nat (infer x)])
+  infer (
+    lam nat [x]
+      infer^0 ?X0[x] (
+        ex ?X0[x] nat ?X4[x; prj x nat (infer x)]
+      )
+  )
 >>
 ;;
 
-(* let repo = Tests.commit repo *)
-(* << *)
-(*   infer (recb (s o) (s o) [x] [y] s x) *)
-(* >> *)
-(* ;; *)
+let repo = Tests.commit repo
+<<
+  infer (
+    recb (
+      infer^0 ?X0[o] (
+        ex ?X0[o] nat ?X4[o; prj o nat (infer o)]
+      )
+    ) (
+      infer^0 ?X0[o] (
+        ex ?X0[o] nat ?X4[o; prj o nat (infer o)]
+      )
+    ) [x] [y]
+      infer^0 ?X0[x] (
+        ex ?X0[x] nat ?X4[x; prj x nat (infer x)]
+      )
+  )
+>>
+;;
 
 (* let repo = Tests.commit repo *)
 (* << *)
