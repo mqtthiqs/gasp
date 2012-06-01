@@ -117,10 +117,6 @@ let repo = Version.init
 >>
 ;;
 
-let repo = Tests.commit repo
-<<
-  infer (recb (s o) (s o) [x] [y] s x)
->>
-;;
+(* TODO *)
 
 42

@@ -111,6 +111,12 @@ let repo = Version.init
     repo, r
   $.
 
+  prj : {M : tm} {A : tp} inf M -> is M A = $ fun _ _ i ->
+    match* i with
+      | << ex $_$ $_$ $h$ >> -> return h
+  $.
+
+
   red_lam : {M : tm -> tm} {N : tm} {A : tp} {B : tp}
              is (lam A [x] M x) (arr A B) -> is N A ->
              is (M N) B = $ fun _ n _ _ hm hn ->
@@ -127,102 +133,3 @@ let repo = Version.init
 
 >>
 ;;
-
-Tests.commit repo
-<<
-  infer (letb o [x] x)
->>
-;;
-
-Tests.commit repo
-<<
-  infer (lam nat [z] z)
->>
-;;
-
-Tests.commit repo
-<<
-  infer (lam (arr nat nat) [x] lam nat [y] app x y)
->>
-;;
-
-Tests.commit repo
-<<
-  infer (lam bool [b] ifb b (s o) o)
->>
-;;
-
-Tests.commit repo
-<<
-  infer (
-    letb (lam bool [b] ifb b (s o) o) [f]
-    letb (app f tt) [x]
-    letb (app f ff) [y]
-    x
-  )
->>
-;;
-
-Tests.commit repo
-<< infer (recb o o [x] [_] s x) >>
-;;
-
-Tests.commit repo
-<<
-  infer (
-    lam nat [x] lam nat [y] recb x y [z] [_] s z
-  )
->>
-;;
-
-Tests.commit repo
-<<
-  infer (
-    letb (lam nat [x] lam nat [y] recb x y [z] [_] s z) [add]
-    letb (lam nat [x] lam nat [y] recb o y [z] [_] app (app add x) z) [mult]
-    letb (lam nat [x] lam nat [y] recb (s o) y [z] [_] app (app mult x) z) [exp]
-    letb (lam nat [x] recb o x [_] [w] w) [pred]
-    app (app exp (s o)) (s o)
-  )
->>
-;;
-
-(* Incremental tests *)
-
-let repo = Tests.commit repo
-<<
-  infer (recb (s o) (s o) [x] [y] s x)
->>
-;;
-
-let repo = Tests.commit repo
-<<
-  infer (
-    letb (lam nat [x] lam nat [y] recb x y [z] [_] (infer^0 z ?X26[z;infer z])) [add]
-    app (app add (infer^0 ?X23) (infer^0 ?X23))
-  )
->>
-;;
-
-let repo = Tests.commit repo
-<<
-  infer (
-    letb ?X42 [add]
-    letb (lam nat [x] lam nat [y] recb o y [z][_] add x z) [mul]
-    app (app mul ?X43[add; infer add]) (s (infer^0 ?X23))
-  )
->>
-;;
-
-let repo = Tests.commit repo
-<<
-  infer (
-    letb ?X42 [add]
-    infer^0 (
-      inline ([x] ?X90[x]) ?X91 nat ?X92[add; infer add]
-    )
-  )
->>
-;;
-
-42

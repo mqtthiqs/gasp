@@ -63,14 +63,14 @@ let repo = Version.init
     repo, r
   $.
 
+
+  prj : {M : tm} {A : tp} inf M -> is M A = $ fun _ _ i ->
+    match* i with
+      | << ex $_$ $_$ $h$ >> -> return h
+  $.
+
 >>
 ;;
-
-(* Tests.commit repo *)
-(* << *)
-(*   is_lam ([t] t) base base ([x] [h] infer (infer^0 x (ex x base h))) *)
-(* >> *)
-(* ;; *)
 
 Tests.commit repo
 <<
@@ -81,6 +81,12 @@ Tests.commit repo
 Tests.commit repo
 <<
   infer (lam (arr base base) [x] lam base [y] app x y)
+>>
+;;
+
+Tests.commit repo
+<<
+  is_lam ([t] t) base base ([x] [h] prj x base (infer (infer^0 x (ex x base h))))
 >>
 ;;
 
