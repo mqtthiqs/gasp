@@ -178,7 +178,7 @@ end = struct
     Debug.close "conv obj";
     r
 
-  and fam repo env = function
+  and fam' repo env = function
     | FProd (x, a1, b1), FProd (_, a2, b2) ->
       fam repo env (a1, a2); fam repo (Env.add x a1 env) (b1, b2)
     | FApp (c1, l1), FApp (c2, l2) when FConst.compare c1 c2 = 0 ->
@@ -186,12 +186,12 @@ end = struct
       fspine repo env (l1, l2, k)
     | a1, a2 -> raise (Not_conv_fam (repo, env, a1, a2))
 
-  (* and fam repo env (a1, a2) = *)
-  (*   let e = Env.names_of env in *)
-  (*   Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2; *)
-  (*   let r = fam' repo env (a1, a2) in *)
-  (*   Debug.close "conv fam"; *)
-  (*   r *)
+  and fam repo env (a1, a2) =
+    let e = Env.names_of env in
+    Debug.log_open "conv fam" "%a ⊢ %a ≡ %a" P.env env (P.efam e) a1 (P.efam e) a2;
+    let r = fam' repo env (a1, a2) in
+    Debug.close "conv fam";
+    r
 
 end
 
