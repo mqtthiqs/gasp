@@ -71,9 +71,9 @@ Tests.subst repo
 ;;
 
 Tests.subst repo
-<< [a] ?X1[a] >>
+<< [a] ?kzebajma[a] >>
 << [X] [x] X x >>
-<< [x] ?X1[x] >>
+<< [x] ?kzebajma[x] >>
 << A -> A >>
 ;;
 

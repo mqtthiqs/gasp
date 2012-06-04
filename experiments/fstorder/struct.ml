@@ -15,8 +15,7 @@ module Context = struct
   type t = (Env.t * obj * fam) M.t * int
   let empty = M.empty, 0
   let find x ((t, _) : t) = M.find x t
-  let add x v (t, n) =
-    if M.mem x t then failwith ("collision"^(Meta.repr x)) else M.add x v t, n
+  let add x (e,m,a) (t, n) = M.add x (e,m,a) t, n
   let fold f ((t, n):t) acc = M.fold f t acc
   let fresh (r, n) =
     Meta.make ("X"^string_of_int n),

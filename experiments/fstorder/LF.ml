@@ -171,4 +171,17 @@ module Util = struct
     | n, FProd (x, a, b) -> FProd (x, a, inv_fam (pred n, b))
     | _ -> invalid_arg "inv_fam"
 
+  let alpha = 65599
+  let (@!) x y = x * alpha + y
+
+  let hash_head = function
+    | HVar x -> 4 @! x
+    | HConst x -> 5 @! OConst.hash x
+    | HInv (x, n) -> 5 @! n @! OConst.hash x @! 42
+
+  let rec hash_obj m = match prj m with
+    | OApp (h, l) -> 1 @! hash_head h @! List.fold_left (fun acc m -> acc @! hash_obj m) 0 l
+    | OLam (x, m) -> 2 @! hash_obj m
+    | OMeta (x, s) -> 3 @! Meta.hash x @! List.fold_left (fun acc m -> acc @! hash_obj m) 0 s
+
 end

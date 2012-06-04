@@ -19,8 +19,8 @@ let repo = Tests.commit repo
 <<
   infer (
     lam nat [x]
-      infer^0 ?X0[x] (
-        ex ?X0[x] nat ?X4[x; prj x nat (infer x)]
+      infer^0 ?j04lbjma[x] (
+        ex ?j04lbjma[x] nat ?bnl0tnkq13[x; prj x nat (infer x)]
       )
   )
 >>
@@ -30,16 +30,16 @@ let repo = Tests.commit repo
 <<
   infer (
     recb (
-      infer^0 ?X0[o] (
-        ex ?X0[o] nat ?X4[o; prj o nat (infer o)]
+      infer^0 ?j04lbjma[o] (
+        ex ?j04lbjma[o] nat ?bnl0tnkq13[o; prj o nat (infer o)]
       )
     ) (
-      infer^0 ?X0[o] (
-        ex ?X0[o] nat ?X4[o; prj o nat (infer o)]
+      infer^0 ?j04lbjma[o] (
+        ex ?j04lbjma[o] nat ?bnl0tnkq13[o; prj o nat (infer o)]
       )
-    ) [x] [y]
-      infer^0 ?X0[x] (
-        ex ?X0[x] nat ?X4[x; prj x nat (infer x)]
+    )  [x] [y]
+      infer^0 ?j04lbjma[x] (
+        ex ?j04lbjma[x] nat ?bnl0tnkq13[x; prj x nat (infer x)]
       )
   )
 >>

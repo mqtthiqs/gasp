@@ -4,6 +4,7 @@ module type NameSig = sig
   val make : string -> t
   val repr : t -> string
   val print : Format.formatter -> t -> unit
+  val hash : t -> int
 end
 
 module Meta : NameSig = struct
@@ -12,6 +13,7 @@ module Meta : NameSig = struct
   let make x = x
   let repr x = x
   let print fmt x = Format.fprintf fmt "?%s" x
+  let hash = Hashtbl.hash
 end
 
 module OConst : NameSig = struct
@@ -20,6 +22,7 @@ module OConst : NameSig = struct
   let make x = x
   let repr x = x
   let print fmt x = Format.fprintf fmt "%s" x
+  let hash = Hashtbl.hash
 end
 
 module OConstSet : Set.S with type elt = OConst.t = Set.Make(OConst)
@@ -30,4 +33,5 @@ module FConst : NameSig = struct
   let make x = x
   let repr x = x
   let print fmt x = Format.fprintf fmt "%s" x
+  let hash = Hashtbl.hash
 end

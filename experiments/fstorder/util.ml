@@ -79,7 +79,31 @@ module String = struct
     in loop 0
   ;;
 
-  subscript_of_int 42;;
+end
+
+module Int = struct
+
+  open Char
+
+  let alpha n =
+    if n >= 0 && n <= 25 then chr (code 'a' + n)
+    else if n >= 26 && n <= 36 then chr (code '0' + n - 26)
+    else failwith ("alpha "^string_of_int n)
+
+  let uident_of n =
+    let rec loop base shift n =
+      String.make 1 (alpha ((n mod base) + shift))
+      ^ if n/base = 0 then "" else loop 36 0 ((n/base)-1)
+    in if n>=0 then loop 13 0 n else loop 13 13 (-n)
+
+  let _ =
+    assert (uident_of 0 = "a");
+    assert (uident_of 1 = "b");
+    assert (uident_of (-1) = "o");
+    assert (uident_of (13) = "aa");
+    assert (uident_of (-13) = "na");
+    assert (uident_of (-13*37) = "naa");
+    assert (uident_of (13*37) = "aaa");
 
 end
 

@@ -55,6 +55,7 @@ module Util : sig
   val fv : obj -> int list
   val eta_expand_var : int -> fam -> obj
   val inv_fam : (int * fam) -> fam
+  val hash_obj : obj -> int
 end
 
 (* debug *)
