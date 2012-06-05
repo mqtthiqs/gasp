@@ -84,7 +84,7 @@ let push repo env (h, l) a =
   let e = Env.names_of env in
   Debug.log_open "push" "%a ⊢ %a : %a" P.env env (P.eobj e) (mkApp(h,l)) (P.efam e) a;
   let r, (x, s) = push repo env (h, l) a in
-  Debug.log_close "push" "=> %a, %a%a" P.repo_light r Meta.print x P.subst s;
+  Debug.log_close "push" "=> %a%a in %a" Meta.print x P.subst s P.repo_light r;
   r, (x, s)
 
 module rec Conv : sig
@@ -259,10 +259,12 @@ end = struct
 
   and obj ~red repo env (m, a) =
     let e = Env.names_of env in
-    Debug.log_open "obj" "%a ⊢ %a : %a" P.env env (P.eobj e) m (P.efam e) a;
-    let r = obj' ~red repo env (m, a) in
-    Debug.close "obj";
-    r
+    Debug.log_open "obj" "%a ⊢%s %a : %a" P.env env (if red then "→" else "") (P.eobj e) m (P.efam e) a;
+    let repo, m = obj' ~red repo env (m, a) in
+    if red then
+      Debug.log_close "obj" "=> %a in %a" (P.eobj e) m P.repo_light repo
+    else Debug.close "obj";
+    repo, m
 
   and subst ~red repo env : subst * ('a * fam) list -> repo * subst = function
 
@@ -290,7 +292,7 @@ end = struct
          * ——————————————————————————————————————— (h sliceable)
          * R, Γ ⊢ h l => R'', ?X[s], C
          *)
-      | Sign.Sliceable when red ->
+      | Sign.Sliceable ->
         let repo, l, a = spine ~red repo env (l, a) in
         let repo, hd = push repo env (h, l) a in
         repo, mkMeta hd, a
