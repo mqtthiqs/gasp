@@ -163,8 +163,7 @@ let repo = Version.init
   $.
 
   infer : {M : tm} inf M = $ fun m ->
-    Debug.log_open "infer" "%a" SLF.Printer.term m;
-    let repo, r = match* m with
+    match* m with
       | << lam $a$ $m$ >> ->
           let* << ex $_$ $b$ $d$ >> in <:env< x:tm; h:is x $a$ >> =
             << infer ($m$ (infer^0 x (ex x $a$ h))) >> in
@@ -221,9 +220,6 @@ let repo = Version.init
                (maybe_is_sub $m$ $tm$ nat $dm$)
                (maybe_is_sub $n$ $tn$ $a$ $dn$)
                [x] [y] [hx] [hy] (maybe_is_sub ($p$ x y) $tp$ $a$ $dp$)) >>
-    in
-    Debug.log_close "infer" "=> %a in %a" SLF.Printer.term r SLF.Printer.repo_light repo;
-    repo, r
   $.
 
 >>
