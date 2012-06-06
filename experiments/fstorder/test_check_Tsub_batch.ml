@@ -64,6 +64,18 @@ Tests.commit repo
 >>
 ;;
 
+(* let repo = Tests.commit repo *)
+(* << *)
+(*   infer ( *)
+(*     lam (arr even nat) [div2] *)
+(*       recb (s (s o)) (s (s o)) [_] [y] app div2 y *)
+(*   ) *)
+(* >> *)
+(* ;; *)
+
+(* Version.checkout repo *)
+(* ;; *)
+
 (* Contrex de Pierre B. *)
 try Tests.fail2
   Tests.commit repo
@@ -88,9 +100,11 @@ Tests.commit repo
 >>
 ;;
 
-(* invalid test (TODO understand) *)
-(* Tests.commit repo *)
-(* << *)
-(*   infer (lam nat [x] infer^0 x (infer x)) *)
-(* >> *)
-(* ;; *)
+(* not incredibly useful... *)
+Tests.commit repo
+<<
+  infer (lam nat [x] infer^0 x (infer x))
+>>
+;;
+
+42
