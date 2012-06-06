@@ -4,6 +4,8 @@
 open Test_check_Tsub
 
 
+(* #load "test_check_Tsub.cmo";; *)
+
 (* Tsub: Incremental tests 2 (LFMTP paper) *)
 
 

@@ -1,9 +1,12 @@
 #use "load.ml"
 ;;
 
-(* Test Tsub: batch tests *)
-
 open Test_check_Tsub
+
+(* #load "test_check_Tsub.cmo" *)
+(* ;; *)
+
+(* Test Tsub: batch tests *)
 
 Tests.commit repo
 <<

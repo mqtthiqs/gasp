@@ -4,6 +4,10 @@
 (* Test T: batch tests *)
 
 open Test_check_T
+;;
+
+(* #load "test_check_T.cmo";; *)
+
 
 Tests.commit repo
 <<
