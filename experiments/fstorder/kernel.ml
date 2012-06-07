@@ -427,12 +427,12 @@ let rec init repo = function
   | (c, t, e) :: s' ->
     match SLF.Strat.term repo.sign [] t, e with
       | SLF.Strat.Fam a, e ->
-        let repo, a = Check.fam false repo [] a in
+        let repo, a = Check.fam ~red:true repo [] a in
         let e = SLF.Strat.entry_type e in
         let repo = {repo with sign = Sign.oadd (OConst.make c) (a, e) repo.sign} in
         init repo s'
       | SLF.Strat.Kind k, SLF.Sliceable ->
-        let repo, k = Check.kind false repo [] k in
+        let repo, k = Check.kind ~red:true repo [] k in
         let repo = {repo with sign = Sign.fadd (FConst.make c) k repo.sign} in
         init repo s'
       | SLF.Strat.Obj _, _ -> failwith "object in sign"
