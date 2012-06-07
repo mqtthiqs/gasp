@@ -75,8 +75,8 @@ let strengthen env (h, l) a =
  * R, Γ ⊢ h l : A => R[?X = Γ ⊢ h l : A], id(Γ)
  *)
 let push repo env (h, l) a =
-  let x = Meta.make (Int.uident_of @@ LF.Util.hash_obj (mkApp (h,l))) in
   let env, (h, l), a, s = strengthen env (h, l) a in
+  let x = Meta.make (Int.uident_of @@ LF.Util.hash_obj (mkApp (h,l))) in
   let repo = { repo with ctx = Context.add x (env, mkApp (h, l), a) repo.ctx } in
   repo, (x, s)
 
