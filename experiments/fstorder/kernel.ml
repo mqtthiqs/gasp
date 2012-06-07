@@ -292,7 +292,7 @@ end = struct
          * ——————————————————————————————————————— (h sliceable)
          * R, Γ ⊢ h l => R'', ?X[s], C
          *)
-      | Sign.Sliceable ->
+      | Sign.Sliceable when red ->
         let repo, l, a = spine ~red repo env (l, a) in
         let repo, hd = push repo env (h, l) a in
         repo, mkMeta hd, a
@@ -309,7 +309,7 @@ end = struct
         (* evaluate it with the reduced arguments *)
         let repo, m = Eval.interp repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
-        let repo, m = obj ~red repo env (m, a) in
+        let repo, m = obj ~red:true repo env (m, a) in
         repo, m, a
 
       (* R, Γ ⊢ h => A  R, Γ, A ⊢ l => R', l', C
