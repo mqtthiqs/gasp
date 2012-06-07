@@ -99,7 +99,7 @@ Tests.commit_eq repo <<
 
 42
 
-(* TODO que faire de ça?!?! *)
+(* TODO what should happen with constants referring defined functions? *)
 (*
 let repo = Version.init <:sign<
 
@@ -109,8 +109,8 @@ let repo = Version.init <:sign<
 
   f : A -> A = $ fun x ->
     match* x with
-      | << plus $x$ $y$ >> -> << $x$ >>
-      | << a >> -> << a >>
+      | << plus $x$ $_$ >> -> return << $x$ >>
+      | << a >> -> return << a >>
   $.
 
   P : A -> type.

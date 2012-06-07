@@ -64,15 +64,6 @@ Tests.commit repo
 >>
 ;;
 
-(* let repo = Tests.commit repo *)
-(* << *)
-(*   infer ( *)
-(*     lam (arr even nat) [div2] *)
-(*       recb (s (s o)) (s (s o)) [_] [y] app div2 y *)
-(*   ) *)
-(* >> *)
-(* ;; *)
-
 (* Version.checkout repo *)
 (* ;; *)
 

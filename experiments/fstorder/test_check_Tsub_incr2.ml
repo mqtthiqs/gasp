@@ -29,6 +29,10 @@ Tests.commit repo
 >>
 ;;
 
+(* let add = λxy. rec x y z_. s z in
+   add (s o) (s o)
+   (with sharing on (s z) and (s o))
+*)
 let repo = Tests.commit repo
 <<
   infer (
@@ -42,6 +46,11 @@ let repo = Tests.commit repo
 >>
 ;;
 
+(* let add = ... in
+   let mul = λxy. rec o y z_. add x z in
+   mul (add (s o) (s o)) (s (s o))
+   (with sharing on ... and (s o))
+ *)
 let repo = Tests.commit repo
 <<
   infer (
@@ -62,6 +71,10 @@ let repo = Tests.commit repo
 >>
 ;;
 
+(* let add = ... in
+   (λxy. rec o y z_. add x z) (add (s o) (s o)) (s (s o))
+   (with sharing on (λxy. ...), ... and (add ...)
+ *)
 let repo = Tests.commit repo
 <<
   infer (

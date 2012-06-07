@@ -23,6 +23,15 @@ let repo = Tests.commit repo
 >>
 ;;
 
-(* TODO: test reuse of (s x) *)
+let repo = Tests.commit repo
+<<
+  infer (
+    lam nat [x]
+      infer^0 ?j04lbjma[x] (
+        ex ?j04lbjma[x] nat ?flkccrfm23[x; prj x nat (infer x)]
+      )
+  )
+>>
+;;
 
 42
