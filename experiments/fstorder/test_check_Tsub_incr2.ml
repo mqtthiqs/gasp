@@ -24,7 +24,7 @@ Tests.commit repo
     recb
       (infer^0 ?e34gq0ra (ex ?e34gq0ra odd ?gp2vx9rpoda))
       (infer^0 ?e34gq0ra (ex ?e34gq0ra odd ?gp2vx9rpoda))
-      [x] [y] infer^0 ?k60pbjma[x] (ex ?k60pbjma[x] nat ?fe8miuauzds8[x; prj x nat (infer x)])
+      [x] [y] infer^0 ?j04lbjma[x] (ex ?j04lbjma[x] nat ?flkccrfm23[x; prj x nat (infer x)])
   )
 >>
 ;;
@@ -34,7 +34,7 @@ let repo = Tests.commit repo
   infer (
     letb
       (lam nat [x] lam nat [y]
-         recb x y [z] [_] (infer^0 (s z) (ex (s z) nat ?fe8miuauzds8[z; prj z nat (infer z)]))) [add]
+         recb x y [z] [_] (infer^0 (s z) (ex (s z) nat ?flkccrfm23[z; prj z nat (infer z)]))) [add]
       app
       (app add (infer^0 ?e34gq0ra (ex ?e34gq0ra odd ?gp2vx9rpoda)))
       (infer^0 ?e34gq0ra (ex ?e34gq0ra odd ?gp2vx9rpoda))
@@ -46,17 +46,17 @@ let repo = Tests.commit repo
 <<
   infer (
     letb (
-      infer^0 ?gy4j2pnp13[[x] ?i7xa2nijgbb[x]; nat]
-        (ex ?gy4j2pnp13[[x] ?i7xa2nijgbb[x]; nat] ?gn7gsi1o13[nat; ?a8w9p8xsmga] ?wq742rd5z6esb)
+      infer^0 ?en5l7qc2sha
+        (ex ?en5l7qc2sha ?gxcaruew4ga ?isn7xttxszj6a)
     ) [add]
       letb (
         lam nat [x] lam nat [y] recb o y [z][_] app (app add x) z
       ) [mul]
       app (app mul
              (infer^0
-                ?lel1wxhp13[?ih610wx79v6ha[add]; ?e34gq0ra]
-                (ex ?lel1wxhp13[?ih610wx79v6ha[add]; ?e34gq0ra] nat
-                   ?v4gw3zvfinhva[add; prj add ?gxcaruew4ga (infer add)])))
+                ?mwu866oos9cda[add]
+                (ex ?mwu866oos9cda[add] nat
+                   ?bdtbvto0cs51[add; prj add ?gxcaruew4ga (infer add)])))
       (s (infer^0 ?e34gq0ra (ex ?e34gq0ra odd ?gp2vx9rpoda)))
   )
 >>
@@ -66,19 +66,19 @@ let repo = Tests.commit repo
 <<
   infer (
     letb (
-      infer^0 ?gy4j2pnp13[[x] ?i7xa2nijgbb[x]; nat]
-        (ex ?gy4j2pnp13[[x] ?i7xa2nijgbb[x]; nat] ?gn7gsi1o13[nat; ?a8w9p8xsmga] ?wq742rd5z6esb)
+      infer^0 ?en5l7qc2sha
+        (ex ?en5l7qc2sha ?gxcaruew4ga ?isn7xttxszj6a)
     ) [add]
     infer^0
-      ?jt1gj8164ge6[add; ?hc4zvjzt9cb[add]] (* let [mul] body, with mul replaced *)
+      ?mqiskkfw46w1a[add; ?ipc1pwxd4cb[add]] (* let [mul] body, with mul replaced *)
       (ex
-         ?jt1gj8164ge6[add; ?hc4zvjzt9cb[add]]
+         ?mqiskkfw46w1a[add; ?ipc1pwxd4cb[add]]
          nat
-         ?bwtcf4ncwnnha[                (* let [mul] body proof *)
+         ?k1panyi4t8phb[                (* let [mul] body proof *)
            add;                            (* add *)
-           prj add ?gn7gsi1o13[nat; ?a8w9p8xsmga] (infer add); (* ⊢ add : N→N→N *)
-           ?gy4j2pnp13[[x] ?f6nhzh6ujsaf[add; x]; nat]; (* mul *)
-           ?w2ntarvx3sce[add; prj add ?gn7gsi1o13[nat; ?a8w9p8xsmga] (infer add)] (* ⊢ mul : N→N→N *)
+           prj add ?gxcaruew4ga (infer add); (* ⊢ add : N→N→N *)
+           ?ipc1pwxd4cb[add]; (* mul *)
+           ?vzi4010grycw[add; prj add ?gxcaruew4ga (infer add)] (* ⊢ mul : N→N→N *)
          ]
       )
   )
