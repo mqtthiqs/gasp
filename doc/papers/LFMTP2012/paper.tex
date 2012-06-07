@@ -82,7 +82,7 @@ systems, relying on a certain notion of definitional equality on
 types, or type systems with subtype polymorphism: both rely on a rule
 of the form
 $$
-\infer{\Gamma\vdash M : A \\ A\leq B}{\Gamma\vdash M : B}
+\infer{\vdash M : A \\ A\leq B}{\vdash M : B}
 $$
 (for a given notion of $\leq$) which is not syntax-directed. The
 implementer then has to convert the declarative system to an
@@ -151,8 +151,8 @@ effect of a small change on the whole edifice: we need to take
 advantage of the results of previous checks in order to build the
 result for a modified version of the program.
 
-Several methods have been devised for turning a batch procedure into
-an incremental one \cite{pugh1989incremental,
+Several generic methods have been devised for turning a batch program
+into an incremental one \cite{pugh1989incremental,
   acar2003selective}. Unfortunately, they all suffer from their
 genericity on the particular problem of type checking:
 \begin{itemize}
