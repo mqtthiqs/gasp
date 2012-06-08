@@ -454,14 +454,14 @@ term $M$ and treats the easy cases of $\cst{o}$ and $\cst{s}$:
 
 \begin{mathleft}
   \lamd M \match{M} \\
-  \quad\case{\z} \pair {\cst{even}}{\infer{ }{\vdash \cst o : \cst{even}}} \\
-  \quad\case{\s M}
+  \quad\caseb{\z} \pair {\cst{even}}{\infer{ }{\vdash \cst o : \cst{even}}} \\
+  \quad\caseb{\s M}
   \match{\finfer M} \\
-  \quad\quad\case{\pair{\cst{even}}\md}
+  \quad\quad\caseb{\pair{\cst{even}}\md}
   \pair {\cst{odd}}{\infer\md{\vdash\app{\cst{s}} M : \cst{odd}}} \\
-  \quad\quad\case{\pair{\cst{odd}}\md}
+  \quad\quad\caseb{\pair{\cst{odd}}\md}
   \pair {\cst{even}}{\infer\md{\vdash\app{\cst{s}} M : \cst{even}}} \\
-  \quad\quad\case{\pair{\cst{nat}}\md}
+  \quad\quad\caseb{\pair{\cst{nat}}\md}
   \pair {\cst{nat}}{\infer\md{\vdash\app{\cst{s}} M : \cst{nat}}} \\
 \end{mathleft}
 
@@ -475,15 +475,15 @@ case, we rely on the well-known property that we may need to insert a
 coercion from the actual type of the argument to its expected type:
 
 \begin{mathleft}
-  \quad\case{\app{M}N} \\
+  \quad\caseb{\app{M}N} \\
   \quad\quad\letd {\pair {A_1\to B} {\md_1}} {\finfer{M}} \\
   \quad\quad\letd {\pair {A_2} {\md_2}} {\finfer{N}} \\
   \quad\quad\letd {\md_{\leq}} {\fleq {A_1} {A_2}} \\
   \quad\quad
   \match{\md_{\leq}} \\
-  \quad\quad\quad\case{\infer{ }{\vdash A\leq A}}
+  \quad\quad\quad\caseb{\infer{ }{\vdash A\leq A}}
   \pair {B} {\infer{\md_1 \and \md_2}{\vdash \app M N : B}} \\
-  \quad\quad\quad\case{\_}
+  \quad\quad\quad\caseb{\_}
   \pair {B} {\infer{\md_1 \and \infer*{\md_2 \and \md_{\leq}}{\vdash N
       : A_1}}{\vdash \app M N : B}}
 \end{mathleft}
@@ -515,7 +515,7 @@ the \emph{inverse} of $\finfer{}$: operator $\fget{}$ maps a pair of a
 type and a derivation to the term it types.
 
 \begin{mathleft}
-  \quad\case{\tlam x A M} \\
+  \quad\caseb{\tlam x A M} \\
   \quad\quad
   \letdin{\pair B \md}{\env {$\md_{\var x}$} {(\vdash {\var x} : A)}}
   {\finfer {\gsubst M {\msubst x {\fget{\pair A {\md_{\var x}}}}}}}
@@ -559,7 +559,7 @@ relation, this means iterating only twice: we will then attain
 \cst{nat}.
 
 \begin{mathleft}
-  \quad\case{\recb M N x y P} \\
+  \quad\caseb{\recb M N x y P} \\
   \quad\quad
   \letd {\pair {A_M} {\md_M}} {\finfer{M}} \\
   \quad\quad\letd {\md_{A_M}} {{A_M} \leq \cst{nat}} \\
@@ -1345,8 +1345,8 @@ objects out of other, and deconstruct them by case analysis:
   U &\gequal
   F \gor
   \matchin U \Gamma C \\
-  C &\gequal \casenobar P U \gor
-  C\ \case P U \\
+  C &\gequal \casebnobar P U \gor
+  C\ \caseb P U \\
   P &\gequal
   \app H {\var x} \ldots\ {\var x}
 \end{align*}
@@ -1377,8 +1377,8 @@ computations: arguments and results are type-checked at run-time.
   \gsubst {(\matchin U \Gamma C)} \sigma &=
   \matchin {\gsubst
     U\sigma} {\gsubst\Gamma\sigma} {\gsubst C\sigma} \\
-  \gsubst {(\casenobar{\app H {\spinecons {\var x_1} {\spinecons \ldots {\var
-          x_n}}}} U)} \sigma &= {\casenobar{\app H {\spinecons {\var x_1} {\spinecons \ldots {\var
+  \gsubst {(\casebnobar{\app H {\spinecons {\var x_1} {\spinecons \ldots {\var
+          x_n}}}} U)} \sigma &= {\casebnobar{\app H {\spinecons {\var x_1} {\spinecons \ldots {\var
           x_n}}}} \gsubst U \sigma} \quad \text{if $\var x_i\notin\dom\sigma$} \\
 \end{align*}
 
@@ -1437,10 +1437,10 @@ computations: arguments and results are type-checked at run-time.
           \msubst {x$_{m_i}$} {M_{m_i}}}} \mmmr F a
     }{
       \jcr\mr\Gamma{\matchin{U}{\Gamma'}{
-          \casenobar{\app {H_1}{\spinecons {\var x_{11}} {\spinecons
+          \casebnobar{\app {H_1}{\spinecons {\var x_{11}} {\spinecons
                 \ldots\ {\var x_{1m_1}}}}}{U_1}
           |\ \ldots\
-          \case{\app {H_n}{\spinecons {\var x_{n1}} {\spinecons
+          \caseb{\app {H_n}{\spinecons {\var x_{n1}} {\spinecons
               \ldots\ {\var x_{nm_n}}}}}{U_n}
         }}\mmr F
     }
