@@ -734,9 +734,10 @@ contextual metavariables $\meta X$, $\meta Y$\ldots\ as in
 \cite{nanevski2008contextual}. Metavariables stand for well-typed
 terms defined in a repository, and are instantiated wrt. their free
 variables. A repository also contains a distinguished metavariable
-corresponding to the head of the term stored in it. For instance, the
+corresponding to the ``tip'' of the term stored in it. For instance, the
 repository
 $$
+\small
 \left(\begin{array}{llll}
     \meta X &\mapsto
     \envnil&\vdash
@@ -874,20 +875,20 @@ We overload \emph{substitution} as a partial operation on objects,
 given a parallel substitution $\sigma$. Since the syntax of object is
 not stable by (textual) substitution, it is defined as
 \emph{hereditary}\footnote{ Note that this notion of substitution,
-  present in \cite{pfenning2007term} differs from
-  \cite{hl07mechanizing} as it presupposes $\eta$-long normal forms:
-  once a \emph{cut} starts, there must be exactly as many formal and
-  actual arguments. A non-empty spine cut against another non-empty
-  spine $\gcut {\app H S} {S'}$ blocks the substitution instead of
-  reducing to $\app H {(\gconcat S S')}$ (an implicit
-  $\eta$-expansion); conversely, exhausting actual but not formal
-  arguments as in $\gcut{\lam x M}{\gnil}$ blocks the substitution
-  too. For example, the reduction $\gcut {\lam x \app {\var x}{\var
-      x}} {\lam x \app {\var x}{\var x}}$ gets stuck because the
-  second $\var x$ in the left part is substituted by a function yet is
-  not itself a function. }: it is mutually recursive with a \emph{cut}
-function $\gcut M S$ which can in turn trigger a chain of
-substitutions, leading to a canonical objects or an error.
+  present in \cite{pfenning2007term}, differs from the more standard
+  definition in \cite{hl07mechanizing} as it presupposes $\eta$-long
+  normal forms: once a \emph{cut} starts, there must be exactly as
+  many formal and actual arguments. A non-empty spine cut against
+  another non-empty spine $\gcut {\app H S} {S'}$ blocks the
+  substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
+  implicit $\eta$-expansion); conversely, exhausting actual but not
+  formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
+  substitution too. For example, the reduction $\gcut {\lam x \app
+    {\var x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck
+  because the second $\var x$ in the left part is substituted by a
+  function yet is not itself a function. }: it is mutually recursive
+with a \emph{cut} function $\gcut M S$ which can in turn trigger a
+chain of substitutions, leading to a canonical objects or an error.
 \begin{align*}
   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
   \text{if $\var x\notin \dom{\sigma}$}
