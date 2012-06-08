@@ -11,23 +11,37 @@
 
 \begin{document}
 
-\title{Incremental tactics}
+\title{Certifying, incremental type checking}
 
 \author{Matthias Puech\inst{1,2} \and Yann R\'egis-Gianas\inst{1}}
-\institute{
-  PPS, Team $\pi r^2$ (Universit\'e Paris Diderot, CNRS, INRIA)
-  \and
-  Department of Computer Science, University of Bologna
-}
+\institute{Univ Paris Diderot, Sorbonne Paris Cit\'e, PPS, UMR 7126
+  CNRS, $\pi r^2$, INRIA Paris-Rocquencourt, F-75205 Paris, France
+  \and Department of Computer Science, University of Bologna, 40126
+  Bologna, Italy}
 
 \maketitle
 
 \begin{abstract}
  %% 4 sentences:
  %% State the problem
+  Type checkers are traditionally implemented as batch processes,
+  taking a program and returning a binary information: well-typed or
+  not.
  %% Say why it’s an interesting problem
+  This laconicism presents a double problem: first, how can I trust
+  that the checking algorithm (a complex program) is sound \wrt\ the
+  declarative type system? Secondly, how can I avoid costly rechecks
+  of the whole program when I only make a small, localized change?
  %% Say what your solution achieves
+  A lightweight solution to both problems is letting the checker
+  return a typing derivation: trust is then ensured by checking that
+  this derivation is well-formed, and incrementality by the
+  possibility of reusing already-computed pieces of derivations.
  %% Say what follows from your solution
+  We present a system turning a type system and its checking algorithm
+  into a safe and incremental one, consisting of a generic data
+  structure to represent reusable derivations based on \LF\ and a
+  general-purpose programming language to generate them.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -262,8 +276,7 @@ of his code:
 \begin{align*}
   &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
     {\var y} u v {\s{\var u}}}
-  \\
-  &\quad\app{\var{add}}\app{(\s\z)}{(\s\z)} \ \text{.}
+  \app{\var{add}}\app{(\s\z)}{(\s\z)} \ \text{.}
 \end{align*}
 But he (or his text editor) realizes that some parts of this program
 have not changed: both $\s\z$, and the function body $\s{\var u}$, and
@@ -276,7 +289,6 @@ program it types, what really needs to be sent to the system is:
   &\finfer{}(
     \letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
       {\var y} u v {\fget{\gsubst{\md_4}{\msubst{H}{\finfer{\var u}}}}}}
-    \\&\qquad
     \app{\var{add}}\app{\fget{\md_2}}{\fget{\md_2}}
   )
 \ \text{,}
@@ -288,11 +300,11 @@ new context where $\var{add}:\cst{nat}\to\cst{nat}$, because System
 a derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole
 with the derivation $\finfer{\var u}$ inferred recursively for the new
 recursive argument $\var u$. $\md_2$ derives $\vdash \s\z :
-\cst{odd}$, but $\var{add}$ awaits $\cst{nat}$ arguments. When the
-system will generate this derivation, it will insert a coercion
-$\cst{odd} \leq \cst{nat}$ at these two points. Taking advantage of
-$\md_2$ and $\md_4$ the system succeeds with a new derivation made out
-of these, without having to regenerate them because it knows that
+\cst{odd}$, but $\var{add}$ awaits two $\cst{nat}$ arguments. When the
+system generates this derivation, it inserts a coercion $\cst{odd}
+\leq \cst{nat}$ at these two points. Taking advantage of $\md_2$ and
+$\md_4$ the system succeeds with a new derivation made out of these,
+without having to regenerate them because it knows that
 $\finfer{\fget\md} = \md$.
 
 Let us call $\md_5$ the subderivation generated for $\tlam x
@@ -352,9 +364,9 @@ returned, $\fget{\md_{10}}$ returns:
   &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
     {\var y} x y {\s{\var x}}}
   \\&\quad
-  {\tlam x {\cst{nat}} \tlam y
+  {(\tlam x {\cst{nat}} \tlam y
     {\cst{nat}} \recb \z {\var y} z t {
-      \app{\var{add}}\app{\var x} {\var z}}}
+      \app{\var{add}}\app{\var x} {\var z}})}
   \\&\quad\quad
   \app{(\app {\var{add}} \app {(\s{\s\z})}
     {(\s{\s\z})})}{(\s{\s{\s\z}})}
@@ -610,16 +622,15 @@ where argument $M$ is implicit.
 
 \paragraph{Discussion}
 
-We exploit here an idea similar to run-time
-\emph{contracts}: %TODO cite
-there is no static guarantee that computations won't return ill-typed
-values, but arguments and results are checked at run-time at the
-boundaries of defined functions. This allows to omit formal
-justifications, like the fact that we need to iterate twice the typing
-of $P$ in $\recb M N x y P$, or that $B$ can't depend on $\md_x$ in
-the $\lambda$ case. Of course this incurs on the performance; we will
-see a compensation for it by the slicing mechanism described below in
-\ref{sec:repr}.
+We exploit here an idea similar to run-time \emph{contracts}
+\cite{wadler2009well}: there is no static guarantee that computations
+won't return ill-typed values, but arguments and results are checked
+at run-time at the boundaries of defined functions. This allows to
+omit formal justifications, like the fact that we need to iterate
+twice the typing of $P$ in $\recb M N x y P$, or that $B$ can't depend
+on $\md_x$ in the $\lambda$ case. Of course this incurs on the
+performance; we will see a compensation for it by the slicing
+mechanism described below in \ref{sec:repr}.
 
 The idea of untrustedly generating certificates verified \emph{a
   posteriori} is very wide-spread in \sysname{LCF}-style proof
@@ -1177,7 +1188,7 @@ $M$ is this tip; if $F$ is directly sliceable, then $M$ is the
 metavariable referring to it.
 
 These typing rules use definitional equality judgement between two
-families $\jea\mr\Gamma A {A'}$. This equivalence is usually defined
+families $\jea\Delta\Gamma A {A'}$. This equivalence is usually defined
 to be just $\alpha$-equivalence since objects are in
 $\beta\eta$-canonical form. Here, objects can contain metavariables
 defined in $\mr$, so we shall thread it. Moreover, we will see in the
@@ -1324,14 +1335,14 @@ objects out of other, and deconstruct them by case analysis:
 \begin{align*}
   T &\gequal
   \lam x T \gor
-  U \\
+  U & \text{Term} \\
   U &\gequal
   F \gor
-  \matchin U \Gamma C \\
+  \matchin U \Gamma C & \text{Atomic term}\\
   C &\gequal \casebnobar P U \gor
-  C\ \caseb P U \\
+  C\ \caseb P U & \text{Branches}\\
   P &\gequal
-  \app H {\var x} \ldots\ {\var x}
+  \app H {\var x} \ldots\ {\var x} &\text{Pattern}
 \end{align*}
 
 This language is un(i)typed, in that all \LF\ objects are viewed as
@@ -1366,71 +1377,71 @@ computations: arguments and results are type-checked at run-time.
 \end{align*}
 
 \begin{figure*}
-  \fbox{$\jcc\mr\Gamma T S A \mmr F$}
+  \fbox{$\jcc\Delta\Gamma T S A {\Delta'} F$}
   \qquad
-  {Computational cut}
+  {Term evaluation}
 
   \begin{mathpar}
-    \infer{
-      \jm\mr\Gamma M {A_1} \mmr {M'}
+    \infer[TLam]{
+      \jm\Delta\Gamma M {A_1} {\Delta'} {M'}
       \and
-      \jcc\mmr\Gamma{\gsubst {A_2} {\msubst x {M'}}}{\gsubst T {\msubst x {M'}}} S \mmmr F
+      \jcc{\Delta'}\Gamma{\gsubst {A_2} {\msubst x {M'}}}{\gsubst T {\msubst x {M'}}} S {\Delta''} F
     }{
-      \jcc\mr\Gamma{\prd x {A_1} {A_2}}{\lam x T}{\spinecons M S}
-      \mmmr F
+      \jcc\Delta\Gamma{\prd x {A_1} {A_2}}{\lam x T}{\spinecons M S}
+      {\Delta''} F
     }
 
-    \infer{
-      \jcr\mr\Gamma U \mmr F
+    \infer[TAtom]{
+      \jcr\Delta\Gamma U {\Delta'} F
       \and
-      \jm\mmr\Gamma F {\app {\cst a} S} \mmmr {F'}
+      \jm{\Delta'}\Gamma F {\app {\cst a} S} {\Delta''} {F'}
     }{
-      \jcc\mr\Gamma {\app {\cst a} S} U \spinenil \mmmr {F'}
+      \jcc\Delta\Gamma {\app {\cst a} S} U \spinenil {\Delta''} {F'}
     }
   \end{mathpar}
 
-  \fbox{$\jcr\mr\Gamma U \mmr F$}
+  \fbox{$\jcr\Delta\Gamma U {\Delta'} F$}
   \qquad
-  {Computational reduction}
+  {Atomic term evaluation}
 
   \begin{mathpar}
-    \infer{ }{
-      \jcr\mr\Gamma{\app {\var x} S} \mr {\app {\var x} S}
+    \infer[UVar]{ }{
+      \jcr\Delta\Gamma{\app {\var x} S} \Delta {\app {\var x} S}
     }
 
-    \infer{
+    \infer[UConst]{
       \Sigma(c) = A; (\annsliceable\text{ or }\annnonsliceable)
     }{
-      \jcr\mr\Gamma{\app {\cst c} S} \mr {\app {\cst c} S}
+      \jcr\Delta\Gamma{\app {\cst c} S} \Delta {\app {\cst c} S}
     }
 
-    \infer{
+    \infer[UEval]{
       \Sigma(c) = A; \anndefined T
       \and
-      \jcc\mr\Gamma T S A \mmr F
+      \jcc\Delta\Gamma T S A {\Delta'} F
     }{
-      \jcr\mr\Gamma{\app {\cst c} S} \mr {\app {\cst c} S}
+      \jcr\Delta\Gamma{\app {\cst c} S} \Delta {\app {\cst c} S}
     }
 
-    \infer{
-      \jcr\mr{\gconcat\Gamma{\Gamma'}} U \mmr {\app {H_i} {\spinecons
+    \infer[UCase]{
+      \jcr\Delta{\gconcat\Gamma{\Gamma'}} U {\Delta'} {\app {H_i} {\spinecons
           {M_1}{\spinecons\ldots{M_{m_i}}}}}
       \and
-      \jcr\mmr\Gamma {\gsubst{U_i}{\msubst {x$_1$} {M_1} \ldots\
-          \msubst {x$_{m_i}$} {M_{m_i}}}} \mmmr F a
+      \jcr{\Delta'}\Gamma {\gsubst{U_i}{\msubst {x$_1$} {M_1} \ldots\
+          \msubst {x$_{m_i}$} {M_{m_i}}}} {\Delta''} F
     }{
-      \jcr\mr\Gamma{\matchin{U}{\Gamma'}{
-          \casebnobar{\app {H_1}{\spinecons {\var x_{11}} {\spinecons
-                \ldots\ {\var x_{1m_1}}}}}{U_1}
+      \jcr\Delta\Gamma{\matchin{U}{\Gamma'}{
+          (\casebnobar{\app {H_1}{\spinecons {\var x_{11}} {\spinecons
+                \ldots\ {\var x_{1m_1}}}}}{U_1})\
           |\ \ldots\
-          \caseb{\app {H_n}{\spinecons {\var x_{n1}} {\spinecons
-              \ldots\ {\var x_{nm_n}}}}}{U_n}
-        }}\mmr F
+          \caseb{(\app {H_n}{\spinecons {\var x_{n1}} {\spinecons
+              \ldots\ {\var x_{nm_n}}}}}{U_n})
+        }}{\Delta''} F
     }
 
   \end{mathpar}
 
-  \caption{Weak head-reduction}
+  \caption{Evaluation of terms}
   \label{fig:whr}
 \end{figure*}
 
