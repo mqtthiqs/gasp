@@ -1,38 +1,27 @@
-\documentclass[9pt]{sigplanconf}
+\documentclass{llncs}
 
 \usepackage{ntheorem}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\newtheorem{theorem}{Theorem}
-\newtheorem{definition}{Definition}
 \usepackage{macros}
 \usepackage{mathpartir}
 \usepackage{url}
 
+\allowdisplaybreaks[1]
+
 \begin{document}
 
-\conferenceinfo{LFMTP '12}{September 9, 2012 -- Copenhagen, Denmark}
-\copyrightyear{2012}
-\copyrightdata{[to be supplied]}
-
-\titlebanner{banner above paper title}        % These are ignored unless
-\preprintfooter{short description of paper}   % 'preprint' option specified.
-
 \title{Incremental tactics}
-%\subtitle{Subtitle Text, if any}
 
-\authorinfo{Matthias Puech}
-           {Department of Comp. Sci., Univ. of Bologna,\\
-             PPS, Team $\pi r^2$ (Univ. Paris Diderot, CNRS, INRIA)}
-           {puech@cs.unibo.it}
-
-\authorinfo{Yann R\'egis-Gianas}
-           {PPS, Team $\pi r^2$ (Univ. Paris Diderot, CNRS, INRIA)}
-           {yrg@pps.jussieu.fr}
+\author{Matthias Puech\inst{1,2} \and Yann R\'egis-Gianas\inst{1}}
+\institute{
+  PPS, Team $\pi r^2$ (Universit\'e Paris Diderot, CNRS, INRIA)
+  \and
+  Department of Computer Science, University of Bologna
+}
 
 \maketitle
 
-%% Here is a problem
 \begin{abstract}
  %% 4 sentences:
  %% State the problem
@@ -40,17 +29,6 @@
  %% Say what your solution achieves
  %% Say what follows from your solution
 \end{abstract}
-
-\category{D.3.3}{Language Constructs and Features}{Data types and
-  structures} \category{F.3.1}{Logics and Meanings of
-  Programs}{Specifying and Verifying and Reasoning about
-  Programs --- Logics of programs}
-
-\terms
-Theory, Languages
-
-\keywords
-incrementality, type checking, logical framework, version control
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -152,9 +130,10 @@ advantage of the results of previous checks in order to build the
 result for a modified version of the program.
 
 Several generic methods have been devised for turning a batch program
-into an incremental one \cite{pugh1989incremental,
-  acar2003selective}. Unfortunately, they all suffer from their
-genericity on the particular problem of type checking:
+into an incremental one
+\cite{pugh1989incremental,acar2003selective}. Unfortunately, they all
+suffer from their genericity on the particular problem of type
+checking:
 \begin{itemize}
 \item first, they ignore the higher-order nature of program syntax,
   and the kind of structural quotients we make on syntax trees with
@@ -166,9 +145,9 @@ genericity on the particular problem of type checking:
   only with a small \emph{delta} on the previous version and not the
   whole program, thus saving the time to recognize already checked
   parts;
-\item finally, there is no way to \emph{a posteriori} validate the
-  result of the incremental process: the user has to trust not only
-  the type-checking algorithm but also its transformation into an
+\item finally, there is no way to a posteriori validate the result of
+  the incremental process: the user has to trust not only the
+  type-checking algorithm but also its transformation into an
   incremental one, which increases the size of the trusted base.
 \end{itemize}
 
@@ -413,11 +392,11 @@ subterms of the input $P_i$ is a well-known technique for handling
 changes in the input: combined with a way to automatically recognize
 already-computed input, it is \emph{memoization}, a general-purpose
 technique for incremental computation that has been extensively
-studied and combined with other techniques \cite{pugh1989incremental,
-  acar2003selective}. However, it is best understood in the case of
-purely first-order data, and to our best knowledge remains unexplored
-for higher-order structures containing binders, like programs and
-proofs.
+studied and combined with other techniques
+\cite{pugh1989incremental,acar2003selective}. However, it is best
+understood in the case of purely first-order data, and to our best
+knowledge remains unexplored for higher-order structures containing
+binders, like programs and proofs.
 
 A memoized type-checker stores in a table bindings from its input (the
 program) to its output (the derivation), and returns automatically the
@@ -1466,8 +1445,8 @@ computations: arguments and results are type-checked at run-time.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\bibliographystyle{abbrvnat}
-\bibliography{../../english.bib}
+\bibliographystyle{splncs}
+\bibliography{../../english}
 
 
 % \begin{thebibliography}{}
