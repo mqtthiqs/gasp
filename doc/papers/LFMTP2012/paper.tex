@@ -819,8 +819,11 @@ as \sysname{LJT} \cite{herbelin1995λ}.
   \text{Kind}\\
   A &\gequal
   \prd x A A \gor
-  \app {\cst a} S &
+  P &
   \text{Type family} \\
+  P &\gequal
+  \app {\cst a} S &
+  \text{Atomic type} \\
   M &\gequal
   \lam x M \gor
   F &
@@ -984,10 +987,10 @@ and the environment in which they are well-typed.
 % TODO parler de la redondance en LF normal
 
 A \emph{repository} $\mr$ is a finite map from metavariable to
-judgements of object well-typing, along with a distinguished
+judgments of atomic object well-typing, along with a distinguished
 metavariable, corresponding to the \emph{tip} of the term contained in
 it:
-$$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp M A)), \smeta X
+$$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp F P)), \smeta X
 \sigma $$
 The algorithm will maintain the invariant that a repository
 $\mr$ is \emph{acyclic}, that is for all $\meta X$ in $\mr$, the
@@ -1022,139 +1025,139 @@ order of computation.
 
 \begin{figure*}
 
-  \fbox{$\jm\mr\Gamma M A \mmr {M'}$}
+  \fbox{$\jm\Delta\Gamma M A {\Delta'} {M'}$}
   \qquad
   Canonical object
 
   \begin{mathpar}
-    % Lambda
-    \infer{
-      \jm\mr{\envcons\Gamma x A} M {A'} \mmr {M'}
+    \infer[MLam]{
+      \jm\Delta{\envcons\Gamma x A} M {A'} {\Delta'} {M'}
     }{
-      \jm\mr\Gamma {\lam x M} {\prd x A {A'}} \mmr {\lam x M'}
+      \jm\Delta\Gamma {\lam x M} {\prd x A {A'}} {\Delta'} {\lam x M'}
     }
 
-    % App
-    \infer{
-      \jf\mr\Gamma F \mmr {F'} {A'}
+    \infer[MAtom]{
+      \jf\Delta\Gamma F {\Delta'} {F'} {P}
        \and
-      \jea\mmr\Gamma {\app{\cst a} S} {A'}
+      \jea{\Delta'}\Gamma P {\app{\cst a} S}
     }{
-      \jm\mr\Gamma F {\app{\cst a} S} \mmr {F'}
+      \jm\Delta\Gamma F {\app{\cst a} S} {\Delta'} {F'}
     }
     % TODO commenter type ground
   \end{mathpar}
 
-  \fbox{$\jf\mr\Gamma F \mmr F A$}
+  \fbox{$\jf\Delta\Gamma F {\Delta'} {F'} P$}
   \qquad
   {Atomic object}
 
   \begin{mathpar}
 
     % Non-sliceable
-    \infer{
-      \jh\mr\Gamma H A \annnonsliceable
+    \infer[FAppNoSlice]{
+      \jh\Delta\Gamma H A \annnonsliceable
       \and
-      \jl\mr\Gamma A S \mmr {S'} {A'}
+      \jl\Delta\Gamma A S {\Delta'} {S'} P
     }{
-      \jf\mr\Gamma {\app H S} \mmr {\app H {S'}} {A'}
+      \jf\Delta\Gamma {\app H S} {\Delta'} {\app H {S'}} P
     }
 
     % Meta
-    \infer{
-      \mr(\meta X) = (\Gamma'\vdash M:A)
+    \infer[FMeta]{
+      \Delta(\meta X) = (\Gamma'\vdash F:P)
       \and
-      \js\mr\Gamma \sigma {\Gamma'} \mmr {\sigma'}
+      \js\Delta\Gamma \sigma {\Gamma'} {\Delta'} {\sigma'}
     }{
-      \jf\mr\Gamma {\smeta X \sigma} \mmr {\smeta X {\sigma'}} {\gsubst{A}\sigma'}
+      \jf\Delta\Gamma {\smeta X \sigma} {\Delta'} {\smeta X {\sigma'}} {\gsubst{P}{\sigma'}}
     }
 
     % Sliceable
-    \infer{
-      \jh\mr\Gamma H A \annsliceable
+    \infer[FAppSlice]{
+      \jh\Delta\Gamma H A \annsliceable
       \and
-      \jl\mr\Gamma A S \mmr {S'} {A'}
+      \jl\Delta\Gamma A S {\Delta'} {S'} {P}
       \and
       \stren{\Gamma, \app H {S'}}=\Gamma'
     }{
-      \jf\mr\Gamma {\app H S} {\mapadd\mmr{\meta X}{(\Gamma'\vdash
-          {\app H {S'}}:A)}} {\smeta X{\msubstid{\Gamma'}}} {A'}
+      \jf\Delta\Gamma {\app H S} {\mapadd{\Delta'}{\meta X}{(\Gamma'\vdash
+          {\app H {S'}}:P)}} {\smeta X{\msubstid{\Gamma'}}} P
     }
-    \quad\text{($\meta X$ fresh in $\mr$)}
+    \quad\text{($\meta X$ fresh in $\Delta'$)}
 
     % Defined
-    \infer{
-      \jh\mr\Gamma H A {\anndefined T}
+    \infer[FAppEval]{
+      \jh\Delta\Gamma H A {\anndefined T}
       \and
-      \jl\mr\Gamma A S {\mmr} {S'} {A'}
-      \and
-      \jcc\mr\Gamma A T S \mmmr F
-      \and
-      \jm\mmmr\Gamma F {A'} {\repo {R'''} } {F'}
+      % check args pas nécessaire (fait ds la red)
+      % \jl\Delta\Gamma A S {{\Delta'}} {S'} P
+      % \and
+      \jcc\Delta\Gamma A T S {\Delta''} F
+      % check result pas nécessaire (fait ds la red)
+      % \and
+      % \jm{\Delta''}\Gamma F P {\Delta'''} {F'}
     }{
-      \jf\mr\Gamma {\app H S} {\repo{R'''}} {F'} {A'}
+      \jf\Delta\Gamma {\app H S} {\Delta'''} {F'} P
     }
 
   \end{mathpar}
 
-  \fbox{$\jh\mr\Gamma H A L$}
+  \fbox{$\jh\Delta\Gamma H A L$}
   \qquad
   {Head}
 
   \begin{mathpar}
     % constant
-    \infer{
+    \infer[HConst]{
       \Sigma(\cst c) = A; L
     }{
-      \jh\mr\Gamma {\cst c} A L
+      \jh\Delta\Gamma {\cst c} A L
     }
 
     % variable
-    \infer{
+    \infer[HVar]{
       \Gamma(\var x) = A
     }{
-      \jh\mr\Gamma {\var x} A \annnonsliceable
+      \jh\Delta\Gamma {\var x} A \annnonsliceable
     }
   \end{mathpar}
 
-  \fbox{$\jl\mr\Gamma A S \mmr{S'}{A'}$}
+  \fbox{$\jl\Delta\Gamma A S {\Delta'}{S'} P$}
   \qquad
   {Spine}
 
   \begin{mathpar}
-    \infer{
-      \jm\mr\Gamma M A \mmr {M'}
+    \infer[SCons]{
+      \jm\Delta\Gamma M A {\Delta'} {M'}
       \and
-      \jl\mmr\Gamma {\gsubst{A'}{M'}} S \mmmr {S'} {A''}
+      \jl{\Delta'}\Gamma {\gsubst{A'}{\msubst x {M'}}} S {\Delta''} {S'} P
     }{
-      \jl\mr\Gamma {\prd x {A} {A'}} {\spinecons M S} \mmmr {\spinecons
-      {M'}{S'}} {A''}
+      \jl\Delta\Gamma {\prd x {A} {A'}} {\spinecons M S} {\Delta''} {\spinecons
+      {M'}{S'}} P
     }
 
-    \infer{ }{
-      \jl\mr\Gamma {\app{\cst a} S} \spinenil \mr \spinenil {{\app{\cst a} S}}
+    \infer[SNil]{ }{
+      \jl\Delta\Gamma {\app{\cst a} S} \spinenil \Delta \spinenil {{\app{\cst a} S}}
     }
   \end{mathpar}
 
-  \fbox{$\js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}$}
+  \fbox{$\js\Delta\Gamma\sigma{\Gamma'}{\Delta'}{\sigma'}$}
   \qquad
   {Substitution}
 
   \begin{mathpar}
 
     % Cons
-    \infer{
-      \js\mr\Gamma\sigma{\Gamma'}\mmr{\sigma'}
+    \infer[$\sigma$Cons]{
+      \js\Delta\Gamma\sigma{\Gamma'}{\Delta'}{\sigma'}
       \and
-      \jm\mmr\Gamma M {\gsubst A {\sigma'}} \mmmr {M'}
+      \jm{\Delta'}\Gamma M {\gsubst A {\sigma'}} {\Delta''} {M'}
     }{
-      \js\mr\Gamma{(\msubstcons \sigma x M)} {(\envcons {\Gamma'} x {A'})}
-      \mmmr {(\msubstcons {\sigma'} x {M'})}
+      \js\Delta\Gamma{(\msubstcons \sigma x M)} {(\envcons {\Gamma'} x {A'})}
+      {\Delta''} {(\msubstcons {\sigma'} x {M'})}
     }
 
     % Nil
-    \infer{ }{
-      \js\mr\Gamma\msubstnil\envnil\mr\envnil
+    \infer[$\sigma$Nil]{ }{
+      \js\Delta\Gamma\msubstnil\envnil\Delta\envnil
     }
 
   \end{mathpar}
@@ -1163,8 +1166,8 @@ order of computation.
   \label{fig:obj-typing}
 \end{figure*}
 
-The main judgement is atomic object typing $\jf\mr\Gamma F \mmr {F'}
-A$, which means that in repository $\mr$ and environment $\Gamma$, the
+The main judgement is atomic object typing $\jf\Delta\Gamma F
+{\Delta'} {F'} P$, which means that in repository $\mr$ and environment $\Gamma$, the
 applicative term $F$ is well-typed of type $A$, and the slicing of $F$
 produces a new repository $\mmr$. The object $F'$ is the
 \emph{residual} of this operation: only certain kind of applications
@@ -1186,90 +1189,90 @@ Signatures themselves need to be checked. We present the checking
 algorithm in Fig. \ref{fig:sign-typing}.
 
 \begin{figure*}
-  \fbox{$\jsig\mr\Sigma\mmr{\Sigma'}$}
+  \fbox{$\jsig\Delta\Sigma{\Delta'}{\Sigma'}$}
   \qquad
   {Signature}
 
   \begin{mathpar}
 
     \infer{
-      \jsig\mr\Sigma\mmr{\Sigma'}
+      \jsig\Delta\Sigma{\Delta'}{\Sigma'}
       \and
-      \jfam\mmr\gnil {\!_{\Sigma'} A}\mmmr {A'}
+      \jfam{\Delta'}\gnil {\!_{\Sigma'} A}{\Delta''} {A'}
     }{
-      \jsig\mr{\gcons\Sigma{{\cst c :^L A}}}\mmmr{\gcons{\Sigma'}{{\cst c :^L A'}}}
+      \jsig\Delta{\gcons\Sigma{{\cst c :^L A}}}{\Delta''}{\gcons{\Sigma'}{{\cst c :^L A'}}}
     }
 
     \infer{
-      \jsig\mmr\Sigma\mmmr{\Sigma'}
+      \jsig{\Delta'}\Sigma{\Delta''}{\Sigma'}
       \and
-      \jkind\mr\gnil {\!_{\Sigma'} K}\mmr {K'}
+      \jkind\Delta\gnil {\!_{\Sigma'} K}{\Delta'} {K'}
     }{
-      \jsig\mr{\gcons\Sigma{{\cst a : K}}}\mmmr{\gcons{\Sigma'}{{\cst a : K'}}}
+      \jsig\Delta{\gcons\Sigma{{\cst a : K}}}{\Delta''}{\gcons{\Sigma'}{{\cst a : K'}}}
     }
 
     \infer{ }{
-      \jsig\mr\gnil\mr\gnil
+      \jsig\Delta\gnil\Delta\gnil
     }
   \end{mathpar}
 
-  \fbox{$\jfam\mr\Gamma A \mmr {A'}$}
+  \fbox{$\jfam\Delta\Gamma A {\Delta'} {A'}$}
   \qquad
   {Family}
 
   \begin{mathpar}
 
     \infer{
-      \jfam\mr\Gamma {A_1} \mmr {A_1'}
+      \jfam\Delta\Gamma {A_1} {\Delta'} {A_1'}
       \and
-      \jfam\mmr{\gcons\Gamma{\tp {\var x} {A_1'}}} {A_2} \mmmr {A_2'}
+      \jfam{\Delta'}{\gcons\Gamma{\tp {\var x} {A_1'}}} {A_2} {\Delta''} {A_2'}
     }{
-      \jfam\mr\Gamma {\prd x {A_1} {A_2}} \mmmr {\prd x {A_1'} {A_2'}}
+      \jfam\Delta\Gamma {\prd x {A_1} {A_2}} {\Delta''} {\prd x {A_1'} {A_2'}}
     }
 
     \infer{
       \Sigma(a) = K
       \and
-      \jfl\mr\Gamma K S \mmr {S'}
+      \jfl\Delta\Gamma K S {\Delta'} {S'}
     }{
-      \jfam\mr\Gamma {\app{\cst a} S} \mmr {\app{\cst a} {S'}}
+      \jfam\Delta\Gamma {\app{\cst a} S} {\Delta'} {\app{\cst a} {S'}}
     }
   \end{mathpar}
 
 
-  \fbox{$\jfl\mr\Gamma K S \mmr {S'}$}
+  \fbox{$\jfl\Delta\Gamma K S {\Delta'} {S'}$}
   \qquad
   {Family spine}
 
   \begin{mathpar}
     \infer{
-      \jm\mr\Gamma M A \mmr {M'}
+      \jm\Delta\Gamma M A {\Delta'} {M'}
       \and
-      \jfl\mmr\Gamma {\gsubst{K}{M'}} S \mmmr {S'}
+      \jfl{\Delta'}\Gamma {\gsubst{K}{\msubst x {M'}}} S {\Delta''} {S'}
     }{
-      \jfl\mr\Gamma {\prd x {A} {K}} {\spinecons M S} \mmmr {\spinecons
+      \jfl\Delta\Gamma {\prd x {A} {K}} {\spinecons M S} {\Delta''} {\spinecons
       {M'}{S'}}
     }
 
     \infer{ }{
-      \jfl\mr\Gamma\type\spinenil\mr\spinenil
+      \jfl\Delta\Gamma\type\spinenil\Delta\spinenil
     }
   \end{mathpar}
 
-  \fbox{$\jkind\mr\Gamma K \mmr {K'}$}
+  \fbox{$\jkind\Delta\Gamma K {\Delta'} {K'}$}
   \qquad
   {Kind}
 
   \begin{mathpar}
     \infer{
-      \jfam\mr\Gamma A\mmr{A'}
+      \jfam\Delta\Gamma A{\Delta'}{A'}
       \and
-      \jkind\mmr{\envcons\Gamma x A} K \mmmr {K'}
+      \jkind{\Delta'}{\envcons\Gamma x A} K {\Delta''} {K'}
     }{
-      \jkind\mr\Gamma{\prd x A K}\mmmr{\prd x {A'}{K'}}
+      \jkind\Delta\Gamma{\prd x A K}{\Delta''}{\prd x {A'}{K'}}
     }
 
-    \infer{ }{\jkind\mr\Gamma\type\mr\type}
+    \infer{ }{\jkind\Delta\Gamma\type\Delta\type}
   \end{mathpar}
 
   \caption{Typing algorithm for signatures}
