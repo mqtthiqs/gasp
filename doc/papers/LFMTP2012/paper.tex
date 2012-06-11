@@ -24,24 +24,26 @@
 \begin{abstract}
  %% 4 sentences:
  %% State the problem
-  Type checkers are traditionally implemented as batch processes,
-  taking a program and returning a binary information: well-typed or
-  not.
- %% Say why it’s an interesting problem
-  This laconicism presents a double problem: first, how can I trust
-  that the checking algorithm (a complex program) is sound \wrt\ the
-  declarative type system? Secondly, how can I avoid costly rechecks
-  of the whole program when I only make a small, localized change?
- %% Say what your solution achieves
-  A lightweight solution to both problems is letting the checker
-  return a typing derivation: trust is then ensured by checking that
-  this derivation is well-formed, and incrementality by the
-  possibility of reusing already-computed pieces of derivations.
- %% Say what follows from your solution
-  We present a system turning a type system and its checking algorithm
-  into a safe and incremental one, consisting of a generic data
-  structure to represent reusable derivations based on \LF\ and a
-  general-purpose programming language to generate them.
+
+  A lightweight way to design a trusted type-checker is to let it
+  return a \emph{certificate} of well-typing (for instance
+  \sysname{Agda} and \sysname{GHC} adopt this architecture
+  internally).  Most of the time, these type-checkers are confronted
+  sequentially with very similar pieces of input: the same program,
+  each time slightly modified. Yet they rebuild the entire
+  certificates, even for unchanged parts of the code. Instead of
+  discarding them between runs, we can take advantage of these
+  certificates to improve the reactivity of type-checking, by feeding
+  parts of the certificates for unchanged parts of the original
+  program back into the new input, thus building an incremental
+  type-checking.
+
+  We present a language-independent framework making possible to turn
+  a type system and its certifying checking algorithm into a safe,
+  incremental one. It consists in a model of incrementality by
+  sharing, a generic data structure to represent reusable derivations
+  based on contextual \LF, and a general-purpose language to write
+  certifying programs.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -196,72 +198,72 @@ as an \sysname{ML} library. We specifically propose:
   checked derivations.
 \end{itemize}
 
-\section{Use case}
+\section{Using the framework}
 %% It’s an unsolved problem (1 page)
 
-\subsection{A backend for incremental type checking}
+\subsection{As a programmer}
 \label{sec:use-incremental}
 
-\begin{figure}
-  \centering
-%  \small
-  \begin{mathpar}
-    \infer{ }{\jts{\cst o} {\even}}
+% \begin{figure}
+%   \centering
+% %  \small
+%   \begin{mathpar}
+%     \infer{ }{\jts{\cst o} {\even}}
 
-    \infer{\jts M \odd} {\jts {\s M} \even}
+%     \infer{\jts M \odd} {\jts {\s M} \even}
 
-    \infer{\jts M \even} {\jts {\s M} \odd}
+%     \infer{\jts M \even} {\jts {\s M} \odd}
 
-    \infer{\jts M \nat} {\jts {\s M} \nat}
+%     \infer{\jts M \nat} {\jts {\s M} \nat}
 
-    \infer{\jts M {A\to B} \and \jts N A} {\jts {\app M N} B}
+%     \infer{\jts M {A\to B} \and \jts N A} {\jts {\app M N} B}
 
-    \infer{\infer*{}{\mbox{$
-          \begin{array}{c}
-            [\jts {\var x} A] \\[-0.3em]
-            \vdots\\
-            \jts M B
-          \end{array}$
-        }}} {\jts {\lam x M} {A\to B}}
+%     \infer{\infer*{}{\mbox{$
+%           \begin{array}{c}
+%             [\jts {\var x} A] \\[-0.3em]
+%             \vdots\\
+%             \jts M B
+%           \end{array}$
+%         }}} {\jts {\lam x M} {A\to B}}
 
-    \infer{\jts M A \and \jsub A B}{\jts M B}
+%     \infer{\jts M A \and \jsub A B}{\jts M B}
 
-    \infer{\jts M \nat
-      \and
-      \jts N A
-      \and
-      \infer*{}{\mbox{$
-        \begin{array}{c}
-          [\jts {\var x} \nat] \quad
-          [\jts {\var y} A] \\[-0.3em]
-          \vdots \\
-          \jts P A
-        \end{array}
-        $}}
-    }{\jts {\recb M N x y P} A}
+%     \infer{\jts M \nat
+%       \and
+%       \jts N A
+%       \and
+%       \infer*{}{\mbox{$
+%         \begin{array}{c}
+%           [\jts {\var x} \nat] \quad
+%           [\jts {\var y} A] \\[-0.3em]
+%           \vdots \\
+%           \jts P A
+%         \end{array}
+%         $}}
+%     }{\jts {\recb M N x y P} A}
 
-    \infer{ }{\jsub A A}
+%     \infer{ }{\jsub A A}
 
-    \infer{ }{\jsub \even\nat}
+%     \infer{ }{\jsub \even\nat}
 
-    \infer{ }{\jsub \odd\nat}
+%     \infer{ }{\jsub \odd\nat}
 
-    \infer{\jsub {A'} A \and \jsub B {B'} }{\jsub {A\to B}{A'\to B'}}
-  \end{mathpar}
-  \caption{System \sysname{T_{<:}}, declaratively}
-  \label{fig:tsub}
-\end{figure}
+%     \infer{\jsub {A'} A \and \jsub B {B'} }{\jsub {A\to B}{A'\to B'}}
+%   \end{mathpar}
+%   \caption{System \sysname{T_{<:}}, declaratively}
+%   \label{fig:tsub}
+% \end{figure}
 
 A student is learning about System \sysname {T_{<:}} --- a simply
 typed $\lambda$-calculus with natural numbers $\cst{nat}$ coming in
 two sets $\cst{even}$ and $\cst{odd}$, introduction $\z$ and $\s{M}$,
-elimination ($\recb M N x y P$), and subtyping on those types; see
-Fig. \ref{fig:tsub}. He (or she) wants to write a program computing
-$(2+2)\times 3$. He knows that sometimes those $\cst{rec}$ arguments
-are quite hard to get correct, but \sysname{T_{<:}} is a typed
-language; he wants to take advantage of this to build his program
-incrementally using the teacher's provided incremental verifier. As a
-first attempt, he wants to verify $P_1$:
+elimination ($\recb M N x y P$), and subtyping on those types. He (or
+she) wants to write a program computing $(2+2)\times 3$. He knows that
+sometimes those $\cst{rec}$ arguments are quite hard to get correct,
+but \sysname{T_{<:}} is a typed language; he wants to take advantage
+of this to build his program incrementally using the teacher's
+provided incremental verifier. As a first attempt, he wants to verify
+$P_1$:
 $$
 \recb{\s\z}{\s\z} x y {\s {\var x}}\ \text{.}
 $$
@@ -420,7 +422,8 @@ case a complex task that we hope to address in the future; we tackle
 here the verification of output reuse: given a delta, construct a new
 derivation and verify it.
 
-\subsection{A language to write incremental type-checkers}
+\subsection{As a type system designer}
+\label{sec:lang-incr}
 
 A few days earlier, the teacher is preparing the tool for the students
 to train composing System \sysname{T_{<:}} programs. He (or she)
@@ -679,7 +682,7 @@ designed strategy (see \ref{sec:comput}).
 
 % TODO cite lee2007mechanizing
 
-\section{Here is my idea}
+\section{Designing the framework}
 %% Here is my idea (2 pages)
 
 % lambda-lifting
@@ -689,22 +692,21 @@ designed strategy (see \ref{sec:comput}).
 
 The emission of certificates by untrusted applications first raises
 the question of the \emph{data structure} to use for these
-certificates. The requirements are:
-\begin{itemize}
-\item conciseness of the certificates, since they are stored or even
-  transferred remotely;
-\item a well-understood, short and independent verification algorithm.
-  This is known as the \emph{de Bruijn principle};
-\item universality with respect to the particular problem: having a
-  certificate language for each domain of application would just shift
-  the problem of trust; having one universally accepted certificate
-  language that can be tailored to many problems puts a much stronger
-  trust on the unique verifier.
-\end{itemize}
-
+certificates. % The requirements are:
+% \begin{itemize}
+% \item conciseness of the certificates, since they are stored or even
+%   transferred remotely;
+% \item a well-understood, short and independent verification algorithm.
+%   This is known as the \emph{de Bruijn principle};
+% \item universality with respect to the particular problem: having a
+%   certificate language for each domain of application would just shift
+%   the problem of trust; having one universally accepted certificate
+%   language that can be tailored to many problems puts a much stronger
+%   trust on the unique verifier.
+% \end{itemize}
 The Edinburgh Logical Framework \cite{harper1993framework}, or \LF\
-for short, is a well-accepted solution to this question. It is a typed
-lambda-calculus and can be viewed as a language for
+for short, is one of the well-accepted solution to this question. It
+is a typed lambda-calculus and can be viewed as a language for
 \emph{representing} terms, derivations and statements of $\Pi_0^1$
 meta-theorems (but not their proofs) in a given inference system
 supporting hypothetical judgments \cite{pfenning2001logical}. For
@@ -714,39 +716,36 @@ binders and hypothesis (a feature called $\lambda$-tree syntax or HOAS
 abstract syntax and inference rules of his \emph{object language}, and
 gets an algorithm to verify terms and derivations expressed in the
 \LF\ syntax.
-
-For instance, the rule for System \sysname{T}'s recursor can be
-encoded by the following constant:
-
-\begin{mathleft}
-  \cst{is\_rec}\ :\
-  \prd{M}{\cst{tm}}\prd{N}{\cst{tm}}\prd{P}{\cst{tm}\to\cst{tm}\to\cst{tm}}
-  \\\quad
-  \prd A {\cst{tp}}
-  \app {\cst{is}}\app M {\cst{nat}} \to \app{\cst{is}}\app N A \to \\\quad
-  \left(
-  \prd x {\cst{tm}} \prd y {\cst{tm}}
-  \app{\cst{is}}\app x \cst{nat} \to \app{\cst{is}}\app y A \to
-  \app{\cst{is}}\app {(\app P \app x y)} A
-  \right)\to\\\quad
-  \app{\cst{is}}\app{(\app{\cst{rec}}\app M \app N (\lam x\lam y \app
-    P\app x y))} A
-\end{mathleft}
-
-This framework has been used to issue certificates for a
-number of practical applications like proof-carrying code
-\cite{necula1997proof}, authentication framework \cite{appel1999proof}
-\ldots %TODO ATP
+% For instance, the rule for System \sysname{T}'s recursor can be
+% encoded by the following constant:
+% \begin{mathleft}
+%   \cst{is\_rec}\ :\
+%   \prd{M}{\cst{tm}}\prd{N}{\cst{tm}}\prd{P}{\cst{tm}\to\cst{tm}\to\cst{tm}}
+%   \\\quad
+%   \prd A {\cst{tp}}
+%   \app {\cst{is}}\app M {\cst{nat}} \to \app{\cst{is}}\app N A \to \\\quad
+%   \left(
+%   \prd x {\cst{tm}} \prd y {\cst{tm}}
+%   \app{\cst{is}}\app x \cst{nat} \to \app{\cst{is}}\app y A \to
+%   \app{\cst{is}}\app {(\app P \app x y)} A
+%   \right)\to\\\quad
+%   \app{\cst{is}}\app{(\app{\cst{rec}}\app M \app N (\lam x\lam y \app
+%     P\app x y))} A
+% \end{mathleft}
+This framework has been used to issue certificates for a number of
+practical applications like proof-carrying
+code~\cite{necula1997proof}, authentication
+framework~\cite{appel1999proof} \ldots %TODO ATP
 
 To write deltas by sharing subterms, we need to be able to address any
-subterm and instantiate its free variables. For this, we define the
-\emph{slicing} of a well-typed \LF\ term: we extend \LF\ with
-contextual metavariables $\meta X$, $\meta Y$\ldots\ as in
-\cite{nanevski2008contextual}. Metavariables stand for well-typed
-terms defined in a repository, and are instantiated wrt. their free
-variables. A repository also contains a distinguished metavariable
-corresponding to the ``tip'' of the term stored in it. For instance, the
-repository
+subterm. Since a subterm can be open, we must instantiate its free
+variables. For this, we define the \emph{slicing} of a well-typed \LF\
+term: we extend \LF\ with contextual metavariables $\meta X$, $\meta
+Y$, \ldots\ as in \cite{nanevski2008contextual}. Metavariables stand
+for well-typed terms defined in a repository, and are instantiated
+wrt. their free variables. A repository also contains a distinguished
+metavariable corresponding to the ``tip'' of the term stored in
+it. For instance, the repository
 $$
 \small
 \left(\begin{array}{llll}
@@ -773,7 +772,7 @@ $$
 
 \end{array}\right), \smeta X {}
 $$
-is one of the possible way of slicing of the term
+is one of the possible way of slicing the term
 $$
 \fbox{$
   \app {\cst{lam}} \lam x
@@ -793,6 +792,12 @@ where all boxed subterms are referable slices.
 \subsection{The computational calculus}
 \label{sec:comput}
 
+Secondly, we need a mean to transform our \LF\ objects as in
+\ref{sec:lang-incr}. For this we introduce \emph{interpreted
+  functions} $\interp f$, $\interp g$, \ldots in the signatures,
+besides constants. Each $\interp f$ comes with its type and its code:
+
+
 % inverse
 
 \section{The calculus}
@@ -808,8 +813,8 @@ hereditary substitution. This calculus is an extension of \emph{spine
   canonical \LF} \cite{pfenning2007term} enriched with metavariables
 which are references to open terms as in
 \cite{nanevski2008contextual}. We present its typing algorithm
-relatively to a signature. It features an explicit caching mechanism
-using metavariables.
+relatively to a signature. % It features an explicit caching mechanism
+% using metavariables.
 
 \paragraph{Syntax}
 
@@ -1420,7 +1425,7 @@ computations: arguments and results are type-checked at run-time.
       \and
       \jcc\Delta\Gamma T S A {\Delta'} F
     }{
-      \jcr\Delta\Gamma{\app {\cst c} S} \Delta {\app {\cst c} S}
+      \jcr\Delta\Gamma{\app {\cst c} S} {\Delta'} F
     }
 
     \infer[UCase]{
