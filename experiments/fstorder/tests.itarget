@@ -9,6 +9,7 @@ test_defined.log
 test_inject.log
 test_uneval.log
 test_inv.log
+test_equal.log
 test_check_stlc.log
 test_check_sub.log
 test_check_T.log
