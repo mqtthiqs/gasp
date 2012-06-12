@@ -35,7 +35,6 @@
 \newcommand\meta[1]{\name{\textsl{#1}}}
 \newcommand\repo[1]{\mathcal{#1}}
 \newcommand\syntax[1]{\operatorname{#1}}
-\newcommand\interp[1]{\name{\textit{\textbf{#1}}}}
 
 % General lists (cons and snoc)
 \newcommand\gnil{\cdot}
@@ -98,12 +97,16 @@
 
 % System names
 \newcommand\LF{\sysname{LF}}
+\newcommand\SLF{\sysname{SLF}}
+\newcommand\CL{\sysname{CL}}
 
 % Metavariables
 \newcommand\mr{\repo R}
 \newcommand\mmr{\repo {R'}}
 \newcommand\mmmr{\repo {R''}}
 \newcommand\md{\ensuremath{\mathcal D}}
+
+\newcommand\cl[1]{\underline{#1}}
 
 % Functions & operations
 \newcommand\checkout[1]{\downarrow{#1}}
@@ -171,6 +174,9 @@
 \newcommand\even{\cst{even}}
 
 % fct/fct inverse
+\newcommand\fct[1]{\name{\textit{\textbf{#1}}}}
+\newcommand\fcti[2]{\fct{#1}^{#2}}
+
 \newcommand\finfer[1]{\uparrow\!{#1}}
 \newcommand\fget[1]{\downarrow\!{#1}}
 \newcommand\feq[2]{{#1}\equiv{#2}}

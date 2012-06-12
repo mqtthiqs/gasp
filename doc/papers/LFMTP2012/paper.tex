@@ -193,9 +193,9 @@ as an \sysname{ML} library. We specifically propose:
   inverse %TODO le nom?
   to refer to already-computed values;
 \item a generic algorithm to evaluate these type-checkers on program
-  deltas and verify on-the-fly the generated certificates
-  incrementally against a \emph{repository} of already constructed and
-  checked derivations.
+  deltas and verify on-the-fly the generated incremental certificates
+  against a \emph{repository} of already constructed and checked
+  derivations.
 \end{itemize}
 
 \section{Using the framework}
@@ -676,9 +676,9 @@ replace the usual ones. The difficulty with this technique,
 particularly in a dependent setting, is to ensure that term $\{\var
 x:A\}$ reduces to $\var x$ so that they are considered equal, \ie\ we
 can strip off the annotations, while not forgetting them too soon:
-otherwise we would arrive to the unhandled case $\finfer{\var
-  x}$. This requires evaluating the type-checker with a carefully
-designed strategy (see \ref{sec:comput}).
+otherwise we would hit the unhandled case $\finfer{\var x}$. This
+requires evaluating the program deltas with a carefully designed
+strategy (see \ref{sec:comput}).
 
 % TODO cite lee2007mechanizing
 
@@ -742,10 +742,183 @@ subterm. Since a subterm can be open, we must instantiate its free
 variables. For this, we define the \emph{slicing} of a well-typed \LF\
 term: we extend \LF\ with contextual metavariables $\meta X$, $\meta
 Y$, \ldots\ as in \cite{nanevski2008contextual}. Metavariables stand
-for well-typed terms defined in a repository, and are instantiated
-wrt. their free variables. A repository also contains a distinguished
-metavariable corresponding to the ``tip'' of the term stored in
-it. For instance, the repository
+for well-typed terms defined in a \emph{repository}, and are
+instantiated wrt. their free variables. A repository also contains a
+distinguished metavariable corresponding to the ``tip'' of the term
+stored in it.
+
+We thus introduce Sliced \LF\ (\SLF, see
+Fig. \ref{fig:syntax-LF}). Specifically, it is an extension of
+\emph{spine canonical \LF} \cite{pfenning2007term} enriched with
+metavariables which are references to open terms as in
+\cite{nanevski2008contextual}.
+
+\begin{figure}\centering
+  \begin{align*}
+    K &\gequal \prd x A K \gor \type &
+    \text{Kind}\\
+    A &\gequal \prd x A A \gor P &
+    \text{Type family} \\
+    P &\gequal \app {\cst a} S &
+    \text{Atomic type} \\
+    M &\gequal \lam x M \gor F &
+    \text{Canonical object} \\
+    F &\gequal \app H S \gor \smeta X \sigma &
+    \text{Atomic object} \\
+    H &\gequal \var x \gor \cst c &
+    \text{Head}\\
+    S &\gequal \spinenil \gor \spinecons M S &
+    \text{Spine}\\
+    \sigma &\gequal \msubstnil \gor \msubstcons \sigma x M &
+    \text{Parallel substitution} \\
+    \Gamma &\gequal \envnil \gor \envcons \Gamma x A &
+    \text{Environment}
+  \end{align*}
+  \caption{Syntax of \SLF}
+  \label{fig:syntax-LF}
+\end{figure}
+
+In this variant, only $\eta$-long and $\beta$-normal values have an
+existence: canonicity for $\beta$-reduction is enforced in the syntax
+and canonicity for $\eta$-expansion will be enforced by typing,
+following \cite{hl07mechanizing}. Besides, application of a
+\emph{head} (\ie\ a constant or variable) is $n$-ary (\ie\ to a
+\emph{spine} of objects) as opposed to the more standard binary
+application: this eases the definition substitution and
+$\eta$-expansion, and corresponds to a focused sequent calculus known
+as \sysname{LJT} \cite{herbelin1995λ}. The definition of hereditary
+substitution $\gsubst M \sigma$ is skipped and can be found in
+\cite{pfenning2007term} (it is extended to metavariables as in
+\cite{nanevski2008contextual}).
+
+We distinguish syntactically between \emph{checkable} $M$ and
+\emph{inferrable} $F$ objects (resp. \emph{canonical} and
+\emph{atomic}), as in \eg\ \cite{pierce2000local}:
+canonical objects are checked against a given type, whereas we can
+synthesize the type of atomic objects; the coercion from the first
+grammatical category to the second is where we verify equality between
+the synthesized and the checked types.
+
+As is customary, we adopt the Barendregt convention for naming bound
+variables, write $A\to A'$ for $\prd x A A'$ when $\var x\notin
+\FV{A'}$, $\meta X$ for $\smeta X \msubstnil$, and adopt indifferently
+list, map or set notations for $\sigma$ and $\Gamma$. The identity
+substitution $\msubstid{\Gamma}$ is a notation for $\{\msubst x {\var
+  x}\ |\ \var x \in\dom\Gamma\}$. Metavariables $\smeta X \sigma$
+stand for open objects with free variables in $\dom{\sigma}$; To each
+use of them is attached a substitution $\sigma$ defining these free
+variables. We write $\FMV{M}$ for the set of metavariables in $M$ and
+speak of a \emph{metaclosed} object $M$ if $\FMV{M} = \emptyset$.
+
+% \paragraph{Substitution}
+
+% We overload \emph{substitution} as a partial operation on objects,
+% given a parallel substitution $\sigma$. Since the syntax of object is
+% not stable by (textual) substitution, it is defined as
+% \emph{hereditary}\footnote{ Note that this notion of substitution,
+%   present in \cite{pfenning2007term}, differs from the more standard
+%   definition in \cite{hl07mechanizing} as it presupposes $\eta$-long
+%   normal forms: once a \emph{cut} starts, there must be exactly as
+%   many formal and actual arguments. A non-empty spine cut against
+%   another non-empty spine $\gcut {\app H S} {S'}$ blocks the
+%   substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
+%   implicit $\eta$-expansion); conversely, exhausting actual but not
+%   formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
+%   substitution too. For example, the reduction $\gcut {\lam x \app
+%     {\var x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck
+%   because the second $\var x$ in the left part is substituted by a
+%   function yet is not itself a function. }: it is mutually recursive
+% with a \emph{cut} function $\gcut M S$ which can in turn trigger a
+% chain of substitutions, leading to a canonical objects or an error.
+% \begin{align*}
+%   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
+%   \text{if $\var x\notin \dom{\sigma}$}
+%   \\
+%   \gsubst {(\app {\cst c} S)} \sigma &= \app {\cst c} {(\gsubst S
+%     \sigma)}
+%   \\
+%   \gsubst {(\app {\var x} S)} \sigma &=
+%   \app {\var x} {\gsubst S \sigma} &
+%   \text{if $\var x\notin \dom{\sigma}$}
+%   \\
+%   \gsubst {(\app {\var x} S)} \sigma &=
+%   \gcut M {\gsubst S \sigma} &
+%   \text{if $\sigma(\var x) = M$}
+%   \\
+%   \gsubst {\smeta X {\sigma}} {\sigma'} &=
+%   \smeta X {\gcomp\sigma{\sigma'}}
+%   \\
+%   \gsubst\spinenil\sigma &=
+%   \spinenil \\
+%   \gsubst{\spinecons M S}\sigma &=
+%   \spinecons{\gsubst M\sigma}{\gsubst S\sigma}
+%   \\
+%   \gcut {\lam x M} {\spinecons N S} &=
+%   \gcut {\gsubst M {\msubst x N}} S
+%   \\
+%   % TODO cas meta/S ? rem: on en a pas besoin ds le proto.
+%   % \gcut {\smeta X\sigma} S &=
+%   % \smeta X{\gcomp\sigma\sigma'}
+%   % \\
+%   \gcut {\app H S} \spinenil &=
+%   \app H S
+%   \\
+%   \gcut {\smeta X\sigma} \spinenil &= \smeta X\sigma
+%   \\
+%   \gcomp \sigma \msubstnil &=
+%   \sigma
+%   \\
+%   \gcomp \sigma {(\msubstcons{\sigma'} x M)} &=
+%   \gcomp {\gsubst\sigma {\msubst x M}} \sigma'
+%   \\
+%   \gsubst {(\msubstcons{\sigma'} x M)} \sigma &=
+%   \msubstcons{\gsubst{\sigma'}\sigma} x {\gsubst M \sigma}
+%   \\
+%   \gsubst {\msubstnil}{\sigma} &= \msubstnil
+% \end{align*}
+
+% We extend this operation trivially on families $\gsubst A \sigma$ and
+% kinds $\gsubst K \sigma$. We also allow to abusively write
+% non-canonical application $\app M S$ as a shorthand for $\gcut M S$
+% if it is defined.
+
+% TODO pourquoi cette def?
+% TODO terminaison?
+% TODO stabilité de la eta?
+
+\begin{definition}
+  A \emph{repository} $\mr$ is a finite map from metavariable to
+  judgments of atomic object well-typing, along with a distinguished
+  metavariable, corresponding to the \emph{tip} of the term contained
+  in it:
+$$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp F P)), \smeta X
+\sigma $$
+\end{definition}
+
+The algorithm will maintain the invariant that a repository $\mr$ is
+\emph{acyclic}, that is for all $\meta X$ in $\mr$, the fixpoint of
+$\FMV{\meta X}$ does not contain $\meta X$. If $\mr = (\Delta,
+X[\sigma])$, we write $\hat {\mr}$ for the tip $X[\sigma]$, abusively
+$\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for $\gsubst M\sigma$
+if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
+
+\begin{definition}
+  We define the partial \emph{checkout} operation $\checkout{\mr}$
+  (resp. $\checkoutr{M}$, $\checkoutr{S}$) from a repository
+  (resp. object, spine) to a metaclosed object as unfolding the
+  definitions of all metavariables recursively:
+  \begin{align*}
+    \checkout{\mr} &= \checkoutr{\hat{\mr}} \\
+    \checkoutr{\smeta X \sigma} &= \checkoutr{\mr(\smeta X\sigma)}\\
+    \checkoutr{\lam x M} &= \lam x \checkoutr{M} \\
+    \checkoutr{\app H S} &= \app H {(\checkoutr{S})} \\
+    \checkoutr{\spinecons M S} &= \spinecons {\checkoutr M} {\checkoutr S} \\
+    \checkoutr{\spinenil} &= \spinenil
+  \end{align*}
+\end{definition}
+
+\begin{example}
+  The repository
 $$
 \small
 \left(\begin{array}{llll}
@@ -772,7 +945,7 @@ $$
 
 \end{array}\right), \smeta X {}
 $$
-is one of the possible way of slicing the term
+checks out as the metaclosed atomic object
 $$
 \fbox{$
   \app {\cst{lam}} \lam x
@@ -787,182 +960,123 @@ $$
   $}
 $}
 $$
-where all boxed subterms are referable slices.
+where all referable slices have been boxed.
+\end{example}
 
-\subsection{The computational calculus}
+\subsection{The computation language}
 \label{sec:comput}
 
-Secondly, we need a mean to transform our \LF\ objects as in
-\ref{sec:lang-incr}. For this we introduce \emph{interpreted
-  functions} $\interp f$, $\interp g$, \ldots in the signatures,
-besides constants. Each $\interp f$ comes with its type and its code:
+Secondly, we introduce the \CL\ language to transform our \SLF\
+objects (Fig.~\ref{fig:syntax-CL}). We can construct objects out of
+other, and deconstruct them by case analysis on an applicative
+term. These objects are \SLF\ objects, except that they can contain
+special function symbols $\fct f$ and $\fcti f n$. Hence, we name them
+with underlined metavariables $\cl F$ instead of $F$.
 
+\begin{figure}
+  \centering
+  \begin{align*}
+    T &\gequal \lam x T \gor
+    U & \text{Term} \\
+    U &\gequal {\cl F} \gor
+    \matchin U \Gamma C & \text{Atomic term}\\
+    C &\gequal \casebnobar P U \gor
+    C\ \caseb P U & \text{Branches}\\
+    P &\gequal \app H {\var x}\ \ldots\ {\var x} &\text{Pattern} \\
+    \cl M &\gequal \lam x {\cl M} \gor \cl F &
+    \text{Canonical object} \\
+    \cl F &\gequal \app {\cl H} {\cl S} \gor \smeta X \sigma &
+    \text{Atomic object} \\
+    \cl H &\gequal \var x \gor \cst c \gor \fct f \gor \fcti f n&
+    \text{Head}\\
+    \cl S &\gequal \spinenil \gor \spinecons {\cl M} {\cl S} &
+    \text{Spine}\\
+    \cl\sigma &\gequal \msubstnil \gor \msubstcons {\cl\sigma} x {\cl M} &
+    \text{Parallel substitution} \\
+  \end{align*}
+  
+  \caption{Syntax of \CL}
+\label{fig:syntax-CL}
+\end{figure}
 
-% inverse
+This language is dynamically typed: there is no static guarantee that
+object $\app {\fct f} x$ produced by a function $\fct f : A_1\to A_2 =
+T$ will have type $A_2$, nor that pattern matching is exhaustive. It
+is also non-terminating: we can define a recursive function $\fct f :
+\cst a\to \cst a = \lam x \app {\fct f} {\var x}$. Nevertheless, we
+want to maintain the invariant that each time an object goes in or out
+of a function $\fct f : A_1\to A_2$, it is checked against the type of
+this function (resp. $A_1$ or $A_2$). You can think of interpreted
+functions as mere black boxes taking and producing objects, and being
+able to feed objects to other black boxes; yet the wires linking them
+are labeled with types and objects circulating in them are checked
+\wrt\ that type.
+
+Besides constants, the signature defines \emph{interpreted functions}
+$\fct f$, $\fct g$. Each function comes with its type and its
+code. 
+
+\begin{definition}
+  A \emph{signature} declares object and type constants and functions
+  to be used in objects.
+  \begin{align*}
+    \Sigma &\gequal
+    \gnil
+    \gor
+    \gcons \Sigma {\cst a : K}
+    \gor
+    \gcons \Sigma {\cst c : A}
+    \gor
+    \gcons \Sigma {\fct f : A = T}
+    &\text{Signature}
+  \end{align*}
+\end{definition}
+
+Again, we use indifferently set, map or list notations for signatures.
+
+\begin{definition}
+  To each function $\fct f : A = T$ in $\Sigma$ we associate a family
+  of \emph{inverses} $\fcti f n : (A)^n = \pi_n(A)$ for $n\in\mathbb
+  N$, where type $(A)^n$ and term $\pi_n(A)$ are defined recursively:
+  \begin{align*}
+    (\prd x {A_1} {A_2})^{n+1} &= \prd x {A_1} (A_2)^n &
+    (\prd x {A_1} {A_2})^0 &= \prd x {A_1} (A_2)^{A_1} \\
+    (\prd x {A_1} {A_2})^A &= \prd x {A_1} (A_2)^A &
+    (\app {\cst a} S)^A &= \prd x {\app{\cst a} S} A \\
+    \pi_{n+1}(\prd x {A_1}{A_2}) &= \lam x \pi_n(A_2) &
+    \pi_0(\prd x {A_1} {A_2}) &= \lam {y} \pi^y(A_n) \\
+    \pi^y(\prd x {A_1}{A_2}) &= \lam x \pi^y (A_2) &
+    \pi^y(\app{\cst a} S) &= \var y
+  \end{align*}
+\end{definition}
+
+\begin{example}
+  Function $\fct{infer} : (\prd M {\cst{tm}} \app{\cst{sig}} M) =
+  T$ (called $\finfer{}$ above, with $\cst{sig}$ the \LF\ encoding of
+  the previous $\Sigma$-type) has one inverse $\fcti{infer}{0} :
+  (\prd M {\cst{tm}} {\app{\cst{sig}} M} \to \cst{tm}) = \lam x \lam y
+  \var x$ (called $\fget{}$ above).
+\end{example}
+
+\begin{example}
+  Function $\fct{equal} : \prd M {\cst{tm}} \prd N {\cst{tm}}
+  \app{\cst{eq}}\app M N = T'$ has two inverses: $\fcti{equal}{0}$ and
+  $\fcti{equal}{1}$ of the same type $\prd M {\cst{tm}} \prd N
+  {\cst{tm}} \app{\cst{eq}}\app M N \to \cst{tm}$ with code
+  respectively $\lam m \lam n \lam h \var m$ and $\lam m \lam n \lam h
+  \var n$.
+\end{example}
 
 \section{The calculus}
 %% My idea works (details, data) (5 pages)
 
 \subsection{Value calculus}
 
-The value calculus defines the \emph{values} we want to
-manipulate. These contain constants, and --- contrarily to \eg\
-\sysname{ML} values --- binders and variables enabling $\lambda$-tree
-syntax. Thus, they embed a superficial notion of computation:
-hereditary substitution. This calculus is an extension of \emph{spine
-  canonical \LF} \cite{pfenning2007term} enriched with metavariables
-which are references to open terms as in
-\cite{nanevski2008contextual}. We present its typing algorithm
-relatively to a signature. % It features an explicit caching mechanism
-% using metavariables.
-
-\paragraph{Syntax}
-
-In this variant, only $\eta$-long and $\beta$-normal values have an
-existence: canonicity for $\beta$-reduction is enforced in the syntax
-and canonicity for $\eta$-expansion will be enforced by typing,
-following \cite{hl07mechanizing}. Besides, application of a
-\emph{head} (\ie\ a constant or variable) is $n$-ary (\ie\ to a
-\emph{spine} of objects) as opposed to the more standard binary
-application: this eases the definition substitution and
-$\eta$-expansion, and corresponds to a focused sequent calculus known
-as \sysname{LJT} \cite{herbelin1995λ}.
-
-\begin{align*}
-  K &\gequal
-  \prd x A K \gor
-  \type &
-  \text{Kind}\\
-  A &\gequal
-  \prd x A A \gor
-  P &
-  \text{Type family} \\
-  P &\gequal
-  \app {\cst a} S &
-  \text{Atomic type} \\
-  M &\gequal
-  \lam x M \gor
-  F &
-  \text{Canonical object} \\
-  F &\gequal \app H S
-  \gor
-  \smeta X \sigma &
-  \text{Atomic object} \\
-  H &\gequal
-  \var x \gor
-  \cst c &
-  \text{Head}\\
-  S &\gequal
-  \spinenil \gor
-  \spinecons M S &
-  \text{Spine}\\
-  \sigma &\gequal
-  \msubstnil \gor
-  \msubstcons \sigma x M &
-  \text{Parallel substitution} \\
-  \Gamma &\gequal
-  \envnil \gor
-  \envcons \Gamma x A &
-  \text{Environment}
-\end{align*}
-
-As is customary, we adopt the Barendregt convention for naming bound
-variables, write $A\to A'$ for $\prd x A A'$ when $\var x\notin \FV{A'}$,
-$\meta X$ for $\smeta X \msubstnil$, and adopt indifferently list, map
-or set notations for $\sigma$ and $\Gamma$. The identity substitution
-$\msubstid{\Gamma}$ is a notation for $\{\msubst x {\var x}\ |\ \var x
-\in\dom\Gamma\}$.
-
-Metavariables $\smeta X \sigma$ stand for open objects with free
-variables in $\dom{\sigma}$; To each use of them is attached a
-substitution $\sigma$ defining these free variables. They are defined
-in a repository (see below). We write $\FMV{M}$ for the set of
-metavariables in $M$ and speak of a \emph{metaclosed} object $M$ if
-$\FMV{M} = \emptyset$.
-
-We distinguish syntactically between \emph{checkable} $M$ and
-\emph{inferrable} $F$ objects (resp. \emph{canonical} and
-\emph{atomic}), an idea dating back to \cite{pierce2000local}:
-canonical objects are checked against a given type, whereas we can
-synthesize the type of atomic objects; the coercion from the first
-grammatical category to the second is where we verify equality between
-the synthesized and the checked types.
-
-\paragraph{Substitution}
-
-We overload \emph{substitution} as a partial operation on objects,
-given a parallel substitution $\sigma$. Since the syntax of object is
-not stable by (textual) substitution, it is defined as
-\emph{hereditary}\footnote{ Note that this notion of substitution,
-  present in \cite{pfenning2007term}, differs from the more standard
-  definition in \cite{hl07mechanizing} as it presupposes $\eta$-long
-  normal forms: once a \emph{cut} starts, there must be exactly as
-  many formal and actual arguments. A non-empty spine cut against
-  another non-empty spine $\gcut {\app H S} {S'}$ blocks the
-  substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
-  implicit $\eta$-expansion); conversely, exhausting actual but not
-  formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
-  substitution too. For example, the reduction $\gcut {\lam x \app
-    {\var x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck
-  because the second $\var x$ in the left part is substituted by a
-  function yet is not itself a function. }: it is mutually recursive
-with a \emph{cut} function $\gcut M S$ which can in turn trigger a
-chain of substitutions, leading to a canonical objects or an error.
-\begin{align*}
-  \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
-  \text{if $\var x\notin \dom{\sigma}$}
-  \\
-  \gsubst {(\app {\cst c} S)} \sigma &= \app {\cst c} {(\gsubst S
-    \sigma)}
-  \\
-  \gsubst {(\app {\var x} S)} \sigma &=
-  \app {\var x} {\gsubst S \sigma} &
-  \text{if $\var x\notin \dom{\sigma}$}
-  \\
-  \gsubst {(\app {\var x} S)} \sigma &=
-  \gcut M {\gsubst S \sigma} &
-  \text{if $\sigma(\var x) = M$}
-  \\
-  \gsubst {\smeta X {\sigma}} {\sigma'} &=
-  \smeta X {\gcomp\sigma{\sigma'}}
-  \\
-  \gsubst\spinenil\sigma &=
-  \spinenil \\
-  \gsubst{\spinecons M S}\sigma &=
-  \spinecons{\gsubst M\sigma}{\gsubst S\sigma}
-  \\
-  \gcut {\lam x M} {\spinecons N S} &=
-  \gcut {\gsubst M {\msubst x N}} S
-  \\
-  % TODO cas meta/S ? rem: on en a pas besoin ds le proto.
-  % \gcut {\smeta X\sigma} S &=
-  % \smeta X{\gcomp\sigma\sigma'}
-  % \\
-  \gcut {\app H S} \spinenil &=
-  \app H S
-  \\
-  \gcut {\smeta X\sigma} \spinenil &= \smeta X\sigma
-  \\
-  \gcomp \sigma \msubstnil &=
-  \sigma
-  \\
-  \gcomp \sigma {(\msubstcons{\sigma'} x M)} &=
-  \gcomp {\gsubst\sigma {\msubst x M}} \sigma'
-  \\
-  \gsubst {(\msubstcons{\sigma'} x M)} \sigma &=
-  \msubstcons{\gsubst{\sigma'}\sigma} x {\gsubst M \sigma}
-  \\
-  \gsubst {\msubstnil}{\sigma} &= \msubstnil
-\end{align*}
-
-We extend this operation trivially on families $\gsubst A \sigma$ and
-kinds $\gsubst K \sigma$. We also allow to abusively write
-non-canonical application $\app M S$ as a shorthand for $\gcut M S$
-if it is defined.
-
-% TODO pourquoi cette def?
-% TODO terminaison?
-% TODO stabilité de la eta?
+% The value calculus defines the \emph{values} we want to
+% manipulate. % These contain constants, and --- contrarily to \eg\
+% \sysname{ML} values --- binders and variables enabling $\lambda$-tree
+% syntax. Thus, they embed a superficial notion of computation:
+% hereditary substitution.
 
 \paragraph{Typing algorithm}
 
@@ -970,28 +1084,6 @@ Typing an object while storing intermediate derivations requires
 threading and maintaining a data structure of named partial
 derivations (\emph{slices}) throughout the typing process. We present
 a bidirectional typing algorithm updating an input repository.
-
-A \emph{signature} declares object and type constants to be used in
-objects. To each object constant we assign an annotation $L$ setting
-the slicing behaviour of the constant during type checking: either
-sliceable $\annsliceable$ (each application of this constant will be
-cached and given a name), non-sliceable $\annnonsliceable$ (we don't
-create a name for applications of this constant), or defined
-$\anndefined{T}$ (see \ref{sec:computational-calculus}).
-\begin{align*}
-  L &\gequal
-  \annsliceable \gor
-  \annnonsliceable \gor
-  \anndefined{T}
-  \\
-  \Sigma &\gequal
-  \gnil \gor
-  \gcons \Sigma {\cst c :^L A} \gor
-  \gcons \Sigma {\cst a : K}
-  &\text{Signature}
-\end{align*}
-We write $\Sigma(\cst c) = A; L$ for $(\cst c :^L A) \in \Sigma$
-suggesting the implementation of signatures as maps.
 
 Our algorithm accepts exactly the well-typed objects of the usual \LF,
 except that we thread a repository $\mr$ and store in it all
@@ -1002,22 +1094,9 @@ and the environment in which they are well-typed.
 % TODO expl. c'est tout comme LF sauf qqes règles...
 % TODO parler de la redondance en LF normal
 
-A \emph{repository} $\mr$ is a finite map from metavariable to
-judgments of atomic object well-typing, along with a distinguished
-metavariable, corresponding to the \emph{tip} of the term contained in
-it:
-$$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp F P)), \smeta X
-\sigma $$
-The algorithm will maintain the invariant that a repository
-$\mr$ is \emph{acyclic}, that is for all $\meta X$ in $\mr$, the
-fixpoint of $\FMV{\meta X}$ does not contain $\meta X$. If $\mr =
-(\Delta, X[\sigma])$, we write $\hat {\mr}$ for $X[\sigma]$, abusively
-$\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for $\gsubst M\sigma$
-if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
-
-We refer to cached subterms by metavariables. We force instantiation
-of all variables in their environment by attaching a substitution to
-them ($\smeta X \sigma$).
+% We refer to cached subterms by metavariables. We force instantiation
+% of all variables in their environment by attaching a substitution to
+% them ($\smeta X \sigma$).
 
 When checking large objects, the environment can grow fast. As an
 optimization to reduce the size of the stored environments and
@@ -1303,23 +1382,8 @@ algorithm in Fig. \ref{fig:sign-typing}.
 Let us work out an example.
 % TODO example
 
-\paragraph{Checkout}
-
-We define the partial \emph{checkout} operation $\checkout{\mr}$
-(resp. $\checkoutr{M}$, $\checkoutr{S}$) from a repository
-(resp. object, spine) to a metaclosed object as unfolding the
-definitions of all metavariables recursively:
-\begin{align*}
-  \checkout{\mr} &= \checkoutr{\hat{\mr}} \\
-  \checkoutr{\smeta X \sigma} &= \checkoutr{\mr(\smeta X\sigma)}\\
-  \checkoutr{\lam x M} &= \lam x \checkoutr{M} \\
-  \checkoutr{\app H S} &= \app H {(\checkoutr{S})} \\
-  \checkoutr{\spinecons M S} &= \spinecons {\checkoutr M} {\checkoutr S} \\
-  \checkoutr{\spinenil} &= \spinenil
-\end{align*}
-
-A repository is said to be \emph{well-formed} if $\checkout {\mr}$
-is defined.
+% A repository is said to be \emph{well-formed} if $\checkout {\mr}$
+% is defined.
 
 % \begin{theorem}
 %   If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
@@ -1335,39 +1399,7 @@ is defined.
 
 We now turn to the definition of our computation calculus. As we saw,
 code is attached to special, \emph{defined} constants in the signature
-that manipulates \LF\ objects. We have the ability to construct
-objects out of other, and deconstruct them by case analysis:
-\begin{align*}
-  T &\gequal
-  \lam x T \gor
-  U & \text{Term} \\
-  U &\gequal
-  F \gor
-  \matchin U \Gamma C & \text{Atomic term}\\
-  C &\gequal \casebnobar P U \gor
-  C\ \caseb P U & \text{Branches}\\
-  P &\gequal
-  \app H {\var x} \ldots\ {\var x} &\text{Pattern}
-\end{align*}
-
-This language is un(i)typed, in that all \LF\ objects are viewed as
-having the same implicit type $\cst{obj}$: there is no static
-guarantee that terms produced by a constant $\cst c : A_1\to A_2$ will
-have type $A_2$. It is also non-terminating: we could declare a
-recursive constant $\cst c : \cst a\to \cst a = \lam x \app {\cst c}
-{\var x}$. We expose here only the minimal building blocks of this
-language, but really any language with algebraic datatypes would do
-since we will be manipulating directly the first-order representation
-of \LF\ objects. In fact, whatever the language is, you can think of
-defined constants as mere black boxes taking and producing terms, and
-being able to call other black boxes.
-
-Nevertheless, in order to maintain the well-typing of the generated
-term, we want to maintain the invariant that each time a piece of term
-goes in or out of a black box, it is checked against its specification
-(\ie\ its type). We thus maintain \emph{dynamic typing} of
-computations: arguments and results are type-checked at run-time.
-
+that manipulates \LF\ objects.
 \paragraph{Substitution}
 
 \begin{align*}
