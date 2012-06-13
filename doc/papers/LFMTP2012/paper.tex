@@ -1,5 +1,7 @@
 \documentclass{llncs}
-
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage[protrusion=true,expansion=true]{microtype}
 \usepackage{ntheorem}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -8,6 +10,7 @@
 \usepackage{url}
 
 \allowdisplaybreaks[1]
+\renewcommand{\floatpagefraction}{0.8}
 
 \begin{document}
 
@@ -26,11 +29,11 @@
  %% State the problem
 
   A lightweight way to design a trusted type-checker is to let it
-  return a \emph{certificate} of well-typing (for instance
-  \sysname{Agda} and \sysname{GHC} adopt this architecture
-  internally).  Most of the time, these type-checkers are confronted
-  sequentially with very similar pieces of input: the same program,
-  each time slightly modified. Yet they rebuild the entire
+  return a \emph{certificate} of well-typing, and check it a
+  posteriori (for instance \sysname{Agda} and \sysname{GHC} adopt this
+  architecture internally).  Most of the time, these type-checkers are
+  confronted sequentially with very similar pieces of input: the same
+  program, each time slightly modified. Yet they rebuild the entire
   certificates, even for unchanged parts of the code. Instead of
   discarding them between runs, we can take advantage of these
   certificates to improve the reactivity of type-checking, by feeding
@@ -70,13 +73,13 @@ little type annotations (``type inference''), in which case the
 missing information has to be algorithmically synthesized, but is also
 true in many cases for mere ``type checking'', or explicit
 ``church-style'' calculi. Take for example dependent type systems,
-relying on a certain notion of definitional equality on types, or type
-systems with subtype polymorphism: both rely on a rule of the form
+relying definitional equality on types, or type systems with subtype
+polymorphism: both rely on a rule of the form
 $$
 \infer{\vdash M : A \\ A\leq B}{\vdash M : B}
 $$
 (for a given notion of $\leq$) which is not syntax-directed. The
-implementer has to convert the declarative system to an algorithm, and
+implementer has to turn the declarative system into an algorithm, and
 convince himself that both are equivalent. This task is highly
 non-trivial and non-modular: for instance, how to infer the type of a
 System \sysname{T} recursor $\recb M N x y P$, in presence of
@@ -98,14 +101,14 @@ typing derivation it provides. Let us then imagine a type-checker to
 be the pair of \emph{(i)} an untrusted procedure $\finfer M$ to infer
 a typing derivation out of program $M$; it doesn't have to be
 complete, or even sound, and \emph{(ii)} a trusted and fast kernel
-$\fcheck{\md}$ to verify these derivations \wrt\ a given set of inference
-rules $\Sigma$. This is a \emph{certifying} scheme (see
+$\fcheck{\md}$ to verify these derivations \wrt\ a given set of
+inference rules $\Sigma$. This is a \emph{certifying} scheme (see
 \cite{leroy2006compcert} for a discussion on approaches to reliable
 compilers): if $\fcheck{\finfer M} = \cst{true}$ then there really
 \emph{is} a derivation $\md$ for $M$, but the converse is not
-necessarily true: function $\finfer{}\!\!$ could fail, or have bugs
-(return an incorrect derivation). Explicitly generating the derivation
-in the declarative system has the following advantages over the first
+necessarily true: function $\finfer{}\!\!$ could fail, or return an
+incorrect derivation. Explicitly generating the derivation in the
+declarative system has the following advantages over the first
 approach:
 \begin{itemize}
 \item it is lightweight: the untrusted algorithm is usually shorter
@@ -144,7 +147,7 @@ result for a modified version of the program.
 
 Several generic methods have been devised for turning a batch program
 into an incremental one
-\cite{pugh1989incremental,acar2003selective}. Unfortunately, they all
+\cite{pugh1989incremental,acar2003selective}. Unfortunately, they
 suffer from their genericity on the particular problem of type
 checking:
 \begin{itemize}
@@ -260,15 +263,12 @@ sometimes those $\cst{rec}$ arguments are quite hard to get correct,
 but \sysname{T_{<:}} is a typed language; he wants to take advantage
 of this to build his program incrementally using the teacher's
 provided incremental verifier. As a first attempt, he wants to verify
-$P_1$:
-$$
-\recb{\s\z}{\s\z} x y {\s {\var x}}\ \text{.}
-$$
-For this, he sends the command $\finfer{P_1}$ to the system. The
-$\finfer{}$ operator takes a well-formed program and tries to construct
-a valid typing derivation for its argument in the current, empty
-context. The system succeeds and returns a typing derivation $\md_1$
-of \/ $\vdash P_1 : \cst{nat}$, valid in an empty context.
+$P_1 = \recb{\s\z}{\s\z} x y {\s {\var x}}$: He sends the command
+$\finfer{P_1}$ to the system. The $\finfer{}$ operator takes a
+well-formed program and tries to construct a valid typing derivation
+for its argument in the current, empty context. The system succeeds
+and returns a typing derivation $\md_1$ of \/ $\vdash P_1 :
+\cst{nat}$, valid in an empty context.
 
 The student then decides to factorize a definition for $\var{add}$ out
 of his code:
@@ -294,7 +294,7 @@ program it types, what really needs to be sent to the system is:
 \end{align*}
 that is, only the changed subterms of the program. Derivation $\md_2$
 used to live in the empty context, we are then free to use it in the
-new context where $\var{add}:\cst{nat}\to\cst{nat}$, because System
+new context where $\vdash\var{add}:\cst{nat}\to\cst{nat}$, because System
 \sysname T enjoys the \emph{weakening} property; $\md_4$ depending on
 a derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole
 with the derivation $\finfer{\var u}$ inferred recursively for the new
@@ -320,8 +320,7 @@ the operation $(2 + 2)\times3$:
 \begin{align*}
   \finfer{}(
   &\letb{add}{\fget{\md_5}}
-  \\
-  &\quad\letb{mul} { \tlam x {\cst{nat}} \tlam y
+  \letb{mul} { \tlam x {\cst{nat}} \tlam y
     {\cst{nat}} \recb \z {\var y} z t {
       \app{\var{add}}\app{\var x} {\var z}} }
   \\
@@ -340,36 +339,35 @@ use it here. $\md_2$ was deriving $\vdash\s\z:\cst{nat}$ (with a
 coercion since it was used as an argument to $\var{add}$); the system
 thus infer the more general type $\cst{nat}$ for $\s{\fget{\md_2}}$.
 
-Finally, he decides (in an odd move) to inline the definition of
-$\var{mul}$ into its call site. Call $\md_8$ the derivation of the
-definition of $\var{mul}$ (it depends on an $\var H$ of
-$\vdash\var{add}:\cst{nat}\to\cst{nat}$) and $\md_9$ the derivation of
-$(2+2)\times 3$ depending on derivations $\var{H}$ and $\var{H'}$ for $+$ and
-$\times$. He orders:
-\begin{align*}
-\finfer{}(
-\letb{add}{\fget{\md_5}}
-\fget{({\gsubst{\md_9} {\msubst {H} {(\fget{\var{add}})}; \msubst {H'}
-      {\gsubst{\md_8}{\msubst H {(\fget{\var{add}})}}}}})}
-)
-  \ \text{.}
-\end{align*}
-The definition for $\var{add}$ is unchanged, but the instantiation of
-open derivations enables to directly substitute one into the other and
-get the appropriate program: call $\md_{10}$ the whole derivation just
-returned, $\fget{\md_{10}}$ returns:
-\begin{align*}
-  &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
-    {\var y} x y {\s{\var x}}}
-  \\&\quad
-  {(\tlam x {\cst{nat}} \tlam y
-    {\cst{nat}} \recb \z {\var y} z t {
-      \app{\var{add}}\app{\var x} {\var z}})}
-  \\&\quad\quad
-  \app{(\app {\var{add}} \app {(\s{\s\z})}
-    {(\s{\s\z})})}{(\s{\s{\s\z}})}
-  \ \text{.}
-\end{align*}
+% Finally, he decides (in an odd move) to inline the definition of
+% $\var{mul}$ into its call site. Call $\md_8$ the derivation of the
+% definition of $\var{mul}$ (it depends on an $\var H$ of
+% $\vdash\var{add}:\cst{nat}\to\cst{nat}$) and $\md_9$ the derivation of
+% $(2+2)\times 3$ depending on derivations $\var{H}$ and $\var{H'}$ for $+$ and
+% $\times$. He orders:
+% \begin{align*}
+% \finfer{}(
+% \letb{add}{\fget{\md_5}}
+% \fget{({\gsubst{\md_9} {\msubst {H} {(\fget{\var{add}})}; \msubst {H'}
+%       {\gsubst{\md_8}{\msubst H {(\fget{\var{add}})}}}}})}
+% )
+%   \ \text{.}
+% \end{align*}
+% The definition for $\var{add}$ is unchanged, but the instantiation of
+% open derivations enables to directly substitute one into the other and
+% get the appropriate program: call $\md_{10}$ the whole derivation just
+% returned, $\fget{\md_{10}}$ returns:
+% \begin{align*}
+%   &\letb{add}{\tlam x {\cst{nat}} \tlam y {\cst{nat}} \recb {\var x}
+%     {\var y} x y {\s{\var x}}}
+%   \\&\quad
+%   {(\tlam x {\cst{nat}} \tlam y
+%     {\cst{nat}} \recb \z {\var y} z t {
+%       \app{\var{add}}\app{\var x} {\var z}})}
+%   \app{(\app {\var{add}} \app {(\s{\s\z})}
+%     {(\s{\s\z})})}{(\s{\s{\s\z}})}
+%   \ \text{.}
+% \end{align*}
 
 \paragraph{Discussion}
 
@@ -675,6 +673,7 @@ strategy (see \ref{sec:comput}).
 \section{Designing the framework}
 %% Here is my idea (2 pages)
 
+% explicit LF
 % lambda-lifting
 
 \subsection{The representation language}
@@ -697,8 +696,8 @@ certificates. % The requirements are:
 The Edinburgh Logical Framework \cite{harper1993framework}, or \LF\
 for short, is one of the well-accepted solution to this question. It
 is a dependently typed lambda-calculus for \emph{representing} terms,
-derivations and statements of $\Pi_0^1$ meta-theorems (but not their
-proofs) in a given inference system supporting hypothetical judgments
+derivations and statements of $\Pi_0^1$ meta-theorems in a given
+inference system supporting hypothetical judgments
 \cite{pfenning2001logical}. For these, it provides built-in support
 for encoding languages with binders and hypothesis (a feature called
 $\lambda$-tree syntax or HOAS \cite{pfenning1988higher}). The user
@@ -736,7 +735,7 @@ an extension of \emph{spine canonical \LF} \cite{pfenning2007term}
 enriched with metavariables which are references to open terms as in
 \cite{nanevski2008contextual}.
 
-\begin{figure}\centering
+\begin{figure}[t]
   \begin{align*}
     K &\gequal \prd x A K \gor \type &
     \text{Kind}\\
@@ -769,7 +768,7 @@ following \cite{hl07mechanizing}. Besides, application of a
 (\ie\ to a \emph{spine} of objects) as opposed to the more standard
 binary application: this eases the definition substitution and
 $\eta$-expansion, and corresponds to a focused sequent calculus known
-as \sysname{LJT} \cite{herbelin1995λ}. We differ the discussion of
+as \sysname{LJT} \cite{herbelin1995lambda}. We differ the discussion of
 function symbols $\fct f$ to \ref{sec:comput}. A \emph{value} is an
 object containing no function symbols. The definition of hereditary
 substitution $\gsubst M \sigma$ is skipped and can be found in
@@ -794,6 +793,8 @@ stand for open objects with free variables in $\dom{\sigma}$; To each
 use of them is attached a substitution $\sigma$ defining these free
 variables. We write $\FMV{M}$ for the set of metavariables in $M$ and
 speak of a \emph{metaclosed} object $M$ if $\FMV{M} = \emptyset$.
+
+% TODO relate to LF
 
 % \paragraph{Substitution}
 
@@ -880,12 +881,12 @@ $$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp F P))\times\smeta X
 \sigma $$
 \end{definition}
 
-The algorithm in \ref{sec:eval} will maintain the invariant that a repository $\mr$ is
-\emph{acyclic}, that is for all $\meta X$ in $\mr$, the fixpoint of
-$\FMV{\meta X}$ does not contain $\meta X$. If $\mr = (\Delta,
-X[\sigma])$, we write $\hat {\mr}$ for the tip $X[\sigma]$, abusively
-$\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$ for $\gsubst M\sigma$
-if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
+If $\mr = (\Delta, X[\sigma])$, we write $\hat {\mr}$ for the tip
+$X[\sigma]$, abusively $\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$
+for $\gsubst M\sigma$ if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
+The algorithm in \ref{sec:eval} will maintain the invariant that a
+repository $\mr$ is \emph{acyclic}, that is for all $\meta X$ in
+$\mr$, the fixpoint of $\FMV{\mr(\meta X)}$ does not contain $\meta X$.
 
 \begin{definition}
   We define the partial \emph{checkout} operation $\checkout{\mr}$
@@ -950,12 +951,10 @@ where all referable slices have been boxed.
 
 Secondly, we introduce the \CL\ language to transform our \SLF\
 objects (Fig.~\ref{fig:syntax-CL}). We can construct objects out of
-others, and deconstruct them by case analysis on an applicative
-term. The definition $T$ of a function always begins with a series of
+others, and deconstruct them by case analysis. The definition $T$ of a function always begins with a series of
 $\lambda$.
 
-\begin{figure}
-  \centering
+\begin{figure}[t]
   \begin{align*}
     T &\gequal \lam x T \gor
     U & \text{Term} \\
@@ -963,9 +962,8 @@ $\lambda$.
     \matchin U \Gamma C & \text{Atomic term}\\
     C &\gequal \casebnobar P U \gor
     C\ \caseb P U & \text{Branches}\\
-    P &\gequal \app H {\var x}\ \ldots\ {\var x} &\text{Pattern} \\
+    P &\gequal \app H {\var x}\ \ldots\ {\var x} &\text{Pattern}
   \end{align*}
-  
   \caption{Syntax of \CL}
 \label{fig:syntax-CL}
 \end{figure}
@@ -1003,11 +1001,9 @@ code.
   \end{align*}
 \end{definition}
 
-Again, we use indifferently set, map or list notations for signatures.
-
 \begin{definition}
   To each function $\fct f : A = T$ in $\Sigma$ we associate a family
-  of \emph{inverses} $\fcti f n : (A)^n = \pi_n(A)$ for $n\in\mathbb
+  of \emph{inverses} $\fcti f {\;n} : (A)^n = \pi_n(A)$ for $n\in\mathbb
   N$, where type $(A)^n$ and term $\pi_n(A)$ are defined recursively:
   \begin{align*}
     (\prd x {A_1} {A_2})^{n+1} &= \prd x {A_1} (A_2)^n &
@@ -1051,21 +1047,33 @@ interleaved:
 
 \begin{itemize}
 \item it evaluates $M$ by reducing function symbols,
-\item it type-checks all values fed and produced by functions \wrt\ $\mr$,
-\item it slices those values
+\item it type-checks all values fed to and produced by functions \wrt\
+  $\mr$,
+\item it slices those values. This requires threading the map of $\mr$
+  throughout evaluation and typing.
 \end{itemize}
 
-This requires threading the map of $\mr$ throughout evaluation and
-typing. We first present the bidirectional typing and slicing part of
-the algorithm (Fig. \ref{fig:obj-typing}) as a syntax-directed
-inference system. All judgments are of the form $\gjo U V W$ where $U$
-and $V$ are inputs, $V$ is the induction hypothesis and $W$ the
-output. They are parameterized by a constant and implicit signature
-$\Sigma$, and all premises are ordered in the algorithmic order of
-computation.
+\paragraph{Typing}
 
-\begin{figure*}
+We first present the bidirectional typing and slicing part of the
+algorithm (Fig. \ref{fig:obj-typing}) as a syntax-directed inference
+system. All judgments are of the form $\gjo U V W$ where $U$ and $V$
+are inputs, $V$ is the induction hypothesis and $W$ the output. They
+are parameterized by a constant and implicit signature $\Sigma$, and
+all premises are ordered in the algorithmic order of computation. The
+main judgement is atomic object typing $\jf\Delta\Gamma F {\Delta'}
+{F'} P$, which reads: in repository $\mr$ and environment $\Gamma$,
+applicative term $F$ is well-typed of type $A$, and the slicing of its
+value produces a new repository $\mmr$. $F'$ is the \emph{residual} of
+this operation: only constant applications $\app{\cst c} S$ are
+sliced, $F'$ is the ``tip'' of $F$ that was not sliced.
 
+These typing rules use definitional equality between two families
+$\jea\Delta\Gamma A {A'}$.
+% TODO expliquer, et commenter reduction des fonctions ou pas,
+% conv. typee ou pas
+
+\begin{figure}
   \fbox{$\jm\Delta\Gamma M A {\Delta'} {M'}$}
   \qquad
   Canonical object
@@ -1156,7 +1164,7 @@ computation.
     }
 
     \infer[SNil]{ }{
-      \jl\Delta\Gamma {\app{\cst a} S} \spinenil \Delta \spinenil {{\app{\cst a} S}}
+      \jl\Delta\Gamma P \spinenil \Delta \spinenil P
     }
   \end{mathpar}
 
@@ -1185,7 +1193,7 @@ computation.
 
   \caption{Typing algorithm for objects}
   \label{fig:obj-typing}
-\end{figure*}
+\end{figure}
 
 To reduce the size of the stored environments and substitutions to
 their minimum in slices $\Gamma\vdash F : P$, we use an auxiliary
@@ -1200,36 +1208,19 @@ $$
 $$
 \end{definition}
 
+It is correct to strengthen $\Gamma$ only \wrt\ $F$ before storing $F$
+as a slice because of the following:
+
+% TODO verif qu'on parle bien de LF normal
 \begin{lemma}
-  If $\jlfm\Gamma F A$, then $\jlfm{\stren{\Gamma, F}} F A$
+  If $\jm\Delta\Gamma F A {\Delta'} {F'}$, then
+  $\jm\Delta{\stren{\Gamma, F}} F A {\Delta'}{F'}$
 \end{lemma}
-
-Our algorithm accepts exactly the well-typed objects of the usual \LF,
-except that we thread a repository $\mr$ and store in it all
-well-typed applicative subterms $F$ along with their classifier $A$
-and the environment in which they are well-typed.
-
-% TODO parler d'effacer les R et retomber sur LF
-% TODO expl. c'est tout comme LF sauf qqes règles...
-% TODO parler de la redondance en LF normal
-
-The main judgement is atomic object typing $\jf\Delta\Gamma F
-{\Delta'} {F'} P$, which reads: in repository $\mr$ and environment
-$\Gamma$, applicative term $F$ is well-typed of type $A$, and the
-slicing of its value produces a new repository $\mmr$. The object $F'$
-is the \emph{residual} of this operation: only constant applications
-$\app{\cst c} S$ are sliced, $F'$ is the ``tip'' of $F$ that was not
-sliced.
-
-These typing rules use definitional equality between two families
-$\jea\Delta\Gamma A {A'}$.
-% TODO expliquer, et commenter reduction des fonctions ou pas,
-% conv. typee ou pas
 
 % Signatures themselves need to be checked. We present the checking
 % algorithm in Fig. \ref{fig:sign-typing}.
 
-% \begin{figure*}
+% \begin{figure}
 %   \fbox{$\jsig\Delta\Sigma{\Delta'}{\Sigma'}$}
 %   \qquad
 %   {Signature}
@@ -1318,13 +1309,35 @@ $\jea\Delta\Gamma A {A'}$.
 
 %   \caption{Typing of signatures}
 %   \label{fig:sign-typing}
-% \end{figure*}
+% \end{figure}
 
 \begin{definition}
   Let $\mr = (\Delta, \smeta X \sigma)$.  If $\jf\Delta\Gamma F
-  {\Delta'} {\smeta Y {\sigma'}} P$, let $\function{commit$_\mr$}{F}$ be
-  $\mmr = (\Delta', \smeta X\sigma)$.
+  {\Delta'} {\smeta {X'} {\sigma'}} P$, then we define $\commit\mr F =
+  (\Delta', \smeta X\sigma)$. We say that $\mr$ is
+  \emph{well-constructed} if $\mr = \commit\mmr F$ with either
+  $\mmr=(\mapempty, \smeta X\sigma)$ or $\mmr$ well-constructed.
 \end{definition}
+
+\begin{lemma}
+  If $\mr$ well-constructed, then $\checkout\mr$ is defined and is a
+  value.
+\end{lemma}
+
+We can already state a conservativity result stating that our
+algorithm accepts exactly the well-typed values of \LF:
+
+\begin{theorem}
+  If $F$ is a value, and $\mr$ is well-constructed then $\commit\mr F
+  = \mmr$ iff $\jlfm\Gamma{\checkoutr F}A$
+\end{theorem}
+
+\paragraph{Evaluation}
+
+Rule \textsc{FAppEval} calls the evaluation of a function. We now turn
+to its description (Fig. \ref{fig:evaluation}).
+
+% TODO
 
 % \begin{theorem}
 %   If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
@@ -1335,7 +1348,7 @@ $\jea\Delta\Gamma A {A'}$.
 %     M)} (\checkoutrr A)$
 % \end{theorem}
 
-\begin{figure*}
+\begin{figure}
   \fbox{$\jcc\Delta\Gamma A T S {\Delta'} F P$}
   \qquad
   {Term evaluation}
@@ -1402,8 +1415,8 @@ $\jea\Delta\Gamma A {A'}$.
   \end{mathpar}
 
   \caption{Evaluation of terms}
-  \label{fig:whr}
-\end{figure*}
+  \label{fig:evaluation}
+\end{figure}
 
 \section{Related work}
 % 1-2 pages

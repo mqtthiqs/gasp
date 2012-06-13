@@ -89,6 +89,7 @@
 
 % Maps
 \newcommand\mapadd[3]{{#1}[{#2}\mapsto{#3}]}
+\newcommand\mapempty{\gnil}
 
 
 %%%
@@ -112,6 +113,8 @@
 \newcommand\checkoutrr[1]{\downarrow_{\mmr}\!{#1}}
 \newcommand\stren[1]{\function{stren}{#1}}
 \newcommand\fcheck[1]{\function{check}{#1}}
+
+\newcommand\commit[2]{\function{commit$_{#1}$}{#2}}
 
 % Judgements
 \newcommand\gj[2]{{#1}\vdash{#2}}
