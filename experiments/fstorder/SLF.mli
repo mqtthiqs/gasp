@@ -39,6 +39,7 @@ module Printer : sig
   val efam : binder list -> formatter -> LF.fam -> unit
   val ekind : binder list -> formatter -> LF.kind -> unit
   val espine : binder list -> formatter -> LF.spine -> unit
+  val head : formatter -> LF.head -> unit
   val obj : formatter -> LF.obj -> unit
   val fam : formatter -> LF.fam -> unit
   val kind : formatter -> LF.kind -> unit

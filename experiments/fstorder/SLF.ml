@@ -317,6 +317,8 @@ module Printer = struct
     in
     Format.fprintf fmt "@[%a@]" aux e
 
+  let head fmt h = obj fmt (LF.mkApp(h, []))
+
   let env fmt e = lenv fmt (Unstrat.env e)
 
   let context fmt c =
