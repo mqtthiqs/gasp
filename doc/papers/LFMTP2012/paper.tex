@@ -620,8 +620,7 @@ at run-time at the boundaries of defined functions. This allows to
 omit formal justifications, like the fact that we need to iterate
 twice the typing of $P$ in $\recb M N x y P$, or that $B$ can't depend
 on $\md_x$ in the $\lambda$ case, while detecting errors early. Of
-course this incurs on the performance; we will see a compensation for
-it by the slicing mechanism described below in \ref{sec:repr}.
+course this incurs on the performance.
 
 The idea of untrustedly generating certificates verified \emph{a
   posteriori} is very wide-spread in \sysname{LCF}-style proof
@@ -670,11 +669,11 @@ strategy (see \ref{sec:comput}).
 
 % TODO cite lee2007mechanizing
 
-\section{Designing the framework}
+\section{Design of the framework}
 %% Here is my idea (2 pages)
 
-% explicit LF
-% lambda-lifting
+% TODO explicit LF
+% TODO lambda-lifting
 
 \subsection{The representation language}
 \label{sec:repr}
@@ -950,9 +949,9 @@ where all referable slices have been boxed.
 \label{sec:comput}
 
 Secondly, we introduce the \CL\ language to transform our \SLF\
-objects (Fig.~\ref{fig:syntax-CL}). We can construct objects out of
-others, and deconstruct them by case analysis. The definition $T$ of a function always begins with a series of
-$\lambda$.
+objects (Fig.~\ref{fig:syntax-CL}). We can construct atomic objects
+out of others, and deconstruct them by case analysis. The definition
+$T$ of a function always begins with a series of $\lambda$.
 
 \begin{figure}[t]
   \begin{align*}
@@ -968,18 +967,18 @@ $\lambda$.
 \label{fig:syntax-CL}
 \end{figure}
 
-This language is dynamically typed: there is no static guarantee that
-object $\app {\fct f} x$ produced by a function $\fct f : A_1\to A_2 =
-T$ will have type $A_2$, nor that pattern matching is exhaustive. It
-is also non-terminating: we can define a recursive function $\fct f :
-\cst a\to \cst a = \lam x \app {\fct f} {\var x}$. Nevertheless, we
-want to maintain the invariant that each time an object goes in or out
-of a function $\fct f : A_1\to A_2$, it is checked against the type of
-this function (resp. $A_1$ or $A_2$). You can think of interpreted
-functions as mere black boxes taking and producing objects, and being
-able to feed objects to other black boxes; yet the wires linking them
-are labeled with types and objects circulating in them are checked
-against that type.
+This language is untyped, but types are dynamically checked: there is
+no static guarantee that object $\app {\fct f} x$ produced by a
+function $\fct f : A_1\to A_2 = T$ will have type $A_2$, nor that
+pattern matching is exhaustive. It is also non-terminating: we can
+define a recursive function $\fct f : \cst a\to \cst a = \lam x \app
+{\fct f} {\var x}$. Nevertheless, we want to maintain the invariant
+that each time an object goes in or out of a function $\fct f : A_1\to
+A_2$, it is checked against the type of this function (resp. $A_1$ or
+$A_2$). You can think of interpreted functions as mere black boxes
+taking and producing objects, and being able to feed objects to other
+black boxes; yet the wires linking them are labeled with types and
+objects circulating in them are checked against that type.
 
 Besides constants, the signature defines \emph{interpreted functions}
 $\fct f$, $\fct g$. Each function comes with its type and its
@@ -1009,11 +1008,11 @@ code.
     (\prd x {A_1} {A_2})^{n+1} &= \prd x {A_1} (A_2)^n &
     (\prd x {A_1} {A_2})^0 &= \prd x {A_1} (A_2)^{A_1} \\
     (\prd x {A_1} {A_2})^A &= \prd x {A_1} (A_2)^A &
-    (\app {\cst a} S)^A &= \prd x {\app{\cst a} S} A \\
+    (\app P)^A &= \prd x P A \\
     \pi_{n+1}(\prd x {A_1}{A_2}) &= \lam x \pi_n(A_2) &
     \pi_0(\prd x {A_1} {A_2}) &= \lam {y} \pi^y(A_n) \\
     \pi^y(\prd x {A_1}{A_2}) &= \lam x \pi^y (A_2) &
-    \pi^y(\app{\cst a} S) &= \var y
+    \pi^y(P) &= \var y
   \end{align*}
 \end{definition}
 
@@ -1086,11 +1085,11 @@ $\jea\Delta\Gamma A {A'}$.
     }
 
     \infer[MAtom]{
-      \jf\Delta\Gamma F {\Delta'} {F'} {P}
+      \jf\Delta\Gamma F {\Delta'} {F'} {P'}
        \and
-      \jea{\Delta'}\Gamma P {\app{\cst a} S}
+      \jea{\Delta'}\Gamma P {P'}
     }{
-      \jm\Delta\Gamma F {\app{\cst a} S} {\Delta'} {F'}
+      \jm\Delta\Gamma F P {\Delta'} {F'}
     }
     % TODO commenter type ground
   \end{mathpar}
@@ -1417,6 +1416,13 @@ to its description (Fig. \ref{fig:evaluation}).
   \caption{Evaluation of terms}
   \label{fig:evaluation}
 \end{figure}
+
+% TODO
+
+\begin{theorem}
+  If $\mr$ well-constructed, and $\commit\mr F = \mmr$, then
+  $\checkout{\mmr}$ is a value.
+\end{theorem}
 
 \section{Related work}
 % 1-2 pages
