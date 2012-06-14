@@ -79,6 +79,18 @@ module String = struct
     in loop 0
   ;;
 
+let split c s =
+  let len = String.length s in
+  let rec split n =
+    try
+      let pos = String.index_from s n c in
+      let dir = String.sub s n (pos-n) in
+      dir :: split (succ pos)
+    with
+      | Not_found -> [String.sub s n (len-n)]
+  in
+  if len = 0 then [] else split 0
+
 end
 
 module Int = struct
@@ -126,7 +138,7 @@ module Debug = struct
 
   open Format
 
-  let tags = ref ["all"]
+  let tags = ref (String.split ',' (try Unix.getenv "DEBUG" with Not_found -> ""))
 
   let active tag =
     List.mem "all" !tags
