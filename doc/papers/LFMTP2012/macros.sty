@@ -34,7 +34,7 @@
 \newcommand\cst[1]{\name{\textsf{#1}}}
 \newcommand\meta[1]{\name{\textsl{#1}}}
 \newcommand\repo[1]{\mathcal{#1}}
-\newcommand\syntax[1]{\operatorname{#1}}
+\newcommand\syntax[1]{\operatorname{\bf #1}}
 
 % General lists (cons and snoc)
 \newcommand\gnil{\cdot}
@@ -108,13 +108,13 @@
 \newcommand\md{\ensuremath{\mathcal D}}
 
 % Functions & operations
-\newcommand\checkout[1]{\downarrow{#1}}
-\newcommand\checkoutr[1]{\downarrow_{\mr}\!{#1}}
-\newcommand\checkoutrr[1]{\downarrow_{\mmr}\!{#1}}
+\newcommand\checkout[1]{\function{co}{#1}}
+\newcommand\checkoutr[1]{\function{co$_{\mr}$}{#1}}
+\newcommand\checkoutrr[1]{\function{co$_{\mmr}$}{#1}}
 \newcommand\stren[1]{\function{stren}{#1}}
 \newcommand\fcheck[1]{\function{check}{#1}}
 
-\newcommand\commit[2]{\function{commit$_{#1}$}{#2}}
+\newcommand\commit[2]{\function{ci$_{#1}$}{#2}}
 
 % Judgements
 \newcommand\gj[2]{{#1}\vdash{#2}}
@@ -123,6 +123,9 @@
 
 \newcommand\gjo[3]{\gj{#1}{{#2}\To{#3}}}
 \newcommand\gjor[4]{\gjo{{#1}; {#2}} {{#3}} {#4}}
+
+\newcommand\gjao[4]{\gja{#2}{#1}{{#3}\To{#4}}}
+\newcommand\gjaor[5]{\gjao{#1}{{#2}; {#3}} {{#4}} {#5}}
 
 %%% System Tsub
 \newcommand\jts[2]{\gjt{}{#1}{#2}}
@@ -133,15 +136,15 @@
 
 %%% My system
 % objects
-\newcommand\jm[6]{\gjor{#1}{#2}{{#3}: {#4}}{{#5}; {#6}}}
+\newcommand\jm[7]{\gjaor{#1}{#2}{#3}{{#4}: {#5}}{{#6}; {#7}}}
 % app
-\newcommand\jf[6]{\gjor{#1}{#2}{#3}{{#4};{#5};{#6}}}
+\newcommand\jf[7]{\gjaor{#1}{#2}{#3}{#4}{{#5};{#6};{#7}}}
 % subst
-\newcommand\js\jm
-% head
-\newcommand\jh[5]{\gjor{#1}{#2}{#3}{{#4}; {#5}}}
+\newcommand\js[7]{\gjaor{#1}{#2}{#3}{{#4}:{#5}}{{#6};{#7}}}
+% % head
+% \newcommand\jh[5]{\gjor{#1}{#2}{#3}{{#4}; {#5}}}
 % spine
-\newcommand\jl[7]{\gjor{#1}{{#2}; {#3}}{#4}{{#5};{#6};{#7}}}
+\newcommand\jl[8]{\gjaor{#1}{#2}{{#3}; {#4}}{#5}{{#6};{#7};{#8}}}
 % fspine
 \newcommand\jfl[6]{\gjor{#1}{{#2};{#3}}{#4}{{#5};{#6}}}
 % sign
@@ -151,20 +154,29 @@
 % kind
 \newcommand\jkind\jfam
 
+%%% Annotations on judgements
+\newcommand\anoeval{\bot}
+\newcommand\aeval{\top}
+\newcommand\aevalh[1]{\fct{#1}}
+
 % comp cut
-\newcommand\jcc[8]{\gjor{#1}{{#2};{#3}}{\gcut{#4}{#5}}{{#6};{#7};{#8}}}
+\newcommand\jcc[6]{\gjor{#1}{#2}{\gcut{#3}{#4}}{{#5};{#6}}}
 \newcommand\jcr[5]{\gjor{#1}{#2}{#3}{{#4};{#5}}}
 
 % obj equality
 \newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}
 % fam equality
 \newcommand\jea[4]{\gj{{#1}; {#2}}{{#3}={#4}}}
+% spine equality
+\newcommand\jel[6]{\gj{{#1}; {#2}; {#3}}{{#4}={#5}:{#6}}}
 
 % constant annotations
 \newcommand\annsliceable{\mathsf{S}}
 \newcommand\annnonsliceable{\mathsf{NS}}
 \newcommand\anndefined[1]{\mathsf{D}({#1})}
 
+\newcommand\fann[1]{\eta({#1})}
+\newcommand\fannp[1]{\eta'({#1})}
 
 % System T
 \newcommand\recb[5]{\cst{rec}({#1},{#2},{\var{#3}}\,{\var{#4}}\postbinder{#5})}

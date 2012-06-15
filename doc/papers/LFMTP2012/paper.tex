@@ -99,7 +99,7 @@ easily inferred, can be \emph{verified} if provided by an oracle. If
 the oracle is wrong, we can tell cheaply by verifying the witness
 typing derivation it provides. Let us then imagine a type-checker to
 be the pair of \emph{(i)} an untrusted procedure $\finfer M$ to infer
-a typing derivation out of program $M$; it doesn't have to be
+a typing derivation out of program $M$; it does not have to be
 complete, or even sound, and \emph{(ii)} a trusted and fast kernel
 $\fcheck{\md}$ to verify these derivations \wrt\ a given set of
 inference rules $\Sigma$. This is a \emph{certifying} scheme (see
@@ -146,9 +146,8 @@ advantage of the results of previous checks in order to build the
 result for a modified version of the program.
 
 Several generic methods have been devised for turning a batch program
-into an incremental one
-\cite{pugh1989incremental,acar2003selective}. Unfortunately, they
-suffer from their genericity on the particular problem of type
+into an incremental one \cite{acar2006,carlsson2002}. Unfortunately,
+they suffer from their genericity on the particular problem of type
 checking:
 \begin{itemize}
 \item first, they ignore the higher-order nature of program syntax,
@@ -190,7 +189,7 @@ as an \sysname{ML} library. We specifically propose:
   deltas, derived from contextual \LF\ \cite{nanevski2008contextual};
 \item a computational language to write untrusted
   derivation-generating type checkers, based on a notion of function
-  inverse %TODO le nom?
+  inverse
   to refer to already-computed values;
 \item a generic algorithm to evaluate these type-checkers on program
   deltas and verify on-the-fly the generated incremental certificates
@@ -204,66 +203,17 @@ as an \sysname{ML} library. We specifically propose:
 \subsection{As a programmer}
 \label{sec:use-incremental}
 
-% \begin{figure}
-%   \centering
-% %  \small
-%   \begin{mathpar}
-%     \infer{ }{\jts{\cst o} {\even}}
-
-%     \infer{\jts M \odd} {\jts {\s M} \even}
-
-%     \infer{\jts M \even} {\jts {\s M} \odd}
-
-%     \infer{\jts M \nat} {\jts {\s M} \nat}
-
-%     \infer{\jts M {A\to B} \and \jts N A} {\jts {\app M N} B}
-
-%     \infer{\infer*{}{\mbox{$
-%           \begin{array}{c}
-%             [\jts {\var x} A] \\[-0.3em]
-%             \vdots\\
-%             \jts M B
-%           \end{array}$
-%         }}} {\jts {\lam x M} {A\to B}}
-
-%     \infer{\jts M A \and \jsub A B}{\jts M B}
-
-%     \infer{\jts M \nat
-%       \and
-%       \jts N A
-%       \and
-%       \infer*{}{\mbox{$
-%         \begin{array}{c}
-%           [\jts {\var x} \nat] \quad
-%           [\jts {\var y} A] \\[-0.3em]
-%           \vdots \\
-%           \jts P A
-%         \end{array}
-%         $}}
-%     }{\jts {\recb M N x y P} A}
-
-%     \infer{ }{\jsub A A}
-
-%     \infer{ }{\jsub \even\nat}
-
-%     \infer{ }{\jsub \odd\nat}
-
-%     \infer{\jsub {A'} A \and \jsub B {B'} }{\jsub {A\to B}{A'\to B'}}
-%   \end{mathpar}
-%   \caption{System \sysname{T_{<:}}, declaratively}
-%   \label{fig:tsub}
-% \end{figure}
-
 A student is learning about System \sysname {T_{<:}} --- a simply
 typed $\lambda$-calculus with natural numbers $\cst{nat}$ coming in
 two sets $\cst{even}$ and $\cst{odd}$, introduction $\z$ and $\s{M}$,
-elimination ($\recb M N x y P$), and subtyping on those types. He (or
-she) wants to write a program computing $(2+2)\times 3$. He knows that
-sometimes those $\cst{rec}$ arguments are quite hard to get correct,
-but \sysname{T_{<:}} is a typed language; he wants to take advantage
-of this to build his program incrementally using the teacher's
-provided incremental verifier. As a first attempt, he wants to verify
-$P_1 = \recb{\s\z}{\s\z} x y {\s {\var x}}$: He sends the command
+elimination ($\recb M N x y P$), and subtyping on these types (for
+formal details, see appendix). He (or she) wants to write a program
+computing $(2+2)\times 3$ in that system. He knows that sometimes the
+arguments of $\cst{rec}$ are quite hard to get correct, but
+\sysname{T_{<:}} is a typed language; he wants to take advantage of
+this to build his program incrementally using the teacher's provided
+incremental verifier. As a first attempt, he wants to verify $P_1 =
+\recb{\s\z}{\s\z} x y {\s {\var x}}$: he sends the command
 $\finfer{P_1}$ to the system. The $\finfer{}$ operator takes a
 well-formed program and tries to construct a valid typing derivation
 for its argument in the current, empty context. The system succeeds
@@ -278,8 +228,8 @@ of his code:
   \app{\var{add}}\app{(\s\z)}{(\s\z)} \ \text{.}
 \end{align*}
 But he (or his text editor) realizes that some parts of this program
-have not changed: both $\s\z$, and the function body $\s{\var u}$, and
-he could reuse the pieces of derivation just built. Let us call these
+have not changed: both $\s\z$, and the function body $\s{\var u}$. He
+could reuse the pieces of derivation just built. Let us call these
 respectively $\md_2$, $\md_3$ and $\md_4$. $\md_4$ is hypothetical: it
 depends on the hypothesis $H$ that\ \ $\vdash \var u:\cst{nat}$ .
 Provided there is an operator $\fget\md$ from the derivation to the
@@ -292,25 +242,25 @@ program it types, what really needs to be sent to the system is:
   )
 \ \text{,}
 \end{align*}
-that is, only the changed subterms of the program. Derivation $\md_2$
-used to live in the empty context, we are then free to use it in the
-new context where $\vdash\var{add}:\cst{nat}\to\cst{nat}$, because System
-\sysname T enjoys the \emph{weakening} property; $\md_4$ depending on
-a derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole
-with the derivation $\finfer{\var u}$ inferred recursively for the new
+that is, only the changed subterms of the program: this is a
+\emph{delta}. Derivation $\md_2$ used to live in the empty context, we
+are then free to use it in the new context where
+$\vdash\var{add}:\cst{nat}\to\cst{nat}$, because System \sysname T
+enjoys the \emph{weakening} property; $\md_4$ depending on a
+derivation\ \ $\vdash\var x:\cst{nat}$, we instantiate this hole with
+the derivation $\finfer{\var u}$ inferred recursively for the new
 recursive argument $\var u$. $\md_2$ derives $\vdash \s\z :
 \cst{odd}$, but $\var{add}$ awaits two $\cst{nat}$ arguments. When the
 system generates this derivation, it inserts a coercion $\cst{odd}
 \leq \cst{nat}$ at these two points. Taking advantage of $\md_2$ and
 $\md_4$ the system succeeds with a new derivation made out of these,
-without having to regenerate them because it knows that
-$\finfer{\fget\md} = \md$.
+without having to regenerate them.
 
 Let us call $\md_5$ the subderivation generated for the definition of
 $\var{add}$, $\md_6$ for the arguments
-$\app{\fget{\md_2}}{\fget{\md_2}}$ and $\md_7$ for the call
+$\app{\fget{\md_2}}{\fget{\md_2}}$ and $\md_7$ for the application
 $\app{\var{add}} {\fget{\md_6}}$. Even if it occurs originally in the
-scope of $\var{add}$, $\md_6$ doesn't depend on the hypothesis $\var
+scope of $\var{add}$, $\md_6$ does not depend on the hypothesis $\var
 H$ that $\vdash \var{add}:\cst{nat}\to\cst{nat}$ because of the
 \emph{strengthening} property. Contrarily, $\md_7$ does: each time we
 want to reuse it, we will have to provide a proof of this fact.
@@ -337,7 +287,7 @@ $\finfer{\var{add}}$ meaning: at this point we will have generated (or
 reused in this case) the derivation of $\var{add}$, so we just have to
 use it here. $\md_2$ was deriving $\vdash\s\z:\cst{nat}$ (with a
 coercion since it was used as an argument to $\var{add}$); the system
-thus infer the more general type $\cst{nat}$ for $\s{\fget{\md_2}}$.
+thus infers the more general type $\cst{nat}$ for $\s{\fget{\md_2}}$.
 
 % Finally, he decides (in an odd move) to inline the definition of
 % $\var{mul}$ into its call site. Call $\md_8$ the derivation of the
@@ -391,8 +341,6 @@ rechecking well-typing of a small modification amounts to rechecking
 the path in the term from the root to the changed part, and the
 changed part itself.
 
-%TODO figure?
-
 Seeing type-checking as issuing a completely explicit typing
 derivation enables thus to think of the relationship between the input
 and the output. Feeding subterms of the output $\md_i$ back into
@@ -400,11 +348,10 @@ subterms of the input $P_i$ is a well-known technique for handling
 changes in the input: combined with a way to automatically recognize
 already-computed input, it is \emph{memoization}, a general-purpose
 technique for incremental computation that has been extensively
-studied and combined with other techniques
-\cite{pugh1989incremental,acar2003selective}. However, it is best
-understood in the case of purely first-order data, and to our best
-knowledge remains unexplored for higher-order structures containing
-binders, like programs and proofs.
+studied and combined with other techniques \cite{acar2006}. However,
+it is best understood in the case of purely first-order data, and to
+our best knowledge remains unexplored for higher-order structures
+containing binders, like programs and proofs.
 
 A memoized type-checker stores in a table bindings from its input (the
 program) to its output (the derivation), and returns automatically the
@@ -424,7 +371,7 @@ she) provides the abstract syntax, the typing rules and the untrusted
 typing algorithm in order to build the incremental type checker. How
 should he write the algorithm? We want it to return a derivation, and
 take advantage of a higher-order representation of the syntax, so it
-shouldn't be necessary to thread any explicit environment. The
+should not be necessary to thread any explicit environment. The
 definition should then start with:
 
 \begin{mathleft}
@@ -437,7 +384,8 @@ inferred type $A$ and a derivation that $M$ has type $A$. Its code
 will be untyped, but the teacher provides this type so that the
 checker can verify that each call is fed and returns values of the
 right type: it is its \emph{contract} so to say. He first decomposes
-term $M$ and treats the easy cases of $\cst{o}$ and $\cst{s}$:
+term $M$ and treats the easy cases of $\cst{o}$ and $\cst{s}$. The
+code continues with:
 
 \begin{mathleft}
   \lamd M \match{M} \\
@@ -453,9 +401,9 @@ term $M$ and treats the easy cases of $\cst{o}$ and $\cst{s}$:
 \end{mathleft}
 
 \noindent
-We write $\pair{\cdot}{\cdot}$ the constructor of $\Sigma$-types;
-patterns don't have to be exhaustive since we are in an untrusted
-setting; for conciseness, we use case failure for signaling typing
+We write $\pair{\cdot}{\cdot}$ for the constructor of $\Sigma$-types.
+Patterns do not have to be exhaustive since we are in an untrusted
+setting. Fr conciseness, we use case failure for signaling typing
 error. There are three cases for $\s{M}$ in the system, corresponding
 to the three rules in the declarative system. For the application
 case, we rely on the well-known property that we may need to insert a
@@ -481,25 +429,25 @@ $\syntax{case}$; we use an auxiliary function $$\fleq{}{}\ :\ \prd A
 {\cst{tp}} \prd B {\cst{tp}} \vdash A\leq B = \ldots$$ trying to
 construct a subtyping derivation for its argument, or failing with an
 error. Notice the slight optimization to the size of the derivation:
-if the types $A_1$ and $A_2$ are the same syntactically, we don't
+if the types $A_1$ and $A_2$ are the same syntactically, we do not
 generate a subtyping rule. This is done by matching on the returned
-derivation $\md_\leq$.
+derivation $\md_\leq$ in the case of the \textsc{Refl} rule.
 
 Then comes the abstraction case $\tlam x A M$. The difficulty is that
 the recursive call $\finfer{M}$ must be done in an enlarged
-environment where $\vdash x : A$, otherwise the check that the
+environment where $\vdash x : A$. Otherwise the check that the
 returned open derivation $\md$ is correct would fail ($x$ is
 unknown). We thus introduce a new construct $\matchin M \Gamma \ldots$
-and its $\syntax{let}$ counterpart ($\match M \ldots$ being syntactic
-sugar for $\matchin M \envnil \ldots$). Even then, in the recursive
-call, the variable case $\var x$ would fail since we would have no way
-of telling its type anymore. Thus we substitute all occurrences of
-$\var x$ with the \emph{output} of function $\finfer{}$ on it (since
-it is known at this point), \ie\ a pair of $A$ and $\md_1$. For this
-substitution to be well-typed, we now need to coerce this output to a
-valid input (a term). We introduce an operator which is in some sense
-the \emph{inverse} of $\finfer{}$: operator $\fget{}$ maps a pair of a
-type and a derivation to the term it types.
+($\match M \ldots$ being syntactic sugar for $\matchin M \envnil
+\ldots$). Even then, in the recursive call, we would have no way of
+synthesizing a variable $\var x$'s type anymore. Thus we substitute
+all occurrences of $\var x$ with the \emph{output} of function
+$\finfer{}$ on it (since it is known at this point), \ie\ a pair of
+$A$ and $\md_1$. For this substitution to be well-typed, we now need
+to coerce this output to a valid input (a term). We introduce an
+operator which is in some sense the \emph{inverse} of $\finfer{}$:
+operator $\fget{}$ maps a pair of a type and a derivation to the term
+it types.
 
 \begin{mathleft}
   \quad\caseb{\tlam x A M}
@@ -508,11 +456,11 @@ type and a derivation to the term it types.
 \end{mathleft}
 
 At this point, we get back $B$ and $\md$ from the recursive call. We
-know that $B$ can't depend on $\md_x$ (because a System
+know that $B$ cannot depend on $\md_x$ (because a System
 \sysname{T_{<:}} type is always closed), but $\md$ can: it is not
 \emph{per se} a hypothetical derivation but an \emph{open} derivation
 where a special judgement named $\md_x$ can occur. To return the
-complete derivation of $\vdash\tlam A x M : A \to B$, we must then
+complete derivation of $\vdash\tlam x A M : A \to B$, we must then
 close, or ``hypothesize'' $\md$ by $\md_x$, and then apply rule
 \rulename{Lam}:
 
@@ -535,12 +483,12 @@ and $\md_N$ which should be well-typed in the current environment, and
 then $\md_P$ in the enlarged environment, with variables $\var x$ and
 $\var y$ in $P$ substituted with the (future) result of $\finfer{}$.
 
-Remains one problem with subtyping: terms $N : A_N$ and $P : A_P$
+One problem remains with subtyping: terms $N : A_N$ and $P : A_P$
 should be coercible to the same type $A$, but $P$ should be typed
 under $\vdash y:A$, which is not known before typing $P$. A trick to
-break the loop is to iterate the typing of $P$ with more and more
-general types, until we reach a fixpoint (we reach a fixpoint if there
-is a unique more general type); in our particular case of subtyping
+break the loop is to iterate the typing of $P$ with a more and more
+general type, until we reach a fixpoint. We reach a fixpoint if there
+is a unique more general type, in our particular case of subtyping
 relation, this means iterating only twice: we will then attain
 \cst{nat}.
 
@@ -589,53 +537,53 @@ relation, this means iterating only twice: we will then attain
 Again, we use a new auxiliary function
 $$\sqcap\ :\ \prd{A}{\cst{tp}} \prd{B}{\cst{tp}} \sig C {\cst{tp}}
 (\vdash A\leq C )\times(\vdash B\leq C) = \ldots$$ computing the sup
-of two types $A$ and $B$, and returning proofs of of subtyping. Note
-that we didn't perform here the optimization seen in the application
-case.
+of two types $A$ and $B$, and returning proofs of subtyping. Note that
+we could have performed the optimization seen in the application case
+as well.
 
 The type-checker is now done. There is no case for variables, as we
-won't ever meet this case: we already substituted all variables with
-their result derivation. Evaluation only need to make sure that in
-this case, the derivation will be returned, \ie\ that equation
+will not ever meet this case: we already substituted all variables
+with their result derivation. Evaluation only needs to make sure that
+in this case, the derivation will be returned, \ie\ that equation
 $\finfer{\fget{\pair A \md}} = \pair A \md$ holds.
 
 Note that $\fget{}$ can be derived automatically from the type of
-$\finfer{}$: it is its inverse. It has definition:
+$\finfer{}$: we will call it its inverse, since it maps the return
+type to the arguments. It has definition:
 
 \begin{mathleft}
-  \fget{}\ :\ \prd{\{M\}}{\cst{tm}} \prd {A}{\cst{tp}} \prd{\md}{(\vdash
+  \fget{}\ :\ \prd{M}{\cst{tm}} \prd {A}{\cst{tp}} \prd{\md}{(\vdash
     M:A)} \cst{tm} =
   \lamd M \lamd A \lamd \md M
 \end{mathleft}
 
 \noindent
-where argument $M$ is implicit.
+where argument $M$ is left implicit (it can be inferred).
 
 \paragraph{Discussion}
 
-We exploit here an idea similar to run-time \emph{contracts}
+We exploit an idea similar to run-time \emph{contracts}
 \cite{wadler2009well}: there is no static guarantee that computations
-won't return ill-typed values, but arguments and results are checked
-at run-time at the boundaries of defined functions. This allows to
-omit formal justifications, like the fact that we need to iterate
-twice the typing of $P$ in $\recb M N x y P$, or that $B$ can't depend
-on $\md_x$ in the $\lambda$ case, while detecting errors early. Of
-course this incurs on the performance.
+will not return ill-typed values, but arguments and results are
+checked at run-time at the boundaries of defined functions. This
+allows to omit formal justifications, like the fact that we need to
+iterate twice the typing of $P$ in $\recb M N x y P$, or that $B$
+cannot depend on $\md_x$ in the $\lambda$ case, while detecting errors
+early.
 
 The idea of untrustedly generating certificates verified \emph{a
   posteriori} is very wide-spread in \sysname{LCF}-style proof
 assistants: during manual proof search, the interaction is driven by
-\emph{tactics}: %TODO cite
-they are untrusted programs generating pieces of proofs, assembled by
-other, higher-order tactics; verification of the generated proofs is
-done when the evaluation of all tactics is complete. The differences
-with our mechanism are two-fold: first, tactics usually take one (or
-several) \emph{goal}(s) as input, \ie\ holes in a proof, whereas our
-functions can take any term; secondly, proof-check is usually done at
-the end of the evaluation, which can lead to less tractable bugs; by
-making evaluation and checking mutually recursive, we choose to detect
-errors earlier in these witnesses: exactly at the point where they are
-generated.
+\emph{tactics}: they are untrusted programs generating pieces of
+proofs, assembled by other, higher-order tactics; verification of the
+generated proofs is done when the evaluation of all tactics is
+complete. The differences with our mechanism are two-fold: first,
+tactics usually take one (or several) \emph{goal}(s) as input, \ie\
+holes in a proof, whereas our functions can take any term; secondly,
+proof-check is usually done at the end of the evaluation, which can
+lead to less tractable bugs; by making evaluation and checking
+mutually recursive, we choose to detect errors earlier in these
+witnesses: exactly at the point where they are generated.
 
 Introducing the ``inverse'' of the derivation inference function has
 two purposes: as we saw in \ref{sec:use-incremental}, it allows to
@@ -658,7 +606,6 @@ $$
   \vdash \{\var x : A\} : A
 }
 $$
-% TODO: vérif ce paragraphe après avoir parlé de fcts inv
 replace the usual ones. The difficulty with this technique,
 particularly in a dependent setting, is to ensure that term $\{\var
 x:A\}$ reduces to $\var x$ so that they are considered equal, \ie\ we
@@ -667,13 +614,8 @@ otherwise we would hit the unhandled case $\finfer{\var x}$. This
 requires evaluating the program deltas with a carefully designed
 strategy (see \ref{sec:comput}).
 
-% TODO cite lee2007mechanizing
-
 \section{Design of the framework}
 %% Here is my idea (2 pages)
-
-% TODO explicit LF
-% TODO lambda-lifting
 
 \subsection{The representation language}
 \label{sec:repr}
@@ -694,15 +636,12 @@ certificates. % The requirements are:
 % \end{itemize}
 The Edinburgh Logical Framework \cite{harper1993framework}, or \LF\
 for short, is one of the well-accepted solution to this question. It
-is a dependently typed lambda-calculus for \emph{representing} terms,
-derivations and statements of $\Pi_0^1$ meta-theorems in a given
-inference system supporting hypothetical judgments
-\cite{pfenning2001logical}. For these, it provides built-in support
-for encoding languages with binders and hypothesis (a feature called
-$\lambda$-tree syntax or HOAS \cite{pfenning1988higher}). The user
-gives a \emph{signature} defining abstract syntax and inference rules
-of his \emph{object language}, and gets an algorithm to verify terms
-and derivations expressed in the \LF\ syntax.
+is a dependently typed lambda-calculus for \emph{representing}
+higher-order terms and derivations
+\cite{pfenning1988higher}. The user gives a
+\emph{signature} defining abstract syntax and inference rules of his
+\emph{object language}, and gets an algorithm to verify terms and
+derivations expressed in the \LF\ syntax.
 % For instance, the rule for System \sysname{T}'s recursor can be
 % encoded by the following constant:
 % \begin{mathleft}
@@ -719,20 +658,16 @@ and derivations expressed in the \LF\ syntax.
 %   \app{\cst{is}}\app{(\app{\cst{rec}}\app M \app N (\lam x\lam y \app
 %     P\app x y))} A
 % \end{mathleft}
-This framework has been used to issue certificates for a number of
-practical applications like proof-carrying
-code~\cite{necula1997proof}, authentication
-framework~\cite{appel1999proof} \ldots %TODO ATP
 
-To write deltas by sharing subterms, we need to be able to address any
-subterm. Since a subterm can be open, we must instantiate its free
-variables. For this, we define the \emph{slicing} of a well-typed \LF\
-term: we extend \LF\ with contextual metavariables $\meta X$, $\meta
-Y$, \ldots\ as in \cite{nanevski2008contextual}. We thus introduce
-Sliced \LF\ (\SLF, see Fig. \ref{fig:syntax-LF}). Specifically, it is
-an extension of \emph{spine canonical \LF} \cite{pfenning2007term}
-enriched with metavariables which are references to open terms as in
-\cite{nanevski2008contextual}.
+To write deltas by sharing subterms, we need to be able to refer to
+any subterm. For this, we first extend \LF\ with contextual
+metavariables (written $\meta X$, $\meta Y$) standing for open terms,
+following \cite{nanevski2008contextual}, secondly, we make sure that
+every subterm is named by a metavariable (an operation called
+\emph{slicing}). We thus introduce Sliced \LF\ (\SLF, see
+Fig. \ref{fig:syntax-LF}): it is an extension of \emph{spine canonical
+  \LF} \cite{pfenning2007term} enriched with metavariables which are
+references to open terms as in \cite{nanevski2008contextual}.
 
 \begin{figure}[t]
   \begin{align*}
@@ -760,122 +695,43 @@ enriched with metavariables which are references to open terms as in
 \end{figure}
 
 In this variant, only $\eta$-long and $\beta$-normal objects have an
-existence: canonicity for $\beta$-reduction is enforced in the syntax
+existence. Canonicity for $\beta$-reduction is enforced in the syntax
 and canonicity for $\eta$-expansion will be enforced by typing,
 following \cite{hl07mechanizing}. Besides, application of a
 \emph{head} (\ie\ a variable, constant, or function symbol) is $n$-ary
 (\ie\ to a \emph{spine} of objects) as opposed to the more standard
-binary application: this eases the definition substitution and
-$\eta$-expansion, and corresponds to a focused sequent calculus known
-as \sysname{LJT} \cite{herbelin1995lambda}. We differ the discussion of
-function symbols $\fct f$ to \ref{sec:comput}. A \emph{value} is an
-object containing no function symbols. The definition of hereditary
-substitution $\gsubst M \sigma$ is skipped and can be found in
-\cite{pfenning2007term} (and extended to metavariables as
-\cite{nanevski2008contextual}).
+binary application: this eases the definition of substitution and
+$\eta$-long forms, and corresponds to a focused sequent calculus known
+as \sysname{LJT}~\cite{herbelin1995lambda}. We differ the discussion
+of function symbols $\fct f$ to section \ref{sec:comput}. A
+\emph{value} is an object containing no function symbols. The
+definition of hereditary substitution $\gsubst M \sigma$ is skipped
+and can be found in the appendix.
 
 We distinguish syntactically between \emph{checkable} $M$ and
 \emph{inferrable} $F$ objects (resp. \emph{canonical} and
-\emph{atomic}), as in \eg\ \cite{pierce2000local}: canonical objects
+\emph{atomic}), as in \eg\ \cite{pierce2000local}. Canonical objects
 are checked against a given type, whereas we can synthesize the type
-of atomic objects; the coercion from the first grammatical category to
-the second is where we verify equality between synthesized and checked
-types.
+of atomic objects; the coercion from canonical to atomic objects
+triggers the equality check between synthesized and checked types.
 
 As is customary, we adopt the Barendregt convention for naming bound
-variables, write $A_1\to A_2$ for $\prd x {A_1} {A_2}$ when $\var x\notin
-\FV{A_2}$, $\meta X$ for $\smeta X \msubstnil$, and adopt indifferently
-list, map or set notations for $\sigma$ and $\Gamma$. The identity
-substitution $\msubstid{\Gamma}$ is a notation for $\{\msubst x {\var
-  x}\ |\ \var x \in\dom\Gamma\}$. Metavariables $\smeta X \sigma$
-stand for open objects with free variables in $\dom{\sigma}$; To each
-use of them is attached a substitution $\sigma$ defining these free
-variables. We write $\FMV{M}$ for the set of metavariables in $M$ and
-speak of a \emph{metaclosed} object $M$ if $\FMV{M} = \emptyset$.
-
-% TODO relate to LF
-
-% \paragraph{Substitution}
-
-% We overload \emph{substitution} as a partial operation on objects,
-% given a parallel substitution $\sigma$. Since the syntax of object is
-% not stable by (textual) substitution, it is defined as
-% \emph{hereditary}\footnote{ Note that this notion of substitution,
-%   present in \cite{pfenning2007term}, differs from the more standard
-%   definition in \cite{hl07mechanizing} as it presupposes $\eta$-long
-%   normal forms: once a \emph{cut} starts, there must be exactly as
-%   many formal and actual arguments. A non-empty spine cut against
-%   another non-empty spine $\gcut {\app H S} {S'}$ blocks the
-%   substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
-%   implicit $\eta$-expansion); conversely, exhausting actual but not
-%   formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
-%   substitution too. For example, the reduction $\gcut {\lam x \app
-%     {\var x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck
-%   because the second $\var x$ in the left part is substituted by a
-%   function yet is not itself a function. }: it is mutually recursive
-% with a \emph{cut} function $\gcut M S$ which can in turn trigger a
-% chain of substitutions, leading to a canonical objects or an error.
-% \begin{align*}
-%   \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
-%   \text{if $\var x\notin \dom{\sigma}$}
-%   \\
-%   \gsubst {(\app {\cst c} S)} \sigma &= \app {\cst c} {(\gsubst S
-%     \sigma)}
-%   \\
-%   \gsubst {(\app {\var x} S)} \sigma &=
-%   \app {\var x} {\gsubst S \sigma} &
-%   \text{if $\var x\notin \dom{\sigma}$}
-%   \\
-%   \gsubst {(\app {\var x} S)} \sigma &=
-%   \gcut M {\gsubst S \sigma} &
-%   \text{if $\sigma(\var x) = M$}
-%   \\
-%   \gsubst {\smeta X {\sigma}} {\sigma'} &=
-%   \smeta X {\gcomp\sigma{\sigma'}}
-%   \\
-%   \gsubst\spinenil\sigma &=
-%   \spinenil \\
-%   \gsubst{\spinecons M S}\sigma &=
-%   \spinecons{\gsubst M\sigma}{\gsubst S\sigma}
-%   \\
-%   \gcut {\lam x M} {\spinecons N S} &=
-%   \gcut {\gsubst M {\msubst x N}} S
-%   \\
-%   % TODO cas meta/S ? rem: on en a pas besoin ds le proto.
-%   % \gcut {\smeta X\sigma} S &=
-%   % \smeta X{\gcomp\sigma\sigma'}
-%   % \\
-%   \gcut {\app H S} \spinenil &=
-%   \app H S
-%   \\
-%   \gcut {\smeta X\sigma} \spinenil &= \smeta X\sigma
-%   \\
-%   \gcomp \sigma \msubstnil &=
-%   \sigma
-%   \\
-%   \gcomp \sigma {(\msubstcons{\sigma'} x M)} &=
-%   \gcomp {\gsubst\sigma {\msubst x M}} \sigma'
-%   \\
-%   \gsubst {(\msubstcons{\sigma'} x M)} \sigma &=
-%   \msubstcons{\gsubst{\sigma'}\sigma} x {\gsubst M \sigma}
-%   \\
-%   \gsubst {\msubstnil}{\sigma} &= \msubstnil
-% \end{align*}
-
-% We extend this operation trivially on families $\gsubst A \sigma$ and
-% kinds $\gsubst K \sigma$. We also allow to abusively write
-% non-canonical application $\app M S$ as a shorthand for $\gcut M S$
-% if it is defined.
-
-% TODO pourquoi cette def?
-% TODO terminaison?
-% TODO stabilité de la eta?
+variables, write $A_1\to A_2$ for $\prd x {A_1} {A_2}$ when $\var
+x\notin \FV{A_2}$, $\meta X$ for $\smeta X \msubstnil$, and adopt
+indifferently list, map or set notations for $\sigma$ and
+$\Gamma$. The identity substitution $\msubstid{\Gamma}$ is a notation
+for $\{\msubst x {\var x}\ |\ \var x \in\dom\Gamma\}$. Metavariables
+$\smeta X \sigma$ stand for open objects with free variables in
+$\dom{\sigma}$. To each use of them is attached a substitution
+$\sigma$ defining these free variables. We write $\FMV{M}$ for the set
+of metavariables in $M$ and call an object $M$ \emph{metaclosed} if
+$\FMV{M} = \emptyset$.
 
 \begin{definition}
   A \emph{repository} $\mr$ is a finite map from metavariable to
   triplets of environments, atomic objects and atomic types (\ie\
   judgments of well-typing), along with a distinguished metavariable,
-  corresponding to the \emph{tip} of the term contained in it:
+  corresponding to the \emph{tip} of the term it contains:
 $$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp F P))\times\smeta X
 \sigma $$
 \end{definition}
@@ -883,9 +739,10 @@ $$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp F P))\times\smeta X
 If $\mr = (\Delta, X[\sigma])$, we write $\hat {\mr}$ for the tip
 $X[\sigma]$, abusively $\mr$ for $\Delta$ and $\mr (\smeta X \sigma)$
 for $\gsubst M\sigma$ if $\Delta(\meta X) = (\Gamma\vdash M : A)$.
-The algorithm in \ref{sec:eval} will maintain the invariant that a
-repository $\mr$ is \emph{acyclic}, that is for all $\meta X$ in
-$\mr$, the fixpoint of $\FMV{\mr(\meta X)}$ does not contain $\meta X$.
+The algorithm in \ref{sec:eval} will maintain two invariants: a
+repository $\mr$ is \emph{acyclic}, (for all $\meta X$ in
+$\mr$, the fixpoint of $\FMV{\mr(\meta X)}$ does not contain $\meta
+X$) and all $F$ and $P$ in it are values.
 
 \begin{definition}
   We define the partial \emph{checkout} operation $\checkout{\mr}$
@@ -928,27 +785,20 @@ $
 ), \smeta X {}
 $
 checks out as the metaclosed atomic object
-$$
-\fbox{$
+$
   \app {\cst{lam}} \lam x
-  \fbox{$
     \app {\cst{lam}} \lam y
-    \fbox{$
       \app {\cst{app}} \app {\var y}
-      (\fbox{$
+      (
         \app{\cst{app}}\app{\var x}{\cst o}
-      $})
-    $}
-  $}
-$}
-$$
-where all referable slices have been boxed.
+      )
+$.
 \end{example}
 
 \subsection{The computation language}
 \label{sec:comput}
 
-Secondly, we introduce the \CL\ language to transform our \SLF\
+Secondly, we introduce the \CL\ language compute over our \SLF\
 objects (Fig.~\ref{fig:syntax-CL}). We can construct atomic objects
 out of others, and deconstruct them by case analysis. The definition
 $T$ of a function always begins with a series of $\lambda$.
@@ -1006,15 +856,17 @@ code.
   N$, where type $(A)^n$ and term $\pi_n(A)$ are defined recursively:
   \begin{align*}
     (\prd x {A_1} {A_2})^{n+1} &= \prd x {A_1} (A_2)^n &
-    (\prd x {A_1} {A_2})^0 &= \prd x {A_1} (A_2)^{A_1} \\
-    (\prd x {A_1} {A_2})^A &= \prd x {A_1} (A_2)^A &
-    (\app P)^A &= \prd x P A \\
+    (\prd x {A_1} {A_2})^0 &= \prd x {A_1} (A_2)_{A_1} \\
+    (\prd x {A_1} {A_2})_A &= \prd x {A_1} (A_2)_A &
+    (P)_A &= \prd x P A \\
     \pi_{n+1}(\prd x {A_1}{A_2}) &= \lam x \pi_n(A_2) &
-    \pi_0(\prd x {A_1} {A_2}) &= \lam {y} \pi^y(A_n) \\
+    \pi_0(\prd x {A_1} {A_2}) &= \lam {y} \pi^y(A_2) \\
     \pi^y(\prd x {A_1}{A_2}) &= \lam x \pi^y (A_2) &
     \pi^y(P) &= \var y
   \end{align*}
 \end{definition}
+Functions $(A)^n$ and $\pi_n(A)$ use auxiliary functions $(A)_B$ and
+$\pi^y(A)$ to put the $n$-th argument at the end of the type and term.
 
 \begin{example}
   \begin{itemize}
@@ -1037,13 +889,12 @@ code.
 \subsection{The evaluation algorithm}
 \label{sec:eval}
 
-The evaluation algorithm, called $\function{commit$_\mr$}{F}$ takes an
-atomic object $F$ (possibly containing function symbols to evaluate)
-and a repository $\mr$, and produces a new repository $\mr'$ which is
-a strict extension of $\mr$ with a different tip, and which checks out
-to the value of $F$. It has three roles, which are necessarily
-interleaved:
-
+The evaluation algorithm, called \emph{commit}
+$\function{commit$_\mr$}{F}$ takes an atomic object $F$ (possibly
+containing function symbols to evaluate) and a repository $\mr$, and
+produces a new repository $\mr'$ which is a strict extension of $\mr$
+with a different tip, and which checks out to the value of $F$. It has
+three roles, which are necessarily interleaved:
 \begin{itemize}
 \item it evaluates $M$ by reducing function symbols,
 \item it type-checks all values fed to and produced by functions \wrt\
@@ -1052,146 +903,199 @@ interleaved:
   throughout evaluation and typing.
 \end{itemize}
 
-\paragraph{Typing}
+We now turn to the bidirectional typed reduction and slicing of the
+algorithm (Fig. \ref{fig:obj-typing}, \ref{fig:obj-typing2},
+\ref{fig:evaluation}), presented as an inference system. All judgments
+are of the form $\gjao L U V W$ where $U$, $V$ and $L$ are inputs, are
+directed by the syntax of $V$ and $L$, and $W$ is the output. They are
+parameterized by a constant and implicit signature $\Sigma$.
 
-We first present the bidirectional typing and slicing part of the
-algorithm (Fig. \ref{fig:obj-typing}) as a syntax-directed inference
-system. All judgments are of the form $\gjo U V W$ where $U$ and $V$
-are inputs, $V$ is the induction hypothesis and $W$ the output. They
-are parameterized by a constant and implicit signature $\Sigma$, and
-all premises are ordered in the algorithmic order of computation. The
-main judgement is atomic object typing $\jf\Delta\Gamma F {\Delta'}
-{F'} P$, which reads: in repository $\mr$ and environment $\Gamma$,
-applicative term $F$ is well-typed of type $A$, and the slicing of its
-value produces a new repository $\mmr$. $F'$ is the \emph{residual} of
-this operation: only constant applications $\app{\cst c} S$ are
-sliced, $F'$ is the ``tip'' of $F$ that was not sliced.
+Label $L$ is a mode influencing the strategy of evaluation of defined
+function applications. They range over $\top$, $\bot$ and $\fct f$,
+meaning respectively strong reduction, pure checking with no reduction
+and call-by-name, head reduction. The purpose of the $\fct f$
+annotation is shown in rule \textsc{FAppEvalInv}: it detects the
+special redex form $\app{\fct f}\app {(\app{\fcti f
+    0}S_0)}\app\ldots{(\app{\fcti f n} S_n)}$, reducing it to the last
+argument of the spines $\function{last}{S_0}$, provided all $S_i$ are
+equal. When $n=0$, we recover the equality $\finfer{\fget{X}} = X$.
 
-These typing rules use definitional equality between two families
-$\jea\Delta\Gamma A {A'}$.
-% TODO expliquer, et commenter reduction des fonctions ou pas,
-% conv. typee ou pas
+The main judgment is atomic object typed reduction
+$\jf\aeval\Delta\Gamma F {\Delta'} {F'} P$, which reads: in repository
+$\Delta$ and environment $\Gamma$, applicative term $F$ is well-typed of
+type $P$, and the slicing of its value produces a new repository
+$\Delta'$. $F'$ is the \emph{residual} of this operation: only constant
+applications $\app{\cst c} S$ are sliced, $F'$ is the ``tip'' of $F$
+that was not sliced.
+
+These typing rules use typed definitional equality between families
+$\jea\Delta\Gamma {A_1} {A_2}$ and between spines $\jel\Delta\Gamma A
+{S_1} {S_2} P$. The formal definition of these judgments is eluded
+here. It compares syntactically the values of its arguments. Since it
+potentially triggers function evaluation (and thus typing
+verification), we carry the repository, the environment and the type
+of the compared objects.
 
 \begin{figure}
-  \fbox{$\jm\Delta\Gamma M A {\Delta'} {M'}$}
+  \fbox{$\jm L \Delta\Gamma M A {\Delta'} {M'}$}
   \qquad
   Canonical object
 
   \begin{mathpar}
     \infer[MLam]{
-      \jm\Delta{\envcons\Gamma x A} M {A'} {\Delta'} {M'}
+      \jm {\fann L} \Delta{\envcons\Gamma x A} M {A'} {\Delta'} {M'}
     }{
-      \jm\Delta\Gamma {\lam x M} {\prd x A {A'}} {\Delta'} {\lam x M'}
+      \jm {L} \Delta\Gamma {\lam x M} {\prd x A {A'}} {\Delta'} {\lam x M'}
     }
 
+    \begin{array}{rl}
+      \fann \top &= \top \\
+      \fann \bot &= \bot \\
+      \fann {\fct f} &= \bot \\
+    \end{array}
+
     \infer[MAtom]{
-      \jf\Delta\Gamma F {\Delta'} {F'} {P'}
+      \jf L \Delta\Gamma F {\Delta'} {F'} {P'}
        \and
       \jea{\Delta'}\Gamma P {P'}
     }{
-      \jm\Delta\Gamma F P {\Delta'} {F'}
+      \jm L \Delta\Gamma F P {\Delta'} {F'}
     }
-    % TODO commenter type ground
   \end{mathpar}
 
-  \fbox{$\jf\Delta\Gamma F {\Delta'} {F'} P$}
+  \fbox{$\jf L \Delta\Gamma F {\Delta'} {F'} P$}
   \qquad
   {Atomic object}
 
   \begin{mathpar}
 
-    % Non-sliceable
+    % Variable
     \infer[FAppVar]{
-      (x:A)\in\Gamma
-      \and
-      \jl\Delta\Gamma A S {\Delta'} {S'} P
+      \jl {\fann L} \Delta\Gamma A S {\Delta'} {S'} P
     }{
-      \jf\Delta\Gamma {\app {\var x} S} {\Delta'} {\app {\var x} {S'}} P
+      \jf L \Delta\Gamma {\app {\var x} S} {\Delta'} {\app {\var x} {S'}} P
+    }\quad{\small (x:A)\in\Gamma}
+
+    % Variable
+    \infer[FAppConst]{
+      \jl {\fann L} \Delta\Gamma A S {\Delta'} {S'} P
+    }{
+      \jf L \Delta\Gamma {\app {\cst c} S} {\Delta'} {\app {\cst c} {S'}} P
+    }\quad{\small
+      \begin{array}{l}
+        (c:A)\in\Sigma\\
+        L\neq\top
+      \end{array}
     }
 
-    % Sliceable
-    \infer[FAppConst]{
-      (c:A)\in\Sigma
-      \and
-      \jl\Delta\Gamma A S {\Delta'} {S'} {P}
+    % Constant
+    \infer[FAppConstSlice]{
+      \jl {\top} \Delta\Gamma A S {\Delta'} {S'} {P}
       \and
       \stren{\Gamma, \app {\cst c} {S'}}=\Gamma'
     }{
-      \jf\Delta\Gamma {\app {\cst c} S} {\mapadd{\Delta'}{\meta X}{(\Gamma'\vdash
+      \jf \top \Delta\Gamma {\app {\cst c} S} {\mapadd{\Delta'}{\meta X}{(\Gamma'\vdash
           {\app {\cst c} {S'}}:P)}} {\smeta X{\msubstid{\Gamma'}}} P
     }
-    \quad\text{($\meta X$ fresh in $\Delta'$)}
+    \quad
+    \begin{array}{l}
+      \small
+      (c:A)\in\Sigma\\
+      \text{($\meta X$ fresh in $\Delta'$)}
+    \end{array}
 
-    % Defined
+    % Evaluation
     \infer[FAppEval]{
-      (\fct f : A = T) \in \Sigma
+      \jl{L'}\Delta\Gamma A S {{\Delta'}} {S'} P
+      \\\\
+      \jcc{\Delta'}\Gamma T {S'} {\Delta''} F
       \and
-      % check args pas nécessaire (fait ds la red)
-      % \jl\Delta\Gamma A S {{\Delta'}} {S'} P
-      % \and
-      \jcc\Delta\Gamma A T S {\Delta'} F P
-      % check result pas nécessaire (fait ds la red)
-      % \and
-      % \jm{\Delta''}\Gamma F P {\Delta'''} {F'}
+      \jm L {\Delta''}\Gamma F P {\Delta'''} {F'}
     }{
-      \jf\Delta\Gamma {\app {\fct f} S} {\Delta'} {F'} P
-    }
+      \jf L \Delta\Gamma {\app {\fct f} S} {\Delta'''} {F'} P
+    } \quad
+    \begin{array}{l}\small
+      (\fct f : A = T) \in \Sigma \\
+      {S' \neq \app {(\app {\fcti f 0} S_0)} \app\ldots {(\app
+          {\fcti f n} {S_n})}} \\
+      (L = \fct g \wedge L'=\bot) \vee (L=\top\wedge L'=\fct f)
+    \end{array}
+
+    \infer[FAppEvalInv]{
+      \jl{\fct f} \Delta\Gamma A S {\Delta'}{\app {(\app {\fcti f 0} S_0)} \app\ldots {(\app
+          {\fcti f n} {S_n})}} P
+      \\\\
+      \text{for all $i$,$j$, }\ (\jel\Delta\Gamma A {S_i}{S_j} P)
+    }{
+      \jf L \Delta\Gamma {\app {\fct f} S}
+      {\Delta'}{\function{last}{S_0}} P
+    }\quad{\small (L = \top \vee L = \fct g)}
+
+    \infer[FAppNoEval]{
+      \jl\bot\Delta\Gamma A S {\Delta'} {S'} P
+    } {
+      \jf \bot \Delta\Gamma {\app{\fct f} S} {\Delta'} {\app{\fct f}
+        {S'}} P
+    }\quad{(\fct f : A = T\in\Sigma)}
 
     % Meta
     \infer[FMeta]{
       \Delta(\meta X) = (\Gamma'\vdash F:P)
       \and
-      \js\Delta\Gamma \sigma {\Gamma'} {\Delta'} {\sigma'}
+      \js{\fann L}\Delta\Gamma \sigma {\Gamma'} {\Delta'} {\sigma'}
     }{
-      \jf\Delta\Gamma {\smeta X \sigma} {\Delta'} {\smeta X {\sigma'}} {\gsubst{P}{\sigma'}}
+      \jf L \Delta\Gamma {\smeta X \sigma} {\Delta'} {\smeta X {\sigma'}} {\gsubst{P}{\sigma'}}
     }
 
   \end{mathpar}
 
-  \fbox{$\jl\Delta\Gamma A S {\Delta'}{S'} P$}
+  \caption{Typed evaluation for objects (1)}
+  \label{fig:obj-typing}
+\end{figure}
+
+\begin{figure}
+  \fbox{$\jl L\Delta\Gamma A S {\Delta'}{S'} P$}
   \qquad
   {Spine}
 
   \begin{mathpar}
+    \hspace{-1.5em}
     \infer[SCons]{
-      \jm\Delta\Gamma M A {\Delta'} {M'}
+      \jm L \Delta\Gamma M A {\Delta'} {M'}
       \and
-      \jl{\Delta'}\Gamma {\gsubst{A'}{\msubst x {M'}}} S {\Delta''} {S'} P
+      \jl L {\Delta'}\Gamma {\gsubst{A'}{\msubst x {M'}}} S {\Delta''} {S'} P
     }{
-      \jl\Delta\Gamma {\prd x {A} {A'}} {\spinecons M S} {\Delta''} {\spinecons
+      \jl L \Delta\Gamma {\prd x {A} {A'}} {\spinecons M S} {\Delta''} {\spinecons
       {M'}{S'}} P
     }
-
+    \quad
     \infer[SNil]{ }{
-      \jl\Delta\Gamma P \spinenil \Delta \spinenil P
+      \jl L\Delta\Gamma P \spinenil \Delta \spinenil P
     }
   \end{mathpar}
-
-  \fbox{$\js\Delta\Gamma\sigma{\Gamma'}{\Delta'}{\sigma'}$}
+  \fbox{$\js L \Delta\Gamma\sigma{\Gamma'}{\Delta'}{\sigma'}$}
   \qquad
   {Substitution}
-
   \begin{mathpar}
-
     % Cons
     \infer[$\sigma$Cons]{
-      \js\Delta\Gamma\sigma{\Gamma'}{\Delta'}{\sigma'}
+      \js L \Delta\Gamma\sigma{\Gamma'}{\Delta'}{\sigma'}
       \and
-      \jm{\Delta'}\Gamma M {\gsubst A {\sigma'}} {\Delta''} {M'}
+      \jm {\fann L} {\Delta'}\Gamma M {\gsubst A {\sigma'}} {\Delta''} {M'}
     }{
-      \js\Delta\Gamma{(\msubstcons \sigma x M)} {(\envcons {\Gamma'} x {A'})}
+      \js L \Delta\Gamma{(\msubstcons \sigma x M)} {(\envcons {\Gamma'} x {A'})}
       {\Delta''} {(\msubstcons {\sigma'} x {M'})}
     }
-
+    \quad
     % Nil
     \infer[$\sigma$Nil]{ }{
-      \js\Delta\Gamma\msubstnil\envnil\Delta\envnil
+      \js L \Delta\Gamma\msubstnil\envnil\Delta\envnil
     }
 
   \end{mathpar}
 
-  \caption{Typing algorithm for objects}
-  \label{fig:obj-typing}
+  \caption{Typed evaluation for objects (2)}
+  \label{fig:obj-typing2}
 \end{figure}
 
 To reduce the size of the stored environments and substitutions to
@@ -1202,18 +1106,17 @@ operation:
   \emph{Strengthening} takes an environment $\Gamma$ and an object $F$
   well-typed in $\Gamma$ to an environment $\Gamma'$ containing only
   the free variables of $F$:
-$$
-\stren{\Gamma,F} = \{x : A\ |\ x\in \FV{F} \wedge \Gamma(x)=A\}
-$$
+$
+\stren{\Gamma,F} = \{x : P\ |\ x\in \FV{F} \wedge \Gamma(x)=P\}
+$.
 \end{definition}
 
 It is correct to strengthen $\Gamma$ only \wrt\ $F$ before storing $F$
 as a slice because of the following:
 
-% TODO verif qu'on parle bien de LF normal
 \begin{lemma}
-  If $\jm\Delta\Gamma F A {\Delta'} {F'}$, then
-  $\jm\Delta{\stren{\Gamma, F}} F A {\Delta'}{F'}$
+  If $\jm L \Delta\Gamma F A {\Delta'} {F'}$, then
+  $\jm L \Delta{\stren{\Gamma, F}} F A {\Delta'}{F'}$
 \end{lemma}
 
 % Signatures themselves need to be checked. We present the checking
@@ -1311,11 +1214,12 @@ as a slice because of the following:
 % \end{figure}
 
 \begin{definition}
-  Let $\mr = (\Delta, \smeta X \sigma)$.  If $\jf\Delta\Gamma F
-  {\Delta'} {\smeta {X'} {\sigma'}} P$, then we define $\commit\mr F =
-  (\Delta', \smeta X\sigma)$. We say that $\mr$ is
-  \emph{well-constructed} if $\mr = \commit\mmr F$ with either
-  $\mmr=(\mapempty, \smeta X\sigma)$ or $\mmr$ well-constructed.
+  Let $\mr = (\Delta, \smeta X \sigma)$.  If $\jf \top\Delta\Gamma F
+  {\Delta'} {\smeta {X'} {\sigma'}} P$, then we define the
+  \emph{commit} operation $\commit\mr F = (\Delta', \smeta
+  X\sigma)$. We say that $\mr$ is \emph{well-constructed} if $\mr =
+  \commit\mmr F$ with either $\mmr=(\mapempty, \smeta X\sigma)$ or
+  $\mmr$ well-constructed.
 \end{definition}
 
 \begin{lemma}
@@ -1328,47 +1232,27 @@ algorithm accepts exactly the well-typed values of \LF:
 
 \begin{theorem}
   If $F$ is a value, and $\mr$ is well-constructed then $\commit\mr F
-  = \mmr$ iff $\jlfm\Gamma{\checkoutr F}A$
+  = \mmr$ iff $\jlfm\Gamma{\checkoutrr F}A$
 \end{theorem}
 
-\paragraph{Evaluation}
-
-Rule \textsc{FAppEval} calls the evaluation of a function. We now turn
-to its description (Fig. \ref{fig:evaluation}).
-
-% TODO
-
-% \begin{theorem}
-%   If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jem\mmr\Gamma M {M'} A$
-% \end{theorem}
-
-% \begin{theorem}
-%   If \/ $\jm\mr\Gamma M A \mmr {M'}$ then \/ $\jlfm\Gamma {(\checkoutrr
-%     M)} (\checkoutrr A)$
-% \end{theorem}
-
 \begin{figure}
-  \fbox{$\jcc\Delta\Gamma A T S {\Delta'} F P$}
+  \fbox{$\jcc\Delta\Gamma T S {\Delta'} F$}
   \qquad
   {Term evaluation}
 
   \begin{mathpar}
     \infer[TLam]{
-      \jm\Delta\Gamma M {A_1} {\Delta'} {M'}
-      \and
-      \jcc{\Delta'}\Gamma{\gsubst {A_2} {\msubst x {M'}}}{\gsubst T
-        {\msubst x {M'}}} S {\Delta''} F P
+      \jcc{\Delta}\Gamma{\gsubst T
+        {\msubst x {M}}} S {\Delta'} F
     }{
-      \jcc\Delta\Gamma{\prd x {A_1} {A_2}}{\lam x T}{\spinecons M S}
-      {\Delta''} F P
+      \jcc\Delta\Gamma{\lam x T}{\spinecons M S}
+      {\Delta'} F
     }
 
     \infer[TAtom]{
       \jcr\Delta\Gamma U {\Delta'} F
-      \and
-      \jm{\Delta'}\Gamma F P {\Delta''} {F'}
     }{
-      \jcc\Delta\Gamma P U \spinenil {\Delta''} {F'} P
+      \jcc\Delta\Gamma U \spinenil {\Delta'} {F}
     }
   \end{mathpar}
 
@@ -1377,58 +1261,155 @@ to its description (Fig. \ref{fig:evaluation}).
   {Atomic term evaluation}
 
   \begin{mathpar}
-    \infer[UVar]{ }{
-      \jcr\Delta\Gamma{\app {\var x} S} \Delta {\app {\var x} S}
-    }
+    % \infer[UVar]{ }{
+    %   \jcr\Delta\Gamma{\app {\var x} S} \Delta {\app {\var x} S}
+    % }
 
-    \infer[UConst]{ }{
-      \jcr\Delta\Gamma{\app {\cst c} S} \Delta {\app {\cst c} S}
-    }
+    % \infer[UConst]{ }{
+    %   \jcr\Delta\Gamma{\app {\cst c} S} \Delta {\app {\cst c} S}
+    % }
+    % \infer[UEval]{
+    %   (\fct f : A = T)\in\Sigma
+    %   \and
+    %   \jcc\Delta\Gamma A T S {\Delta'} F P
+    % }{
+    %   \jcr\Delta\Gamma{\app {\fct f} S} {\Delta'} F
+    % }
 
-    % TODO UMeta?
-
-    \infer[UEval]{
-      (\fct f : A = T)\in\Sigma
-      \and
-      \jcc\Delta\Gamma A T S {\Delta'} F P
+    \infer[UAtom]{
+      \jf{\fct{f}}\Delta\Gamma F {\Delta'} {F'} P
     }{
-      \jcr\Delta\Gamma{\app {\fct f} S} {\Delta'} F
-    }
+      \jcr\Delta\Gamma F {\Delta'}{F'}
+    }\quad
+    \begin{array}{l}
+      \text{$\fct f$ fresh} \\
+      F'\neq\smeta X\sigma
+    \end{array}
 
-    \infer[UCase]{
-      \jcr\Delta{\gconcat\Gamma{\Gamma'}} U {\Delta'} {\app {H_i} {\spinecons
-          {M_1}{\spinecons\ldots{M_{m_i}}}}}
-      \and
-      \jcr{\Delta'}\Gamma {\gsubst{U_i}{\msubst {x$_1$} {M_1} \ldots\
-          \msubst {x$_{m_i}$} {M_{m_i}}}} {\Delta''} F
+    \infer[UMeta]{
+      \jf{\fct{f}}\Delta\Gamma F {\Delta'} {\smeta X \sigma} P
     }{
-      \jcr\Delta\Gamma{\matchin{U}{\Gamma'}{
-          (\casebnobar{\app {H_1}{\spinecons {\var x_{11}} {\spinecons
-                \ldots\ {\var x_{1m_1}}}}}{U_1})\
-          |\ \ldots\
-          \caseb{(\app {H_n}{\spinecons {\var x_{n1}} {\spinecons
+      \jcr\Delta\Gamma F {\Delta'}{\Delta'(\smeta X \sigma)}
+    }\quad
+    {\text{($\fct f$ fresh)}}
+
+  \infer[UCase]{
+    \jcr\Delta{\gconcat\Gamma{\Gamma'}} U {\Delta'} {\app {H_i} {\spinecons
+        {M_1}{\spinecons\ldots{M_{m_i}}}}}
+    \and
+    \jcr{\Delta'}\Gamma {\gsubst{U_i}{\msubst {x$_1$} {M_1} \ldots\
+        \msubst {x$_{m_i}$} {M_{m_i}}}} {\Delta''} F
+  }{
+    \jcr\Delta\Gamma{\matchin{U}{\Gamma'}{
+        (\casebnobar{\app {H_1}{\spinecons {\var x_{11}} {\spinecons
+              \ldots\ {\var x_{1m_1}}}}}{U_1})\
+        |\ \ldots\
+        \caseb{(\app {H_n}{\spinecons {\var x_{n1}} {\spinecons
               \ldots\ {\var x_{nm_n}}}}}{U_n})
-        }}{\Delta''} F
+      }}{\Delta''} F
     }
-
   \end{mathpar}
-
-  \caption{Evaluation of terms}
+  \caption{Evaluation of \CL\ terms}
   \label{fig:evaluation}
 \end{figure}
 
-% TODO
+Rule \textsc{FAppEval} calls the evaluation of a function, written as
+a \CL\ term, on a spine. The rules of Fig. \ref{fig:evaluation} follow
+the call-by-name strategy, so that an atom is only head-reduced when
+destructed by a case analysis. We finish by a soundness result:
 
 \begin{theorem}
-  If $\mr$ well-constructed, and $\commit\mr F = \mmr$, then
-  $\checkout{\mmr}$ is a value.
+  If $\mr$ well-constructed, and $\commit\mr F$ succeeds with $\mmr$,
+  then $\checkout{\mmr}$ is a closed value, well-typed \wrt\ \LF.
 \end{theorem}
 
 \section{Related work}
-% 1-2 pages
+
+\paragraph{Symbolic manipulation of proofs}
+
+Several attempts to design a functional programming language are
+proposed to compute over valid proof
+derivations~\cite{cave2012,stampoulis2012,poswolsky2008}. Two
+essential design aspects of these tools are the choice of the
+representation for proof trees and the choice of the meta-language to
+manipulate them. Like them, we commit ourselves to Higher-Order
+Abstract Syntax (HOAS), and more specifically to a language of the
+\LF\ family.
+
+Unlike them, we follow a contract-based approach~\cite{wadler2009well}
+to guarantee the validity of the proofs generated by the programs
+written using our framework. Thus, our technique is similar to
+\LF-based proof-carrying code~\cite{necula1997proof,appel1999proof},
+and to the \sysname{LCF} architecture: an untrusted proof generator is
+composed with a (small) trusted proof checker. A noticeable difference
+is the fact that, in our setting, the checking of proofs is
+interleaved with their generation.
+
+This recent work~\cite{cave2012,stampoulis2012,poswolsky2008} tackles
+the ambitious challenge of deciding statically if a proof-generating
+function will always produce valid proof terms. On one hand, these
+approaches are more satisfying than contract-based ones because of the
+static guarantees. Besides, they are also more efficient since they
+totally remove the need for dynamic verification of proof
+well-formedness. On the other hand, they are based on more sophisticated
+type systems, which augments the trusted base, and put more
+constraints on the way programs are written.
+
+% We write our proof-generating functions in a functional language
+% equipped with a pattern matching capable of dealing with binders. Our
+% syntax for patterns is close to Delphin's~\cite{poswolsky2008} or
+% FreshML's~\cite{shinwell2003} in the sense that it uses a meta-level
+% operation reminiscent of the $\nabla$ quantifier~\cite{gacek2011}
+% instead of the meta-level binding operation~\cite{jay2009}in order to
+% introduce bound names in the evaluation context. Unlike FreshML, our
+% operational semantics does not allow bound names to escape their
+% scope: a variable escaping a local scope introduced by a pattern
+% matching would be rejected by dynamic contract-based verification just
+% before the function exit. Yet, in contrast with Pure
+% FreshML~\cite{pottier2007} or NomPa~\cite{pouillard2010}, we do not
+% enforce this non-escaping property statically but dynamically.
+
+\paragraph{Incremental computation}
+
+Memoization is a widely used technique to reuse previously computed
+outputs. The slicing of our values implements the same idea: naming
+intermediate results of computation (derivations), and reuse of
+computation results by metavariables. Whereas memoization embeds the
+recognition of a previously seen input by searching in the associative
+table, we delegate this to the user (or a front-end) who is
+responsible for giving the delta: these deltas are more involved to
+infer in the higher-order case, and may invoke reasons that are
+beyond the scope of a basic memoized type-checker to justify the reuse
+of a specific typing derivation. For instance, if term~$\tlam x A M$
+has been assigned the type $A \rightarrow B$ leading to a typing
+derivation $\md$, one can specialize its type to $A'\rightarrow B$ by
+applying the subtyping rule directly on $\md$ and providing a proof
+that $A' \rightarrow B \leq A \rightarrow B$.
+
+There is more to incrementality than just memoization. Adaptive
+functional programming techniques~\cite{acar2006,carlsson2002}
+includes memoization but also, thanks to dependency tracking, allows
+to recompute the output only for changed parts without even
+considering unchanged parts. We do have an explicit representation of
+changes (the deltas), but they still must describe the path down to
+the changed part.
 
 \section*{Conclusion and future work}
 % 0.5 pages
+
+We have presented a lightweight framework to program incremental
+certifying type-checker. A prototype implementation is available
+online\footnote{\url{http://www.cs.unibo.it/~puech/}} as well as
+examples of type-checkers for several variants of
+$\lambda$-calculus. This prototype comes as an \sysname{OCaml} library
+with its \sysname{CamlP4} syntax extension, offering the commit and
+checkout operations on repositories given an \LF\ signature and
+\sysname{OCaml} implementations of the defined functions.
+
+This system is meant to serve as a kernel for checking deltas inferred
+by a front-end whose development is still to be done. This piece of
+software will be responsible for comparing several versions of the same
+source code to guess which modifications have been applied to it.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1441,6 +1422,138 @@ to its description (Fig. \ref{fig:evaluation}).
 % \bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
 % P. Q. Smith, and X. Y. Jones. ...reference text...
 % \end{thebibliography}
+
+\pagebreak
+\appendix
+\section{Appendix}
+
+\begin{figure}
+  \centering
+%  \small
+  \begin{mathpar}
+    \infer{ }{\jts{\cst o} {\even}}
+
+    \infer{\jts M \odd} {\jts {\s M} \even}
+
+    \infer{\jts M \even} {\jts {\s M} \odd}
+
+    \infer{\jts M \nat} {\jts {\s M} \nat}
+
+    \infer{\jts M {A\to B} \and \jts N A} {\jts {\app M N} B}
+
+    \infer{\infer*{}{\mbox{$
+          \begin{array}{c}
+            [\jts {\var x} A] \\[-0.3em]
+            \vdots\\
+            \jts M B
+          \end{array}$
+        }}} {\jts {\lam x M} {A\to B}}
+
+    \infer{\jts M A \and \jsub A B}{\jts M B}
+
+    \infer{\jts M \nat
+      \and
+      \jts N A
+      \and
+      \infer*{}{\mbox{$
+        \begin{array}{c}
+          [\jts {\var x} \nat] \quad
+          [\jts {\var y} A] \\[-0.3em]
+          \vdots \\
+          \jts P A
+        \end{array}
+        $}}
+    }{\jts {\recb M N x y P} A}
+
+    \infer{ }{\jsub A A}
+
+    \infer{ }{\jsub \even\nat}
+
+    \infer{ }{\jsub \odd\nat}
+
+    \infer{\jsub {A'} A \and \jsub B {B'} }{\jsub {A\to B}{A'\to B'}}
+  \end{mathpar}
+  \caption{System \sysname{T_{<:}}, declaratively}
+  \label{fig:tsub}
+\end{figure}
+
+
+\paragraph{Substitution}
+
+We overload \emph{substitution} as a partial operation on objects,
+given a parallel substitution $\sigma$. Since the syntax of object is
+not stable by (textual) substitution, it is defined as
+\emph{hereditary}\footnote{ Note that this notion of substitution,
+  present in \cite{pfenning2007term}, differs from the more standard
+  definition in \cite{hl07mechanizing} as it presupposes $\eta$-long
+  normal forms: once a \emph{cut} starts, there must be exactly as
+  many formal and actual arguments. A non-empty spine cut against
+  another non-empty spine $\gcut {\app H S} {S'}$ blocks the
+  substitution instead of reducing to $\app H {(\gconcat S S')}$ (an
+  implicit $\eta$-expansion); conversely, exhausting actual but not
+  formal arguments as in $\gcut{\lam x M}{\gnil}$ blocks the
+  substitution too. For example, the reduction $\gcut {\lam x \app
+    {\var x}{\var x}} {\lam x \app {\var x}{\var x}}$ gets stuck
+  because the second $\var x$ in the left part is substituted by a
+  function yet is not itself a function. }: it is mutually recursive
+with a \emph{cut} function $\gcut M S$ which can in turn trigger a
+chain of substitutions, leading to a canonical objects or an error.
+\begin{align*}
+  \gsubst {(\lam x M)} \sigma &= \lam x {\gsubst M \sigma} &
+  \text{if $\var x\notin \dom{\sigma}$}
+  \\
+  \gsubst {(\app {\cst c} S)} \sigma &= \app {\cst c} {(\gsubst S
+    \sigma)}
+  \\
+  \gsubst {(\app {\var x} S)} \sigma &=
+  \app {\var x} {\gsubst S \sigma} &
+  \text{if $\var x\notin \dom{\sigma}$}
+  \\
+  \gsubst {(\app {\var x} S)} \sigma &=
+  \gcut M {\gsubst S \sigma} &
+  \text{if $\sigma(\var x) = M$}
+  \\
+  \gsubst {\smeta X {\sigma}} {\sigma'} &=
+  \smeta X {\gcomp\sigma{\sigma'}}
+  \\
+  \gsubst\spinenil\sigma &=
+  \spinenil \\
+  \gsubst{\spinecons M S}\sigma &=
+  \spinecons{\gsubst M\sigma}{\gsubst S\sigma}
+  \\
+  \gcut {\lam x M} {\spinecons N S} &=
+  \gcut {\gsubst M {\msubst x N}} S
+  \\
+  % TODO cas meta/S ? rem: on en a pas besoin ds le proto.
+  % \gcut {\smeta X\sigma} S &=
+  % \smeta X{\gcomp\sigma\sigma'}
+  % \\
+  \gcut {\app H S} \spinenil &=
+  \app H S
+  \\
+  \gcut {\smeta X\sigma} \spinenil &= \smeta X\sigma
+  \\
+  \gcomp \sigma \msubstnil &=
+  \sigma
+  \\
+  \gcomp \sigma {(\msubstcons{\sigma'} x M)} &=
+  \gcomp {\gsubst\sigma {\msubst x M}} \sigma'
+  \\
+  \gsubst {(\msubstcons{\sigma'} x M)} \sigma &=
+  \msubstcons{\gsubst{\sigma'}\sigma} x {\gsubst M \sigma}
+  \\
+  \gsubst {\msubstnil}{\sigma} &= \msubstnil
+\end{align*}
+
+We extend this operation trivially on families $\gsubst A \sigma$ and
+kinds $\gsubst K \sigma$. We also allow to abusively write
+non-canonical application $\app M S$ as a shorthand for $\gcut M S$
+if it is defined.
+
+% TODO pourquoi cette def?
+% TODO terminaison?
+% TODO stabilité de la eta?
+
 
 \end{document}
 
