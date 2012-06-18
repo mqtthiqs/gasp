@@ -1,0 +1,68 @@
+\documentclass{beamer}
+
+\usepackage{ucs}
+\usepackage{amsfonts,amsmath}
+\usepackage[utf8x]{inputenc}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{setspace}
+\usepackage{pdfsync}
+\usepackage{tikz}
+\usepackage{macros}
+\usepackage{mathpartir}
+
+\usetikzlibrary{automata, positioning, shapes.geometric, shapes.misc,
+  chains, backgrounds, fit, decorations.pathmorphing}
+
+\tikzset{
+  state/.style={
+    rounded rectangle,
+    very thick,draw=black!50,
+    top color=white, bottom color=black!20,
+    minimum size=2em,
+    text height=1.5ex,text depth=.25ex
+  }
+}
+
+\tikzset{
+  tribox/.style={
+    isosceles triangle,
+    isosceles triangle apex angle=40,
+  }
+}
+
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}[circle]
+
+\usefonttheme{serif}
+\usecolortheme[rgb={0.7,0.2,0.2}]{structure}
+\definecolor{greenish}{rgb}{0.20,0.48,0.09} % vert des exemples
+
+
+\date{\small June 20, 2012\\[0.5em]
+  \scriptsize PPS -- Groupe de travail théorie des types et
+  réalisabilité
+}
+
+\title{Certificates for incremental type checking}
+
+\author[Matthias Puech \& Yann Régis-Gianas] {
+  Matthias Puech\inst{1,2} \and Yann Régis-Gianas\inst{2}
+}
+
+\institute {
+  \inst 1 {Dept. of Computer Science, University of Bologna} \and
+  \inst 2 {Univ. Paris Diderot, Sorbonne Paris Cité, PPS, CNRS,  ${\pi}r^2$, INRIA}
+}
+
+\begin{document}
+
+\frame\titlepage
+
+\input{intro}
+% \input{cert}
+% \input{incr}
+% \input{real}
+
+
+\end{document}

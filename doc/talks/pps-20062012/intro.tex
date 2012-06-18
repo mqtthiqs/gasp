@@ -1,0 +1,114 @@
+
+\section{Introduction}
+
+\begin{frame}{A compiler designer's job}
+  \begin{center}
+    \begin{tikzpicture}[auto, >=latex]
+      \node (ts) {System \sysname{Z}};
+
+      \node (tc) [below=4em of ts] {$\tt \fct{infer}\ :\ \cst{env} \to \cst{tm} \to \app
+        {\cst{tp}} \cst{option}$};
+
+      \path[->] (ts) edge (tc);
+    \end{tikzpicture}
+
+    \vspace{2em}
+    set of declarative inference rules $\to$ decision algorithm
+  \end{center}
+  \pause
+  \begin{itemize}
+  \item non trivial (inference, conversion\ldots)
+  \item non compositional
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{\textcolor{greenish}{Example:} System \sysname{T}$_{<:}$}
+  \begin{block}{Syntax}
+    \vspace{-2em}
+    \begin{align*}
+      M &\gequal \z \gor \s M \gor M M \gor \lam x M \gor
+      \recb M N x y P \\
+      A &\gequal \nat \gor \even \gor \odd \gor A \to A
+    \end{align*}
+  \end{block}
+  \begin{block}{Typing rules}
+    \vspace{-2em}
+    \begin{mathpar}
+      \infer{\jts M \nat \and \jts N A \and \infer*{}{\mbox{$
+            \begin{array}{c}
+              [\jts {\var x} \nat] \quad
+              [\jts {\var y} A] \\[-0.3em]
+              \vdots\\
+              \jts P A
+            \end{array}
+            $}} }{\jts {\recb M N x y P} A}
+
+      \only<2>\alert{\infer{\jts M A \and \jsub A B}{\jts M B}}
+
+    \end{mathpar}
+  \end{block}
+  \pause
+  \begin{center}
+    {\large\it \alert{Not syntax directed!}}
+  \end{center}
+\end{frame}
+
+\begin{frame}{\textcolor{greenish}{Example:} System \sysname{T}$_{<:}$}
+  \begin{block}{Typing algorithm}
+    \begin{overlayarea}\textwidth{8em}
+      \large \only<1>{$$ \infer{\Gamma\jts M {A\to B} \and \Gamma\jts
+          N A}{\Gamma\jts{\app M N} B}
+    $$}
+
+  \only<2>{$$ \infer{ \Gamma\jts M {A\to B} \and \infer*{ \Gamma\jts N
+        {A'} \and \Gamma\jsub {A'} A }{ \Gamma\jts N A } }{
+      \Gamma\jts{\app M N} B }
+    $$}
+
+  \only<3>{$$ \infer{ \Gamma\jts M \nat \and \Gamma\jts N A \and
+      \Gamma, \var x :\nat, \var y: A\jts P A }{\jts {\recb M N x y P}
+      A}
+    $$}
+
+  \only<4->{$$ \infer{ \Gamma\jts M {T_M} \and \Gamma\jsub{T_M}{\nat}
+      \and \Gamma\jts N T_N
+      \\
+      \Gamma, \var x:\nat, \var y:T_N\jts P {T_P}
+      \\
+      \Gamma, \var x:\nat, \var y:T_N\sqcap T_P\jts P {T_N\sqcap T_P}
+    }{ \Gamma\jts {\recb M N x y P} {T_N\sqcap T_P} }
+    $$}
+
+  \only<5>{
+    \begin{itemize}
+    \item Far from the declarative system
+    \item Hard to prove
+    \end{itemize}
+  }
+\end{overlayarea}
+  \end{block}
+\end{frame}
+
+\begin{frame}{How to trust your typing algorithm?}
+  \begin{block}{Option 1}
+    Prove equivalence:
+    $$
+    \app{\fct{infer}}\app{\Gamma}{M}=\app{\cst{Some}} A
+    \quad\text{iff}\quad
+    \vdash M : A
+    $$
+  \end{block}
+  \pause
+  \begin{block}{Option 2}
+    Return a System \sysname{T}$_{<:}$ derivation:
+    $$
+    \fct{infer}\ :\ \cst{env}\to\cst{tm}\to\cst{tp}\times\cst{deriv}
+    $$
+  \end{block}
+\end{frame}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "slides"
+%%% End: 

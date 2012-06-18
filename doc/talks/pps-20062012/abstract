@@ -15,17 +15,38 @@ possible to turn a type system and its certifying checking algorithm
 into a safe, incremental one. It consists in a model of incrementality
 by sharing, a generic data structure to represent reusable derivations
 based on Contextual LF, and a general-purpose language to write
-certifying programs.
+certifying
 
+* Introduction
 
-- LF: equiv deriv <-> obj
-  - HOAS vs Coq
-- incremental
+* Certifying procedures
+  - procédure certifiée, proc. certifiante
+    - petit kernel
+  - ex: type-checker (prouver ou vérifier?)
+
+  - eval + vérif fct untrusted on-the-fly
+
+** LF: equiv deriv <-> obj
+    - HOAS vs Coq
+
+  - cas part des fct dependentes: inversibilité
+  - ex: écrire un TC T_{<:}
+    - fct inverse
+ - tactiques generalisee
+   - vernac
+   - undo/redo
+
+* Incrementality
   - modele de Coq
+    - interactive toplevel
   - bidirectional
-- tactiques generalisee
-  - vernac
-  - undo/redo
-- ecriture du tc
-  - fct inverse
+  - backend
+  - exemple d'utilisation: student
+
+* Realization
+  - checking/eval/conv mut. rec.
+  - slicing
+  - difficultés: evaluation
+  - properties
+
 - demo proto

@@ -1,0 +1,203 @@
+
+\section{Certifying procedures}
+
+\begin{frame}{Certifying procedures}
+  What is a certifying procedure?
+
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}[auto, >=latex]
+
+      \node (input) {$x$};
+
+      \node (F) [state, right=of input] {$\fct{f}$};
+
+      \node (output) [right=of F]{$\fct{f}(x)$};
+
+      \path[->] (input) edge (F) (F) edge (output);
+
+      \pause
+
+      \node (P) [below=of F]{$P(x, \fct{f}(x))$};
+
+      \node (check) [state, right=of P] {kernel};
+
+      \node (bool) [right=of check] {$\cst{bool}$};
+
+      \path[->]
+
+      (input) edge (F)
+
+      (F) [-] edge (P)
+
+      (P) [->] edge (check)
+
+      (check) edge (bool)
+
+      ;
+
+    \end{tikzpicture}
+  \end{figure}
+
+  \begin{itemize}[<3->]
+  \item untrusted, complex function
+  \item generic and small kernel (dB principle)
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Certifying procedures}
+  \begin{examples}
+    \begin{itemize}
+    \begin{onlyenv}<1>
+    \item Theorem proving
+      \begin{figure}
+        \centering
+        \begin{tikzpicture}[auto, >=latex]
+
+          \node (input) {$A : \cst{Prop}$};
+
+          \node (F) [state, right=of input] {prover};
+
+          \node (output) [right=of F]{$\cst{bool}$};
+
+          \path[->] (input) edge (F) (F) edge (output);
+
+          \node (P) [below=of F]{$\vdash A$};
+
+          \node (check) [state, right=of P] {kernel};
+
+          \node (bool) [right=of check] {$\cst{bool}$};
+
+          \path[->]
+
+          (input) edge (F)
+
+          (F) [-] edge (P)
+
+          (P) [->] edge (check)
+
+          (check) edge (bool)
+
+          ;
+
+        \end{tikzpicture}
+      \end{figure}
+    \end{onlyenv}
+      \begin{onlyenv}<2>
+      \item Proof-carrying code
+      \begin{figure}
+        \begin{tikzpicture}[auto, >=latex]
+
+          \node (input) {$M : \cst{int}\to\cst{int}$};
+
+          \node (F) [state, right=of input] {compile};
+
+          \node (output) [right=of F]{$P : \sysname{asm}$};
+
+          \path[->] (input) edge (F) (F) edge (output);
+
+          \node (P) [below=of F]{$\small\vdash_{\sysname{TAL}} P : \{r_1:\cst{int}, r_a:\{r_1:\cst{int}\}\}$};
+
+          \node (check) [state, right=of P] {kernel};
+
+          \node (bool) [right=1em of check] {$\cst{bool}$};
+
+          \path[->]
+
+          (input) edge (F)
+
+          (F) [-] edge (P)
+
+          (P) [->] edge (check)
+
+          (check) edge (bool)
+
+          ;
+
+        \end{tikzpicture}
+\\[2em]
+{\footnotesize To call $P$, the caller must place an integer in $r_1$ and a
+        return label in $r_a$, the return label must accept an integer
+        in $r_1$.
+}      \end{figure}
+    \end{onlyenv}
+    \begin{onlyenv}<3>
+    \item \sysname{LCF} Tactics
+      \begin{figure}
+        \centering
+        \begin{tikzpicture}[auto, >=latex]
+
+          \node (input) {$\Gamma\vdash A\to B$};
+
+          \node (F) [state, right=of input] {\tt intros.};
+
+          \node (output) [right=of F]{$\Gamma, H:A\vdash B$};
+
+          \path[->] (input) edge (F) (F) edge (output);
+
+          \node (P) [below=of F]{$\tlam x A \smeta X {\msubst x H}$};
+
+          \node (check) [state, right=of P] {kernel};
+
+          \node (bool) [right=of check] {$\cst{bool}$};
+
+          \path[->]
+
+          (input) edge (F)
+
+          (F) [-] edge (P)
+
+          (P) [->] edge (check)
+
+          (check) edge (bool)
+
+          ;
+
+        \end{tikzpicture}
+      \end{figure}
+    \end{onlyenv}
+    \begin{onlyenv}<4>
+    \item Type checking
+      \begin{figure}
+        \centering
+        \begin{tikzpicture}[auto, >=latex]
+
+          \node (input) {$M : \cst{Prog}$};
+
+          \node (F) [state, right=of input] {infer};
+
+          \node (output) [right=of F]{$A : \cst{Type}$};
+
+          \path[->] (input) edge (F) (F) edge (output);
+
+          \node (P) [below=of F]{$\vdash M : A$};
+
+          \node (check) [state, right=of P] {kernel};
+
+          \node (bool) [right=of check] {$\cst{bool}$};
+
+          \path[->]
+
+          (input) edge (F)
+
+          (F) [-] edge (P)
+
+          (P) [->] edge (check)
+
+          (check) edge (bool)
+
+          ;
+
+        \end{tikzpicture}
+      \end{figure}
+    \end{onlyenv}
+    \end{itemize}
+  \end{examples}
+\end{frame}
+
+\subsection{LF}
+
+\subsection{Writing a type-checker}
+
+

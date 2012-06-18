@@ -1,0 +1,198 @@
+%%% Local Variables:
+%%% TeX-master: "paper"
+%%% End:
+
+%%%
+%%% Generic part
+%%%
+
+% English
+\newcommand\eg{e.g.}
+\newcommand\ie{i.e.}
+\newcommand\wrt{w.r.t.}
+
+% Various
+\newcommand\To{\Rightarrow}
+\newcommand\sysname[1]{\ensuremath{{\mathsf{#1}}}}
+\newcommand\rulename[1]{\ensuremath{\textsc{#1}}}
+
+% Grammars
+\newcommand\gor{\ {\big|}\ }
+\newcommand\gequal{\ ::=\ }
+
+% Functions
+\newcommand\funname[1]{{\text{\textsf{#1}}}}
+\newcommand\function[2]{\funname{#1}({#2})}
+
+\newcommand\FV[1]{\function{FV}{#1}}
+\newcommand\FMV[1]{\function{FMV}{#1}}
+\newcommand\dom[1]{\operatorname{dom}{\!(#1)}}
+
+% Names
+\newcommand\name[1]{\ensuremath{\text{#1}}}
+\newcommand\var[1]{\name{\textit{#1}}}
+\newcommand\cst[1]{\name{\textsf{#1}}}
+\newcommand\meta[1]{\name{\textsl{#1}}}
+\newcommand\repo[1]{\mathcal{#1}}
+\newcommand\syntax[1]{\operatorname{\bf #1}}
+
+% General lists (cons and snoc)
+\newcommand\gnil{\cdot}
+\newcommand\gcons[2]{{#1},{#2}}
+\newcommand\gsnoc[2]{\gcons{#2}{#1}}
+\newcommand\gconcat[2]{{#1}@{#2}}
+
+% General operations and constructors
+\newcommand\gsubst[2]{{#1}[{#2}]}
+\newcommand\gcomp[2]{{#1}\circ{#2}}
+\newcommand\gcut[2]{{#1}\star{#2}}
+\newcommand\tp[2]{{#1}:{#2}}
+
+% Terms
+\newcommand\postbinder{.\ }
+\newcommand\prd[2]{\Pi\tp{\var{#1}}{#2}\postbinder}
+\newcommand\sig[2]{\Sigma\tp{\var{#1}}{#2}\postbinder}
+\newcommand\prdi[1]{\forall{#1}\postbinder}
+\newcommand\app[1]{{#1}\ }
+\newcommand\pair[2]{\langle{#1}, {#2}\rangle}
+\newcommand\tlam[2]{\lambda\tp{\var{#1}}{#2}\postbinder}
+\newcommand\lam[1]{\lambda{\var {#1}}\postbinder}
+\newcommand\lamd[1]{\lambda{#1}\postbinder}
+\newcommand\letd[2]{\ensuremath\syntax{let}{{#1}}={#2}\ \syntax{in}\ }
+\newcommand\letb[2]{\letd{\var{#1}}{#2}}
+\newcommand\letdin[3]{\letd{{#1}\syntax{in}{#2}}{#3}}
+\newcommand\smeta[2]{\gsubst{\meta{#1}}{#2}}
+
+\newcommand\spinenil{\gnil}
+\newcommand\spinecons[2]{{#1}\ {#2}}
+
+\newcommand\match[1]{\syntax{case}\ {#1}\ \syntax{of}\ }
+\newcommand\matchin[2]{\match{{#1}\ \syntax{in}\ {#2}}}
+\newcommand\caseb[1]{|\ {#1}\to}
+\newcommand\casebnobar[1]{{#1}\to}
+
+% Environment
+\newcommand\env[2]{\tp{\var{#1}}{#2}}
+\newcommand\envnil{\gnil}
+\newcommand\envcons[3]{\gcons{#1}{\tp{\var {#2}}{#3}}}
+
+% Metavariable substitutions
+\newcommand\msubst[2]{{\var{#1}}/{#2}}
+\newcommand\msubstnil{\gnil}
+\newcommand\msubstcons[3]{\gcons{#1}{\msubst{#2}{#3}}}
+\newcommand\msubstid[1]{\function{id}{#1}}
+
+% Sorts
+\newcommand\srt[1]{\mathsf{#1}}
+\newcommand\type{\srt *}
+\newcommand\kind{\srt \Box}
+
+% Maps
+\newcommand\mapadd[3]{{#1}[{#2}\mapsto{#3}]}
+\newcommand\mapempty{\gnil}
+
+
+%%%
+%%% Specific part
+%%%
+
+% System names
+\newcommand\LF{\sysname{LF}}
+\newcommand\SLF{\sysname{SLF}}
+\newcommand\CL{\sysname{CL}}
+
+% Metavariables
+\newcommand\mr{\repo R}
+\newcommand\mmr{\repo {R'}}
+\newcommand\mmmr{\repo {R''}}
+\newcommand\md{\ensuremath{\mathcal D}}
+
+% Functions & operations
+\newcommand\checkout[1]{\function{co}{#1}}
+\newcommand\checkoutr[1]{\function{co$_{\mr}$}{#1}}
+\newcommand\checkoutrr[1]{\function{co$_{\mmr}$}{#1}}
+\newcommand\stren[1]{\function{stren}{#1}}
+\newcommand\fcheck[1]{\function{check}{#1}}
+
+\newcommand\commit[2]{\function{ci$_{#1}$}{#2}}
+
+% Judgements
+\newcommand\gj[2]{{#1}\vdash{#2}}
+\newcommand\gjt[3]{\gj{#1}{{#2}:{#3}}}
+\newcommand\gja[3]{{#1}\vdash_{#2}{#3}}
+
+\newcommand\gjo[3]{\gj{#1}{{#2}\To{#3}}}
+\newcommand\gjor[4]{\gjo{{#1}; {#2}} {{#3}} {#4}}
+
+\newcommand\gjao[4]{\gja{#2}{#1}{{#3}\To{#4}}}
+\newcommand\gjaor[5]{\gjao{#1}{{#2}; {#3}} {{#4}} {#5}}
+
+%%% System Tsub
+\newcommand\jts[2]{\gjt{}{#1}{#2}}
+\newcommand\jsub[2]{\gj{}{{#1}\leq{#2}}}
+
+%%% Usual LF
+\newcommand\jlfm[3]{\gja{#1}{\LF}{\tp{#2}{#3}}}
+
+%%% My system
+% objects
+\newcommand\jm[7]{\gjaor{#1}{#2}{#3}{{#4}: {#5}}{{#6}; {#7}}}
+% app
+\newcommand\jf[7]{\gjaor{#1}{#2}{#3}{#4}{{#5};{#6};{#7}}}
+% subst
+\newcommand\js[7]{\gjaor{#1}{#2}{#3}{{#4}:{#5}}{{#6};{#7}}}
+% % head
+% \newcommand\jh[5]{\gjor{#1}{#2}{#3}{{#4}; {#5}}}
+% spine
+\newcommand\jl[8]{\gjaor{#1}{#2}{{#3}; {#4}}{#5}{{#6};{#7};{#8}}}
+% fspine
+\newcommand\jfl[6]{\gjor{#1}{{#2};{#3}}{#4}{{#5};{#6}}}
+% sign
+\newcommand\jsig[4]{\gjo{#1}{#2}{{#3};{#4}}}
+% fam
+\newcommand\jfam[5]{\gjor{#1}{#2}{#3}{{#4};{#5}}}
+% kind
+\newcommand\jkind\jfam
+
+%%% Annotations on judgements
+\newcommand\anoeval{\bot}
+\newcommand\aeval{\top}
+\newcommand\aevalh[1]{\fct{#1}}
+
+% comp cut
+\newcommand\jcc[6]{\gjor{#1}{#2}{\gcut{#3}{#4}}{{#5};{#6}}}
+\newcommand\jcr[5]{\gjor{#1}{#2}{#3}{{#4};{#5}}}
+
+% obj equality
+\newcommand\jem[5]{\gj{{#1}; {#2}}{{#3}={#4}:{#5}}}
+% fam equality
+\newcommand\jea[4]{\gj{{#1}; {#2}}{{#3}={#4}}}
+% spine equality
+\newcommand\jel[6]{\gj{{#1}; {#2}; {#3}}{{#4}={#5}:{#6}}}
+
+% constant annotations
+\newcommand\annsliceable{\mathsf{S}}
+\newcommand\annnonsliceable{\mathsf{NS}}
+\newcommand\anndefined[1]{\mathsf{D}({#1})}
+
+\newcommand\fann[1]{\eta({#1})}
+\newcommand\fannp[1]{\eta'({#1})}
+
+% System T
+\newcommand\recb[5]{\cst{rec}({#1},{#2},{\var{#3}}\,{\var{#4}}\postbinder{#5})}
+\newcommand\s[1]{\cst s ({#1})}
+\newcommand\z{\cst o}
+\newcommand\nat{\cst{nat}}
+\newcommand\odd{\cst{odd}}
+\newcommand\even{\cst{even}}
+
+% fct/fct inverse
+\newcommand\fct[1]{\name{\textit{\textbf{#1}}}}
+\newcommand\fcti[2]{\fct{#1}^{#2}}
+
+\newcommand\finfer[1]{\uparrow\!{#1}}
+\newcommand\fget[1]{\downarrow\!{#1}}
+\newcommand\feq[2]{{#1}\equiv{#2}}
+\newcommand\fleq[2]{{#1}\leq{#2}}
+
+\newenvironment{mathleft}{\medskip$\begin{array}{l}}{\end{array}$\medskip}
