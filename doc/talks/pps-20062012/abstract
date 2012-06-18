@@ -1,0 +1,31 @@
+Certificates for incremental type checking
+
+A lightweight way to design a trusted type-checker is to let it return
+a certificate of well-typing, and check it a posteriori (for instance
+Agda and GHC adopt this architecture internally). Most of the time,
+these type-checkers are confronted sequentially with very similar
+pieces of input: the same program, each time slightly modified. Yet
+they rebuild the entire certificates, even for unchanged parts of the
+code. Instead of discarding them between runs, we can take advantage
+of these certificates to improve the reactivity of type-checking, by
+feeding parts of the certificates for unchanged parts of the original
+program back into the new input, thus building an incremental
+type-checker. We present a language-independent framework making
+possible to turn a type system and its certifying checking algorithm
+into a safe, incremental one. It consists in a model of incrementality
+by sharing, a generic data structure to represent reusable derivations
+based on Contextual LF, and a general-purpose language to write
+certifying programs.
+
+
+- LF: equiv deriv <-> obj
+  - HOAS vs Coq
+- incremental
+  - modele de Coq
+  - bidirectional
+- tactiques generalisee
+  - vernac
+  - undo/redo
+- ecriture du tc
+  - fct inverse
+- demo proto
