@@ -1,7 +1,3 @@
-%%% Local Variables:
-%%% TeX-master: "paper"
-%%% End:
-
 %%%
 %%% Generic part
 %%%
@@ -15,6 +11,12 @@
 \newcommand\To{\Rightarrow}
 \newcommand\sysname[1]{\ensuremath{{\mathsf{#1}}}}
 \newcommand\rulename[1]{\ensuremath{\textsc{#1}}}
+\newcommand{\cfbox}[2]{%
+    \colorlet{currentcolor}{.}%
+    {\color{#1}%
+    \fbox{\color{currentcolor}#2}}%
+}
+\newcommand\theprompt{{\texttt \#}\quad}
 
 % Grammars
 \newcommand\gor{\ {\big|}\ }
@@ -179,7 +181,7 @@
 \newcommand\fannp[1]{\eta'({#1})}
 
 % System T
-\newcommand\recb[5]{\cst{rec}({#1},{#2},{\var{#3}}\,{\var{#4}}\postbinder{#5})}
+\newcommand\recb[5]{\cst{rec}({#1},{#2},{\var{#3}}{\var{#4}}\postbinder{#5})}
 \newcommand\s[1]{\cst s ({#1})}
 \newcommand\z{\cst o}
 \newcommand\nat{\cst{nat}}

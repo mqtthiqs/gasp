@@ -9,6 +9,7 @@
 \usepackage{tikz}
 \usepackage{macros}
 \usepackage{mathpartir}
+\usepackage{ulem}
 
 \usetikzlibrary{automata, positioning, shapes.geometric, shapes.misc,
   chains, backgrounds, fit, decorations.pathmorphing}
@@ -55,14 +56,24 @@
   \inst 2 {Univ. Paris Diderot, Sorbonne Paris Cité, PPS, CNRS,  ${\pi}r^2$, INRIA}
 }
 
+\AtBeginSection[]
+{\begin{frame}<beamer>
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
 \begin{document}
 
 \frame\titlepage
 
-\input{intro}
-% \input{cert}
-% \input{incr}
-% \input{real}
+\section{Introduction}
+%\input{intro}
+\frame\tableofcontents
+\section{Using \sysname{Gasp}}
+\input{incr}
+%\input{cert}
+\section{The design of \sysname{Gasp}}
+%\input{real}
 
 
 \end{document}
