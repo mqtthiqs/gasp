@@ -78,7 +78,7 @@
     \begin{tikzpicture}[auto, >=latex]
       \node (ts) {System \sysname{Z}};
 
-      \node (tc) [below=4em of ts] {$\tt \fct{infer}\ :\ \cst{env} \to \cst{tm} \to \app
+      \node (tc) [below=4em of ts] {$\tt \finfer\ :\ \cst{env} \to \cst{tm} \to \app
         {\cst{tp}} \cst{option}$};
 
       \path[->] (ts) edge (tc);
@@ -90,7 +90,7 @@
   \pause
   \begin{itemize}
   \item non trivial (inference, conversion\ldots)
-  \item non compositional
+  \item critical
   \end{itemize}
 
 \end{frame}
@@ -163,21 +163,40 @@
 \end{frame}
 
 \begin{frame}{How to trust your typing algorithm?}
-  \begin{block}{Option 1}
-    Prove equivalence:
+  \begin{onlyenv}<1>
+    \begin{block}{Option 1}
+      Prove equivalence:
     $$
-    \app{\fct{infer}}\app{\Gamma}{M}=\app{\cst{Some}} A
-    \quad\text{iff}\quad
-    \vdash M : A
+    \app{\finfer{}}\app{\Gamma}{M}=\app{\cst{Some}} A
+    \quad\text{iff}\quad \vdash M : A
     $$
+    \begin{itemize}
+    \item[\itplus] the safest
+    \item[\itminus] tedious proof
+    \item[\itminus] non modular
+    \end{itemize}
   \end{block}
-  \pause
+\end{onlyenv}
+\begin{onlyenv}<2->
   \begin{block}{Option 2}
     Return a System \sysname{T}$_{<:}$ derivation:
     $$
-    \fct{infer}\ :\ \cst{env}\to\cst{tm}\to\cst{tp}\times\cst{deriv}
+    \finfer{}\ :\ \cst{env}\to\cst{tm}\to\cst{tp}\times\cst{deriv}
     $$
+    \pause
+    Checked a posteriori:
+    $$
+    \fct{kernel}\ :\ \cst{env}\to\cst{deriv}\to\cst{bool}
+    $$
+    \begin{itemize}
+    \item[\itminus] only \emph{certifying} (not certified)
+    \item[\itplus] lightweight
+    \item[\itplus] evident witness of well-typing (PCC, \ldots)
+    \end{itemize}
+    \pause
+    \flushright \ldots but there is more
   \end{block}
+\end{onlyenv}
 \end{frame}
 
 \begin{frame}{Observation}

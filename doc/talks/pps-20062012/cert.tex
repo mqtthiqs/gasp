@@ -18,7 +18,7 @@
 
       \node (P) [below=of F]{$P(x, \fct{f}(x))$};
 
-      \node (check) [state, right=of P] {kernel};
+      \node (check) [state, right=of P] {$\fct{kernel}$};
 
       \node (bool) [right=of check] {$\cst{bool}$};
 
@@ -63,7 +63,7 @@
 
           \node (P) [below=of F]{$\vdash A$};
 
-          \node (check) [state, right=of P] {kernel};
+          \node (check) [state, right=of P] {$\fct{kernel}$};
 
           \node (bool) [right=of check] {$\cst{bool}$};
 
@@ -97,7 +97,7 @@
 
           \node (P) [below=of F]{$\small\vdash_{\sysname{TAL}} P : \{r_1:\cst{int}, r_a:\{r_1:\cst{int}\}\}$};
 
-          \node (check) [state, right=of P] {kernel};
+          \node (check) [state, right=of P] {$\fct{kernel}$};
 
           \node (bool) [right=1em of check] {$\cst{bool}$};
 
@@ -136,7 +136,7 @@
 
           \node (P) [below=of F]{$\tlam x A \smeta X {\msubst x H}$};
 
-          \node (check) [state, right=of P] {kernel};
+          \node (check) [state, right=of P] {$\fct{kernel}$};
 
           \node (bool) [right=of check] {$\cst{bool}$};
 
@@ -163,7 +163,7 @@
 
           \node (input) {$M : \cst{Prog}$};
 
-          \node (F) [state, right=of input] {infer};
+          \node (F) [state, right=of input] {$\finfer{}$};
 
           \node (output) [right=of F]{$A : \cst{Type}$};
 
@@ -171,7 +171,7 @@
 
           \node (P) [below=of F]{$\vdash M : A$};
 
-          \node (check) [state, right=of P] {kernel};
+          \node (check) [state, right=of P] {$\fct{kernel}$};
 
           \node (bool) [right=of check] {$\cst{bool}$};
 
@@ -193,12 +193,6 @@
     \end{itemize}
   \end{examples}
 \end{frame}
-
-\subsection{LF}
-
-\subsection{Writing a type-checker}
-
-
 
 %%% Local Variables: 
 %%% mode: latex

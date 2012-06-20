@@ -1,4 +1,126 @@
 
+\begin{frame}{The design of the system}
+  Takes a
+\end{frame}
+
+\subsection{Data structures}
+
+\begin{frame}{Sliced \LF}
+  \begin{block}{Syntax}
+  \begin{align*}
+    K &\gequal \prd x A K \gor \type &
+    \text{Kind}\\
+    A &\gequal \prd x A A \gor P &
+    \text{Type family} \\
+    P &\gequal \app {\cst a} S &
+    \text{Atomic type} \\
+    M &\gequal \lam x M \gor F &
+    \text{Canonical object} \\
+    F &\gequal \app H S \gor \alert{\smeta X \sigma} &
+    \text{Atomic object} \\
+    H &\gequal \var x \gor \cst c \gor \alert{\fct{f}} &
+    \text{Head}\\
+    S &\gequal \spinenil \gor \spinecons M S &
+    \text{Spine}\\
+    \sigma &\gequal \msubstnil \gor \msubstcons \sigma x M &
+    \text{Parallel substitution}
+  \end{align*}
+  \vspace{-1.5em}
+  \begin{itemize}
+    \item The $\smeta X \sigma$ stand for open objects (CMTT).
+    \item The $\sigma$ close them.
+    \item The $\fct{f}$ are computations to do
+  \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Data structures}
+  \begin{block}{Signature}
+    An object language is defined by a \emph{signature}:
+    \begin{align*}
+      \Sigma &\gequal \gnil \gor \gcons \Sigma {\cst a : K} \gor \gcons
+      \Sigma {\cst c : A} \gor \alert{\gcons \Sigma {\fct f : A = T}}
+    \end{align*}
+  \end{block}
+  \begin{block}{Repository}
+    A \emph{repository} is the sliced representation of an atomic object (\verb'evar_map'):
+    $$ \mr\;:\;(\meta X \mapsto (\Gamma\vdash\tp F P))\times\smeta X
+    \sigma $$
+
+    We define $\checkout{\mr}$ the operation of stripping out all metavariables
+  \end{block}
+\end{frame}
+
+\begin{frame}{Inverse functions}
+  To each $\fct{f}:A=T\in\Sigma$, associate a family of $\fcti{f} n
+  : A^{-n} = T^{-n}$\\
+  Project out the $n$-th argument of $\fct{f}$
+  \begin{examples}
+    \begin{itemize}
+    \item
+      $\fct{infer} : \prd M {\cst{tm}} \sig A {\cst{tp}}
+      {\app{\cst{is}}\app M A}  = T$ \\
+      $\fcti{infer}{0} : \prd {\{M\}} {\cst{tm}}
+      {(\sig A {\cst{tp}}
+      {\app{\cst{is}}\app M A})} \to \cst{tm} = \lam x \lam y \var x$
+
+    \item $\fct{equal} : \prd M {\cst{tm}} \prd N {\cst{tm}}
+      \app{\cst{eq}}\app M N = T'$\\
+      $\fcti{equal}{0} : \prd {\{M\}} {\cst{tm}} \prd {\{N\}}
+      {\cst{tm}} \app{\cst{eq}}\app M N \to \cst{tm} = \lam m \lam n
+      \lam h \var m $  \\
+      $\fcti{equal}{1} : \prd {\{M\}} {\cst{tm}} \prd {\{N\}}
+      {\cst{tm}} \app{\cst{eq}}\app M N \to \cst{tm} = \lam m \lam n
+      \lam h \var n $  \\
+    \end{itemize}
+  \end{examples}
+  \begin{block}{Evaluation}
+    \begin{itemize}
+    \item $\fct{infer}\ (\fcti{infer} 0 \pair A \md) = \pair A \md$
+    \item $\fct{equal}\ (\fcti{equal} 0\ \md)\ (\fcti{equal} 1\ \md) = \md$
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\subsection{Typed evaluation algorithm}
+
+\begin{frame}{The typed evaluation algorithm}
+  In \textcolor{blue}{[P. \& R-G., CPP'12]}, we define $\commit \mr F$:
+  \begin{itemize}
+  \item evaluates functions $\fct f$ in $F$
+  \item checks $F$, functions arguments and return (\wrt\ type of
+    $\fct f$)
+  \item slices values in $\mr$
+  \item returns the enlarged $\mmr$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Evaluation strategy}
+  \begin{itemize}[<+->]
+  \item We want strong reduction\\
+    \textcolor{greenish}{Example}\quad
+    $\cst{lam}\ \lam x \alert{\fct{f}\ (\s {\var x})} $
+    {\footnotesize not a value}
+  \item But not call-by-value\\
+    \textcolor{greenish}{Example}\quad
+    $\finfer{(\recb{\s{\alert{\fget\md_1}}}{\fget\md_3} x y {\fget{\md_2[\alert{\finfer{x}}]}})}$
+  \item And not call-by-name either \\
+    \textcolor{greenish}{Example}\quad
+    $\finfer{(\alert{\fct{id}}\ (\fget{\md}))}${\footnotesize$\neq\md$}
+  \end{itemize}
+  \pause
+  \begin{block}{Ugly solution}
+    Strong call-by-name \emph{except} in function argument position\\
+    \qquad$\leadsto$ weak head call-by-name
+  \end{block}
+\end{frame}
+
+\begin{frame}{Conclusion}
+  \begin{center}
+    \huge Demo
+  \end{center}
+\end{frame}
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "slides"

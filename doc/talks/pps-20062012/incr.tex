@@ -76,7 +76,102 @@
 \subsection{The \LF\ notation for derivations}
 
 \begin{frame}{What notation for derivations?}
-  % TODO
+  \begin{onlyenv}<1-2>
+    \begin{block}{Preamble}
+      \begin{itemize}
+      \item First-order \emph{vs.} higher-order notations
+        \vspace{-2em}
+        $$
+        \begin{array}{ccc}
+          \infer{\Gamma, A\vdash B}{\Gamma\vdash A\to B}
+          &\text{\emph{vs.}}&
+          \infer{[\vdash A] \\\\\vdots\\\\ \vdash B}{\vdash A\to B}
+          \\\\
+          \text{Explicit structural rules} &&
+          \text{Handled by the notation}
+        \end{array}
+        $$
+        \pause
+      \item Local \emph{vs.} global verification
+        $$
+        \begin{array}{ccc}
+          \infer{\infer*{\md_1}{\vdash A\to B\to C} \and \infer*{\md_2}{\vdash A}}{\vdash B\to C}
+          &\text{\emph{vs.}}&
+          \app M N \\[1em]
+          \text{Can locally verify rule} &&
+          \text{Need $M$ and $N$}
+        \end{array}
+        $$
+      \end{itemize}
+    \end{block}
+  \end{onlyenv}
+
+  \begin{onlyenv}<3>
+    \begin{block}{The \LF\ notation}
+      is a higher-order, local notation for derivations (and terms).\\
+      Comes with a small verification algorithm (typing)
+    \end{block}
+    \begin{block}{Adequacy}
+      \vspace{0.5em}
+        \footnotesize
+      \begin{tabular}{c|c|c}
+        \bf in \LF, a & \bf is a & \bf example \\\hline
+        atomic type constant & syntactical category & $\cst{tm} : \type$ \\
+        family of types constant & judgement & $\cst{is} : \cst{tm} \to
+        \cst{tp}\to\type$ \\
+        object constant & constructor or rule & $\cst{lam} : (\cst{tm}\to\cst{tm})\to{\cst{tm}}$
+        \\
+        applied object constant & rule application &
+        \\
+        well-typed object & well-formed derivation &
+        \\
+        \hline
+      \end{tabular}
+    \end{block}
+    \begin{examples}
+      \begin{itemize}
+      \item $ \text{\textsf{is\_lam}} : \prd {A,B}{\mathsf{ty}} \prd t
+        {\mathsf{tm}\to \mathsf{tm}}$ \\\quad $ (\prd x {\mathsf{tm}}
+        {\textsf{is}\ x\ A} \to \textsf{is}\ (t\ x)\ B) \to
+        \textsf{is}\ (\textsf{lam}\ A\ (\lam x t\ x))(\textsf{arr}\ A\
+        B) $
+      \item
+        $\text{\textsf{is\_lam}}\ \mathsf{nat}\ \mathsf{nat}\ (\lam x
+        x)\ (\lam {x h} \md[\var x, \var h])\ :\ \cst{is}\ (\cst{lam}\ \lam x {\fget\md})\
+        (\cst{arr}\ \nat\ \nat) $
+      \end{itemize}
+    \end{examples}
+  \end{onlyenv}
+
+  \begin{onlyenv}<4->
+    \begin{block}{Syntax}
+      \vspace{-1.5em}
+  \begin{align*}
+    K &\gequal \prd x A K \gor \type &
+    \text{Kind}\\
+    A &\gequal \prd x A A \gor P &
+    \text{Type family} \\
+    P &\gequal \app {\cst a} S &
+    \text{Atomic type} \\
+    M &\gequal \lam x M \gor F &
+    \text{Canonical object} \\
+    F &\gequal \app H S &
+    \text{Atomic object} \\
+    H &\gequal \var x \gor \cst c &
+    \text{Head}\\
+    S &\gequal \spinenil \gor \spinecons M S &
+    \text{Spine}\\
+    % \sigma &\gequal \msubstnil \gor \msubstcons \sigma x M &
+    % \text{Parallel substitution}
+  \end{align*}
+    \end{block}
+    \begin{itemize}
+    \item The $F$ are the \emph{values} we want to manipulate.
+    \end{itemize}
+  \end{onlyenv}
+    \pause\pause\pause
+    \flushright \ldots \small what are the computations?
+
 \end{frame}
 
 \subsection{As a type system designer}
@@ -85,8 +180,21 @@
   The computation language \CL:
   \begin{itemize}
   \item an unsafe language to manipulate \LF\ objects
-  \item but with runtime check: each input \& output must be well-typed
+  \item but with runtime check: each input \& output of functions must be well-typed
   \end{itemize}
+
+  \begin{block}{Syntax}
+    \vspace{-1.5em}
+  \begin{align*}
+    T &\gequal \lam x T \gor
+    U & \text{Term} \\
+    U &\gequal F \gor
+    \matchin U \Gamma C & \text{Atomic term}\\
+    C &\gequal \cdot \gor
+    C\ \caseb P U & \text{Branches}\\
+    P &\gequal \app H {\var x}\ \ldots\ {\var x} &\text{Pattern}
+  \end{align*}
+  \end{block}
 \end{frame}
 
 \begin{frame}{\textcolor{greenish}{Example}}
@@ -217,7 +325,7 @@
 
 \begin{frame}{Discussion}
   \begin{itemize}[<+->]
-  \item the ``type'' of a function is more of a \emph{contract}:
+  \item the ``type'' of a function is a kind of \emph{contract}:
     \begin{figure}
       \centering
       \begin{tikzpicture}[auto]
