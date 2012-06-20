@@ -91,11 +91,4 @@ Tests.commit repo
 >>
 ;;
 
-(* not incredibly useful... *)
-Tests.commit repo
-<<
-  infer (lam nat [x] infer^0 x (infer x))
->>
-;;
-
 42

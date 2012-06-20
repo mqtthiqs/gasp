@@ -8,8 +8,6 @@ test_recmatch.log
 test_defined.log
 test_inject.log
 test_uneval.log
-test_inv.log
-test_equal.log
 test_check_stlc.log
 test_check_sub.log
 test_check_T.log
@@ -20,3 +18,5 @@ test_check_Tsub_batch.log
 test_check_T_incr.log
 test_check_Tsub_incr1.log
 test_check_Tsub_incr2.log
+test_equal.log
+test_inv.log

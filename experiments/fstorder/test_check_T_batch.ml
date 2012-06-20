@@ -8,6 +8,13 @@ open Test_check_T
 
 (* #load "test_check_T.cmo";; *)
 
+(* not incredibly useful... *)
+(* Tests.commit repo *)
+(* << *)
+(*   infer (lam nat [x] infer^0 x (infer x)) *)
+(* >> *)
+(* ;; *)
+
 
 Tests.commit repo
 <<

@@ -51,6 +51,12 @@ module List = struct
       | _ -> failwith "drop"
     in fst (aux 0 (xs, is))
 
+  let rec fold_map f e = function
+    |  []  -> (e,[])
+    |  h::t ->
+        let e',h' = f e h in
+        let e'',t' = fold_map f e' t in
+        e'',h'::t'
 end
 
 module String = struct

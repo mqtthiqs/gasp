@@ -306,6 +306,8 @@ end = struct
       | Sign.Defined f when red ->
         (* check and reduce arguments of this constant *)
         let repo, l, a = spine ~red:false repo env (l, a) in
+        let except = match h with HConst c -> c | HInv (c, _) -> c | HVar _ -> assert false in
+        let repo, l = List.fold_map (fun repo -> Eval.eval ~except repo env) repo l in
         (* evaluate it with the reduced arguments *)
         let repo, m = Eval.interp repo env h f l in
         (* check that the result is well-typed, and take the result into account *)
@@ -325,7 +327,9 @@ end = struct
     (* ———————————————————————
      * R, Γ, P ⊢ · => R, ·, P
      *)
-    | [], (FApp _ as a) -> repo, [], a
+    | [], (FApp _ as a) ->
+        (* TODO: evaluer a? *)
+        repo, [], a
 
     (* R, Γ ⊢ m : A => R', m'
      * R', Γ, B[x/m'] ⊢ l => R, l', C
@@ -373,12 +377,13 @@ end = struct
 end
 
 and Eval : sig
+  val eval : repo -> env -> ?except:OConst.t -> obj -> repo * obj
   val interp : repo -> env -> head
     -> (repo -> env -> (repo -> env -> obj -> repo * obj) -> spine -> repo * obj)
     -> spine -> repo * obj
 end = struct
 
-  let rec eval' repo env = prj @> function
+  let rec eval' repo env ?except = prj @> function
     | OMeta (x, s) ->
         let e, m, _ =
           try Context.find x repo.ctx
@@ -388,20 +393,26 @@ end = struct
     | OApp (h, l) ->
         begin match Check.head repo env h with
           | a, Sign.Defined f ->
-              let repo, l, a = Check.spine ~red:false repo env (l, a) in
-              let repo, m = interp repo env h f l in
-              eval repo env m
+              begin match h, except with
+                | HInv (c, _), Some c' when OConst.compare c c' = 0 ->
+                repo, mkApp (h, l)
+                | _ ->
+                    let repo, l, a = Check.spine ~red:false repo env (l, a) in
+                    let repo, m = interp repo env h f l in
+                    eval ?except repo env m
+              end
           | _ -> repo, mkApp(h, l)
         end
     | m -> repo, inj m
 
-  and eval repo env m =
+  and eval repo env ?except m =
     Debug.log_open "eval" "%a" P.obj m;
-    let repo, m = eval' repo env m in
+    let repo, m = eval' ?except repo env m in
     Debug.log_close "eval" "=> %a" P.obj m;
     repo, m
 
   and interp' repo env h (f : repo -> env -> (repo -> env -> obj -> repo * obj) -> spine -> repo * obj) l =
+    let eval repo env m = eval repo env m in
     match h with
       |  HConst c ->
           begin match List.map prj l with
