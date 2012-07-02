@@ -1,0 +1,76 @@
+* Gasp 0.1
+
+** Requirements
+
+The program requires the standard OCaml tool chain:
+- OCaml 3.12 (untested with previous versions)
+- Camlp4 3.12
+- OCamlfind
+- Make 3.81
+
+On a recent Debian system, the following packages should be installed:
+: $ apt-get install ocaml ocaml-interp ocaml-findlib camlp4
+
+** Compilation
+
+Just issueing =make= in the main directory should compile the library
+and run the included test suite. The result is an OCaml toplevel
+=gasp.top=.
+
+** Usage
+
+The toplevel can be used to declare signatures and commit/checkout
+terms.
+
+#+BEGIN_SRC ocaml
+$ ./gasp.top
+
+	Gasp version 0.1
+        Objective Caml version 3.12.1
+
+#+END_SRC
+
+First load the library, parsers and pretty-printers needed:
+
+#+BEGIN_SRC ocaml
+# #use "load.ml";;
+	Camlp4 Parsing version 3.12.1
+
+#+END_SRC
+
+The following quotations are then available:
+- in OCaml expressions, =<< .. >>= : quotation for LF terms,
+- in OCaml expressions, =<:sign< .. >>= : quotation for LF signature,
+- in OCaml patterns, =<< .. >>= : quotation for LF terms.  Inside a
+quotation, everything between =$ .. $= is an anti-quotation, i.e. a
+normal OCaml expression or pattern. When their declaration starts with
+a =#= sign, constants are not sliceable (an application of them
+doesn't give rise to a sliced subterm). In function declarations,
+final expressions should be preceded by the keyword =return=, and
+pattern-matching should have form =match* .. with ..=. For instance,
+the following signature declaration is a valid repository
+initialization:
+
+#+BEGIN_SRC ocaml
+# let repo = Version.init <:sign<
+    nat : type.
+    #o : nat.
+    s : nat -> nat.
+    plus : nat -> nat -> nat = $ fun m n ->
+      match* m with
+      | << o >> -> return n
+      | << s $m$ >> -> return << s (plus $m$ $n$) >>
+    $.
+  >>;;
+val repo : Struct.repo = {
+  sign = 
+    s : nat -> nat.
+    plus : nat -> nat -> nat = <fun>.
+    #o : nat.;
+  ctx = ;
+  head = ?DUMMY[] }
+# 
+#+END_SRC
+
+More examples of use can be found in the test files (files matching
+=test_*.ml=).
