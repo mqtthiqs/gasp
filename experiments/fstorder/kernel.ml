@@ -390,7 +390,7 @@ end = struct
         begin match prj m with
           | OApp (HInv (c', j) as h, args') when i=j && OConst.compare c c' = 0 ->
               let a, _ = Check.head repo env h in
-              Conv.spine repo env h (args, args', a);
+              ignore (Conv.spine repo env h (args, args', a));
               is_inverse_of repo env args (succ i) c l
           | _ -> None
         end
