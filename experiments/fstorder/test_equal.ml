@@ -17,19 +17,19 @@ let repo = Version.init
 
   equals : {M : tm} {N : tm} eq M N = $ fun m n ->
     match* m with
-    | << app $t1$ $u1$ >> ->
+    | << app $e1$ $e2$ >> ->
       begin match* n with
-      | << app $t2$ $u2$ >> ->
-        let* d1 = << equals $t1$ $t2$ >> in
-        let* d2 = << equals $u1$ $u2$ >> in
-        return << eq_app $t1$ $u1$ $t2$ $u2$ $d1$ $d2$ >>
+      | << app $f1$ $f2$ >> ->
+        let* d1 = << equals $e1$ $f1$ >> in
+        let* d2 = << equals $e2$ $f2$ >> in
+        return << eq_app $e1$ $f1$ $e2$ $f2$ $d1$ $d2$ >>
       | _ -> failwith "not equal"
       end
     | << lam $t$ >> ->
       begin match* n with
       | << lam $u$ >> ->
         let* d in <:env< x : tm; h : eq x x >> =
-          << equals ($t$ (equals^0 ($t$ x) ($u$ x) h)) ($u$ (equals^1 ($t$ x) ($u$ x) h)) >> in
+          << equals ($t$ (equals^0 x x h)) ($u$ (equals^1 x x h)) >> in
         return << eq_lam $t$ $u$ [x] [h] $d$ >>
       | _ -> failwith "not equal"
       end
@@ -37,8 +37,27 @@ let repo = Version.init
 >>
 ;;
 
-Tests.commit repo <<
+Tests.commit_eq repo <<
   equals (lam [x] x) (lam [y] y)
+>> <<
+  eq_lam ([x] x) ([y] y) [x] [h] h
+>>
+;;
+
+Tests.commit repo <<
+  equals (lam [a] app a a) (lam [b] app b b)
+>>
+;;
+
+Tests.commit repo <<
+  equals (lam [a] lam [b] app a b) (lam [c] lam [d] app c d)
+>>
+;;
+
+Tests.commit repo <<
+  equals
+  (lam [a] lam [b] app (app a b) (app b a))
+  (lam [c] lam [d] app (app c d) (app d c))
 >>
 ;;
 
