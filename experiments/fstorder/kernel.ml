@@ -89,6 +89,7 @@ let push repo env (h, l) a =
 
 module rec Conv : sig
   val obj : repo -> env -> obj * obj * fam -> unit
+  val spine : repo -> env -> head -> spine * spine * fam -> fam
   val fam : repo -> env -> (fam * fam) -> unit
 end = struct
 
@@ -383,6 +384,24 @@ and Eval : sig
     -> spine -> repo * obj
 end = struct
 
+  let rec is_inverse_of repo env args i c = function
+    | [] -> Some (List.last args)
+    | m :: l ->
+        begin match prj m with
+          | OApp (HInv (c', j) as h, args') when i=j && OConst.compare c c' = 0 ->
+              let a, _ = Check.head repo env h in
+              Conv.spine repo env h (args, args', a);
+              is_inverse_of repo env args (succ i) c l
+          | _ -> None
+        end
+
+  let is_inverse_of repo env c = function
+    | [] -> None
+    | m :: l -> match prj m with
+        | OApp (HInv (c', 0), args) when OConst.compare c c' = 0 ->
+            is_inverse_of repo env args 1 c l
+        | _ -> None
+
   let rec eval' repo env ?except = prj @> function
     | OMeta (x, s) ->
         let e, m, _ =
@@ -415,15 +434,12 @@ end = struct
     let eval repo env m = eval repo env m in
     match h with
       |  HConst c ->
-          begin match List.map prj l with
-            | [OApp (HInv (c', 0), [m1; m2])] when OConst.compare c c' = 0 ->
-                (* if the only argument is the inverse function c^0 *)
-                repo, m2
-            | _ -> f repo env eval l
+          begin match is_inverse_of repo env c l with
+            | Some m -> repo, m
+            | None -> f repo env eval l
           end
       | HInv (c, _) -> f repo env eval l
       | HVar _ -> assert false
-
 
   and interp repo env h f l =
     Debug.log_open "interp" "%a" P.obj (mkApp (h, l));

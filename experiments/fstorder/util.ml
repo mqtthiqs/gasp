@@ -2,6 +2,11 @@ module List = struct
 
   include List
 
+  let rec last = function
+    | [] -> invalid_arg "last"
+    | [x] -> x
+    | x :: xs -> last xs
+
   let index p =
     let rec aux i = function
       | [] -> raise Not_found
