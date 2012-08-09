@@ -23,7 +23,7 @@ let commit_eq repo m p = Topcatch.(catch (catch (commit_eq repo) m) p)
 let inv repo n a b =
   let a = SLF.Strat.fam repo.sign [] a in
   let b = SLF.Strat.fam repo.sign [] b in
-  let b' = LF.Util.inv_fam (n, a) in
+  let b' = LF.LFUtil.inv_fam (n, a) in
   Kernel.Conv.fam repo [] (b, b');
   b'
 ;;

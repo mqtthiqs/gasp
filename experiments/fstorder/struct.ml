@@ -101,7 +101,7 @@ module Renaming = struct
 
   let subst_of env s = List.map
     (fun x ->
-      if x <> dummy_var then LF.Util.eta_expand_var x (snd (List.nth env x))
+      if x <> dummy_var then LFUtil.eta_expand_var x (snd (List.nth env x))
       else inj @@ OApp (HVar x, [])
     ) s
 

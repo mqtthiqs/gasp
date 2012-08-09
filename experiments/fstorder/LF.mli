@@ -50,7 +50,7 @@ module Subst : sig
   val kind : obj list -> kind -> kind
 end
 
-module Util : sig
+module LFUtil : sig
   val map_meta : (Meta.t * subst -> obj) -> obj -> obj
   val fv : obj -> int list
   val eta_expand_var : int -> fam -> obj

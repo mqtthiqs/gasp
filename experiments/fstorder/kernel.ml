@@ -48,7 +48,7 @@ let pull repo x =
       with Not_found -> raise (Unbound_meta (repo, x)) in
     assert (List.length e = List.length s);
     let m = Subst.obj s m in
-    LF.Util.map_meta (aux ctx) m
+    LFUtil.map_meta (aux ctx) m
   in aux repo.ctx x
 
 (* Γ ⊢ σ : Γ'  Γ ⊢ M ≡ M'[σ]  Γ ⊢ A ≡ A'[σ]
@@ -56,7 +56,7 @@ let pull repo x =
  * (Γ ⊢ M : A) ~> (Γ' ⊢ M' : A'), σ
  *)
 let strengthen env (h, l) a =
-  let fv = (LF.Util.fv (mkApp(h, l))) in
+  let fv = (LFUtil.fv (mkApp(h, l))) in
   let subst = Renaming.subst_of env fv in  (* Γ ⊢ σ : Γ') *)
   let env' = Renaming.drop_env fv env in
   let subst' = Renaming.subst_of env' (Renaming.inverse fv) in (* Γ' ⊢ σ' : Γ *)
@@ -76,7 +76,7 @@ let strengthen env (h, l) a =
  *)
 let push repo env (h, l) a =
   let env, (h, l), a, s = strengthen env (h, l) a in
-  let x = Meta.make (Int.uident_of @@ LF.Util.hash_obj (mkApp (h,l))) in
+  let x = Meta.make (Int.uident_of @@ LFUtil.hash_obj (mkApp (h,l))) in
   let repo = { repo with ctx = Context.add x (env, mkApp (h, l), a) repo.ctx } in
   repo, (x, s)
 
@@ -215,7 +215,7 @@ end = struct
     | HConst c -> Sign.ofind c repo.sign
     | HInv (c, n) ->
       match Sign.ofind c repo.sign with
-        | a, Sign.Defined _ -> LF.Util.inv_fam (n, a), Sign.Defined (fun repo _ _ s -> repo, List.nth s n)
+        | a, Sign.Defined _ -> LFUtil.inv_fam (n, a), Sign.Defined (fun repo _ _ s -> repo, List.nth s n)
         | _ -> failwith ("inverted a non-defined function")
 
   (* obj: check mode, returns the rewritten obj and the enlarged repo *)

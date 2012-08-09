@@ -135,7 +135,7 @@ module Lower = struct
 
 end
 
-module Util = struct
+module LFUtil = struct
 
   let rec map_meta f = prj @> begin function
     | OApp (h, l) -> OApp (h, List.map (map_meta f) l)
