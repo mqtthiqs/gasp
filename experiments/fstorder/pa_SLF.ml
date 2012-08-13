@@ -1,5 +1,3 @@
-open Util
-
 module ExprParser = struct
 
   open Camlp4.PreCast
