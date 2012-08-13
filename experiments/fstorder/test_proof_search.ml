@@ -19,7 +19,7 @@ let repo = Version.init
   bot : atom.
   n : nat -> atom.
 
-  eq_nat : nat -> nat -> nat = $ fun x y ->
+  eq_nat : nat -> nat -> bool = $ fun x y ->
     match* x with
       | << z >> -> (match* y with << z >> -> return << tt >>
                                 | _ -> return << ff >>)
@@ -27,12 +27,12 @@ let repo = Version.init
                                     | _ -> return << ff >>)
   $.
 
-  eq_atom : atom -> atom -> nat = $ fun x y ->
+  eq_atom : atom -> atom -> bool = $ fun x y ->
     match* x with
       | << top >> -> (match* y with << top >> -> return << tt >> | _ -> return << ff >>)
       | << bot >> -> (match* y with << bot >> -> return << tt >> | _ -> return << ff >>)
-      | << n $n$ >> ->
-        (match* y with << n $m$ >> -> return << eq_nat $m$ $n$ >>
+      | << n $x$ >> ->
+        (match* y with << n $y$ >> -> return << eq_nat $x$ $y$ >>
         | _ -> return << ff >>)
   $.
 
@@ -55,6 +55,8 @@ let repo = Version.init
   disj_e : {A:o} {B:o} {C:o}
     pf (disj A B) -> (pf A -> pf C) -> (pf B -> pf C) -> pf C.
 
+  sorry : {A:o} pf A.
+
   hyps : type.
   nil : hyps.
   cons : {A:o} pf A -> hyps -> hyps.
@@ -62,7 +64,7 @@ let repo = Version.init
   rev_append : hyps -> hyps -> hyps = $ fun xs ys ->
     match* xs with
     | << nil >> -> return ys
-    | << cons $x$ $xs$ >> -> return << rev_append $xs$ (cons $x$ $ys$) >>
+    | << cons $x$ $a$ $xs$ >> -> return << rev_append $xs$ (cons $x$ $a$ $ys$) >>
   $.
 
   search : hyps -> {A:o} pf A = $ fun hs a ->
@@ -87,16 +89,31 @@ let repo = Version.init
     match* xs with
     | << nil >> -> raise Failure
     | << cons $a$ $m$ $xs$ >> ->
-      try let* x = << focus (rev_append $xs$ $ys$) $a$ $m$ $c$ >> in return x
+      (* We focus on formula [a], and remove it from the hypothesis (no contraction) *)
+      try let* x = << focus (rev_append $ys$ $xs$) $a$ $m$ $c$ >> in return x
+      (* If it fails, continue with xs *)
       with Failure -> return << select $xs$ (cons $a$ $m$ $ys$) $c$ >>
   $.
 
-  focus : hyps -> {A:o} pf A -> {C:o} pf C = $ fun hs a m c ->
-    Util.Debug.log "a" "focus %a |- %a" SLF.Printer.term a SLF.Printer.term c;
+  assumption : hyps -> {P:atom} pf (at P) = $ fun hs p ->
+    Util.Debug.log "a" "assumption %a |- %a" SLF.Printer.term hs SLF.Printer.term p;
+    match* hs with
+    | << nil >> -> raise Failure
+    | << cons $a$ $m$ $hs$ >> -> match* a with
+      | << at $q$ >> ->
+        begin match* << eq_atom $p$ $q$ >> with
+        | << tt >> -> return m
+        | << ff >> -> return << assumption $hs$ $p$ >>
+        end
+      | _ -> return << assumption $hs$ $p$ >>
+  $.
+
+  focus : hyps -> {A:o} pf A -> {G:o} pf G = $ fun hs a m g ->
+    Util.Debug.log "a" "focus %a |- %a" SLF.Printer.term a SLF.Printer.term g;
     match* a with
-    | << at bot >> -> return << bot_e $c$ $m$ >>
+    | << at bot >> -> return << bot_e $g$ $m$ >>
     | << at $q$ >> ->
-      begin match* c with
+      begin match* g with
       | << at $p$ >> ->
         begin match* << eq_atom $p$ $q$ >> with
         | << tt >> -> return m
@@ -105,22 +122,55 @@ let repo = Version.init
       | _ -> raise Failure
       end
     | << imp $a$ $b$ >> ->
-      return << focus $hs$ $b$ (imp_e $a$ $b$ $m$ (search $hs$ $a$)) $c$ >>
+      begin match* a with
+      | << at $p$ >> ->
+        let* n = << assumption $hs$ $p$ >> in
+        return << search (cons $b$ (imp_e $a$ $b$ $m$ $n$) $hs$) $g$ >>
+      | << conj $c$ $d$ >> ->
+        return << search (cons (imp $c$ (imp $d$ $b$)) (imp_i $c$ (imp $d$ $b$) [pc] imp_i $d$ $b$ [pd] imp_e (conj $c$ $d$) $b$ $m$ (conj_i $c$ $d$ pc pd))
+          $hs$) $g$ >>
+      | << disj $c$ $d$ >> ->
+        return << search
+          (cons (imp $c$ $b$) (imp_i $c$ $b$ [pc] imp_e (disj $c$ $d$) $b$ $m$ (disj_i1 $c$ $d$ pc))
+          (cons (imp $d$ $b$) (imp_i $d$ $b$ [pd] imp_e (disj $c$ $d$) $b$ $m$ (disj_i2 $c$ $d$ pd))
+            $hs$)) $g$ >>
+      | << imp $c$ $d$ >> ->
+        return <<
+          imp_e $b$ $g$
+            (imp_i $b$ $g$ [pb] (search (cons $b$ pb $hs$) $g$))
+            (imp_e (imp $c$ $d$) $b$
+              $m$
+              (imp_i $c$ $d$ [pc]
+                (imp_e $c$ $d$
+                  (imp_e (imp $d$ $b$) (imp $c$ $d$)
+                    (imp_i (imp $d$ $b$) (imp $c$ $d$) [pdb]
+                      (search (cons (imp $d$ $b$) pdb $hs$) (imp $c$ $d$)))
+                    (imp_i $d$ $b$ [pd]
+                      imp_e (imp $c$ $d$) $b$
+                        $m$
+                        (imp_i $c$ $d$ [pc] pd)))
+                  pc)))
+        >>
+      end
+      (* order matters (CBN) :
+         - first focus and find if head matches (shallow backtracking)
+         - then search for proof of [a] *)
+      (* return << focus $hs$ $b$ (imp_e $a$ $b$ $m$ (search $hs$ $a$)) $c$ >> *)
     | << disj $a$ $b$ >> ->
-      return << disj_e $a$ $b$ $c$ $m$
-                  ([x] search (cons $a$ x $hs$) $c$)
-                  ([x] search (cons $b$ x $hs$) $c$) >>
+      return << disj_e $a$ $b$ $g$ $m$
+                  ([x] search (cons $a$ x $hs$) $g$)
+                  ([x] search (cons $b$ x $hs$) $g$) >>
     | << conj $a$ $b$ >> ->
       (* two choices here: *)
-      (* 1. stay focused and try the two sides with backtracking: *)
-      begin
-        try let* x = << focus $hs$ $a$ (conj_e1 $a$ $b$ $m$) $c$ >> in return x
-        with Failure ->
-          let* x = << focus $hs$ $b$ (conj_e2 $a$ $b$ $m$) $c$ >> in return x
-      end
+      (* 1. stay focused and try the two sides with backtracking: (not complete, see ex. [1]!) *)
+      (* begin *)
+      (*   try let* x = << focus $hs$ $a$ (conj_e1 $a$ $b$ $m$) $c$ >> in return x *)
+      (*   with Failure -> *)
+      (*     let* x = << focus $hs$ $b$ (conj_e2 $a$ $b$ $m$) $c$ >> in return x *)
+      (* end *)
       (* 2. go back to unfocused state with two new premisses: *)
-      (* return << search (cons $a$ (conj_e1 $a$ $b$ $m$)
-         (cons $b$ (conj_e2 $a$ $b$ $m$) $hs$)) $c$ >> *)
+      return << search (cons $a$ (conj_e1 $a$ $b$ $m$)
+         (cons $b$ (conj_e2 $a$ $b$ $m$) $hs$)) $g$ >>
   $.
 
 >>
@@ -128,6 +178,7 @@ let repo = Version.init
 
 let a = << at (n z) >> ;;
 let b = << at (n (s z)) >>;;
+let c = << at (n (s (s z))) >>;;
 
 (* resulting proofs are not eta-expanded: *)
 let _ = Tests.commit repo <<
@@ -142,52 +193,59 @@ let _ = Tests.commit repo <<
 >>
 ;;
 
-let _ = Tests.commit repo << search nil (at top) >>
+let test_commits repo f xs =
+  List.iter (fun x -> ignore (Tests.commit repo (f x))) xs
 ;;
 
-(* Implication & bottom *)
+let _ = test_commits repo
+  (fun x -> << search nil $x$ >>)
+  [
+    (* Implication & bottom *)
+    << at top >>;
+    << imp (at bot) (at top) >>;
+    << imp (at bot) (at bot) >>;
+    << imp (at bot) (at bot) >>;
+    << imp (at (bot)) (imp $a$ $b$) >>;
+    << imp $a$ (imp (at (bot)) $b$) >>;
+    << imp $a$ (imp $b$ $a$) >>;
+    << imp $a$ (imp (imp $a$ $b$) $b$) >>;
+    << imp (imp $a$ $b$) (imp $a$ $b$) >>;
+    << imp $a$ (imp (imp $a$ $b$) (imp (imp $a$ (imp $b$ $c$)) $c$))>>;
+    (* barbara *)
+    << imp (imp $a$ $b$) (imp (imp $b$ $c$) (imp $a$ $c$)) >>;
+    << imp (imp $c$ $a$) (imp (imp $c$ (imp $a$ $b$)) (imp $c$ $b$)) >>;
+    (* S *)
+    << imp (imp $a$ (imp $b$ $c$)) (imp (imp $a$ $b$) (imp $a$ $c$)) >>;
 
-let _ = Tests.commit repo << search nil (imp (at bot) (at top)) >>
+    (* Negation *)
+    << imp $a$ (imp (imp $a$ (at bot)) (at bot)) >>;
+    << imp (conj $a$ (imp $a$ (at bot))) (at bot) >>;     (* [1] *)
+    << imp (imp (disj $a$ $b$) (at bot)) (imp $a$ $b$) >>;
+    << imp (imp (disj $a$ $b$) (at bot)) (conj (imp $a$ (at bot)) (imp $b$ (at bot))) >>;
+    << imp (imp $a$ $b$) (imp (imp $b$ (at bot)) (imp $a$ (at bot))) >>;
+    << imp (imp $a$ $b$) (imp (imp $b$ (at bot)) (imp $a$ (at bot))) >>;
+    << imp (imp $a$ (at bot)) (imp (imp (imp $a$ (at bot)) (at bot)) (at bot)) >>;
+    << imp (imp (imp (imp $a$ (at bot)) (at bot)) (at bot)) (imp $a$ (at bot)) >>;
+
+    (* Conjunction *)
+    << conj (at top) (at top) >>;
+    << imp $a$ (imp $b$ (conj $a$ $b$)) >>;
+    << imp (conj $a$ $b$) $a$ >>;
+    << imp (conj $a$ $b$) $b$ >>;
+    << imp (conj $a$ $b$) (conj $b$ $a$) >>;
+
+    (* Disjunction *)
+    << imp $a$ (disj $a$ $b$) >>;
+    << imp $b$ (disj $a$ $b$) >>;
+    << imp (disj $a$ $b$) (disj $b$ $a$) >>;
+    << imp (conj $a$ $b$) (disj $b$ $a$) >>;
+    (* example showing that we must contract a imp_l rule: *)
+    << imp (imp (disj $a$ (imp $a$ (at bot))) (at bot)) (at bot) >>
+  ]
 ;;
 
-let _ = Tests.commit repo << search nil (imp (at bot) (at bot)) >>
-;;
-
-let _ = Tests.commit repo << search nil (imp (at (bot)) (imp $a$ $b$)) >>
-;;
-
-let _ = Tests.commit repo << search nil (imp $a$ (imp (at (bot)) $b$)) >>
-;;
-
-let _ = Tests.commit repo << search nil (imp $a$ (imp (imp $a$ $b$) $b$)) >>
-;;
-
-let _ = Tests.commit repo << search nil (imp (imp $a$ $b$) (imp $a$ $b$)) >>
-;;
-
-let repo = Tests.commit repo << search nil (conj (at top) (at top)) >>
-;;
-
-(* Conjunction *)
-
-let _ = Tests.commit repo << search nil (imp (conj $a$ $b$) $a$) >>
-;;
-
-let _ = Tests.commit repo << search nil (imp (conj $a$ $b$) $b$) >>
-;;
-
-let _ = Tests.commit repo << search nil (imp (conj $a$ $b$) (conj $b$ $a$)) >>
-;;
-
-(* Disjunction *)
-
-let _ = Tests.commit repo << search nil (imp $a$ (disj $a$ $b$)) >>
-;;
-
-let _ = Tests.commit repo << search nil (imp $b$ (disj $a$ $b$)) >>
-;;
-
-(* let _ = Tests.commit repo << search nil (imp (disj $a$ $b$) (disj $b$ $a$)) >> *)
+(* let _ = *)
+(*   Util.Debug.log "a" "repo: %a" SLF.Printer.term (Version.checkout repo) *)
 (* ;; *)
 
 42
