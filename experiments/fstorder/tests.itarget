@@ -1,3 +1,5 @@
+test_sequent.log
+test_proof_search.log
 test_eval.log
 test_stlc.log
 test_hol.log
