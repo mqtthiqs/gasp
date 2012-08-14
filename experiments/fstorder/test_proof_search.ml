@@ -152,10 +152,6 @@ let repo = Version.init
                   pc)))
         >>
       end
-      (* order matters (CBN) :
-         - first focus and find if head matches (shallow backtracking)
-         - then search for proof of [a] *)
-      (* return << focus $hs$ $b$ (imp_e $a$ $b$ $m$ (search $hs$ $a$)) $c$ >> *)
     | << disj $a$ $b$ >> ->
       return << disj_e $a$ $b$ $g$ $m$
                   ([x] search (cons $a$ x $hs$) $g$)
@@ -193,12 +189,7 @@ let _ = Tests.commit repo <<
 >>
 ;;
 
-let test_commits repo f xs =
-  List.iter (fun x -> ignore (Tests.commit repo (f x))) xs
-;;
-
-let _ = test_commits repo
-  (fun x -> << search nil $x$ >>)
+let _ = List.iter (fun x -> ignore (Tests.commit repo << search nil $x$ >>))
   [
     (* Implication & bottom *)
     << at top >>;
