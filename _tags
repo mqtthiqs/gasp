@@ -4,7 +4,7 @@
 <version.ml> : syntax(camlp4o), package(camlp4.quotations), pa(SLF)
 
 <tests.ml> or <util.ml> : package(camlp4)
-<test_*.ml> : syntax(camlp4o), package(camlp4.quotations), dep(load.ml), dep(tests.ml), \
-              pa(SLF), pa(here), pa(recmatch), warn(+a-p-u)
+<tests/*.ml> : syntax(camlp4o), package(camlp4.quotations), dep(load.ml), dep(tests.ml), \
+              pa(SLF), pa(recmatch), warn(+a-p-u)
 
-<*.{byte,native,top}> : package(unix), package(camlp4.lib), debug
+<tests/*.{byte,native,top}> or <*.{byte,native,top}> : package(unix), package(camlp4.lib), debug

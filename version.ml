@@ -5,6 +5,7 @@ open Struct
 
 let prelude : repo = Kernel.init Repo.empty
   <:sign<
+    Commit : type.
     (* version : type. *)
     (* ancestors : type. *)
     (* anil : ancestors. *)
