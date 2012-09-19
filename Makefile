@@ -1,15 +1,20 @@
-###########################
-## Package configuration ##
-###########################
+TARGET=gasp
 
-VERSION  = 0.1
-TARGET   = gasp
-PACKAGE  = gasp-$(VERSION)
+.PHONY: all clean
 
-include Makefile.generic
-include Makefile.check
+OCAMLBUILD_OPT=-use-ocamlfind -classic-display #-j 5
+OCAMLBUILD=ocamlbuild ${OCAMLBUILD_OPT}
 
-.PHONY: spl
-spl: 
-	rm -f spl
-	$(OCAMLBUILD) spltc.byte && cp spltc.byte spl
+all: ${TARGET}
+
+${TARGET}:
+	@${OCAMLBUILD} ${TARGET}.otarget
+
+clean:
+	@${OCAMLBUILD} -clean
+
+%:
+	@$(OCAMLBUILD) $@
+
+check:
+	@${OCAMLBUILD} tests.otarget
