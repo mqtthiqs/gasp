@@ -42,3 +42,5 @@ tests/check_Tsub_incr1.log
 tests/check_Tsub_incr2.log
 tests/equal.log
 tests/inv.log
+tests/proof_search.log
+tests/lj.log
